@@ -35,6 +35,8 @@ app.get('/health', (_req, res) => res.json({ status: 'ok', time: new Date().toIS
 
 // Serve React build in production
 if (isProd) {
+  // Works both locally (backend/src → ../../frontend/dist)
+  // and on Render/Railway (started from repo root → frontend/dist)
   const buildPath = path.join(__dirname, '../../frontend/dist');
 
   // Static assets (hashed filenames like index-abc123.js) — cache for 1 year
