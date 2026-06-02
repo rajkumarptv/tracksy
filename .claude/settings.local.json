@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($env:PGPASSWORD = \"password\"; psql -U postgres -c \"CREATE DATABASE tracksy;\" 2>&1)",
+      "PowerShell(Start-Process powershell -ArgumentList \"-NoExit\", \"-Command\", \"Set-Location D:\\\\tracksy\\\\backend; npm run dev\" -WindowStyle Minimized; Start-Sleep 4; Invoke-RestMethod http://localhost:3001/api/health 2>&1)",
+      "PowerShell(Invoke-RestMethod http://localhost:3001/api/health 2>&1)",
+      "PowerShell(try { Invoke-RestMethod http://localhost:3001/api/health } catch { $_.Exception.Message })",
+      "mcp__Claude_Preview__preview_start",
+      "PowerShell(netstat -ano | findstr \":3000 \" | findstr LISTENING; $pid3000 = \\(netstat -ano | findstr \":3000 \" | findstr LISTENING | ForEach-Object { \\($_ -split \"\\\\s+\"\\)[-1] } | Select-Object -First 1\\); \\(Get-WmiObject Win32_Process -Filter \"ProcessId=$pid3000\"\\).CommandLine)",
+      "Bash(node -e \"const r=require\\('./node_modules/recharts'\\); console.log\\(r.AreaChart ? 'AreaChart OK' : 'MISSING'\\)\")",
+      "Bash(node -e \"const r=require\\('D:/tracksy/frontend/node_modules/recharts'\\); console.log\\(r.AreaChart ? 'AreaChart OK' : 'MISSING'\\); console.log\\(r.Area ? 'Area OK' : 'MISSING'\\)\")",
+      "Bash(cd /d D:\\\\tracksy\\\\frontend)",
+      "Bash(npm install *)",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "mcp__Claude_in_Chrome__browser_batch",
+      "mcp__Claude_in_Chrome__computer",
+      "mcp__Claude_in_Chrome__tabs_create_mcp",
+      "Bash(npx vite *)",
+      "PowerShell(New-Item -ItemType Directory -Force \"$env:USERPROFILE\\\\.cloudflared\" | Out-Null; Write-Host \"Dir ready: $env:USERPROFILE\\\\.cloudflared\")",
+      "Bash(npx tsc *)",
+      "Bash(cd /mnt/d/tracksy/frontend && npx vite build 2>&1 | tail -30)",
+      "Read(//mnt/**)",
+      "Read(//d//**)",
+      "Read(//proc/**)",
+      "Bash(node_modules/.bin/vite build *)",
+      "Bash(cd /d/tracksy/frontend/src/pages && sed -i 's/\\\\$\\\\${fmt\\(/\\\\${fmt\\(/g' Debts.jsx && echo \"Done\")",
+      "Bash(mkdir -p /mnt/d/tracksy/frontend/public/icons 2>/dev/null; echo \"done\")",
+      "Bash(node src/db/migrate.js)",
+      "Bash(node -e \"const {query} = require\\('./src/db'\\); query\\('SELECT id, email, is_admin FROM users ORDER BY created_at'\\).then\\(r => { console.log\\(JSON.stringify\\(r.rows, null, 2\\)\\); process.exit\\(0\\); }\\).catch\\(e => { console.error\\(e.message\\); process.exit\\(1\\); }\\);\")",
+      "Bash(npm run *)",
+      "Bash(Get-ChildItem -Path \"D:\\\\tracksy\" -Recurse -Depth 2)",
+      "Bash(Select-Object FullName)",
+      "PowerShell($r = Invoke-WebRequest -Uri \"http://localhost:5000/api/auth/notification-preferences\" -Method GET -Headers @{ \"Authorization\" = \"Bearer bad\" } -ErrorAction SilentlyContinue; Write-Host \"Notif prefs:\", \\($r.Content\\); $r2 = Invoke-WebRequest -Uri \"http://localhost:5000/api/auth/change-password\" -Method POST -Headers @{ \"Authorization\" = \"Bearer bad\"; \"Content-Type\"=\"application/json\" } -Body '{}' -ErrorAction SilentlyContinue; Write-Host \"Change pwd:\", \\($r2.Content\\))",
+      "Bash(cd /d D:\\\\tracksy\\\\backend)",
+      "Bash(node -e \"const { pool } = require\\('./src/db/index'\\); pool.query\\('SELECT COUNT\\(*\\) FROM transactions'\\).then\\(r => { console.log\\('Transactions:', r.rows[0].count\\); return pool.query\\('SELECT COUNT\\(*\\) FROM wallets'\\); }\\).then\\(r => { console.log\\('Wallets:', r.rows[0].count\\); return pool.query\\('SELECT COUNT\\(*\\) FROM users'\\); }\\).then\\(r => { console.log\\('Users:', r.rows[0].count\\); pool.end\\(\\); }\\).catch\\(e => { console.error\\('DB Error:', e.message\\); pool.end\\(\\); }\\);\")",
+      "Bash(node -e \"require\\('dotenv'\\).config\\(\\); console.log\\('PORT:', process.env.PORT\\); console.log\\('DB_HOST:', process.env.DB_HOST ? 'set' : 'missing'\\); console.log\\('JWT_SECRET:', process.env.JWT_SECRET ? 'set' : 'missing'\\);\")",
+      "Bash(node -e \"require\\('dotenv'\\).config\\(\\); console.log\\('NODE_ENV:', process.env.NODE_ENV\\);\")",
+      "Bash(node -e ' *)"
+    ]
+  }
+}

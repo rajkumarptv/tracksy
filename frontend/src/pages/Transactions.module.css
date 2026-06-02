@@ -1,0 +1,211 @@
+@keyframes dropFade {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0);     }
+}
+
+.page    { display: flex; flex-direction: column; height: 100%; position: relative; }
+.content { padding: 24px 28px 40px; flex: 1; overflow: auto; }
+
+/* ── Summary cards ─────────────────────────────────── */
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.summaryCard {
+  background: var(--surface);
+  border-radius: 18px; padding: 18px 20px;
+  box-shadow: 0 4px 20px rgba(108,99,255,.08);
+  border: 1px solid var(--border-light);
+  display: flex; align-items: center; gap: 14px;
+}
+
+/* ── Desktop filters ───────────────────────────────── */
+.desktopFilters {
+  display: flex; gap: 10px; margin-bottom: 18px;
+  flex-wrap: wrap; align-items: center;
+}
+
+/* ── Desktop table ─────────────────────────────────── */
+.tableCard {
+  background: var(--surface);
+  border-radius: 22px;
+  box-shadow: 0 4px 24px rgba(108,99,255,.08);
+  border: 1px solid var(--border-light);
+  overflow: hidden;
+}
+
+/* ── Show/hide helpers ─────────────────────────────── */
+.desktopOnly { display: block; }
+.mobileHeader { display: none; }
+.mobileList { display: none; }
+.fab { display: none; }
+.txDateBar { padding: 9px 28px; }
+
+@media (max-width: 768px) {
+  .txDateBar { padding: 8px 12px !important; gap: 6px !important; }
+}
+
+/* ══════════════════════════════════════════════════════
+   MOBILE — ≤ 768px
+══════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* Hide desktop elements */
+  .desktopOnly  { display: none !important; }
+  .desktopFilters { display: none; }
+
+  /* Page layout */
+  .content { padding: 0 0 100px; background: var(--bg); }
+
+  /* ── Mobile header ── */
+  .mobileHeader {
+    display: block;
+    padding: 16px 16px 0;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border-light);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .mobileHeaderRow {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .mobileTitle { font-size: 22px; font-weight: 800; color: var(--text); }
+  .mobileDownload {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: var(--accent-light); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* Search */
+  .mobileSearch {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 50px; padding: 10px 16px;
+    margin-bottom: 14px;
+  }
+  .mobileSearchInput {
+    flex: 1; border: none; background: transparent; outline: none;
+    font-size: 14px; color: var(--text); font-family: 'Inter', sans-serif;
+  }
+  .mobileSearchInput::placeholder { color: var(--text3); }
+
+  /* Filter chips */
+  .filterChips {
+    display: flex; gap: 8px; overflow-x: auto;
+    padding-bottom: 14px; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .filterChips::-webkit-scrollbar { display: none; }
+  .chip {
+    flex-shrink: 0;
+    padding: 8px 18px; border-radius: 50px;
+    font-size: 13.5px; font-weight: 600;
+    background: var(--surface2); color: var(--text2);
+    border: 1.5px solid var(--border); cursor: pointer;
+    transition: all .15s; white-space: nowrap;
+  }
+  .chipActive {
+    background: #6C63FF; color: #fff; border-color: #6C63FF;
+    box-shadow: 0 4px 12px rgba(108,99,255,.35);
+  }
+
+  /* ── Summary cards (compact row) ── */
+  .summaryGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px; margin: 14px 12px;
+  }
+  .summaryCard {
+    border-radius: 14px; padding: 12px 10px;
+    flex-direction: column; align-items: flex-start; gap: 6px;
+  }
+  .summaryCard > div:first-child {
+    width: 36px; height: 36px; border-radius: 10px;
+  }
+  .summaryCard .mono { font-size: 13px !important; }
+  .summaryCard > div:last-child > div:first-child { font-size: 10px !important; }
+
+  /* ── Mobile grouped list ── */
+  .mobileList { display: block; }
+
+  .monthGroup { margin-bottom: 8px; }
+
+  .monthHeader {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px 8px;
+  }
+  .monthLabel {
+    font-size: 17px; font-weight: 800; color: var(--text);
+  }
+  .monthTotal {
+    font-size: 15px; font-weight: 700;
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .txGroup {
+    background: var(--surface);
+    border-radius: 20px;
+    margin: 0 12px;
+    border: 1px solid var(--border-light);
+    box-shadow: 0 2px 12px rgba(108,99,255,.06);
+    overflow: hidden;
+  }
+
+  .txRow {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: background .12s;
+    position: relative;
+  }
+  .txRow:active { background: var(--surface2); }
+
+  .txCircle {
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .txInfo { flex: 1; min-width: 0; }
+  .txName {
+    font-size: 15px; font-weight: 700; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    margin-bottom: 4px;
+  }
+  .txMeta {
+    font-size: 12px; color: var(--text3); display: flex;
+    align-items: center; flex-wrap: wrap; gap: 4px;
+  }
+  .txDot { opacity: .5; }
+
+  .txAmount {
+    font-size: 16px; font-weight: 800;
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0; text-align: right;
+  }
+
+  /* Load more */
+  .loadMore {
+    width: calc(100% - 24px); margin: 14px 12px;
+    padding: 14px; border-radius: 14px;
+    background: var(--surface); border: 1.5px solid var(--border);
+    color: var(--accent); font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: all .15s;
+  }
+  .loadMore:active { background: var(--surface2); }
+
+  /* ── FAB ── */
+  .fab {
+    display: flex; align-items: center; justify-content: center;
+    position: fixed; bottom: 28px; right: 22px;
+    width: 58px; height: 58px; border-radius: 50%;
+    background: linear-gradient(135deg, #6C63FF, #5B8CFF);
+    border: none; cursor: pointer; z-index: 50;
+    box-shadow: 0 6px 24px rgba(108,99,255,.5);
+    transition: transform .2s, box-shadow .2s;
+  }
+  .fab:active { transform: scale(.94); }
+}

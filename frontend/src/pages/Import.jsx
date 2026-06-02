@@ -1,0 +1,495 @@
+import { useState, useRef } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { importAPI, walletsAPI, categoriesAPI } from '../services/api';
+import { Topbar } from '../components/ui';
+import { Upload, FileText, CheckCircle, AlertCircle, X, Check } from 'lucide-react';
+import { useT, useFmt } from '../i18n';
+
+const TYPE_COLOR = { income:'#37D67A', expense:'#FF5B5B' };
+const TYPE_BG    = { income:'rgba(55,214,122,.12)', expense:'rgba(255,91,91,.1)' };
+
+const WALLET_ICONS   = { visa:'💳', mastercard:'💳', paypal:'🅿️', bank:'🏦', cash:'💵', crypto:'₿', loan:'📋', asset:'📈', lending:'🤝', other:'👛' };
+const WALLET_GRADIENTS = [
+  'linear-gradient(135deg,#6C63FF,#5B8CFF)',
+  'linear-gradient(135deg,#00b894,#55efc4)',
+  'linear-gradient(135deg,#e17055,#fd79a8)',
+  'linear-gradient(135deg,#0984e3,#74b9ff)',
+  'linear-gradient(135deg,#6ab04c,#badc58)',
+  'linear-gradient(135deg,#1A1033,#3d3473)',
+];
+
+// Steps: 1=Upload  2=Pick Account  3=Review  4=Done
+const STEPS = ['Upload File', 'Select Account', 'Review & Map', 'Done'];
+
+export default function Import() {
+  const qc = useQueryClient();
+  const t = useT();
+  const fmt = useFmt();
+  const fileRef = useRef();
+
+  const [step,      setStep]     = useState(1);
+  const [preview,   setPreview]  = useState(null);
+  const [rows,      setRows]     = useState([]);
+  const [walletId,  setWalletId] = useState(null);  // null = no wallet
+  const [filter,    setFilter]   = useState('all');
+  const [dragOver,  setDragOver] = useState(false);
+  const [result,    setResult]   = useState(null);
+  const [search,    setSearch]   = useState('');
+
+  const { data: wallets = [] } = useQuery({
+    queryKey: ['wallets'],
+    queryFn: () => walletsAPI.getAll().then(r => r.data.data),
+  });
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => categoriesAPI.getAll().then(r => r.data.data),
+  });
+
+  // Only non-debt wallets for account selection
+  const bankWallets = wallets.filter(w => !['visa','mastercard','loan'].includes(w.type));
+
+  const previewMut = useMutation({
+    mutationFn: ({ content, filename }) => importAPI.preview(content, filename).then(r => r.data),
+    onSuccess: (data) => {
+      setPreview(data.data);
+      setRows(data.data.transactions.map((t, i) => ({ ...t, _id: i, skip: false })));
+      setStep(2); // go to account picker
+    },
+  });
+
+  const confirmMut = useMutation({
+    mutationFn: () => importAPI.confirm(rows, walletId).then(r => r.data),
+    onSuccess: (data) => {
+      setResult(data.data);
+      setStep(4);
+      qc.invalidateQueries({ queryKey: ['transactions'] });
+      qc.invalidateQueries({ queryKey: ['dashboard-summary'] });
+      qc.invalidateQueries({ queryKey: ['wallets'] });
+    },
+  });
+
+  const handleFile = (file) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => previewMut.mutate({ content: e.target.result, filename: file.name });
+    reader.readAsText(file);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault(); setDragOver(false);
+    handleFile(e.dataTransfer.files[0]);
+  };
+
+  const toggleSkip      = (id) => setRows(r => r.map(row => row._id===id ? {...row, skip:!row.skip} : row));
+  const unskipAll       = ()   => setRows(r => r.map(row => ({...row, skip:false})));
+  const skipVisible     = ()   => setRows(r => r.map(row => visibleIds.has(row._id) ? {...row,skip:true} : row));
+  const updateCategory  = (id, category_id, category_name) =>
+    setRows(r => r.map(row => row._id===id ? {...row,category_id,category_name} : row));
+
+  const visibleIds = new Set(
+    rows.filter(row => {
+      if (filter !== 'all' && row.type !== filter) return false;
+      if (search && !`${row.merchant} ${row.description} ${row.category_name}`.toLowerCase().includes(search.toLowerCase())) return false;
+      return true;
+    }).map(row => row._id)
+  );
+  const visible      = rows.filter(row => visibleIds.has(row._id));
+  const activeCount  = rows.filter(row => !row.skip).length;
+  const incomeTotal  = rows.filter(row => !row.skip && row.type==='income').reduce((s,row)=>s+row.amount,0);
+  const expenseTotal = rows.filter(row => !row.skip && row.type==='expense').reduce((s,row)=>s+row.amount,0);
+
+  const selectedWallet = wallets.find(w => w.id === walletId);
+
+  const reset = () => {
+    setStep(1); setPreview(null); setRows([]); setWalletId(null);
+    setResult(null); setFilter('all'); setSearch('');
+    previewMut.reset(); confirmMut.reset();
+  };
+
+  return (
+    <div style={{ display:'flex', flexDirection:'column', height:'100%' }}>
+      <Topbar title={t('import_title')} subtitle={t('import_sub')}/>
+      <div style={{ padding:'24px 32px 40px', flex:1, overflow:'auto' }}>
+
+        {/* ── Step indicator ── */}
+        <div style={{ display:'flex', alignItems:'center', marginBottom:32, maxWidth:600 }}>
+          {STEPS.map((label, i) => {
+            const s = i + 1;
+            const done   = step > s;
+            const active = step === s;
+            return (
+              <div key={s} style={{ display:'flex', alignItems:'center', flex: i < STEPS.length-1 ? 1 : 'none' }}>
+                <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:5 }}>
+                  <div style={{
+                    width:34, height:34, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center',
+                    fontWeight:700, fontSize:13, transition:'all .3s',
+                    background: done ? '#37D67A' : active ? '#6C63FF' : 'var(--surface3)',
+                    color: done||active ? '#fff' : 'var(--text3)',
+                    boxShadow: active ? '0 4px 14px rgba(108,99,255,.45)' : 'none',
+                  }}>
+                    {done ? <Check size={15}/> : s}
+                  </div>
+                  <span style={{ fontSize:10.5, fontWeight:600, color: active?'var(--accent)':'var(--text3)', whiteSpace:'nowrap' }}>{label}</span>
+                </div>
+                {i < STEPS.length-1 && (
+                  <div style={{ flex:1, height:2, margin:'0 6px 18px', transition:'background .3s',
+                    background: done ? '#37D67A' : 'var(--surface3)' }}/>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ══════════════════════════════════════════
+            STEP 1 — Upload
+        ══════════════════════════════════════════ */}
+        {step === 1 && (
+          <div style={{ maxWidth:560 }}>
+            <div
+              onDragOver={e=>{e.preventDefault();setDragOver(true)}}
+              onDragLeave={()=>setDragOver(false)}
+              onDrop={handleDrop}
+              onClick={() => fileRef.current?.click()}
+              style={{
+                border:`2px dashed ${dragOver?'#6C63FF':'var(--border)'}`,
+                borderRadius:24, padding:'56px 32px', textAlign:'center', cursor:'pointer',
+                background: dragOver?'rgba(108,99,255,.06)':'var(--surface)',
+                transition:'all .2s', marginBottom:20,
+              }}>
+              <input ref={fileRef} type="file" accept=".txt,.csv" style={{display:'none'}}
+                onChange={e => handleFile(e.target.files[0])}/>
+              <div style={{ width:72, height:72, borderRadius:22, background:'rgba(108,99,255,.1)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 18px' }}>
+                <Upload size={32} color="#6C63FF"/>
+              </div>
+              <div style={{ fontSize:18, fontWeight:800, color:'var(--text)', marginBottom:8 }}>
+                {dragOver ? 'Drop it here!' : t('import_drop')}
+              </div>
+              <div style={{ fontSize:13, color:'var(--text3)', marginBottom:20 }}>
+                Drag & drop or click to browse · HDFC .txt / .csv
+              </div>
+              <div style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'10px 22px', borderRadius:20,
+                background:'linear-gradient(135deg,#6C63FF,#5B8CFF)', color:'#fff', fontWeight:700, fontSize:13,
+                boxShadow:'0 4px 14px rgba(108,99,255,.35)' }}>
+                <FileText size={15}/> {t('import_choose')}
+              </div>
+            </div>
+
+            {previewMut.isPending && (
+              <div style={{ display:'flex', alignItems:'center', gap:10, color:'var(--text3)', fontSize:13, padding:'12px 0' }}>
+                <div style={{ width:18, height:18, border:'2px solid #6C63FF', borderTopColor:'transparent', borderRadius:'50%', animation:'spin 1s linear infinite' }}/>
+                {t('import_parsing')}
+              </div>
+            )}
+            {previewMut.isError && (
+              <div style={{ display:'flex', alignItems:'center', gap:8, color:'#FF5B5B', fontSize:13, padding:'12px 16px', background:'rgba(255,91,91,.08)', borderRadius:12, border:'1px solid rgba(255,91,91,.2)', marginBottom:16 }}>
+                <AlertCircle size={16}/> {previewMut.error?.response?.data?.message || 'Failed to parse file. Make sure it is a valid HDFC statement.'}
+              </div>
+            )}
+
+            <div style={{ background:'var(--surface)', borderRadius:16, padding:'16px 20px', border:'1px solid var(--border-light)' }}>
+              <div style={{ fontSize:11.5, fontWeight:700, color:'var(--text3)', marginBottom:10, textTransform:'uppercase', letterSpacing:'.06em' }}>Supported Formats</div>
+              <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                {['✅ HDFC Bank .txt','✅ HDFC Bank .csv','🔜 ICICI Bank','🔜 SBI','🔜 Axis Bank'].map(b => (
+                  <span key={b} style={{ padding:'5px 12px', borderRadius:20,
+                    background: b.startsWith('✅') ? 'rgba(55,214,122,.1)' : 'var(--surface2)',
+                    color: b.startsWith('✅') ? '#37D67A' : 'var(--text3)',
+                    fontSize:12, fontWeight:600 }}>{b}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════
+            STEP 2 — Select Account
+        ══════════════════════════════════════════ */}
+        {step === 2 && (
+          <div style={{ maxWidth:620 }}>
+            {/* Summary of parsed file */}
+            <div style={{ background:'rgba(108,99,255,.07)', border:'1px solid rgba(108,99,255,.2)', borderRadius:16, padding:'14px 18px', marginBottom:24, display:'flex', alignItems:'center', gap:12 }}>
+              <div style={{ width:38, height:38, borderRadius:10, background:'rgba(108,99,255,.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                <FileText size={18} color="#6C63FF"/>
+              </div>
+              <div>
+                <div style={{ fontWeight:700, fontSize:13, color:'var(--text)' }}>{preview?.filename || 'Statement'}</div>
+                <div style={{ fontSize:12, color:'var(--text3)', marginTop:2 }}>
+                  {preview?.total} transactions found · {fmt(preview?.total_credit||0)} credits · {fmt(preview?.total_debit||0)} debits
+                </div>
+              </div>
+            </div>
+
+            <div style={{ fontSize:15, fontWeight:800, color:'var(--text)', marginBottom:6 }}>
+              {t('import_which_acc')}
+            </div>
+            <div style={{ fontSize:13, color:'var(--text3)', marginBottom:20 }}>
+              Transactions will be linked to the selected account. You can also skip this.
+            </div>
+
+            {/* Account cards grid */}
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(180px,1fr))', gap:12, marginBottom:20 }}>
+
+              {/* "No account" option */}
+              <div onClick={() => setWalletId(null)}
+                style={{
+                  borderRadius:18, padding:'18px 16px', cursor:'pointer', transition:'all .2s',
+                  border: walletId===null ? '2px solid #6C63FF' : '2px solid var(--border)',
+                  background: walletId===null ? 'rgba(108,99,255,.08)' : 'var(--surface)',
+                  boxShadow: walletId===null ? '0 4px 16px rgba(108,99,255,.2)' : 'none',
+                  position:'relative',
+                }}>
+                {walletId===null && (
+                  <div style={{ position:'absolute', top:10, right:10, width:20, height:20, borderRadius:'50%', background:'#6C63FF', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                    <Check size={12} color="#fff"/>
+                  </div>
+                )}
+                <div style={{ fontSize:28, marginBottom:8 }}>🚫</div>
+                <div style={{ fontSize:13, fontWeight:700, color:'var(--text)' }}>{t('import_no_acc')}</div>
+                <div style={{ fontSize:11, color:'var(--text3)', marginTop:3 }}>Import without linking</div>
+              </div>
+
+              {/* Real wallet cards */}
+              {bankWallets.map((w, i) => {
+                const selected = walletId === w.id;
+                const bal = parseFloat(w.balance || 0);
+                return (
+                  <div key={w.id} onClick={() => setWalletId(w.id)}
+                    style={{
+                      borderRadius:18, padding:'18px 16px', cursor:'pointer', transition:'all .2s',
+                      border: selected ? '2px solid #6C63FF' : '2px solid transparent',
+                      background: selected
+                        ? 'rgba(108,99,255,.08)'
+                        : WALLET_GRADIENTS[i % WALLET_GRADIENTS.length],
+                      boxShadow: selected ? '0 4px 20px rgba(108,99,255,.25)' : '0 4px 16px rgba(0,0,0,.12)',
+                      position:'relative', color: selected ? 'var(--text)' : '#fff',
+                      transform: selected ? 'translateY(-3px)' : 'none',
+                    }}>
+                    {selected && (
+                      <div style={{ position:'absolute', top:10, right:10, width:22, height:22, borderRadius:'50%', background:'#6C63FF', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 2px 8px rgba(108,99,255,.5)' }}>
+                        <Check size={13} color="#fff"/>
+                      </div>
+                    )}
+                    {/* Decorative circle */}
+                    {!selected && <div style={{ position:'absolute', top:-20, right:-20, width:80, height:80, borderRadius:'50%', background:'rgba(255,255,255,.07)' }}/>}
+
+                    <div style={{ fontSize:26, marginBottom:8 }}>{WALLET_ICONS[w.type]||'👛'}</div>
+                    <div style={{ fontSize:13, fontWeight:800, marginBottom:2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{w.name}</div>
+                    <div style={{ fontSize:11, opacity: selected ? 0.6 : 0.75, textTransform:'capitalize', marginBottom:8 }}>{w.type}</div>
+                    <div style={{ fontSize:14, fontWeight:900, fontFamily:'Space Grotesk, Inter, sans-serif' }}>
+                      {fmt(Math.abs(bal),{noDecimals:true})}
+                    </div>
+                    {w.last_four && (
+                      <div style={{ fontSize:10, opacity:0.65, marginTop:4, letterSpacing:2 }}>•••• {w.last_four}</div>
+                    )}
+                  </div>
+                );
+              })}
+
+              {bankWallets.length === 0 && (
+                <div style={{ gridColumn:'1/-1', padding:'20px', textAlign:'center', color:'var(--text3)', fontSize:13, background:'var(--surface2)', borderRadius:14 }}>
+                  No accounts yet. You can still import without linking.
+                </div>
+              )}
+            </div>
+
+            {/* Selected summary */}
+            <div style={{ background:'var(--surface)', borderRadius:14, padding:'13px 18px', border:'1px solid var(--border-light)', marginBottom:24, display:'flex', alignItems:'center', gap:10 }}>
+              <div style={{ fontSize:20 }}>{selectedWallet ? WALLET_ICONS[selectedWallet.type]||'👛' : '🚫'}</div>
+              <div style={{ flex:1 }}>
+                <span style={{ fontSize:13, color:'var(--text3)' }}>Importing to: </span>
+                <span style={{ fontSize:13, fontWeight:700, color:'var(--text)' }}>
+                  {selectedWallet ? selectedWallet.name : 'No account (unlinked)'}
+                </span>
+              </div>
+            </div>
+
+            <div style={{ display:'flex', gap:12, justifyContent:'flex-end' }}>
+              <button onClick={reset} style={{ padding:'10px 20px', borderRadius:12, border:'1px solid var(--border)', background:'var(--surface)', color:'var(--text)', fontWeight:600, fontSize:13, cursor:'pointer' }}>
+                {t('common_back')}
+              </button>
+              <button onClick={() => setStep(3)}
+                style={{ padding:'11px 28px', borderRadius:12, border:'none', background:'linear-gradient(135deg,#6C63FF,#5B8CFF)', color:'#fff', fontWeight:700, fontSize:14, cursor:'pointer', boxShadow:'0 4px 14px rgba(108,99,255,.35)' }}>
+                {t('common_continue')}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════
+            STEP 3 — Review & Map
+        ══════════════════════════════════════════ */}
+        {step === 3 && preview && (
+          <div>
+            {/* Account badge */}
+            <div style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'7px 14px', borderRadius:20, background:'rgba(108,99,255,.1)', border:'1px solid rgba(108,99,255,.25)', marginBottom:16, cursor:'pointer' }}
+              onClick={() => setStep(2)}>
+              <span style={{ fontSize:16 }}>{selectedWallet ? WALLET_ICONS[selectedWallet.type]||'👛' : '🚫'}</span>
+              <span style={{ fontSize:12, fontWeight:700, color:'#6C63FF' }}>{selectedWallet ? selectedWallet.name : 'No account'}</span>
+              <span style={{ fontSize:11, color:'var(--text3)' }}>· tap to change</span>
+            </div>
+
+            {/* Summary cards */}
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))', gap:12, marginBottom:18 }}>
+              {[
+                { label:'Total Found',      value:preview.total,            color:'var(--text)',  mono:false },
+                { label:'To Import',        value:activeCount,              color:'#6C63FF',      mono:false },
+                { label:'Credits',          value: fmt(incomeTotal),         color:'#37D67A',      mono:true  },
+                { label:'Debits',           value: fmt(expenseTotal),        color:'#FF5B5B',      mono:true  },
+              ].map(({label,value,color,mono}) => (
+                <div key={label} style={{ background:'var(--surface)', borderRadius:14, padding:'12px 16px', border:'1px solid var(--border-light)' }}>
+                  <div style={{ fontSize:10.5, color:'var(--text3)', fontWeight:600, marginBottom:3 }}>{label}</div>
+                  <div className={mono?'mono':''} style={{ fontSize:17, fontWeight:800, color }}>{value}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Filters */}
+            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12, flexWrap:'wrap' }}>
+              <div style={{ display:'flex', gap:3, background:'var(--surface2)', borderRadius:10, padding:3 }}>
+                {['all','income','expense'].map(f => (
+                  <button key={f} onClick={() => setFilter(f)}
+                    style={{ padding:'6px 13px', borderRadius:8, border:'none', cursor:'pointer', fontSize:12, fontWeight:700, transition:'all .18s',
+                      background: filter===f ? 'var(--surface)' : 'transparent',
+                      color: filter===f ? (f==='income'?'#37D67A':f==='expense'?'#FF5B5B':'var(--accent)') : 'var(--text3)',
+                      boxShadow: filter===f ? '0 2px 6px rgba(0,0,0,.08)' : 'none' }}>
+                    {f[0].toUpperCase()+f.slice(1)}
+                  </button>
+                ))}
+              </div>
+              <input placeholder="Search merchant…" value={search} onChange={e=>setSearch(e.target.value)}
+                style={{ flex:1, minWidth:160, padding:'7px 13px', borderRadius:10, border:'1px solid var(--border)', background:'var(--surface)', color:'var(--text)', fontSize:13, outline:'none' }}/>
+              <button onClick={unskipAll}   style={{ padding:'7px 13px', borderRadius:10, border:'1px solid var(--border)', background:'var(--surface)', color:'var(--text)', fontSize:12, fontWeight:600, cursor:'pointer' }}>Select All</button>
+              <button onClick={skipVisible} style={{ padding:'7px 13px', borderRadius:10, border:'1px solid rgba(255,91,91,.3)', background:'rgba(255,91,91,.07)', color:'#FF5B5B', fontSize:12, fontWeight:600, cursor:'pointer' }}>Skip Visible</button>
+            </div>
+
+            {/* Table */}
+            <div style={{ background:'var(--surface)', borderRadius:18, border:'1px solid var(--border-light)', overflow:'hidden', marginBottom:18 }}>
+              <div style={{ overflowX:'auto' }}>
+                <table style={{ width:'100%', borderCollapse:'collapse', minWidth:680 }}>
+                  <thead>
+                    <tr style={{ background:'var(--surface2)', borderBottom:'1px solid var(--border-light)' }}>
+                      {['','Date','Merchant','Amount','Category','Type',''].map((h,i) => (
+                        <th key={i} style={{ padding:'10px 13px', textAlign:i===3?'right':'left', fontSize:11, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.06em', whiteSpace:'nowrap' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visible.length === 0 && (
+                      <tr><td colSpan={7} style={{ padding:'32px', textAlign:'center', color:'var(--text3)', fontSize:13 }}>No transactions match filters</td></tr>
+                    )}
+                    {visible.map(tx => (
+                      <tr key={tx._id} style={{ borderBottom:'1px solid var(--border-light)', opacity:tx.skip?.38:1, transition:'opacity .15s', background:tx.skip?'var(--surface2)':'transparent' }}>
+                        {/* Checkbox */}
+                        <td style={{ padding:'9px 8px 9px 13px', width:30 }}>
+                          <div onClick={() => toggleSkip(tx._id)} style={{ width:18, height:18, borderRadius:5, cursor:'pointer',
+                            border: tx.skip?'1.5px solid var(--border)':'1.5px solid #6C63FF',
+                            background: tx.skip?'transparent':'#6C63FF',
+                            display:'flex', alignItems:'center', justifyContent:'center' }}>
+                            {!tx.skip && <Check size={10} color="#fff"/>}
+                          </div>
+                        </td>
+                        {/* Date */}
+                        <td style={{ padding:'9px 13px', fontSize:12, color:'var(--text3)', whiteSpace:'nowrap' }}>
+                          {new Date(tx.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short'})}
+                        </td>
+                        {/* Merchant */}
+                        <td style={{ padding:'9px 13px', maxWidth:200 }}>
+                          <div style={{ fontSize:13, fontWeight:600, color:'var(--text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{tx.merchant}</div>
+                          <div style={{ fontSize:10.5, color:'var(--text3)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:190 }}>{tx.narration.substring(0,55)}</div>
+                        </td>
+                        {/* Amount */}
+                        <td style={{ padding:'9px 13px', textAlign:'right', whiteSpace:'nowrap' }}>
+                          <span className="mono" style={{ fontSize:13, fontWeight:800, color:TYPE_COLOR[tx.type] }}>
+                            {tx.type==='income'?'+':'-'}{fmt(tx.amount)}
+                          </span>
+                        </td>
+                        {/* Category */}
+                        <td style={{ padding:'7px 13px', minWidth:130 }}>
+                          <select value={tx.category_id||''} onChange={e => {
+                            const cat = categories.find(c=>c.id===e.target.value);
+                            updateCategory(tx._id, e.target.value||null, cat?.name||tx.category_name);
+                          }} style={{ padding:'4px 8px', borderRadius:8, border:'1px solid var(--border)', background:'var(--surface2)', color:'var(--text)', fontSize:12, cursor:'pointer', maxWidth:145 }}>
+                            <option value="">— {tx.category_name} —</option>
+                            {categories.map(c => <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>)}
+                          </select>
+                        </td>
+                        {/* Type */}
+                        <td style={{ padding:'7px 13px' }}>
+                          <span style={{ padding:'3px 10px', borderRadius:20, fontSize:11, fontWeight:700, background:TYPE_BG[tx.type], color:TYPE_COLOR[tx.type] }}>
+                            {tx.type}
+                          </span>
+                        </td>
+                        {/* Remove */}
+                        <td style={{ padding:'7px 10px', width:30 }}>
+                          <button onClick={() => toggleSkip(tx._id)} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text3)', padding:3, borderRadius:5, lineHeight:0 }}>
+                            <X size={13}/>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Action buttons */}
+            <div style={{ display:'flex', gap:12, alignItems:'center', justifyContent:'flex-end' }}>
+              <button onClick={() => setStep(2)} style={{ padding:'10px 20px', borderRadius:12, border:'1px solid var(--border)', background:'var(--surface)', color:'var(--text)', fontWeight:600, fontSize:13, cursor:'pointer' }}>
+                {t('common_back')}
+              </button>
+              <button onClick={() => confirmMut.mutate()} disabled={confirmMut.isPending || activeCount===0}
+                style={{ padding:'11px 28px', borderRadius:12, border:'none', fontWeight:700, fontSize:14, cursor:activeCount===0?'not-allowed':'pointer', transition:'all .2s',
+                  background: activeCount===0 ? 'var(--surface3)' : 'linear-gradient(135deg,#6C63FF,#5B8CFF)',
+                  color: activeCount===0 ? 'var(--text3)' : '#fff',
+                  boxShadow: activeCount>0 ? '0 4px 14px rgba(108,99,255,.35)' : 'none' }}>
+                {confirmMut.isPending ? `⏳ ${t('common_loading')}` : `${t('import_import_btn')} (${activeCount})`}
+              </button>
+            </div>
+            {confirmMut.isError && (
+              <div style={{ marginTop:10, color:'#FF5B5B', fontSize:13 }}>⚠️ {confirmMut.error?.response?.data?.message||'Import failed. Try again.'}</div>
+            )}
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════
+            STEP 4 — Done
+        ══════════════════════════════════════════ */}
+        {step === 4 && result && (
+          <div style={{ maxWidth:460, textAlign:'center', margin:'0 auto', padding:'48px 0' }}>
+            <div style={{ width:84, height:84, borderRadius:'50%', background:'rgba(55,214,122,.12)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 22px', boxShadow:'0 0 0 14px rgba(55,214,122,.06)' }}>
+              <CheckCircle size={42} color="#37D67A"/>
+            </div>
+            <div style={{ fontSize:24, fontWeight:900, color:'var(--text)', marginBottom:6 }}>{t('import_done')}</div>
+            {selectedWallet && (
+              <div style={{ fontSize:13, color:'var(--text3)', marginBottom:6 }}>
+                Linked to <strong style={{color:'var(--text)'}}>{selectedWallet.name}</strong>
+              </div>
+            )}
+            <div style={{ fontSize:13, color:'var(--text3)', marginBottom:28 }}>Your transactions have been added to Tracksy</div>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:12, marginBottom:32 }}>
+              {[
+                { label:'Imported', value:result.imported, color:'#37D67A' },
+                { label:'Skipped',  value:result.skipped,  color:'#FFB84D' },
+                { label:'Total',    value:result.total,    color:'var(--text)' },
+              ].map(({label,value,color}) => (
+                <div key={label} style={{ background:'var(--surface)', borderRadius:16, padding:'16px', border:'1px solid var(--border-light)' }}>
+                  <div style={{ fontSize:26, fontWeight:900, color, marginBottom:4 }}>{value}</div>
+                  <div style={{ fontSize:12, color:'var(--text3)', fontWeight:600 }}>{label}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ display:'flex', gap:12, justifyContent:'center' }}>
+              <button onClick={reset} style={{ padding:'11px 24px', borderRadius:12, border:'1px solid var(--border)', background:'var(--surface)', color:'var(--text)', fontWeight:700, fontSize:13, cursor:'pointer' }}>
+                Import Another
+              </button>
+              <a href="/transactions" style={{ padding:'11px 24px', borderRadius:12, background:'linear-gradient(135deg,#6C63FF,#5B8CFF)', color:'#fff', fontWeight:700, fontSize:13, textDecoration:'none', boxShadow:'0 4px 14px rgba(108,99,255,.35)' }}>
+                View Transactions →
+              </a>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <style>{`@keyframes spin { to { transform:rotate(360deg); } }`}</style>
+    </div>
+  );
+}

@@ -1,0 +1,34 @@
+{
+  "name": "Tracksy – Personal Finance",
+  "short_name": "Tracksy",
+  "description": "Your personal finance management dashboard",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f0f1a",
+  "theme_color": "#6C63FF",
+  "orientation": "portrait-primary",
+  "categories": ["finance", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Add Transaction",
+      "short_name": "Add",
+      "description": "Log a new transaction",
+      "url": "/transactions"
+    }
+  ]
+}
