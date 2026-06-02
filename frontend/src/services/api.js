@@ -116,8 +116,9 @@ export const dataAPI = {
 
 // Bank statement import
 export const importAPI = {
-  preview: (content, filename) => api.post('/import/preview', { content, filename }),
-  confirm: (transactions, wallet_id) => api.post('/import/confirm', { transactions, wallet_id }),
+  preview:    (content, filename, source) => api.post('/import/preview',   { content, filename, source }),
+  reconcile:  (transactions)              => api.post('/import/reconcile', { transactions }),
+  confirm:    (transactions, wallet_id)   => api.post('/import/confirm',   { transactions, wallet_id }),
 };
 
 export default api;

@@ -98,9 +98,10 @@ router.post('/recurring/process', auth, recurringCtrl.process);
 router.get('/data/export', auth, res0.exportData);
 router.post('/data/reset', auth, res0.resetData);
 
-// Bank statement import
-router.post('/import/preview', auth, importCtrl.previewStatement);
-router.post('/import/confirm', auth, importCtrl.confirmImport);
+// Bank statement import + reconciliation
+router.post('/import/preview',    auth, importCtrl.previewStatement);
+router.post('/import/reconcile',  auth, importCtrl.reconcileStatement);
+router.post('/import/confirm',    auth, importCtrl.confirmImport);
 
 // Categories
 router.get('/categories', auth, res0.getAllCategories);

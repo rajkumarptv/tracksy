@@ -1,231 +1,604 @@
 const { query } = require('../db');
+const pdfParse  = require('pdf-parse');
 
-// ─── Smart narration cleaner ────────────────────────────────────────────────
+/* ══════════════════════════════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════════════════════════════ */
+function toTitleCase(str) {
+  return (str || '').toLowerCase().replace(/\b\w/g, c => c.toUpperCase()).trim();
+}
+
+function parseAmount(raw) {
+  return parseFloat((raw || '0').toString().replace(/[₹,\s]/g, '').replace(/[()]/g, '')) || 0;
+}
+
+function normalizeDate(raw) {
+  if (!raw) return null;
+  const s = raw.trim();
+
+  // DD/MM/YY or DD/MM/YYYY
+  let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+  if (m) {
+    const d = m[1].padStart(2,'0'), mo = m[2].padStart(2,'0');
+    const y = m[3].length === 2 ? '20'+m[3] : m[3];
+    return `${y}-${mo}-${d}`;
+  }
+
+  // "01 May 2026" or "01 May, 2026"
+  m = s.match(/(\d{1,2})\s+([A-Za-z]+)[,\s]+(\d{4})/);
+  if (m) {
+    const months = {jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
+    const mo = months[m[2].toLowerCase().slice(0,3)];
+    return mo ? `${m[3]}-${mo}-${m[1].padStart(2,'0')}` : null;
+  }
+
+  // "May 01, 2026" or "May 1 2026"
+  m = s.match(/([A-Za-z]+)\s+(\d{1,2})[,\s]+(\d{4})/);
+  if (m) {
+    const months = {jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
+    const mo = months[m[1].toLowerCase().slice(0,3)];
+    return mo ? `${m[3]}-${mo}-${m[2].padStart(2,'0')}` : null;
+  }
+
+  // ISO YYYY-MM-DD
+  m = s.match(/^(\d{4})[\/\-](\d{2})[\/\-](\d{2})/);
+  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+
+  return null;
+}
+
+/* ── Smart narration cleaner ── */
 function parseNarration(raw) {
-  const n = raw.trim();
-
-  // UPI: "UPI-MERCHANT NAME-upiid@bank-IFSC-refno-DESCRIPTION"
+  const n = (raw || '').trim();
   if (n.startsWith('UPI-')) {
     const parts = n.slice(4).split('-');
-    // merchant is first part (before any @ or digits-only part)
-    let merchant = parts[0] || '';
-    // strip leading "MR ", "MRS ", "MS " honorifics
-    merchant = merchant.replace(/^(MR\.?\s+|MRS\.?\s+|MS\.?\s+)/i, '').trim();
-    // grab optional description at the end (last part if it's words, not a ref number)
-    const lastPart = parts[parts.length - 1] || '';
-    const hasDesc = lastPart && !/^\d{6,}$/.test(lastPart) && !/^UPI$/.test(lastPart) &&
-                    !/^SENT USING PAYTM/i.test(lastPart) && !/^NA$/i.test(lastPart) &&
-                    !/^PAYMENT FROM PHONE/i.test(lastPart);
-    const desc = hasDesc ? lastPart : '';
-    return { merchant: toTitleCase(merchant), description: toTitleCase(desc) };
+    let merchant = (parts[0] || '').replace(/^(MR\.?\s+|MRS\.?\s+|MS\.?\s+)/i,'').trim();
+    const lastPart = parts[parts.length-1] || '';
+    const hasDesc = lastPart && !/^\d{6,}$/.test(lastPart) && !/^(UPI|NA|SENT USING PAYTM|PAYMENT FROM PHONE)$/i.test(lastPart);
+    return { merchant: toTitleCase(merchant), description: hasDesc ? toTitleCase(lastPart) : '' };
   }
-
-  // ACH Debit (EMI/loan)
   if (/^ACH D[- ]/.test(n)) {
     const match = n.match(/ACH D[- ]\s*([A-Z0-9& ]+?)[-\s]/i);
-    const merchant = match ? match[1].trim() : 'ACH Debit';
-    return { merchant: toTitleCase(merchant), description: 'EMI / Loan Payment' };
+    return { merchant: toTitleCase(match?.[1]?.trim() || 'ACH Debit'), description: 'EMI / Loan Payment' };
   }
-
-  // ACH Debit return
-  if (/^ACH DEBIT RETURN/i.test(n)) {
-    return { merchant: 'ACH Debit Return', description: 'Bank Charges' };
-  }
-
-  // IMPS
   if (/^IMPS-/.test(n)) {
     const parts = n.split('-');
-    const merchant = parts[2] || 'IMPS Transfer';
-    return { merchant: toTitleCase(merchant.trim()), description: 'IMPS Transfer' };
+    return { merchant: toTitleCase((parts[2]||'IMPS Transfer').trim()), description: 'IMPS Transfer' };
   }
-
-  // NEFT
   if (/^NEFT (CR|DR)-/.test(n)) {
     const parts = n.split('-');
-    const merchant = parts[2] || 'NEFT Transfer';
-    return { merchant: toTitleCase(merchant.trim()), description: 'NEFT Transfer' };
+    return { merchant: toTitleCase((parts[2]||'NEFT Transfer').trim()), description: 'NEFT Transfer' };
   }
-
-  // IB BILLPAY (credit card bill)
-  if (/^IB BILLPAY/i.test(n)) {
-    return { merchant: 'Credit Card Bill', description: 'Bill Payment' };
-  }
-
-  return { merchant: toTitleCase(n.substring(0, 40)), description: '' };
+  if (/^IB BILLPAY/i.test(n)) return { merchant: 'Credit Card Bill', description: 'Bill Payment' };
+  return { merchant: toTitleCase(n.substring(0,40)), description: '' };
 }
 
-function toTitleCase(str) {
-  return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase()).trim();
-}
-
-// ─── Smart category detector ────────────────────────────────────────────────
+/* ── Category auto-detector ── */
 function detectCategory(narration, merchant, isDebit) {
-  const text = (narration + ' ' + merchant).toLowerCase();
-
+  const text = `${narration} ${merchant}`.toLowerCase();
   if (!isDebit) {
-    if (/salary|payroll|stipend/i.test(text)) return 'Salary';
-    if (/gim info|freelance|invoice|payment received/i.test(text)) return 'Freelance';
-    if (/neft|imps|transfer received|received/i.test(text)) return 'Transfer';
-    if (/refund|return|cashback/i.test(text)) return 'Refund';
-    if (/interest|dividend/i.test(text)) return 'Investment';
-    return 'Income';
+    if (/salary|payroll|stipend/i.test(text))     return 'Salary';
+    if (/freelance|invoice|payment received/i.test(text)) return 'Freelance';
+    if (/refund|return|cashback/i.test(text))      return 'Other Income';
+    if (/interest|dividend/i.test(text))           return 'Investment';
+    return 'Other Income';
   }
-
-  // Loans / EMI
-  if (/ach d|emi|loan|kisestu|l&t finance|idfc|moneyview|smfg|bajaj|hdfc loan|piramal|tata capital|fullerton|shriram/i.test(text)) return 'Loan EMI';
-
-  // Credit Card
-  if (/credit card|creditcard|cred\.club|cred club|billpay|rbl bank|amex|sbi card/i.test(text)) return 'Credit Card';
-
-  // Fuel / Transport
-  if (/fuel|petrol|balaji fuels|om service station|indian oil|shell|hp petrol|bpcl|hpcl|cng/i.test(text)) return 'Fuel';
-  if (/redbus|ola|uber|rapido|metro|railway|irctc|bus|train|flight|indigo|spicejet|makemytrip|goibibo|taxi/i.test(text)) return 'Transport';
-
-  // Food & Dining
-  if (/bakery|restaurant|hotel|cafe|coffee|tea stall|foods|dinetech|canteen|swiggy|zomato|domino|pizza|biryani|mess|tiffin|snacks|juice|milk|dairy/i.test(text)) return 'Food & Dining';
-
-  // Groceries
-  if (/super market|supermarket|grocery|ranjitham|sabarivel|vignesh agencies|kirana|provision|store/i.test(text)) return 'Groceries';
-
-  // Utilities / Bills
-  if (/airtel|jio|vi |vodafone|bsnl|internet|broadband|electricity|eb |tneb|bescom|water bill|gas bill|lpg|cylinder/i.test(text)) return 'Bills & Utilities';
-
-  // Shopping / Online
-  if (/flipkart|amazon|meesho|myntra|ajio|nykaa|reliance|d-mart|big bazaar|shoppers/i.test(text)) return 'Shopping';
-
-  // Gold / Investment
-  if (/caratlane|tanishq|gold|sovereign|mutual fund|sip|zerodha|groww|coin|sensex|nifty/i.test(text)) return 'Investment';
-
-  // Insurance
-  if (/insurance|hdfc life|lic|sbi life|bajaj allianz|star health|mediclaim|premium/i.test(text)) return 'Insurance';
-
-  // Medical
-  if (/hospital|clinic|pharmacy|medical|doctor|eye care|dental|health|apollo|fortis/i.test(text)) return 'Medical';
-
-  // Education
-  if (/school|college|university|tuition|fees|course|coaching/i.test(text)) return 'Education';
-
-  // Bank charges
-  if (/charges|penalty|fine|late fee|processing fee|gst|tax/i.test(text)) return 'Bank Charges';
-
-  // Transfer / Personal
-  if (/transfer|neft|imps/i.test(text)) return 'Transfer';
-
-  return 'Others';
+  if (/ach d|emi|loan|bajaj|hdfc loan|tata capital|fullerton/i.test(text)) return 'Bills & Utilities';
+  if (/credit card|cred\.club|billpay/i.test(text)) return 'Bills & Utilities';
+  if (/fuel|petrol|indian oil|shell|bpcl|hpcl|cng/i.test(text)) return 'Transport';
+  if (/redbus|ola|uber|rapido|metro|irctc|taxi/i.test(text)) return 'Transport';
+  if (/swiggy|zomato|domino|pizza|restaurant|cafe|food|mess|biryani/i.test(text)) return 'Food & Dining';
+  if (/grocery|supermarket|kirana|provision|dmart|reliance fresh/i.test(text)) return 'Food & Dining';
+  if (/airtel|jio|vi |vodafone|electricity|tneb|bescom|water bill|lpg/i.test(text)) return 'Bills & Utilities';
+  if (/flipkart|amazon|meesho|myntra|ajio|nykaa|shoppers/i.test(text)) return 'Shopping';
+  if (/hospital|clinic|pharmacy|medical|doctor|health|apollo/i.test(text)) return 'Health';
+  if (/school|college|tuition|fees|course|coaching/i.test(text)) return 'Education';
+  return 'Shopping';
 }
 
-// ─── Parse HDFC statement text ──────────────────────────────────────────────
+/* ══════════════════════════════════════════════════════════════════
+   PARSERS
+══════════════════════════════════════════════════════════════════ */
+
+/* ── HDFC Bank CSV ── */
 function parseHDFCStatement(text) {
-  const lines = text.split('\n').filter(l => l.trim());
   const transactions = [];
-
-  for (const line of lines) {
-    // skip header line
-    if (/Date\s*,Narration/i.test(line)) continue;
-
+  for (const line of text.split('\n')) {
+    if (/Date\s*,Narration/i.test(line) || !line.trim()) continue;
     const cols = line.split(',');
     if (cols.length < 6) continue;
-
-    const dateRaw    = (cols[0] || '').trim();
-    const narration  = (cols[1] || '').trim();
-    const debitRaw   = (cols[3] || '').trim().replace(/\s/g, '');
-    const creditRaw  = (cols[4] || '').trim().replace(/\s/g, '');
-    const refNumber  = (cols[5] || '').trim();
-    const closingBal = parseFloat((cols[6] || '0').trim().replace(/\s/g, '')) || 0;
-
-    if (!dateRaw || !narration) continue;
-
-    // Parse date: DD/MM/YY → YYYY-MM-DD
-    const dateParts = dateRaw.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
-    if (!dateParts) continue;
-    const day   = dateParts[1].padStart(2, '0');
-    const month = dateParts[2].padStart(2, '0');
-    const yr    = dateParts[3].length === 2 ? '20' + dateParts[3] : dateParts[3];
-    const date  = `${yr}-${month}-${day}`;
-
-    const debit  = parseFloat(debitRaw)  || 0;
-    const credit = parseFloat(creditRaw) || 0;
-
-    // skip zero-amount rows
-    if (debit === 0 && credit === 0) continue;
-
-    const isDebit    = debit > 0;
-    const amount     = isDebit ? debit : credit;
-    const type       = isDebit ? 'expense' : 'income';
-
+    const date   = normalizeDate(cols[0]?.trim());
+    const narration = (cols[1]||'').trim();
+    const debit  = parseAmount(cols[3]);
+    const credit = parseAmount(cols[4]);
+    const ref    = (cols[5]||'').trim();
+    if (!date || !narration || (debit===0 && credit===0)) continue;
+    const isDebit = debit > 0;
     const { merchant, description } = parseNarration(narration);
-    const category = detectCategory(narration, merchant, isDebit);
+    transactions.push({
+      date, narration: narration.substring(0,120), merchant,
+      description: description || merchant,
+      amount: isDebit ? debit : credit,
+      type: isDebit ? 'expense' : 'income',
+      category: detectCategory(narration, merchant, isDebit),
+      ref_number: ref, source: 'hdfc',
+    });
+  }
+  return transactions;
+}
+
+/* ── Paytm Wallet / Passbook CSV ──
+   Columns: S.No., Date, Remarks, Type, Amount, Wallet Balance
+   OR: Date,Description,Credit,Debit,Balance
+*/
+function parsePaytmStatement(text) {
+  const transactions = [];
+  const lines = text.split('\n').filter(l => l.trim());
+
+  // Detect format by header
+  const header = lines[0]?.toLowerCase() || '';
+  const isFormat2 = header.includes('credit') && header.includes('debit');
+
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i];
+    // Simple CSV split respecting quotes
+    const cols = line.match(/(".*?"|[^,]+)(?=,|$)/g)?.map(c => c.replace(/^"|"$/g,'').trim()) || line.split(',').map(c=>c.trim());
+    if (cols.length < 3) continue;
+
+    let date, description, amount, type;
+
+    if (isFormat2) {
+      // Date, Description, Credit, Debit, Balance
+      date        = normalizeDate(cols[0]);
+      description = cols[1] || '';
+      const credit = parseAmount(cols[2]);
+      const debit  = parseAmount(cols[3]);
+      if (!date || (credit===0 && debit===0)) continue;
+      const isDebit = debit > 0;
+      amount = isDebit ? debit : credit;
+      type   = isDebit ? 'expense' : 'income';
+    } else {
+      // S.No., Date, Remarks, Type, Amount, Balance
+      date        = normalizeDate(cols[1]);
+      description = cols[2] || '';
+      const typeStr = (cols[3]||'').toLowerCase();
+      amount      = parseAmount(cols[4]);
+      if (!date || amount === 0) continue;
+      const isDebit = typeStr.includes('debit') || typeStr.includes('paid') || typeStr.includes('sent');
+      type = isDebit ? 'expense' : 'income';
+    }
+
+    const merchant = toTitleCase(description.replace(/^(Paid to|Received from|UPI-)\s*/i,'').split('-')[0].substring(0,40));
+    transactions.push({
+      date,
+      narration: description.substring(0,120),
+      merchant,
+      description: description.substring(0,120),
+      amount,
+      type,
+      category: detectCategory(description, merchant, type==='expense'),
+      ref_number: null,
+      source: 'paytm',
+    });
+  }
+  return transactions;
+}
+
+/* ── PhonePe Statement CSV ──
+   Formats vary; common:
+   Transaction Date, Transaction ID, Remarks, Credit/Debit, Amount, Balance
+   OR: Date, UPI Ref, Description, Type, Amount
+*/
+function parsePhonePeStatement(text) {
+  const transactions = [];
+  const lines = text.split('\n').filter(l => l.trim());
+
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i];
+    const cols = line.match(/(".*?"|[^,]+)(?=,|$)/g)?.map(c => c.replace(/^"|"$/g,'').trim()) || line.split(',').map(c=>c.trim());
+    if (cols.length < 4) continue;
+
+    // Try to find date (first col that looks like a date)
+    let date = null, description = '', amount = 0, type = 'expense', ref = '';
+    for (let j = 0; j < Math.min(cols.length, 3); j++) {
+      const d = normalizeDate(cols[j]);
+      if (d) { date = d; break; }
+    }
+    if (!date) continue;
+
+    // Description is usually col index 2 or 3
+    description = cols[2] || cols[1] || '';
+    ref         = cols[1] || '';
+
+    // Find amount — look for a numeric col
+    for (let j = cols.length-1; j >= 2; j--) {
+      const a = parseAmount(cols[j]);
+      if (a > 0) { amount = a; break; }
+    }
+    if (amount === 0) continue;
+
+    // Detect credit/debit
+    const typeHint = cols.join(' ').toLowerCase();
+    const isDebit  = typeHint.includes('debit') || typeHint.includes('paid') || typeHint.includes('dr');
+    type = isDebit ? 'expense' : 'income';
+
+    const merchant = toTitleCase(description.replace(/^(UPI-|Paid to |Received from )/i,'').split('-')[0].substring(0,40));
+    transactions.push({
+      date,
+      narration: description.substring(0,120),
+      merchant,
+      description: description.substring(0,120),
+      amount, type,
+      category: detectCategory(description, merchant, isDebit),
+      ref_number: ref.length > 8 ? ref : null,
+      source: 'phonepe',
+    });
+  }
+  return transactions;
+}
+
+/* ── GPay / Google Pay ──
+   Google Takeout CSV:
+   Date, Transaction ID, Description, Amount (INR), Status
+*/
+function parseGPayStatement(text) {
+  const transactions = [];
+  const lines = text.split('\n').filter(l => l.trim());
+
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i];
+    const cols = line.match(/(".*?"|[^,]+)(?=,|$)/g)?.map(c => c.replace(/^"|"$/g,'').trim()) || line.split(',').map(c=>c.trim());
+    if (cols.length < 3) continue;
+
+    const date   = normalizeDate(cols[0]);
+    if (!date) continue;
+
+    const ref    = cols[1] || '';
+    const desc   = cols[2] || '';
+    const amtRaw = cols[3] || cols[cols.length-2] || '0';
+    const status = (cols[cols.length-1]||'').toLowerCase();
+
+    if (status.includes('fail') || status.includes('decline')) continue;
+
+    const rawAmt = amtRaw.replace(/[₹,\s]/g,'');
+    const isNeg  = rawAmt.startsWith('-') || amtRaw.includes('(');
+    const amount = parseFloat(rawAmt.replace(/[^0-9.]/g,'')) || 0;
+    if (amount === 0) continue;
+
+    const type = isNeg ? 'expense' : 'income';
+    const merchant = toTitleCase(desc.replace(/^(Paid to|Received from)\s*/i,'').split(/\s+via\s+/i)[0].substring(0,40));
 
     transactions.push({
       date,
-      narration: narration.substring(0, 120),
+      narration: desc.substring(0,120),
       merchant,
-      description: description || merchant,
+      description: desc.substring(0,120),
+      amount, type,
+      category: detectCategory(desc, merchant, isNeg),
+      ref_number: ref || null,
+      source: 'gpay',
+    });
+  }
+  return transactions;
+}
+
+/* ── Paytm UPI PDF Parser ──────────────────────────────────────────────────
+   Parses Paytm's "Passbook Payments History" PDF
+   Format per transaction block:
+     DATE\nTIME\nTransaction Details...\nTag: #Category\nAccount\nAmount
+───────────────────────────────────────────────────────────────────────── */
+
+// Map Paytm tags → Tracksy categories
+const PAYTM_TAG_MAP = {
+  'food':              'Food & Dining',
+  'groceries':         'Food & Dining',
+  'travel':            'Transport',
+  'bill payments':     'Bills & Utilities',
+  'money transfer':    'Shopping',       // will be treated as transfer
+  'money received':    'Other Income',
+  'shopping':          'Shopping',
+  'fuel':              'Transport',
+  'education':         'Education',
+  'entertainment':     'Entertainment',
+  'health':            'Health',
+  'investment':        'Investment',
+  'services':          'Bills & Utilities',
+  'miscellaneous':     'Shopping',
+  'credit card payment': 'Bills & Utilities',
+  'self transfer':     null,             // skip self transfers
+};
+
+async function parsePaytmPDF(buffer) {
+  const data = await pdfParse(buffer);
+  const text = data.text;
+  const transactions = [];
+
+  // Split into lines, clean up
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+
+  // Months map for date parsing
+  const MONTH_MAP = { Jan:'01',Feb:'02',Mar:'03',Apr:'04',May:'05',Jun:'06',
+                      Jul:'07',Aug:'08',Sep:'09',Oct:'10',Nov:'11',Dec:'12' };
+
+  const YEAR = new Date().getFullYear(); // current year (statements are always current year)
+
+  let i = 0;
+  while (i < lines.length) {
+    // Look for a date line like "01 Jun" or "31 May"
+    const dateLine = lines[i].match(/^(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)$/i);
+    if (!dateLine) { i++; continue; }
+
+    const day   = dateLine[1].padStart(2,'0');
+    const month = MONTH_MAP[dateLine[2].charAt(0).toUpperCase() + dateLine[2].slice(1).toLowerCase()];
+    const date  = `${YEAR}-${month}-${day}`;
+
+    i++;
+    // Next line should be time like "7:45 PM"
+    if (i >= lines.length || !/^\d{1,2}:\d{2}\s*(AM|PM)$/i.test(lines[i])) continue;
+    i++; // skip time line
+
+    // Collect transaction detail lines until we hit "Tag:" or Account line or next date
+    const detailLines = [];
+    let tag = '';
+    let amountRaw = '';
+    let account = '';
+
+    while (i < lines.length) {
+      const l = lines[i];
+
+      // Stop at next date block
+      if (/^\d{1,2}\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)$/i.test(l)) break;
+
+      // Tag line: "# Food" or "#✈ Travel" or "# Bill Payments"
+      if (l.startsWith('#') || l.startsWith('Tag:')) {
+        const tagMatch = l.replace(/^Tag:/,'').replace(/^#\s*/,'').replace(/^[✈🏧💰]*\s*/,'').trim();
+        if (tagMatch && !tagMatch.includes('Tag:')) tag = tagMatch;
+        i++; continue;
+      }
+
+      // Amount line: "- Rs.340.50" or "+ Rs.1,000" or "Rs.7,000" (self transfer)
+      if (/^[+\-]?\s*Rs\.\s*[\d,]+(\.\d+)?$/i.test(l)) {
+        amountRaw = l; i++; continue;
+      }
+
+      // Account line: "HDFC Bank - 90" or "HDFC Bank Rupay Credit Card - 50"
+      if (/HDFC|ICICI|Yes Bank|Other UPI|Gold Coin/i.test(l) && !/UPI ID/i.test(l)) {
+        account = l; i++; continue;
+      }
+
+      // Note line: skip
+      if (l.startsWith('Note:') || l === 'Note:') { i++; continue; }
+
+      // Skip disclaimer lines
+      if (/^This payment is not included/i.test(l)) { i++; continue; }
+
+      detailLines.push(l);
+      i++;
+    }
+
+    if (!amountRaw || !detailLines.length) continue;
+
+    // Parse amount
+    const isDebit  = amountRaw.trim().startsWith('-');
+    const isCredit = amountRaw.trim().startsWith('+');
+    const isSelf   = !isDebit && !isCredit; // self transfer — skip
+    if (isSelf) continue;
+
+    const amount = parseFloat(amountRaw.replace(/[^0-9.]/g,''));
+    if (!amount || amount === 0) continue;
+
+    // Map tag to category
+    const tagLower = tag.toLowerCase().replace(/^[^a-z]*/,'').trim();
+    // Skip self transfers tagged as "Self Transfer"
+    if (tagLower === 'self transfer') continue;
+
+    const type = isCredit ? 'income' : 'expense';
+    const category = PAYTM_TAG_MAP[tagLower] ||
+      detectCategory(detailLines.join(' '), '', type === 'expense');
+
+    // Extract merchant name from first detail line
+    // "Paid to MERCHANT NAME" or "Money sent to NAME" or "Money received from NAME"
+    const desc = detailLines[0] || '';
+    let merchant = desc
+      .replace(/^Paid to\s+/i,'')
+      .replace(/^Money sent to\s+/i,'')
+      .replace(/^Money received from\s+/i, '')
+      .replace(/^Recharge of\s+/i, '')
+      .replace(/^Automatic payment for\s+/i, '')
+      .replace(/^Bill Payment of\s+/i, '')
+      .trim();
+    merchant = toTitleCase(merchant.substring(0, 50));
+
+    // Extract UPI Ref No
+    const refLine = detailLines.find(l => /UPI Ref No/i.test(l));
+    const refMatch = refLine?.match(/UPI Ref No[:\s]+(\d+)/i);
+    const upiRef   = refMatch?.[1] || null;
+
+    // Extract UPI ID
+    const upiLine  = detailLines.find(l => /UPI ID/i.test(l));
+    const upiId    = upiLine?.replace(/^UPI ID:\s*/i,'').trim() || '';
+
+    transactions.push({
+      date,
+      narration:   desc.substring(0,120),
+      merchant,
+      description: merchant,
       amount,
       type,
       category,
-      ref_number: refNumber,
-      closing_balance: closingBal,
+      ref_number:  upiRef,
+      upi_id:      upiId,
+      account,
+      paytm_tag:   tag,
+      source:      'paytm_pdf',
     });
   }
 
   return transactions;
 }
 
-// ─── POST /api/import/preview ───────────────────────────────────────────────
+/* ── Auto-detect format and parse ── */
+function autoDetectAndParse(content, filename, source) {
+  const lower = (filename||'').toLowerCase();
+  const first500 = content.substring(0, 500).toLowerCase();
+
+  if (source === 'paytm' || lower.includes('paytm') || first500.includes('wallet balance') || first500.includes('passbook')) {
+    return { parsed: parsePaytmStatement(content), source: 'paytm' };
+  }
+  if (source === 'phonepe' || lower.includes('phonepe') || lower.includes('phone_pe') || first500.includes('phonepe')) {
+    return { parsed: parsePhonePeStatement(content), source: 'phonepe' };
+  }
+  if (source === 'gpay' || lower.includes('gpay') || lower.includes('google') || first500.includes('transaction id') && first500.includes('status')) {
+    return { parsed: parseGPayStatement(content), source: 'gpay' };
+  }
+  if (lower.includes('hdfc') || first500.includes('narration') || first500.includes('chq')) {
+    return { parsed: parseHDFCStatement(content), source: 'hdfc' };
+  }
+
+  // Try all parsers and pick the one with most results
+  const hdfc    = parseHDFCStatement(content);
+  const paytm   = parsePaytmStatement(content);
+  const phonepe = parsePhonePeStatement(content);
+  const gpay    = parseGPayStatement(content);
+
+  const best = [
+    { src:'hdfc',    txs: hdfc    },
+    { src:'paytm',   txs: paytm   },
+    { src:'phonepe', txs: phonepe },
+    { src:'gpay',    txs: gpay    },
+  ].sort((a,b) => b.txs.length - a.txs.length)[0];
+
+  return { parsed: best.txs, source: best.src };
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   API HANDLERS
+══════════════════════════════════════════════════════════════════ */
+
+/* ── POST /api/import/preview ── */
 const previewStatement = async (req, res) => {
   try {
-    const { content, filename } = req.body;
-    if (!content) return res.status(400).json({ success: false, message: 'No file content provided' });
+    const { content, filename, source, isPDF, pdfBase64 } = req.body;
+    if (!content && !pdfBase64) return res.status(400).json({ success:false, message:'No file content provided' });
 
-    const transactions = parseHDFCStatement(content);
-    if (!transactions.length) return res.status(400).json({ success: false, message: 'No transactions found in file' });
+    let parsed, detectedSource;
 
-    // Get user's categories for mapping
+    // PDF path
+    if (isPDF || pdfBase64 || (filename||'').toLowerCase().endsWith('.pdf')) {
+      const buf = Buffer.from(pdfBase64 || content, 'base64');
+      parsed = await parsePaytmPDF(buf);
+      detectedSource = 'paytm_pdf';
+      if (!parsed.length) return res.status(400).json({ success:false, message:'No transactions found in PDF. Make sure it is a Paytm UPI statement.' });
+    } else {
+      const result = autoDetectAndParse(content, filename, source);
+      parsed = result.parsed;
+      detectedSource = result.source;
+      if (!parsed.length) return res.status(400).json({ success:false, message:'No transactions found. Make sure it is a valid CSV statement.' });
+    }
+
     const catsRes = await query(
       'SELECT id, name FROM categories WHERE user_id=$1 OR is_default=true',
       [req.user.userId]
     );
     const categories = catsRes.rows;
 
-    // Map detected category names to actual category IDs
-    const mapped = transactions.map(tx => {
+    const mapped = parsed.map(tx => {
       const cat = categories.find(c => c.name.toLowerCase() === tx.category.toLowerCase())
-                || categories.find(c => tx.category.toLowerCase().includes(c.name.toLowerCase()))
-                || null;
-      return { ...tx, category_id: cat?.id || null, category_name: cat?.name || tx.category };
+               || categories.find(c => tx.category.toLowerCase().includes(c.name.toLowerCase()))
+               || null;
+      return { ...tx, category_id: cat?.id||null, category_name: cat?.name||tx.category };
     });
 
     res.json({
       success: true,
       data: {
         transactions: mapped,
-        total: mapped.length,
-        total_credit: mapped.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0),
-        total_debit:  mapped.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0),
+        source: detectedSource,
+        total:         mapped.length,
+        total_credit:  mapped.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0),
+        total_debit:   mapped.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0),
         filename,
       }
     });
   } catch (err) {
     console.error('Import preview error:', err);
-    res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({ success:false, message: err.message });
   }
 };
 
-// ─── POST /api/import/confirm ───────────────────────────────────────────────
+/* ── POST /api/import/reconcile ──
+   Compares uploaded transactions with existing ones
+   Returns status: 'matched' | 'new' | 'duplicate'
+*/
+const reconcileStatement = async (req, res) => {
+  try {
+    const { transactions } = req.body;
+    if (!transactions?.length) return res.status(400).json({ success:false, message:'No transactions provided' });
+
+    const userId = req.user.userId;
+
+    // Fetch last 12 months of existing transactions
+    const existing = await query(
+      `SELECT id, type, amount::float, description, payment_name, transaction_date::date::text
+       FROM transactions
+       WHERE user_id=$1 AND transaction_date >= NOW() - INTERVAL '12 months'
+       ORDER BY transaction_date DESC`,
+      [userId]
+    );
+
+    const results = transactions.map(tx => {
+      // Check for exact match: same date + same amount + same type
+      const exactMatch = existing.rows.find(ex =>
+        ex.transaction_date === tx.date &&
+        Math.abs(ex.amount - tx.amount) < 0.5 &&
+        ex.type === tx.type
+      );
+
+      if (exactMatch) {
+        return { ...tx, status: 'matched', matched_id: exactMatch.id, matched_desc: exactMatch.description };
+      }
+
+      // Check for probable duplicate: same amount + type within 2 days
+      const txDate = new Date(tx.date);
+      const nearMatch = existing.rows.find(ex => {
+        const exDate = new Date(ex.transaction_date);
+        const daysDiff = Math.abs((txDate - exDate) / 86400000);
+        return daysDiff <= 2 && Math.abs(ex.amount - tx.amount) < 0.5 && ex.type === tx.type;
+      });
+
+      if (nearMatch) {
+        return { ...tx, status: 'possible_duplicate', matched_id: nearMatch.id, matched_desc: nearMatch.description };
+      }
+
+      return { ...tx, status: 'new' };
+    });
+
+    const summary = {
+      total:              results.length,
+      matched:            results.filter(r=>r.status==='matched').length,
+      possible_duplicate: results.filter(r=>r.status==='possible_duplicate').length,
+      new:                results.filter(r=>r.status==='new').length,
+    };
+
+    res.json({ success:true, data: { transactions: results, summary } });
+  } catch (err) {
+    console.error('Reconcile error:', err);
+    res.status(500).json({ success:false, message: err.message });
+  }
+};
+
+/* ── POST /api/import/confirm ── */
 const confirmImport = async (req, res) => {
   try {
     const { transactions, wallet_id } = req.body;
-    if (!transactions?.length) return res.status(400).json({ success: false, message: 'No transactions to import' });
+    if (!transactions?.length) return res.status(400).json({ success:false, message:'No transactions to import' });
 
     const userId = req.user.userId;
-    let imported = 0;
-    let skipped  = 0;
+    let imported = 0, skipped = 0;
 
     for (const tx of transactions) {
-      if (tx.skip) { skipped++; continue; }
+      if (tx.skip || tx.status === 'matched') { skipped++; continue; }
 
-      // Check duplicate by ref_number
       if (tx.ref_number) {
         const exists = await query(
           'SELECT id FROM transactions WHERE user_id=$1 AND payment_name=$2',
@@ -251,11 +624,11 @@ const confirmImport = async (req, res) => {
       imported++;
     }
 
-    res.json({ success: true, data: { imported, skipped, total: transactions.length } });
+    res.json({ success:true, data: { imported, skipped, total: transactions.length } });
   } catch (err) {
     console.error('Import confirm error:', err);
-    res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({ success:false, message: err.message });
   }
 };
 
-module.exports = { previewStatement, confirmImport };
+module.exports = { previewStatement, reconcileStatement, confirmImport };

@@ -2,8 +2,16 @@ import { useState, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { importAPI, walletsAPI, categoriesAPI } from '../services/api';
 import { Topbar } from '../components/ui';
-import { Upload, FileText, CheckCircle, AlertCircle, X, Check } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertCircle, X, Check, GitMerge } from 'lucide-react';
 import { useT, useFmt } from '../i18n';
+
+const SOURCE_OPTIONS = [
+  { id:'hdfc',    label:'HDFC Bank',   emoji:'🏦', color:'#003087', hint:'Download from NetBanking → Statements → CSV/TXT' },
+  { id:'paytm',   label:'Paytm',       emoji:'🟦', color:'#00B9F1', hint:'Paytm App → Passbook → Download Statement → PDF preferred (has your tags!) or CSV' },
+  { id:'phonepe', label:'PhonePe',     emoji:'💜', color:'#5f259f', hint:'PhonePe → Profile → Account Statement → Export CSV' },
+  { id:'gpay',    label:'GPay',        emoji:'🟣', color:'#4285F4', hint:'Google Takeout → Google Pay → transactions.csv' },
+  { id:'auto',    label:'Auto Detect', emoji:'🔍', color:'#6C63FF', hint:'Let Tracksy figure out the format automatically' },
+];
 
 const TYPE_COLOR = { income:'#37D67A', expense:'#FF5B5B' };
 const TYPE_BG    = { income:'rgba(55,214,122,.12)', expense:'rgba(255,91,91,.1)' };
@@ -28,13 +36,15 @@ export default function Import() {
   const fileRef = useRef();
 
   const [step,      setStep]     = useState(1);
+  const [source,    setSource]   = useState('auto');
   const [preview,   setPreview]  = useState(null);
   const [rows,      setRows]     = useState([]);
-  const [walletId,  setWalletId] = useState(null);  // null = no wallet
+  const [walletId,  setWalletId] = useState(null);
   const [filter,    setFilter]   = useState('all');
   const [dragOver,  setDragOver] = useState(false);
   const [result,    setResult]   = useState(null);
   const [search,    setSearch]   = useState('');
+  const [reconciled, setReconciled] = useState(false);
 
   const { data: wallets = [] } = useQuery({
     queryKey: ['wallets'],
@@ -49,11 +59,23 @@ export default function Import() {
   const bankWallets = wallets.filter(w => !['visa','mastercard','loan'].includes(w.type));
 
   const previewMut = useMutation({
-    mutationFn: ({ content, filename }) => importAPI.preview(content, filename).then(r => r.data),
+    mutationFn: ({ content, filename }) => importAPI.preview(content, filename, source).then(r => r.data),
     onSuccess: (data) => {
       setPreview(data.data);
-      setRows(data.data.transactions.map((t, i) => ({ ...t, _id: i, skip: false })));
-      setStep(2); // go to account picker
+      setRows(data.data.transactions.map((t, i) => ({ ...t, _id: i, skip: false, status: 'new' })));
+      setStep(2);
+    },
+  });
+
+  const reconcileMut = useMutation({
+    mutationFn: (txns) => importAPI.reconcile(txns).then(r => r.data),
+    onSuccess: (data) => {
+      setRows(data.data.transactions.map((t, i) => ({
+        ...t, _id: i,
+        // auto-skip already matched; possible duplicates default to skip too
+        skip: t.status === 'matched' || t.status === 'possible_duplicate',
+      })));
+      setReconciled(true);
     },
   });
 
@@ -70,9 +92,21 @@ export default function Import() {
 
   const handleFile = (file) => {
     if (!file) return;
+    const isPDF = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
     const reader = new FileReader();
-    reader.onload = (e) => previewMut.mutate({ content: e.target.result, filename: file.name });
-    reader.readAsText(file);
+    if (isPDF) {
+      reader.onload = (e) => {
+        // Send as base64
+        const base64 = btoa(
+          new Uint8Array(e.target.result).reduce((d, b) => d + String.fromCharCode(b), '')
+        );
+        previewMut.mutate({ pdfBase64: base64, filename: file.name, isPDF: true, source });
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      reader.onload = (e) => previewMut.mutate({ content: e.target.result, filename: file.name, source });
+      reader.readAsText(file);
+    }
   };
 
   const handleDrop = (e) => {
@@ -102,8 +136,8 @@ export default function Import() {
 
   const reset = () => {
     setStep(1); setPreview(null); setRows([]); setWalletId(null);
-    setResult(null); setFilter('all'); setSearch('');
-    previewMut.reset(); confirmMut.reset();
+    setResult(null); setFilter('all'); setSearch(''); setReconciled(false);
+    previewMut.reset(); reconcileMut.reset(); confirmMut.reset();
   };
 
   return (
@@ -144,7 +178,35 @@ export default function Import() {
             STEP 1 — Upload
         ══════════════════════════════════════════ */}
         {step === 1 && (
-          <div style={{ maxWidth:560 }}>
+          <div style={{ maxWidth:600 }}>
+
+            {/* ── Source picker ── */}
+            <div style={{ marginBottom:22 }}>
+              <div style={{ fontSize:13, fontWeight:700, color:'var(--text2)', marginBottom:12 }}>
+                📂 Select your statement source:
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:10 }}>
+                {SOURCE_OPTIONS.map(opt => (
+                  <button key={opt.id} onClick={() => setSource(opt.id)}
+                    style={{
+                      padding:'12px 8px', borderRadius:14, border:'2px solid',
+                      borderColor: source===opt.id ? opt.color : 'var(--border)',
+                      background: source===opt.id ? `${opt.color}18` : 'var(--surface)',
+                      cursor:'pointer', textAlign:'center', transition:'all .15s',
+                    }}>
+                    <div style={{ fontSize:24, marginBottom:5 }}>{opt.emoji}</div>
+                    <div style={{ fontSize:11, fontWeight:700, color: source===opt.id ? opt.color : 'var(--text3)' }}>{opt.label}</div>
+                  </button>
+                ))}
+              </div>
+              {source && (
+                <div style={{ marginTop:10, fontSize:12, color:'var(--text3)', background:'var(--surface2)', borderRadius:9, padding:'8px 12px' }}>
+                  💡 {SOURCE_OPTIONS.find(s=>s.id===source)?.hint}
+                </div>
+              )}
+            </div>
+
+            {/* ── Drop zone ── */}
             <div
               onDragOver={e=>{e.preventDefault();setDragOver(true)}}
               onDragLeave={()=>setDragOver(false)}
@@ -152,48 +214,56 @@ export default function Import() {
               onClick={() => fileRef.current?.click()}
               style={{
                 border:`2px dashed ${dragOver?'#6C63FF':'var(--border)'}`,
-                borderRadius:24, padding:'56px 32px', textAlign:'center', cursor:'pointer',
+                borderRadius:24, padding:'48px 32px', textAlign:'center', cursor:'pointer',
                 background: dragOver?'rgba(108,99,255,.06)':'var(--surface)',
-                transition:'all .2s', marginBottom:20,
+                transition:'all .2s', marginBottom:16,
               }}>
-              <input ref={fileRef} type="file" accept=".txt,.csv" style={{display:'none'}}
+              <input ref={fileRef} type="file" accept=".txt,.csv,.pdf,.xls,.xlsx" style={{display:'none'}}
                 onChange={e => handleFile(e.target.files[0])}/>
-              <div style={{ width:72, height:72, borderRadius:22, background:'rgba(108,99,255,.1)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 18px' }}>
-                <Upload size={32} color="#6C63FF"/>
+              <div style={{ width:64, height:64, borderRadius:20, background:'rgba(108,99,255,.1)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px' }}>
+                <Upload size={28} color="#6C63FF"/>
               </div>
-              <div style={{ fontSize:18, fontWeight:800, color:'var(--text)', marginBottom:8 }}>
-                {dragOver ? 'Drop it here!' : t('import_drop')}
+              <div style={{ fontSize:17, fontWeight:800, color:'var(--text)', marginBottom:6 }}>
+                {dragOver ? 'Drop it here!' : 'Drop your statement here'}
               </div>
-              <div style={{ fontSize:13, color:'var(--text3)', marginBottom:20 }}>
-                Drag & drop or click to browse · HDFC .txt / .csv
+              <div style={{ fontSize:12.5, color:'var(--text3)', marginBottom:18 }}>
+                Supports <strong>PDF</strong> (Paytm) · CSV · TXT from banks and payment apps
               </div>
               <div style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'10px 22px', borderRadius:20,
                 background:'linear-gradient(135deg,#6C63FF,#5B8CFF)', color:'#fff', fontWeight:700, fontSize:13,
                 boxShadow:'0 4px 14px rgba(108,99,255,.35)' }}>
-                <FileText size={15}/> {t('import_choose')}
+                <FileText size={15}/> Choose File
               </div>
             </div>
 
             {previewMut.isPending && (
               <div style={{ display:'flex', alignItems:'center', gap:10, color:'var(--text3)', fontSize:13, padding:'12px 0' }}>
                 <div style={{ width:18, height:18, border:'2px solid #6C63FF', borderTopColor:'transparent', borderRadius:'50%', animation:'spin 1s linear infinite' }}/>
-                {t('import_parsing')}
+                Parsing statement...
               </div>
             )}
             {previewMut.isError && (
               <div style={{ display:'flex', alignItems:'center', gap:8, color:'#FF5B5B', fontSize:13, padding:'12px 16px', background:'rgba(255,91,91,.08)', borderRadius:12, border:'1px solid rgba(255,91,91,.2)', marginBottom:16 }}>
-                <AlertCircle size={16}/> {previewMut.error?.response?.data?.message || 'Failed to parse file. Make sure it is a valid HDFC statement.'}
+                <AlertCircle size={16}/> {previewMut.error?.response?.data?.message || 'Could not parse file. Try selecting the correct source above.'}
               </div>
             )}
 
-            <div style={{ background:'var(--surface)', borderRadius:16, padding:'16px 20px', border:'1px solid var(--border-light)' }}>
-              <div style={{ fontSize:11.5, fontWeight:700, color:'var(--text3)', marginBottom:10, textTransform:'uppercase', letterSpacing:'.06em' }}>Supported Formats</div>
-              <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
-                {['✅ HDFC Bank .txt','✅ HDFC Bank .csv','🔜 ICICI Bank','🔜 SBI','🔜 Axis Bank'].map(b => (
-                  <span key={b} style={{ padding:'5px 12px', borderRadius:20,
-                    background: b.startsWith('✅') ? 'rgba(55,214,122,.1)' : 'var(--surface2)',
-                    color: b.startsWith('✅') ? '#37D67A' : 'var(--text3)',
-                    fontSize:12, fontWeight:600 }}>{b}</span>
+            {/* Supported formats */}
+            <div style={{ background:'var(--surface)', borderRadius:16, padding:'14px 18px', border:'1px solid var(--border-light)' }}>
+              <div style={{ fontSize:11, fontWeight:700, color:'var(--text3)', marginBottom:8, textTransform:'uppercase', letterSpacing:'.06em' }}>Supported Formats</div>
+              <div style={{ display:'flex', gap:7, flexWrap:'wrap' }}>
+                {[
+                  {l:'✅ Paytm PDF ⭐'},
+                  {l:'✅ HDFC Bank CSV'},
+                  {l:'✅ Paytm CSV'},
+                  {l:'✅ PhonePe CSV'},
+                  {l:'✅ GPay CSV'},
+                  {l:'🔜 ICICI / SBI'},
+                ].map(b => (
+                  <span key={b.l} style={{ padding:'4px 11px', borderRadius:20,
+                    background: b.l.startsWith('✅') ? 'rgba(55,214,122,.1)' : 'var(--surface2)',
+                    color: b.l.startsWith('✅') ? '#37D67A' : 'var(--text3)',
+                    fontSize:11.5, fontWeight:600 }}>{b.l}</span>
                 ))}
               </div>
             </div>
@@ -306,9 +376,9 @@ export default function Import() {
               <button onClick={reset} style={{ padding:'10px 20px', borderRadius:12, border:'1px solid var(--border)', background:'var(--surface)', color:'var(--text)', fontWeight:600, fontSize:13, cursor:'pointer' }}>
                 {t('common_back')}
               </button>
-              <button onClick={() => setStep(3)}
-                style={{ padding:'11px 28px', borderRadius:12, border:'none', background:'linear-gradient(135deg,#6C63FF,#5B8CFF)', color:'#fff', fontWeight:700, fontSize:14, cursor:'pointer', boxShadow:'0 4px 14px rgba(108,99,255,.35)' }}>
-                {t('common_continue')}
+              <button onClick={() => { reconcileMut.mutate(rows); setStep(3); }}
+                style={{ padding:'11px 28px', borderRadius:12, border:'none', background:'linear-gradient(135deg,#6C63FF,#5B8CFF)', color:'#fff', fontWeight:700, fontSize:14, cursor:'pointer', boxShadow:'0 4px 14px rgba(108,99,255,.35)', display:'flex', alignItems:'center', gap:8 }}>
+                <GitMerge size={15}/> Reconcile & Review
               </button>
             </div>
           </div>
@@ -361,13 +431,35 @@ export default function Import() {
               <button onClick={skipVisible} style={{ padding:'7px 13px', borderRadius:10, border:'1px solid rgba(255,91,91,.3)', background:'rgba(255,91,91,.07)', color:'#FF5B5B', fontSize:12, fontWeight:600, cursor:'pointer' }}>Skip Visible</button>
             </div>
 
+            {/* Reconciliation summary */}
+            {reconciled && (
+              <div style={{ display:'flex', gap:10, marginBottom:14, flexWrap:'wrap' }}>
+                {[
+                  { label:'✅ Already in App', count: rows.filter(r=>r.status==='matched').length,            bg:'rgba(55,214,122,.1)',  color:'#37D67A' },
+                  { label:'🆕 New — needs approval', count: rows.filter(r=>r.status==='new').length,         bg:'rgba(108,99,255,.1)', color:'var(--accent)' },
+                  { label:'⚠️ Possible duplicate', count: rows.filter(r=>r.status==='possible_duplicate').length, bg:'rgba(255,184,77,.1)', color:'#FFB84D' },
+                ].map(s => (
+                  <div key={s.label} style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 14px', borderRadius:12, background:s.bg }}>
+                    <span style={{ fontSize:20, fontWeight:900, color:s.color }}>{s.count}</span>
+                    <span style={{ fontSize:12, fontWeight:700, color:s.color }}>{s.label}</span>
+                  </div>
+                ))}
+                {reconcileMut.isPending && (
+                  <div style={{ display:'flex', alignItems:'center', gap:8, fontSize:13, color:'var(--text3)' }}>
+                    <div style={{ width:14, height:14, border:'2px solid var(--accent)', borderTopColor:'transparent', borderRadius:'50%', animation:'spin 1s linear infinite' }}/>
+                    Checking against existing transactions...
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Table */}
             <div style={{ background:'var(--surface)', borderRadius:18, border:'1px solid var(--border-light)', overflow:'hidden', marginBottom:18 }}>
               <div style={{ overflowX:'auto' }}>
-                <table style={{ width:'100%', borderCollapse:'collapse', minWidth:680 }}>
+                <table style={{ width:'100%', borderCollapse:'collapse', minWidth:720 }}>
                   <thead>
                     <tr style={{ background:'var(--surface2)', borderBottom:'1px solid var(--border-light)' }}>
-                      {['','Date','Merchant','Amount','Category','Type',''].map((h,i) => (
+                      {['','Date','Merchant','Amount','Category','Status','Action'].map((h,i) => (
                         <th key={i} style={{ padding:'10px 13px', textAlign:i===3?'right':'left', fontSize:11, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.06em', whiteSpace:'nowrap' }}>{h}</th>
                       ))}
                     </tr>
@@ -412,17 +504,32 @@ export default function Import() {
                             {categories.map(c => <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>)}
                           </select>
                         </td>
-                        {/* Type */}
-                        <td style={{ padding:'7px 13px' }}>
-                          <span style={{ padding:'3px 10px', borderRadius:20, fontSize:11, fontWeight:700, background:TYPE_BG[tx.type], color:TYPE_COLOR[tx.type] }}>
-                            {tx.type}
-                          </span>
+                        {/* Status badge */}
+                        <td style={{ padding:'7px 13px', whiteSpace:'nowrap' }}>
+                          {tx.status === 'matched' ? (
+                            <span style={{ padding:'3px 9px', borderRadius:20, fontSize:10.5, fontWeight:700, background:'rgba(55,214,122,.12)', color:'#37D67A' }}>✅ Matched</span>
+                          ) : tx.status === 'possible_duplicate' ? (
+                            <span style={{ padding:'3px 9px', borderRadius:20, fontSize:10.5, fontWeight:700, background:'rgba(255,184,77,.12)', color:'#FFB84D' }}>⚠️ Duplicate?</span>
+                          ) : (
+                            <span style={{ padding:'3px 9px', borderRadius:20, fontSize:10.5, fontWeight:700, background:'rgba(108,99,255,.1)', color:'var(--accent)' }}>🆕 New</span>
+                          )}
                         </td>
-                        {/* Remove */}
-                        <td style={{ padding:'7px 10px', width:30 }}>
-                          <button onClick={() => toggleSkip(tx._id)} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text3)', padding:3, borderRadius:5, lineHeight:0 }}>
-                            <X size={13}/>
-                          </button>
+                        {/* Approve toggle */}
+                        <td style={{ padding:'7px 10px', width:60, textAlign:'center' }}>
+                          {tx.status !== 'matched' && (
+                            <button onClick={() => toggleSkip(tx._id)}
+                              title={tx.skip ? 'Click to approve' : 'Click to skip'}
+                              style={{ padding:'4px 10px', borderRadius:8, border:'1.5px solid', fontSize:11, fontWeight:700, cursor:'pointer', transition:'all .15s',
+                                borderColor: tx.skip ? 'var(--border)' : '#37D67A',
+                                background: tx.skip ? 'var(--surface2)' : 'rgba(55,214,122,.1)',
+                                color: tx.skip ? 'var(--text3)' : '#37D67A',
+                              }}>
+                              {tx.skip ? 'Skip' : 'Add'}
+                            </button>
+                          )}
+                          {tx.status === 'matched' && (
+                            <span style={{ fontSize:11, color:'var(--text3)' }}>—</span>
+                          )}
                         </td>
                       </tr>
                     ))}
