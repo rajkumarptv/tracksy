@@ -10,6 +10,7 @@ import Categories from './pages/Categories';
 import Debts from './pages/Debts';
 import Import from './pages/Import';
 import Recurring from './pages/Recurring';
+import Family from './pages/Family';
 import { Login, Register, OAuthCallback, ForgotPassword, ResetPassword } from './pages/Auth';
 import Admin from './pages/Admin';
 import useAuthStore from './store/authStore';
@@ -59,6 +60,7 @@ export default function App() {
             <Route path="analytics" element={<Analytics />} />
             <Route path="import" element={<Import />} />
             <Route path="recurring" element={<Recurring />} />
+            <Route path="family" element={<Family />} />
             <Route path="settings" element={<Settings />} />
           </Route>
 

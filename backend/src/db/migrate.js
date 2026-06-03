@@ -155,6 +155,20 @@ const migrate = async () => {
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT false`);
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ`);
 
+    // ── Family Budget (Head-of-Household model) ──────────────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS families (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        name VARCHAR(120) NOT NULL,
+        primary_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+    // Link users to a family + role: 'primary' (head) or 'member'
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS family_id UUID REFERENCES families(id) ON DELETE SET NULL`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS family_role VARCHAR(10)`);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_users_family ON users(family_id) WHERE family_id IS NOT NULL`);
+
     // Recurring transactions
     await client.query(`
       CREATE TABLE IF NOT EXISTS recurring_transactions (

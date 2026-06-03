@@ -3,6 +3,16 @@ const { encrypt, decryptRow } = require('../utils/crypto');
 
 const decrypt = row => decryptRow(row, ['payment_name', 'description']);
 
+const FREE_RECURRING_LIMIT = 5;
+
+async function isPremium(userId) {
+  const r = await query('SELECT is_premium, premium_expires_at FROM users WHERE id=$1', [userId]);
+  const u = r.rows[0];
+  if (!u || !u.is_premium) return false;
+  if (u.premium_expires_at && new Date(u.premium_expires_at) < new Date()) return false;
+  return true;
+}
+
 // Calculate next run date based on frequency
 function calcNextRun(from, frequency) {
   const d = new Date(from);
@@ -36,6 +46,17 @@ const getAll = async (req, res) => {
 // POST /recurring
 const create = async (req, res) => {
   try {
+    const premium = await isPremium(req.user.userId);
+    if (!premium) {
+      const cnt = await query('SELECT COUNT(*) FROM recurring_transactions WHERE user_id=$1 AND is_active=true', [req.user.userId]);
+      if (parseInt(cnt.rows[0].count) >= FREE_RECURRING_LIMIT) {
+        return res.status(403).json({
+          success: false,
+          code: 'FREE_LIMIT_RECURRING',
+          message: `Free plan allows up to ${FREE_RECURRING_LIMIT} recurring transactions. Upgrade to Premium for unlimited.`,
+        });
+      }
+    }
     const { wallet_id, category_id, type, amount, payment_name, description, frequency, start_date, end_date } = req.body;
     if (!type || !amount || !payment_name || !frequency || !start_date) {
       return res.status(400).json({ success: false, message: 'type, amount, payment_name, frequency, start_date required' });

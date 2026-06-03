@@ -114,9 +114,18 @@ export const dataAPI = {
   reset:  (scope) => api.post('/data/reset', { scope }),
 };
 
+// Family budget
+export const familyAPI = {
+  status:       () => api.get('/family/status'),
+  overview:     () => api.get('/family/overview'),
+  memberDetail: (id) => api.get(`/family/member/${id}`),
+};
+
 // Bank statement import
 export const importAPI = {
-  preview:    (content, filename, source) => api.post('/import/preview',   { content, filename, source }),
+  preview:    (formData) => api.post('/import/preview', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }),
   reconcile:  (transactions)              => api.post('/import/reconcile', { transactions }),
   confirm:    (transactions, wallet_id)   => api.post('/import/confirm',   { transactions, wallet_id }),
 };

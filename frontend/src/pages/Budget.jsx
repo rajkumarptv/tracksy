@@ -4,11 +4,17 @@ import { budgetsAPI, categoriesAPI, transactionsAPI } from '../services/api';
 import { Topbar, PageLoader, ProgressBar, EmptyState } from '../components/ui';
 import { Plus, PieChart, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useFmt, useT } from '../i18n';
+import useAuthStore from '../store/authStore';
+import usePremiumStore from '../store/premiumStore';
+
+const FREE_BUDGET_LIMIT = 3;
 
 export default function Budget() {
   const qc = useQueryClient();
   const fmt = useFmt();
   const t = useT();
+  const { user } = useAuthStore();
+  const { openPremium } = usePremiumStore();
   const [showModal, setShowModal] = useState(false);
   const [editBudget, setEditBudget] = useState(null);
 
@@ -16,6 +22,9 @@ export default function Budget() {
     queryKey: ['budgets'],
     queryFn: () => budgetsAPI.getAll().then(r => r.data.data),
   });
+
+  const atBudgetLimit = !user?.is_premium && (budgets||[]).length >= FREE_BUDGET_LIMIT;
+  const openAddBudget = () => atBudgetLimit ? openPremium() : (setEditBudget(null), setShowModal(true));
 
   const deleteMutation = useMutation({
     mutationFn: (id) => budgetsAPI.delete(id),
@@ -77,13 +86,30 @@ export default function Budget() {
         <Topbar title={t('budget_title')} subtitle={t('budget_sub')}>
           <button className="btn btn-primary btn-sm"
             style={{ display:'flex', alignItems:'center', gap:6, background:'linear-gradient(135deg,#6C63FF,#5B8CFF)', border:'none', boxShadow:'0 4px 14px rgba(108,99,255,.35)' }}
-            onClick={() => { setEditBudget(null); setShowModal(true); }}>
+            onClick={openAddBudget}>
             <Plus size={13}/> {t('budget_add')}
           </button>
         </Topbar>
       </div>
 
       <div className="mob-content" style={{ padding:'28px 32px 40px', flex:1, overflow:'auto' }}>
+
+        {/* Free-tier limit banner */}
+        {!user?.is_premium && (
+          <div style={{ display:'flex', alignItems:'center', gap:10, background: atBudgetLimit ? 'rgba(255,184,77,.12)' : 'rgba(108,99,255,.06)', borderRadius:12, padding:'10px 16px', marginBottom:18, border:`1px solid ${atBudgetLimit ? 'rgba(255,184,77,.3)' : 'rgba(108,99,255,.15)'}` }}>
+            <span style={{ fontSize:18 }}>{atBudgetLimit ? '⚠️' : '📊'}</span>
+            <span style={{ fontSize:12.5, color: atBudgetLimit ? '#b8860b' : 'var(--text3)', flex:1 }}>
+              {atBudgetLimit
+                ? <><strong style={{ color:'#FFB84D' }}>Budget limit reached</strong> — Free plan allows {FREE_BUDGET_LIMIT} budgets.</>
+                : <>{(budgets||[]).length} / {FREE_BUDGET_LIMIT} budgets used on free plan.</>}
+            </span>
+            {atBudgetLimit && (
+              <button onClick={openPremium} style={{ fontSize:12, fontWeight:700, padding:'5px 12px', borderRadius:8, border:'none', background:'#FFB84D', color:'#fff', cursor:'pointer' }}>
+                Upgrade ✨
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Summary row */}
         <div className="mob-summary-scroll" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:24 }}>

@@ -4,11 +4,17 @@ import { goalsAPI, transactionsAPI } from '../services/api';
 import { Topbar, PageLoader, ProgressBar, EmptyState } from '../components/ui';
 import { Plus, Target, TrendingUp, Calendar, DollarSign } from 'lucide-react';
 import { useFmt, useT } from '../i18n';
+import useAuthStore from '../store/authStore';
+import usePremiumStore from '../store/premiumStore';
+
+const FREE_GOAL_LIMIT = 3;
 
 export default function Goals() {
   const qc = useQueryClient();
   const fmt = useFmt();
   const t = useT();
+  const { user } = useAuthStore();
+  const { openPremium } = usePremiumStore();
   const [showModal, setShowModal] = useState(false);
   const [editGoal, setEditGoal] = useState(null);
   const [showFunds, setShowFunds] = useState(null);
@@ -17,6 +23,9 @@ export default function Goals() {
     queryKey: ['goals'],
     queryFn: () => goalsAPI.getAll().then(r => r.data.data),
   });
+
+  const atGoalLimit = !user?.is_premium && (goals||[]).length >= FREE_GOAL_LIMIT;
+  const openAddGoal = () => atGoalLimit ? openPremium() : (setEditGoal(null), setShowModal(true));
 
   /* 6-month trend data for sparklines */
   const { data: trendTx } = useQuery({
@@ -73,13 +82,30 @@ export default function Goals() {
         <Topbar title={t('goals_title')} subtitle={t('goals_sub')}>
           <button className="btn btn-primary btn-sm"
             style={{ display:'flex', alignItems:'center', gap:6, background:'linear-gradient(135deg,#6C63FF,#5B8CFF)', border:'none', boxShadow:'0 4px 14px rgba(108,99,255,.35)' }}
-            onClick={() => { setEditGoal(null); setShowModal(true); }}>
+            onClick={openAddGoal}>
             <Plus size={13}/> {t('goals_add')}
           </button>
         </Topbar>
       </div>
 
       <div className="mob-content" style={{ padding:'28px 32px 40px', flex:1, overflow:'auto' }}>
+
+        {/* Free-tier limit banner */}
+        {!user?.is_premium && (
+          <div style={{ display:'flex', alignItems:'center', gap:10, background: atGoalLimit ? 'rgba(255,184,77,.12)' : 'rgba(108,99,255,.06)', borderRadius:12, padding:'10px 16px', marginBottom:18, border:`1px solid ${atGoalLimit ? 'rgba(255,184,77,.3)' : 'rgba(108,99,255,.15)'}` }}>
+            <span style={{ fontSize:18 }}>{atGoalLimit ? '⚠️' : '🎯'}</span>
+            <span style={{ fontSize:12.5, color: atGoalLimit ? '#b8860b' : 'var(--text3)', flex:1 }}>
+              {atGoalLimit
+                ? <><strong style={{ color:'#FFB84D' }}>Goal limit reached</strong> — Free plan allows {FREE_GOAL_LIMIT} saving goals.</>
+                : <>{(goals||[]).length} / {FREE_GOAL_LIMIT} goals used on free plan.</>}
+            </span>
+            {atGoalLimit && (
+              <button onClick={openPremium} style={{ fontSize:12, fontWeight:700, padding:'5px 12px', borderRadius:8, border:'none', background:'#FFB84D', color:'#fff', cursor:'pointer' }}>
+                Upgrade ✨
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Summary cards */}
         <div className="mob-summary-scroll" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:24 }}>

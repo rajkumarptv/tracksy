@@ -9,6 +9,10 @@ const adminAPI = {
   getStats: ()                      => api.get('/admin/stats'),
   getUsers: (params)                => api.get('/admin/users', { params }),
   togglePremium: (userId)           => api.patch(`/admin/users/${userId}/premium`),
+  listFamilies: ()                  => api.get('/admin/families'),
+  createFamily: (name, primaryId)   => api.post('/admin/families', { name, primary_user_id: primaryId }),
+  addMember: (familyId, userId)     => api.patch(`/admin/families/${familyId}/members`, { user_id: userId }),
+  removeMember: (userId)            => api.delete(`/admin/families/members/${userId}`),
 };
 
 // ── Tiny stat card ─────────────────────────────────────────────────────────────
@@ -90,6 +94,34 @@ export default function Admin() {
       qc.invalidateQueries({ queryKey: ['admin-users'] });
       qc.invalidateQueries({ queryKey: ['admin-stats'] });
     },
+  });
+
+  // ── Family management ──
+  const { data: families = [] } = useQuery({
+    queryKey: ['admin-families'],
+    queryFn: () => adminAPI.listFamilies().then(r => r.data.data),
+    enabled: isAdmin,
+  });
+  const [newFamilyName, setNewFamilyName] = useState('');
+  const [newFamilyPrimary, setNewFamilyPrimary] = useState('');
+  const [addMemberFamilyId, setAddMemberFamilyId] = useState('');
+  const [addMemberUserId, setAddMemberUserId] = useState('');
+
+  const invalidateFamilies = () => {
+    qc.invalidateQueries({ queryKey: ['admin-families'] });
+    qc.invalidateQueries({ queryKey: ['admin-users'] });
+  };
+  const createFamilyMut = useMutation({
+    mutationFn: () => adminAPI.createFamily(newFamilyName, newFamilyPrimary),
+    onSuccess: () => { setNewFamilyName(''); setNewFamilyPrimary(''); invalidateFamilies(); },
+  });
+  const addMemberMut = useMutation({
+    mutationFn: () => adminAPI.addMember(addMemberFamilyId, addMemberUserId),
+    onSuccess: () => { setAddMemberUserId(''); invalidateFamilies(); },
+  });
+  const removeMemberMut = useMutation({
+    mutationFn: (userId) => adminAPI.removeMember(userId),
+    onSuccess: invalidateFamilies,
   });
 
   const s = statsData;
@@ -334,6 +366,88 @@ export default function Admin() {
               </button>
             </div>
           )}
+        </div>
+
+        {/* ══ FAMILY MANAGEMENT ══ */}
+        <div style={{ background: 'rgba(255,255,255,.03)', borderRadius: 18, border: '1px solid rgba(255,255,255,.06)', overflow: 'hidden', marginTop: 28 }}>
+          <div style={{ padding: '16px 22px', borderBottom: '1px solid rgba(255,255,255,.05)', fontWeight: 700, fontSize: 14, color: '#fff', display: 'flex', alignItems: 'center', gap: 8 }}>
+            👨‍👩‍👧 Family Management
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#FFB84D', background: 'rgba(255,184,77,.12)', borderRadius: 20, padding: '2px 8px' }}>Premium feature</span>
+          </div>
+
+          {/* Create new family */}
+          <div style={{ padding: '16px 22px', borderBottom: '1px solid rgba(255,255,255,.05)', display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+            <div>
+              <div style={{ fontSize: 10.5, color: '#888', marginBottom: 5, fontWeight: 600 }}>FAMILY NAME</div>
+              <input value={newFamilyName} onChange={e => setNewFamilyName(e.target.value)}
+                placeholder="e.g. Rajkumar Family"
+                style={{ padding: '8px 12px', borderRadius: 9, background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.1)', color: '#e0e0e0', fontSize: 12.5, outline: 'none', width: 200 }}/>
+            </div>
+            <div>
+              <div style={{ fontSize: 10.5, color: '#888', marginBottom: 5, fontWeight: 600 }}>PRIMARY MEMBER (HEAD)</div>
+              <select value={newFamilyPrimary} onChange={e => setNewFamilyPrimary(e.target.value)}
+                style={{ padding: '8px 12px', borderRadius: 9, background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.1)', color: '#e0e0e0', fontSize: 12.5, outline: 'none', minWidth: 220 }}>
+                <option value="">Select user…</option>
+                {users.map(u => <option key={u.id} value={u.id} style={{ background:'#1a1a2e' }}>{u.first_name} {u.last_name} ({u.email})</option>)}
+              </select>
+            </div>
+            <button onClick={() => createFamilyMut.mutate()} disabled={!newFamilyName || !newFamilyPrimary || createFamilyMut.isPending}
+              style={{ padding: '9px 18px', borderRadius: 9, background: (!newFamilyName || !newFamilyPrimary) ? 'rgba(255,255,255,.05)' : 'linear-gradient(135deg,#6C63FF,#5B8CFF)', border: 'none', color: '#fff', fontSize: 12.5, fontWeight: 700, cursor: (!newFamilyName || !newFamilyPrimary) ? 'not-allowed' : 'pointer' }}>
+              + Create Family
+            </button>
+          </div>
+
+          {/* Family list */}
+          <div style={{ padding: '8px 22px 22px' }}>
+            {families.length === 0 && (
+              <div style={{ padding: '24px', textAlign: 'center', color: '#555', fontSize: 13 }}>No families yet. Create one above.</div>
+            )}
+            {families.map(fam => (
+              <div key={fam.id} style={{ marginTop: 16, padding: '16px 18px', borderRadius: 14, background: 'rgba(255,255,255,.02)', border: '1px solid rgba(255,255,255,.06)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: '#fff' }}>{fam.name}</div>
+                  <span style={{ fontSize: 11, color: '#888', background: 'rgba(255,255,255,.05)', borderRadius: 20, padding: '2px 9px' }}>{fam.member_count} members</span>
+                </div>
+
+                {/* Members */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
+                  {fam.members.map(m => (
+                    <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 12px', borderRadius: 9, background: 'rgba(255,255,255,.03)' }}>
+                      <span style={{ fontSize: 13, color: '#e0e0e0', fontWeight: 600 }}>{m.name}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: m.family_role === 'primary' ? 'rgba(255,184,77,.15)' : 'rgba(108,99,255,.15)', color: m.family_role === 'primary' ? '#FFB84D' : '#a29bfe' }}>
+                        {m.family_role === 'primary' ? '👑 Primary' : 'Member'}
+                      </span>
+                      <span style={{ fontSize: 11.5, color: '#666', flex: 1 }}>{m.email}</span>
+                      {m.family_role !== 'primary' && (
+                        <button onClick={() => removeMemberMut.mutate(m.id)}
+                          style={{ fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 7, background: 'rgba(255,91,91,.12)', border: '1px solid rgba(255,91,91,.3)', color: '#FF5B5B', cursor: 'pointer' }}>
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Add member to this family */}
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <select
+                    value={addMemberFamilyId === fam.id ? addMemberUserId : ''}
+                    onChange={e => { setAddMemberFamilyId(fam.id); setAddMemberUserId(e.target.value); }}
+                    style={{ padding: '7px 11px', borderRadius: 8, background: 'rgba(255,255,255,.05)', border: '1px solid rgba(255,255,255,.1)', color: '#e0e0e0', fontSize: 12, outline: 'none', minWidth: 240 }}>
+                    <option value="">+ Add member…</option>
+                    {users.filter(u => !fam.members.some(m => m.id === u.id)).map(u =>
+                      <option key={u.id} value={u.id} style={{ background:'#1a1a2e' }}>{u.first_name} {u.last_name} ({u.email})</option>)}
+                  </select>
+                  <button
+                    onClick={() => addMemberMut.mutate()}
+                    disabled={addMemberFamilyId !== fam.id || !addMemberUserId || addMemberMut.isPending}
+                    style={{ padding: '7px 16px', borderRadius: 8, background: (addMemberFamilyId === fam.id && addMemberUserId) ? 'rgba(55,214,122,.15)' : 'rgba(255,255,255,.05)', border: `1px solid ${(addMemberFamilyId === fam.id && addMemberUserId) ? 'rgba(55,214,122,.3)' : 'rgba(255,255,255,.08)'}`, color: (addMemberFamilyId === fam.id && addMemberUserId) ? '#37D67A' : '#555', fontSize: 12, fontWeight: 700, cursor: (addMemberFamilyId === fam.id && addMemberUserId) ? 'pointer' : 'not-allowed' }}>
+                    Add
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
       </div>

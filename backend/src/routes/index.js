@@ -1,4 +1,5 @@
 const express = require('express');
+const multer  = require('multer');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const authCtrl = require('../controllers/authController');
@@ -7,6 +8,9 @@ const txCtrl = require('../controllers/transactionController');
 const budgetCtrl = require('../controllers/budgetController');
 const res0 = require('../controllers/resourceController');
 const importCtrl = require('../controllers/importController');
+
+// multer: store uploaded files in memory (max 20 MB)
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 const waCtrl = require('../controllers/whatsappController');
 const oauth = require('../middleware/oauth');
 const adminCtrl = require('../controllers/adminController');
@@ -99,7 +103,7 @@ router.get('/data/export', auth, res0.exportData);
 router.post('/data/reset', auth, res0.resetData);
 
 // Bank statement import + reconciliation
-router.post('/import/preview',    auth, importCtrl.previewStatement);
+router.post('/import/preview',    auth, upload.single('file'), importCtrl.previewStatement);
 router.post('/import/reconcile',  auth, importCtrl.reconcileStatement);
 router.post('/import/confirm',    auth, importCtrl.confirmImport);
 
@@ -117,5 +121,17 @@ router.put('/whatsapp/phone', auth, waCtrl.savePhone);
 router.get('/admin/stats',                    auth, adminAuth, adminCtrl.getStats);
 router.get('/admin/users',                    auth, adminAuth, adminCtrl.getUsers);
 router.patch('/admin/users/:userId/premium',  auth, adminAuth, adminCtrl.togglePremium);
+
+// Admin — Family management
+router.get('/admin/families',                       auth, adminAuth, adminCtrl.listFamilies);
+router.post('/admin/families',                      auth, adminAuth, adminCtrl.createFamily);
+router.patch('/admin/families/:familyId/members',   auth, adminAuth, adminCtrl.addFamilyMember);
+router.delete('/admin/families/members/:userId',    auth, adminAuth, adminCtrl.removeFamilyMember);
+
+// Family — primary member views family data
+const familyCtrl = require('../controllers/familyController');
+router.get('/family/status',        auth, familyCtrl.getStatus);
+router.get('/family/overview',      auth, familyCtrl.getOverview);
+router.get('/family/member/:id',    auth, familyCtrl.getMemberDetail);
 
 module.exports = router;

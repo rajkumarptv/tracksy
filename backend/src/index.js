@@ -39,22 +39,22 @@ if (isProd) {
   // and on Render/Railway (started from repo root → frontend/dist)
   const buildPath = path.join(__dirname, '../../frontend/dist');
 
-  // Static assets (hashed filenames like index-abc123.js) — cache for 1 year
+  // 1) Hashed JS/CSS assets — cache 1 year (safe: hash changes on each build)
   app.use('/assets', express.static(path.join(buildPath, 'assets'), {
-    maxAge: '1y',
-    immutable: true,
+    maxAge: '1y', immutable: true,
   }));
 
-  // Icons, manifest, sw.js — never cache (always fresh)
-  app.use('/icons',        express.static(path.join(buildPath, 'icons'),        { maxAge: 0 }));
-  app.use('/manifest.json',express.static(path.join(buildPath),                 { maxAge: 0 }));
-  app.use('/sw.js', (_req, res) => {
-    res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
-    res.set('Pragma', 'no-cache');
-    res.sendFile(path.join(buildPath, 'sw.js'));
-  });
+  // 2) All other static files (images, icons, manifest, sw.js etc.) — no cache
+  app.use(express.static(buildPath, {
+    maxAge: 0,
+    setHeaders(res, filePath) {
+      if (filePath.endsWith('.html') || filePath.endsWith('sw.js')) {
+        res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+      }
+    },
+  }));
 
-  // Everything else (including /, /login, /register etc.) — serve index.html with NO cache
+  // 3) SPA fallback — all remaining routes serve index.html
   app.get('*', (_req, res) => {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
     res.set('Pragma', 'no-cache');

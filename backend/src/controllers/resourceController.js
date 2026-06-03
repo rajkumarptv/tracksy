@@ -7,6 +7,8 @@ const decryptGoal   = row => decryptRow(row, ['name']);
 // ── Free-tier limits ──────────────────────────────────────────────────────────
 const FREE_WALLET_LIMIT   = 3;
 const FREE_CATEGORY_LIMIT = 5;
+const FREE_GOAL_LIMIT     = 3;
+const FREE_BUDGET_LIMIT   = 3;
 
 async function isPremium(userId) {
   const r = await query('SELECT is_premium, premium_expires_at FROM users WHERE id=$1', [userId]);
@@ -34,6 +36,17 @@ const getAllGoals = async (req, res) => {
 
 const createGoal = async (req, res) => {
   try {
+    const premium = await isPremium(req.user.userId);
+    if (!premium) {
+      const cnt = await query('SELECT COUNT(*) FROM saving_goals WHERE user_id=$1', [req.user.userId]);
+      if (parseInt(cnt.rows[0].count) >= FREE_GOAL_LIMIT) {
+        return res.status(403).json({
+          success: false,
+          code: 'FREE_LIMIT_GOALS',
+          message: `Free plan allows up to ${FREE_GOAL_LIMIT} saving goals. Upgrade to Premium for unlimited goals.`,
+        });
+      }
+    }
     const { name, target_amount, current_amount, emoji, color, target_date, monthly_contribution } = req.body;
     const result = await query(`
       INSERT INTO saving_goals (user_id, name, target_amount, current_amount, emoji, color, target_date, monthly_contribution)
