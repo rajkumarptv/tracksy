@@ -2,12 +2,16 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const compression = require('compression');
 const routes = require('./routes');
 require('./middleware/oauth'); // initialise passport strategies
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const isProd = process.env.NODE_ENV === 'production';
+
+// Gzip every response (API JSON + JS/CSS) — big win on mobile networks
+app.use(compression({ level: 6, threshold: 512 }));
 
 // Middleware
 app.use(cors({
