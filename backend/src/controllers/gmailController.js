@@ -42,6 +42,29 @@ function titleCase(s) {
   return (s || '').toLowerCase().replace(/\b\w/g, c => c.toUpperCase()).trim().slice(0, 50);
 }
 
+// Guess a category name from merchant + email text
+function detectCategory(text, isDebit) {
+  const t = (text || '').toLowerCase();
+  if (!isDebit) {
+    if (/salary|payroll|stipend/.test(t))            return 'Salary';
+    if (/freelance|invoice|payment received/.test(t))return 'Freelance';
+    if (/interest|dividend/.test(t))                 return 'Investment';
+    if (/refund|cashback|reversal/.test(t))          return 'Other Income';
+    return 'Other Income';
+  }
+  if (/swiggy|zomato|restaurant|cafe|hotel|food|pizza|domino|kfc|biryani|bakery|mess|tea|coffee|juice|sweets|mittai|catering/.test(t)) return 'Food & Dining';
+  if (/super ?market|grocery|kirana|provision|store|agencies|fruits|vegetable|dmart|reliance fresh|kaikani/.test(t)) return 'Food & Dining';
+  if (/fuel|petrol|diesel|indianoil|hpcl|bpcl|shell|cng|sri sathya|sri vignesh/.test(t)) return 'Transport';
+  if (/redbus|ola|uber|rapido|metro|irctc|railway|bus|train|flight|indigo|spicejet|travel|web upi/.test(t)) return 'Transport';
+  if (/airtel|jio|vodafone|\bvi\b|bsnl|recharge|electricity|tangedco|tneb|broadband|gas|water|dth|bill/.test(t)) return 'Bills & Utilities';
+  if (/flipkart|amazon|meesho|myntra|ajio|nykaa|shopping|textiles|readymade|store/.test(t)) return 'Shopping';
+  if (/hospital|clinic|pharmacy|medical|doctor|apollo|health|salon|bridal/.test(t)) return 'Health';
+  if (/school|college|tuition|fees|course|coaching|superking|ventures/.test(t)) return 'Education';
+  if (/credit card|cred|sbi card|billpay|card payment/.test(t)) return 'Bills & Utilities';
+  if (/google play|netflix|spotify|prime|hotstar|entertainment|zarivault/.test(t)) return 'Entertainment';
+  return null; // leave uncategorized rather than guess wrong
+}
+
 function parseTxnEmail({ subject, from, body, snippet }) {
   const text = `${subject || ''}\n${snippet || ''}\n${body || ''}`;
 
@@ -97,7 +120,11 @@ function parseTxnEmail({ subject, from, body, snippet }) {
 
   const ref = (text.match(/(?:UPI Ref(?:erence)? (?:No\.?|number)?|Ref(?:erence)? No\.?|txn id)[:\s]*([A-Za-z0-9]{6,})/i) || [])[1] || null;
 
-  return { amount, type, merchant, ref };
+  // Category from the MERCHANT name only (full body is too noisy → false matches).
+  // Person-to-person transfers stay uncategorized, which is correct.
+  const category = detectCategory(merchant, type === 'expense');
+
+  return { amount, type, merchant, ref, category };
 }
 
 // Decode a Gmail message body (base64url, possibly multipart)
@@ -132,6 +159,19 @@ async function syncUserGmail(userId, { days = 7 } = {}) {
   auth.setCredentials({ refresh_token: u.gmail_refresh_token });
   const gmail = google.gmail({ version: 'v1', auth });
 
+  // Load this user's categories once → map detected name → id
+  const catRows = (await query(
+    'SELECT id, name, type FROM categories WHERE user_id=$1 OR is_default=true', [userId]
+  )).rows;
+  const findCatId = (name, txType) => {
+    if (!name) return null;
+    const lc = name.toLowerCase();
+    const match = catRows.find(c =>
+      c.name.toLowerCase() === lc && (c.type === txType || c.type === 'both'))
+      || catRows.find(c => c.name.toLowerCase() === lc);
+    return match?.id || null;
+  };
+
   // Search query: bank/UPI alerts in the last N days
   const q = `newer_than:${days}d (debited OR credited OR "UPI" OR "spent" OR "received") (Rs OR INR OR "₹")`;
   const list = await gmail.users.messages.list({ userId: 'me', q, maxResults: 50 });
@@ -161,14 +201,16 @@ async function syncUserGmail(userId, { days = 7 } = {}) {
 
     const dateISO = new Date(parseInt(msg.data.internalDate)).toISOString().split('T')[0];
 
+    const categoryId = findCatId(parsed.category, parsed.type);
+
     try {
       await query(`
         INSERT INTO transactions
-          (user_id, type, amount, description, payment_name, status, transaction_date, external_id)
-        VALUES ($1,$2,$3,$4,$5,'completed',$6,$7)
+          (user_id, type, amount, description, payment_name, category_id, status, transaction_date, external_id)
+        VALUES ($1,$2,$3,$4,$5,$6,'completed',$7,$8)
         ON CONFLICT (user_id, external_id) WHERE external_id IS NOT NULL DO NOTHING
       `, [userId, parsed.type, parsed.amount, parsed.merchant,
-          parsed.ref || 'Gmail import', dateISO, id]);
+          parsed.ref || 'Gmail import', categoryId, dateISO, id]);
       imported++;
     } catch (e) { skipped++; }
   }
