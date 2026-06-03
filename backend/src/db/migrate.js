@@ -168,6 +168,15 @@ const migrate = async () => {
     await client.query(`ALTER TABLE families ADD COLUMN IF NOT EXISTS family_code VARCHAR(10) UNIQUE`);
     // Visibility: 'head_only' = only primary sees members | 'shared' = everyone sees everyone
     await client.query(`ALTER TABLE families ADD COLUMN IF NOT EXISTS share_mode VARCHAR(20) DEFAULT 'head_only'`);
+
+    // ── Gmail auto-import ────────────────────────────────────────────────
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS gmail_refresh_token TEXT`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS gmail_connected BOOLEAN DEFAULT false`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS gmail_sync_enabled BOOLEAN DEFAULT true`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS gmail_last_sync TIMESTAMPTZ`);
+    // Idempotency: store the Gmail message id (or UPI ref) so we never double-import
+    await client.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS external_id VARCHAR(255)`);
+    await client.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_tx_external ON transactions(user_id, external_id) WHERE external_id IS NOT NULL`);
     // Link users to a family + role: 'primary' (head) or 'member'
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS family_id UUID REFERENCES families(id) ON DELETE SET NULL`);
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS family_role VARCHAR(10)`);

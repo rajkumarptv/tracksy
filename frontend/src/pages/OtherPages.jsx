@@ -844,7 +844,7 @@ export function Analytics() {
 import { useState as useState2 } from 'react';
 import { useMutation as useMutation2, useQuery as useQuery2 } from '@tanstack/react-query';
 import { useNavigate as useNavigate3 } from 'react-router-dom';
-import { authAPI, dataAPI } from '../services/api';
+import { authAPI, dataAPI, gmailAPI } from '../services/api';
 import { Topbar as Topbar3 } from '../components/ui';
 import useAuthStore2 from '../store/authStore';
 import useCurrencyStore2, { CURRENCIES as ALL_CURRENCIES } from '../store/currencyStore';
@@ -976,6 +976,9 @@ export function Settings() {
 
           {/* Security / Change Password */}
           <ChangePasswordSection user={user} />
+
+          {/* Gmail Auto-Import */}
+          <GmailSection user={user} openPremium={openPremium} />
 
           {/* Data Backup */}
           <SectionCard icon={<Download size={18} color="#5B8CFF"/>} title="Data Backup & Export">
@@ -1395,5 +1398,115 @@ function SectionCard({ icon, title, children }) {
       </div>
       {children}
     </div>
+  );
+}
+
+/* ── Gmail Auto-Import section ───────────────────────────── */
+function GmailSection({ user, openPremium }) {
+  const qc = useQueryClient();
+  const [syncResult, setSyncResult] = useState2(null);
+  const [params] = [new URLSearchParams(window.location.search)];
+
+  const { data: status } = useQuery2({
+    queryKey: ['gmail-status'],
+    queryFn: () => gmailAPI.status().then(r => r.data.data),
+  });
+
+  const syncMut = useMutation2({
+    mutationFn: () => gmailAPI.sync(),
+    onSuccess: (r) => {
+      setSyncResult(r.data.data);
+      qc.invalidateQueries({ queryKey: ['gmail-status'] });
+      qc.invalidateQueries({ queryKey: ['transactions'] });
+      qc.invalidateQueries({ queryKey: ['dashboard-summary'] });
+    },
+  });
+  const disconnectMut = useMutation2({
+    mutationFn: () => gmailAPI.disconnect(),
+    onSuccess: () => { setSyncResult(null); qc.invalidateQueries({ queryKey: ['gmail-status'] }); },
+  });
+  const toggleMut = useMutation2({
+    mutationFn: (en) => gmailAPI.toggle(en),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['gmail-status'] }),
+  });
+
+  const connected = status?.connected;
+  const justConnected = params.get('gmail') === 'connected';
+
+  const SvgGmail = (
+    <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#EA4335" d="M5 5h14a2 2 0 0 1 2 2v.4L12 13 3 7.4V7a2 2 0 0 1 2-2z"/><path fill="#34A853" d="M3 9.2V17a2 2 0 0 0 2 2h2V11l-4-1.8z"/><path fill="#FBBC04" d="M17 19h2a2 2 0 0 0 2-2V9.2L17 11v8z"/><path fill="#4285F4" d="M7 19h10v-8l-5 3-5-3v8z"/></svg>
+  );
+
+  return (
+    <SectionCard icon={SvgGmail} title="Gmail Auto-Import">
+      {/* Premium gate */}
+      {!user?.is_premium ? (
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:16, flexWrap:'wrap' }}>
+          <div style={{ fontSize:13.5, color:'var(--text2)', lineHeight:1.6, flex:1 }}>
+            Connect Gmail and Tracksy will automatically read your bank & UPI transaction
+            emails every night and add them for you — no manual entry.
+            <div style={{ marginTop:6, fontSize:12, color:'var(--text3)' }}>🔒 Read-only access. We only scan transaction alerts.</div>
+          </div>
+          <button onClick={openPremium}
+            style={{ padding:'10px 20px', borderRadius:12, border:'none', background:'linear-gradient(135deg,#FFB84D,#FF79A8)', color:'#fff', fontWeight:700, fontSize:13.5, cursor:'pointer', flexShrink:0 }}>
+            ✨ Upgrade
+          </button>
+        </div>
+      ) : !connected ? (
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:16, flexWrap:'wrap' }}>
+          <div style={{ fontSize:13.5, color:'var(--text2)', lineHeight:1.6, flex:1 }}>
+            Auto-add transactions from your bank & UPI email alerts. Runs nightly; you can also sync on demand.
+            <div style={{ marginTop:6, fontSize:12, color:'var(--text3)' }}>🔒 Read-only — Tracksy only scans transaction alerts, never sends email.</div>
+          </div>
+          <a href={gmailAPI.connectUrl()}
+            style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 18px', borderRadius:12, border:'1.5px solid var(--border)', background:'var(--surface)', color:'var(--text)', fontWeight:700, fontSize:13.5, cursor:'pointer', flexShrink:0, textDecoration:'none' }}>
+            {SvgGmail} Connect Gmail
+          </a>
+        </div>
+      ) : (
+        <div>
+          {justConnected && (
+            <div style={{ background:'rgba(55,214,122,.12)', color:'#00a86b', padding:'10px 14px', borderRadius:10, marginBottom:14, fontSize:13, fontWeight:600 }}>
+              ✓ Gmail connected! Run your first sync below.
+            </div>
+          )}
+          <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14 }}>
+            <span style={{ width:9, height:9, borderRadius:'50%', background:'#37D67A', flexShrink:0 }}/>
+            <span style={{ fontSize:13.5, fontWeight:600, color:'var(--text)' }}>Connected</span>
+            <span style={{ fontSize:12, color:'var(--text3)' }}>
+              · Last sync: {status?.last_sync ? new Date(status.last_sync).toLocaleString('en-IN',{ day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : 'never'}
+            </span>
+          </div>
+
+          {/* Nightly toggle */}
+          <label style={{ display:'flex', alignItems:'center', gap:10, marginBottom:16, cursor:'pointer' }}>
+            <div onClick={() => toggleMut.mutate(!status.sync_enabled)} style={{
+              width:40, height:22, borderRadius:11, flexShrink:0, position:'relative', transition:'background .2s',
+              background: status?.sync_enabled ? '#37D67A' : 'var(--surface3)',
+            }}>
+              <div style={{ position:'absolute', top:3, left: status?.sync_enabled ? 21 : 3, width:16, height:16, borderRadius:'50%', background:'#fff', transition:'left .2s', boxShadow:'0 1px 3px rgba(0,0,0,.3)' }}/>
+            </div>
+            <span style={{ fontSize:13, color:'var(--text2)' }}>Automatic nightly sync (2:00 AM)</span>
+          </label>
+
+          {syncResult && (
+            <div style={{ background:'var(--accent-light)', color:'var(--accent)', padding:'10px 14px', borderRadius:10, marginBottom:14, fontSize:13, fontWeight:600 }}>
+              ✓ Imported {syncResult.imported} new transaction{syncResult.imported!==1?'s':''} (scanned {syncResult.scanned} emails)
+            </div>
+          )}
+
+          <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
+            <button onClick={() => syncMut.mutate()} disabled={syncMut.isPending}
+              style={{ display:'flex', alignItems:'center', gap:7, padding:'10px 18px', borderRadius:12, border:'none', background:'linear-gradient(135deg,#6C63FF,#5B8CFF)', color:'#fff', fontWeight:700, fontSize:13.5, cursor:'pointer' }}>
+              {syncMut.isPending ? '⟳ Syncing…' : '↻ Sync Now'}
+            </button>
+            <button onClick={() => { if(confirm('Disconnect Gmail? Nightly auto-import will stop.')) disconnectMut.mutate(); }}
+              style={{ padding:'10px 18px', borderRadius:12, border:'1.5px solid rgba(255,91,91,.3)', background:'var(--red-light)', color:'#FF5B5B', fontWeight:700, fontSize:13.5, cursor:'pointer' }}>
+              Disconnect
+            </button>
+          </div>
+        </div>
+      )}
+    </SectionCard>
   );
 }

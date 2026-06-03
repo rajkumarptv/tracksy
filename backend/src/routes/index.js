@@ -125,6 +125,15 @@ router.patch('/admin/users/:userId/premium',  auth, adminAuth, adminCtrl.toggleP
 // Admin — read-only family oversight
 router.get('/admin/families',                       auth, adminAuth, adminCtrl.listFamilies);
 
+// Gmail auto-import
+const gmailCtrl = require('../controllers/gmailController');
+router.get('/gmail/connect',      gmailCtrl.connect);    // browser redirect (?token=)
+router.get('/gmail/callback',     gmailCtrl.callback);   // Google redirect (?state=)
+router.get('/gmail/status',       auth, gmailCtrl.status);
+router.post('/gmail/sync',        auth, gmailCtrl.syncNow);
+router.post('/gmail/toggle',      auth, gmailCtrl.toggleSync);
+router.post('/gmail/disconnect',  auth, gmailCtrl.disconnect);
+
 // Family — consent-based: create (premium), join by code, leave, overview
 const familyCtrl = require('../controllers/familyController');
 router.get('/family/status',          auth, familyCtrl.getStatus);

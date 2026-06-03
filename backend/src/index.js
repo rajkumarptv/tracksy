@@ -80,3 +80,28 @@ app.listen(PORT, () => {
   }
   console.log(`🗄️  DB: ${process.env.DATABASE_URL ? 'Cloud (DATABASE_URL)' : `${process.env.DB_NAME}@${process.env.DB_HOST}`}\n`);
 });
+
+/* ── Nightly Gmail auto-import (02:00 every day) ───────────────────────── */
+const cron = require('node-cron');
+const { query } = require('./db');
+const { syncUserGmail } = require('./controllers/gmailController');
+
+cron.schedule('0 2 * * *', async () => {
+  try {
+    const users = (await query(
+      `SELECT id FROM users WHERE gmail_connected=true AND gmail_sync_enabled=true
+         AND is_premium=true AND gmail_refresh_token IS NOT NULL`
+    )).rows;
+    console.log(`[gmail-cron] syncing ${users.length} user(s)…`);
+    for (const u of users) {
+      try {
+        const r = await syncUserGmail(u.id, { days: 2 });
+        if (r.imported) console.log(`[gmail-cron] user ${u.id}: +${r.imported} txns`);
+      } catch (e) {
+        console.error(`[gmail-cron] user ${u.id} failed:`, e.message);
+      }
+    }
+  } catch (e) {
+    console.error('[gmail-cron] error:', e.message);
+  }
+}, { timezone: 'Asia/Kolkata' });
