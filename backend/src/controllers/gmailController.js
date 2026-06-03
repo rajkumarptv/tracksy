@@ -26,18 +26,30 @@ async function isPremium(userId) {
    EMAIL PARSER — best-effort extraction of bank / UPI transaction emails
 ══════════════════════════════════════════════════════════════════════════ */
 
-// Senders/keywords that indicate a transaction alert
-const TXN_SENDERS = /hdfcbank|icicibank|axisbank|sbi|kotak|yesbank|paytm|phonepe|google|gpay|amazonpay|idfcfirstbank|indusind|federalbank|rblbank|aubank/i;
+// Senders/keywords that indicate a transaction alert (covers x.bank.in domains)
+const TXN_SENDERS = /hdfc|icici|axis|sbi|kotak|yes\.?bank|paytm|phonepe|google|gpay|amazon|idfc|indusind|federal|rbl|aubank|bank\.in/i;
+
+// Pretty-print a UPI handle like "bajajpay.6879729.cioig72p@indus" → "Bajajpay"
+function cleanVpa(handle) {
+  let h = (handle || '').split('@')[0];          // drop @bank
+  h = h.replace(/[.\-_]\d.*$/, '');              // drop from first .digit onward
+  h = h.replace(/[._-]+/g, ' ').trim();          // separators → space
+  if (/^\d+$/.test(h)) return '';                // pure number (phone) → no name
+  return h;
+}
+
+function titleCase(s) {
+  return (s || '').toLowerCase().replace(/\b\w/g, c => c.toUpperCase()).trim().slice(0, 50);
+}
 
 function parseTxnEmail({ subject, from, body, snippet }) {
   const text = `${subject || ''}\n${snippet || ''}\n${body || ''}`;
 
-  // Must look like a money movement
   const isDebit  = /\b(debited|spent|paid|sent|purchase|withdrawn|deducted)\b/i.test(text);
   const isCredit = /\b(credited|received|deposited|refund)\b/i.test(text);
   if (!isDebit && !isCredit) return null;
 
-  // Amount: Rs. / INR / ₹ followed by number
+  // Amount
   const amtMatch = text.match(/(?:Rs\.?|INR|₹)\s?([\d,]+(?:\.\d{1,2})?)/i);
   if (!amtMatch) return null;
   const amount = parseFloat(amtMatch[1].replace(/,/g, ''));
@@ -45,24 +57,44 @@ function parseTxnEmail({ subject, from, body, snippet }) {
 
   const type = isCredit && !isDebit ? 'income' : 'expense';
 
-  // Merchant / counterparty — try common phrasings
+  // Merchant / counterparty — priority order
   let merchant = '';
-  const m =
-    text.match(/(?:at|to|towards)\s+([A-Z0-9][A-Za-z0-9 &._-]{2,40})/)
- || text.match(/(?:from)\s+([A-Z0-9][A-Za-z0-9 &._-]{2,40})/)
- || text.match(/VPA\s+([a-zA-Z0-9.@_-]{3,40})/i)
- || text.match(/UPI\/[A-Z]+\/\d+\/([A-Za-z0-9 ._-]{3,40})/);
-  if (m) merchant = m[1].trim().replace(/\s+/g, ' ');
-  // Trim trailing noise words
-  merchant = merchant.replace(/\b(on|info|ref|upi|a\/c|account|your)\b.*$/i, '').trim();
-  if (!merchant) {
-    // Fall back to the bank name from sender
-    const bank = (from || '').match(TXN_SENDERS);
-    merchant = bank ? bank[0].toUpperCase() : 'Bank Transaction';
-  }
-  merchant = merchant.charAt(0).toUpperCase() + merchant.slice(1, 50);
 
-  // UPI ref for nicer dedup secondary key
+  // 1) "VPA handle (NAME)" → prefer the name in parentheses
+  let m = text.match(/VPA\s+[a-zA-Z0-9.@_-]+\s*\(([^)]{2,40})\)/i);
+  if (m) merchant = m[1].trim();
+
+  // 2) "towards VPA handle" → clean the handle
+  if (!merchant) {
+    m = text.match(/VPA\s+([a-zA-Z0-9.@_-]{3,50})/i);
+    if (m) merchant = cleanVpa(m[1]);
+  }
+
+  // 3) "credited to / debited to <NAME>"
+  if (!merchant) {
+    m = text.match(/(?:credited to|debited to|paid to|sent to)\s+(?:VPA\s+)?([A-Za-z][A-Za-z0-9 &._-]{2,40})/i);
+    if (m) merchant = m[1].trim();
+  }
+
+  // 4) generic "at/to <NAME>"
+  if (!merchant) {
+    m = text.match(/\b(?:at|to|towards)\s+([A-Z][A-Za-z0-9 &._-]{2,40})/);
+    if (m) merchant = m[1].trim();
+  }
+
+  // Strip trailing boilerplate words
+  merchant = merchant.replace(/\b(on|info|ref|upi|a\/c|account|your|dated|towards|is|has|was|the)\b.*$/i, '').trim();
+
+  // Fallbacks: a credit with no name → "Bank Credit"; else bank name
+  if (!merchant || merchant.length < 2) {
+    const bank = (from || '').match(/hdfc|icici|axis|sbi|kotak|yes|paytm|phonepe|gpay|google|amazon|idfc|indusind|federal|rbl/i);
+    merchant = type === 'income'
+      ? (bank ? `${bank[0].toUpperCase()} Credit` : 'Bank Credit')
+      : (bank ? `${bank[0].toUpperCase()} Payment` : 'Bank Payment');
+  } else {
+    merchant = titleCase(merchant);
+  }
+
   const ref = (text.match(/(?:UPI Ref(?:erence)? (?:No\.?|number)?|Ref(?:erence)? No\.?|txn id)[:\s]*([A-Za-z0-9]{6,})/i) || [])[1] || null;
 
   return { amount, type, merchant, ref };
