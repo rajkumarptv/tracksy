@@ -117,6 +117,10 @@ export const dataAPI = {
 // Family budget
 export const familyAPI = {
   status:       () => api.get('/family/status'),
+  create:       (name) => api.post('/family/create', { name }),
+  join:         (code) => api.post('/family/join', { code }),
+  leave:        () => api.post('/family/leave'),
+  removeMember: (memberId) => api.post('/family/remove-member', { member_id: memberId }),
   overview:     () => api.get('/family/overview'),
   memberDetail: (id) => api.get(`/family/member/${id}`),
 };

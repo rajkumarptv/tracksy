@@ -1,5 +1,4 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import {
   LayoutDashboard, Wallet, ArrowLeftRight, PieChart,
   Target, Tag, TrendingUp, Settings,
@@ -8,20 +7,11 @@ import {
 import useAuthStore from '../../store/authStore';
 import useThemeStore from '../../store/themeStore';
 import usePremiumStore from '../../store/premiumStore';
-import { familyAPI } from '../../services/api';
 import { useT } from '../../i18n';
 import styles from './Sidebar.module.css';
 
 function NavItems({ onClose }) {
   const t = useT();
-
-  // Show Family link only to users who belong to a family
-  const { data: familyStatus } = useQuery({
-    queryKey: ['family-status'],
-    queryFn: () => familyAPI.status().then(r => r.data.data),
-    staleTime: 5 * 60 * 1000,
-    retry: false,
-  });
 
   const NAV_ITEMS = [
     { path: '/',             key: 'nav_dashboard',    Icon: LayoutDashboard },
@@ -29,6 +19,7 @@ function NavItems({ onClose }) {
     { path: '/wallet',       key: 'nav_accounts',     Icon: Wallet },
     { path: '/goals',        key: 'nav_goals',        Icon: Target },
     { path: '/budget',       key: 'nav_budget',       Icon: PieChart },
+    { path: '/family',       label: 'Family',         Icon: Users },
     { path: '/categories',   key: 'nav_categories',   Icon: Tag },
     { path: '/debts',        key: 'nav_debts',        Icon: CreditCard },
     { path: '/recurring',    key: 'nav_recurring',    Icon: Repeat },
@@ -36,25 +27,15 @@ function NavItems({ onClose }) {
     { path: '/import',      key: 'nav_import',       Icon: Upload },
   ];
 
-  // Insert Family link (only primary members see it) after Budget
-  const showFamily = familyStatus?.in_family && familyStatus?.role === 'primary';
-
   return (
     <>
-      {NAV_ITEMS.map(({ path, key, Icon }) => (
+      {NAV_ITEMS.map(({ path, key, label, Icon }) => (
         <NavLink key={path} to={path} end={path === '/'} onClick={onClose}
           className={({ isActive }) => `${styles.navItem}${isActive ? ' ' + styles.active : ''}`}>
           <span className={styles.navIcon}><Icon size={17} /></span>
-          {t(key)}
+          {label || t(key)}
         </NavLink>
       ))}
-      {showFamily && (
-        <NavLink to="/family" onClick={onClose}
-          className={({ isActive }) => `${styles.navItem}${isActive ? ' ' + styles.active : ''}`}>
-          <span className={styles.navIcon}><Users size={17} /></span>
-          Family
-        </NavLink>
-      )}
     </>
   );
 }

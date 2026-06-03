@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { familyAPI } from '../services/api';
 import { Topbar, PageLoader, EmptyState } from '../components/ui';
-import { Users, TrendingUp, TrendingDown, Wallet, ChevronRight, X } from 'lucide-react';
+import { Users, TrendingUp, TrendingDown, Wallet, ChevronRight, X, Copy, Check, LogOut, UserPlus, Plus } from 'lucide-react';
 import { useFmt, useT } from '../i18n';
 import useAuthStore from '../store/authStore';
 import usePremiumStore from '../store/premiumStore';
@@ -11,30 +11,45 @@ const MONTHS = ['January','February','March','April','May','June','July','August
 
 export default function Family() {
   const fmt = useFmt();
-  const t = useT();
   const { user } = useAuthStore();
   const { openPremium } = usePremiumStore();
+  const qc = useQueryClient();
   const [activeMember, setActiveMember] = useState(null);
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['family-overview'],
-    queryFn: () => familyAPI.overview().then(r => r.data.data),
+  const { data: status, isLoading: statusLoading } = useQuery({
+    queryKey: ['family-status'],
+    queryFn: () => familyAPI.status().then(r => r.data.data),
     retry: false,
   });
 
-  if (isLoading) return <PageLoader />;
+  const isPremium = user?.is_premium || status?.is_premium;
+  const inFamily  = status?.in_family;
+  const isPrimary = status?.role === 'primary';
 
-  // Premium gate
-  if (!user?.is_premium) {
+  // Overview only fetched for primary members
+  const { data: overview, isLoading: ovLoading } = useQuery({
+    queryKey: ['family-overview'],
+    queryFn: () => familyAPI.overview().then(r => r.data.data),
+    enabled: !!isPremium && inFamily && isPrimary,
+    retry: false,
+  });
+
+  if (statusLoading) return <PageLoader />;
+
+  /* ── 1. NOT PREMIUM → upgrade prompt ── */
+  if (!isPremium) {
     return (
-      <div style={{ display:'flex', flexDirection:'column', height:'100%' }}>
-        <Topbar title="Family Budget" subtitle="Manage your whole family's finances"/>
+      <Shell>
         <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:40 }}>
-          <div style={{ textAlign:'center', maxWidth:420 }}>
+          <div style={{ textAlign:'center', maxWidth:440 }}>
             <div style={{ fontSize:56, marginBottom:16 }}>👨‍👩‍👧</div>
-            <div style={{ fontSize:22, fontWeight:800, color:'var(--text)', marginBottom:8 }}>Family Budget is Premium</div>
-            <div style={{ fontSize:14, color:'var(--text3)', marginBottom:24, lineHeight:1.6 }}>
-              See every family member's income, spending, and balances in one place. Upgrade to unlock.
+            <div style={{ fontSize:22, fontWeight:800, color:'var(--text)', marginBottom:10 }}>Family Budget</div>
+            <div style={{ fontSize:14, color:'var(--text3)', marginBottom:8, lineHeight:1.6 }}>
+              Create a private family space and invite members with a code. See everyone's
+              income, spending and balances in one combined view.
+            </div>
+            <div style={{ fontSize:12.5, color:'var(--text3)', marginBottom:24, background:'var(--surface2)', borderRadius:10, padding:'10px 14px' }}>
+              🔒 Members join only with your code — nobody's data is shared without consent.
             </div>
             <button onClick={openPremium}
               style={{ padding:'12px 28px', borderRadius:12, border:'none', background:'linear-gradient(135deg,#FFB84D,#FF79A8)', color:'#fff', fontWeight:800, fontSize:15, cursor:'pointer', boxShadow:'0 4px 16px rgba(255,184,77,.4)' }}>
@@ -42,43 +57,31 @@ export default function Family() {
             </button>
           </div>
         </div>
-      </div>
+      </Shell>
     );
   }
 
-  // Not a primary member (or no family assigned)
-  if (error || !data) {
-    const msg = error?.response?.data?.code === 'NOT_PRIMARY'
-      ? "You're part of a family, but only the primary member can view the family overview."
-      : "You're not set up in a family yet. Ask the admin to add you to a family.";
-    return (
-      <div style={{ display:'flex', flexDirection:'column', height:'100%' }}>
-        <Topbar title="Family Budget" subtitle="Manage your whole family's finances"/>
-        <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:40 }}>
-          <EmptyState icon="👨‍👩‍👧" title="No family overview" description={msg}/>
-        </div>
-      </div>
-    );
+  /* ── 2. PREMIUM, NOT IN FAMILY → create or join ── */
+  if (!inFamily) {
+    return <SetupFamily qc={qc} />;
   }
 
-  const { family, members, combined, period } = data;
+  /* ── 3. PREMIUM, MEMBER (not primary) → own status + leave ── */
+  if (!isPrimary) {
+    return <MemberView status={status} qc={qc} />;
+  }
+
+  /* ── 4. PREMIUM, PRIMARY → full overview ── */
+  if (ovLoading || !overview) return <PageLoader />;
+  const { family, members, combined, period } = overview;
   const monthLabel = `${MONTHS[period.month - 1]} ${period.year}`;
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', height:'100%' }}>
-      {/* Mobile header */}
-      <div className="mob-header">
-        <div>
-          <div className="mob-header-title">{family.name}</div>
-          <div className="mob-header-sub">Family Budget · {monthLabel}</div>
-        </div>
-      </div>
-      {/* Desktop topbar */}
-      <div className="mob-hide">
-        <Topbar title={`👨‍👩‍👧 ${family.name}`} subtitle={`Family Budget overview · ${monthLabel}`}/>
-      </div>
-
+    <Shell title={`👨‍👩‍👧 ${family.name}`} subtitle={`Family overview · ${monthLabel}`} mobileTitle={family.name} mobileSub={`Family · ${monthLabel}`}>
       <div className="mob-content" style={{ padding:'28px 32px 40px', flex:1, overflow:'auto' }}>
+
+        {/* Invite code banner */}
+        <InviteCodeBar code={family.family_code} qc={qc} />
 
         {/* Combined totals */}
         <div className="mob-summary-scroll" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:24 }}>
@@ -98,15 +101,14 @@ export default function Family() {
           ))}
         </div>
 
-        {/* Member cards */}
         <div style={{ fontSize:13, fontWeight:700, color:'var(--text2)', marginBottom:12 }}>
           Family Members ({members.length})
         </div>
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:14 }}>
           {members.map(m => (
-            <div key={m.id} onClick={() => setActiveMember(m.id)}
-              style={{ background:'var(--surface)', borderRadius:18, padding:'18px 20px', border:'1px solid var(--border-light)', boxShadow:'0 4px 20px rgba(108,99,255,.06)', cursor:'pointer', transition:'transform .2s' }}
-              onMouseEnter={e => e.currentTarget.style.transform='translateY(-3px)'}
+            <div key={m.id} onClick={() => m.is_me ? null : setActiveMember(m.id)}
+              style={{ background:'var(--surface)', borderRadius:18, padding:'18px 20px', border:'1px solid var(--border-light)', boxShadow:'0 4px 20px rgba(108,99,255,.06)', cursor: m.is_me ? 'default' : 'pointer', transition:'transform .2s' }}
+              onMouseEnter={e => { if(!m.is_me) e.currentTarget.style.transform='translateY(-3px)'; }}
               onMouseLeave={e => e.currentTarget.style.transform=''}>
               <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:14 }}>
                 <div style={{ width:44, height:44, borderRadius:'50%', background:'linear-gradient(135deg,#6C63FF,#a29bfe)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontWeight:800, color:'#fff', flexShrink:0 }}>
@@ -117,28 +119,23 @@ export default function Family() {
                     {m.name}{m.is_me ? ' (You)' : ''}
                   </div>
                   <span style={{ fontSize:10.5, fontWeight:700, padding:'2px 8px', borderRadius:20, background: m.role==='primary' ? 'rgba(255,184,77,.15)' : 'rgba(108,99,255,.12)', color: m.role==='primary' ? '#FFB84D' : 'var(--accent)' }}>
-                    {m.role === 'primary' ? '👑 Primary' : 'Member'}
+                    {m.role === 'primary' ? '👑 Head' : 'Member'}
                   </span>
                 </div>
-                <ChevronRight size={18} color="var(--text3)"/>
+                {!m.is_me && <ChevronRight size={18} color="var(--text3)"/>}
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
-                <div style={{ background:'var(--surface2)', borderRadius:10, padding:'9px 11px' }}>
-                  <div style={{ fontSize:10, color:'var(--text3)', fontWeight:600, marginBottom:2 }}>Income</div>
-                  <div className="mono" style={{ fontSize:13.5, fontWeight:800, color:'#37D67A' }}>{fmt(m.income)}</div>
-                </div>
-                <div style={{ background:'var(--surface2)', borderRadius:10, padding:'9px 11px' }}>
-                  <div style={{ fontSize:10, color:'var(--text3)', fontWeight:600, marginBottom:2 }}>Expense</div>
-                  <div className="mono" style={{ fontSize:13.5, fontWeight:800, color:'#FF5B5B' }}>{fmt(m.expense)}</div>
-                </div>
-                <div style={{ background:'var(--surface2)', borderRadius:10, padding:'9px 11px' }}>
-                  <div style={{ fontSize:10, color:'var(--text3)', fontWeight:600, marginBottom:2 }}>Net</div>
-                  <div className="mono" style={{ fontSize:13.5, fontWeight:800, color: m.net>=0?'#37D67A':'#FF5B5B' }}>{m.net>=0?'+':''}{fmt(m.net)}</div>
-                </div>
-                <div style={{ background:'var(--surface2)', borderRadius:10, padding:'9px 11px' }}>
-                  <div style={{ fontSize:10, color:'var(--text3)', fontWeight:600, marginBottom:2 }}>Net Worth</div>
-                  <div className="mono" style={{ fontSize:13.5, fontWeight:800, color:'var(--text)' }}>{fmt(m.net_balance)}</div>
-                </div>
+                {[
+                  { l:'Income',    v:fmt(m.income),  c:'#37D67A' },
+                  { l:'Expense',   v:fmt(m.expense), c:'#FF5B5B' },
+                  { l:'Net',       v:`${m.net>=0?'+':''}${fmt(m.net)}`, c: m.net>=0?'#37D67A':'#FF5B5B' },
+                  { l:'Net Worth', v:fmt(m.net_balance), c:'var(--text)' },
+                ].map(s => (
+                  <div key={s.l} style={{ background:'var(--surface2)', borderRadius:10, padding:'9px 11px' }}>
+                    <div style={{ fontSize:10, color:'var(--text3)', fontWeight:600, marginBottom:2 }}>{s.l}</div>
+                    <div className="mono" style={{ fontSize:13.5, fontWeight:800, color:s.c }}>{s.v}</div>
+                  </div>
+                ))}
               </div>
             </div>
           ))}
@@ -146,31 +143,214 @@ export default function Family() {
       </div>
 
       {activeMember && (
-        <MemberDetailModal memberId={activeMember} onClose={() => setActiveMember(null)} fmt={fmt}/>
+        <MemberDetailModal memberId={activeMember} onClose={() => setActiveMember(null)} fmt={fmt} qc={qc} />
       )}
+    </Shell>
+  );
+}
+
+/* ── Layout shell ── */
+function Shell({ children, title='Family Budget', subtitle="Manage your family's finances", mobileTitle='Family Budget', mobileSub='' }) {
+  return (
+    <div style={{ display:'flex', flexDirection:'column', height:'100%' }}>
+      <div className="mob-header">
+        <div>
+          <div className="mob-header-title">{mobileTitle}</div>
+          {mobileSub && <div className="mob-header-sub">{mobileSub}</div>}
+        </div>
+      </div>
+      <div className="mob-hide"><Topbar title={title} subtitle={subtitle}/></div>
+      {children}
     </div>
   );
 }
 
-function MemberDetailModal({ memberId, onClose, fmt }) {
+/* ── Invite code bar (primary) ── */
+function InviteCodeBar({ code, qc }) {
+  const [copied, setCopied] = useState(false);
+  const leaveMut = useMutation({
+    mutationFn: () => familyAPI.leave(),
+    onSuccess: () => { qc.invalidateQueries({ queryKey:['family-status'] }); qc.invalidateQueries({ queryKey:['family-overview'] }); },
+  });
+  const copy = () => { navigator.clipboard?.writeText(code); setCopied(true); setTimeout(()=>setCopied(false), 1500); };
+
+  return (
+    <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap', background:'var(--surface)', borderRadius:14, padding:'14px 18px', marginBottom:20, border:'1px solid var(--border-light)' }}>
+      <div style={{ fontSize:13, color:'var(--text3)' }}>
+        <strong style={{ color:'var(--text)' }}>Invite code:</strong> share this so family can join
+      </div>
+      <div style={{ display:'flex', alignItems:'center', gap:8, background:'var(--accent-light)', borderRadius:10, padding:'7px 14px' }}>
+        <span className="mono" style={{ fontSize:18, fontWeight:800, letterSpacing:3, color:'var(--accent)' }}>{code}</span>
+        <button onClick={copy} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--accent)', display:'flex' }}>
+          {copied ? <Check size={16}/> : <Copy size={16}/>}
+        </button>
+      </div>
+      <button onClick={() => { if(confirm('Disband this family? All members will be removed.')) leaveMut.mutate(); }}
+        style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:6, padding:'7px 14px', borderRadius:10, border:'1.5px solid rgba(255,91,91,.3)', background:'var(--red-light)', color:'#FF5B5B', fontSize:12.5, fontWeight:700, cursor:'pointer' }}>
+        <LogOut size={13}/> Disband
+      </button>
+    </div>
+  );
+}
+
+/* ── Create or Join (premium, no family yet) ── */
+function SetupFamily({ qc }) {
+  const [mode, setMode] = useState(null); // 'create' | 'join'
+  const [name, setName] = useState('');
+  const [code, setCode] = useState('');
+  const [err, setErr]   = useState('');
+
+  const refresh = () => { qc.invalidateQueries({ queryKey:['family-status'] }); qc.invalidateQueries({ queryKey:['family-overview'] }); };
+  const createMut = useMutation({
+    mutationFn: () => familyAPI.create(name),
+    onSuccess: refresh,
+    onError: e => setErr(e.response?.data?.message || 'Failed to create family'),
+  });
+  const joinMut = useMutation({
+    mutationFn: () => familyAPI.join(code),
+    onSuccess: refresh,
+    onError: e => setErr(e.response?.data?.message || 'Failed to join family'),
+  });
+
+  return (
+    <Shell>
+      <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:40 }}>
+        <div style={{ width:'100%', maxWidth:440 }}>
+          <div style={{ textAlign:'center', marginBottom:28 }}>
+            <div style={{ fontSize:48, marginBottom:12 }}>👨‍👩‍👧</div>
+            <div style={{ fontSize:21, fontWeight:800, color:'var(--text)', marginBottom:6 }}>Set up Family Budget</div>
+            <div style={{ fontSize:13.5, color:'var(--text3)' }}>Start a family as head, or join one with a code.</div>
+          </div>
+
+          {err && <div style={{ background:'var(--red-light)', color:'#FF5B5B', padding:'10px 14px', borderRadius:10, marginBottom:16, fontSize:13 }}>⚠️ {err}</div>}
+
+          {/* Choice cards */}
+          {!mode && (
+            <div style={{ display:'grid', gap:12 }}>
+              <button onClick={() => { setMode('create'); setErr(''); }}
+                style={{ display:'flex', alignItems:'center', gap:14, padding:'18px 20px', borderRadius:16, border:'1.5px solid var(--border)', background:'var(--surface)', cursor:'pointer', textAlign:'left' }}>
+                <div style={{ width:46, height:46, borderRadius:13, background:'rgba(108,99,255,.12)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                  <Plus size={22} color="#6C63FF"/>
+                </div>
+                <div>
+                  <div style={{ fontSize:15, fontWeight:700, color:'var(--text)' }}>Create a family</div>
+                  <div style={{ fontSize:12.5, color:'var(--text3)' }}>You become the head & get an invite code</div>
+                </div>
+              </button>
+              <button onClick={() => { setMode('join'); setErr(''); }}
+                style={{ display:'flex', alignItems:'center', gap:14, padding:'18px 20px', borderRadius:16, border:'1.5px solid var(--border)', background:'var(--surface)', cursor:'pointer', textAlign:'left' }}>
+                <div style={{ width:46, height:46, borderRadius:13, background:'rgba(55,214,122,.12)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                  <UserPlus size={22} color="#37D67A"/>
+                </div>
+                <div>
+                  <div style={{ fontSize:15, fontWeight:700, color:'var(--text)' }}>Join a family</div>
+                  <div style={{ fontSize:12.5, color:'var(--text3)' }}>Enter the code from your family head</div>
+                </div>
+              </button>
+            </div>
+          )}
+
+          {/* Create form */}
+          {mode === 'create' && (
+            <div style={{ background:'var(--surface)', borderRadius:16, padding:'20px', border:'1px solid var(--border-light)' }}>
+              <label style={{ fontSize:12, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.05em', display:'block', marginBottom:8 }}>Family Name</label>
+              <input autoFocus value={name} onChange={e=>{setName(e.target.value);setErr('');}} placeholder="e.g. The Kumar Family"
+                onKeyDown={e=>e.key==='Enter'&&name.trim()&&createMut.mutate()}
+                style={{ width:'100%', padding:'11px 14px', borderRadius:10, border:'1.5px solid var(--border)', background:'var(--surface2)', color:'var(--text)', fontSize:14, outline:'none', boxSizing:'border-box', marginBottom:16 }}/>
+              <div style={{ display:'flex', gap:10 }}>
+                <button onClick={()=>{setMode(null);setErr('');}} style={{ flex:1, padding:'11px', borderRadius:10, border:'1.5px solid var(--border)', background:'var(--surface)', color:'var(--text3)', fontWeight:600, fontSize:14, cursor:'pointer' }}>Back</button>
+                <button onClick={()=>createMut.mutate()} disabled={!name.trim()||createMut.isPending}
+                  style={{ flex:2, padding:'11px', borderRadius:10, border:'none', background:'linear-gradient(135deg,#6C63FF,#5B8CFF)', color:'#fff', fontWeight:700, fontSize:14, cursor:'pointer', opacity:(!name.trim())?.6:1 }}>
+                  {createMut.isPending ? 'Creating…' : 'Create Family'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Join form */}
+          {mode === 'join' && (
+            <div style={{ background:'var(--surface)', borderRadius:16, padding:'20px', border:'1px solid var(--border-light)' }}>
+              <label style={{ fontSize:12, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.05em', display:'block', marginBottom:8 }}>Family Code</label>
+              <input autoFocus value={code} onChange={e=>{setCode(e.target.value.toUpperCase());setErr('');}} placeholder="ABC123" maxLength={6}
+                onKeyDown={e=>e.key==='Enter'&&code.trim()&&joinMut.mutate()}
+                style={{ width:'100%', padding:'11px 14px', borderRadius:10, border:'1.5px solid var(--border)', background:'var(--surface2)', color:'var(--text)', fontSize:20, fontWeight:800, letterSpacing:4, textAlign:'center', outline:'none', boxSizing:'border-box', marginBottom:12, fontFamily:'monospace' }}/>
+              <div style={{ fontSize:12, color:'var(--text3)', background:'rgba(255,184,77,.08)', borderRadius:9, padding:'9px 12px', marginBottom:16 }}>
+                ⚠️ By joining, the family head will be able to see your accounts and spending.
+              </div>
+              <div style={{ display:'flex', gap:10 }}>
+                <button onClick={()=>{setMode(null);setErr('');}} style={{ flex:1, padding:'11px', borderRadius:10, border:'1.5px solid var(--border)', background:'var(--surface)', color:'var(--text3)', fontWeight:600, fontSize:14, cursor:'pointer' }}>Back</button>
+                <button onClick={()=>joinMut.mutate()} disabled={!code.trim()||joinMut.isPending}
+                  style={{ flex:2, padding:'11px', borderRadius:10, border:'none', background:'linear-gradient(135deg,#37D67A,#00b894)', color:'#fff', fontWeight:700, fontSize:14, cursor:'pointer', opacity:(!code.trim())?.6:1 }}>
+                  {joinMut.isPending ? 'Joining…' : 'Join Family'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </Shell>
+  );
+}
+
+/* ── Member view (joined, not primary) ── */
+function MemberView({ status, qc }) {
+  const leaveMut = useMutation({
+    mutationFn: () => familyAPI.leave(),
+    onSuccess: () => qc.invalidateQueries({ queryKey:['family-status'] }),
+  });
+  const head = status.members?.find(m => m.family_role === 'primary');
+
+  return (
+    <Shell mobileTitle={status.family_name} mobileSub="You're a family member">
+      <div style={{ flex:1, display:'flex', alignItems:'center', justifyContent:'center', padding:40 }}>
+        <div style={{ width:'100%', maxWidth:440, textAlign:'center' }}>
+          <div style={{ fontSize:48, marginBottom:12 }}>👨‍👩‍👧</div>
+          <div style={{ fontSize:21, fontWeight:800, color:'var(--text)', marginBottom:6 }}>{status.family_name}</div>
+          <div style={{ fontSize:13.5, color:'var(--text3)', marginBottom:20 }}>
+            You're a member of this family.{head ? ` ${head.name} (head) can see your accounts and spending.` : ''}
+          </div>
+          <div style={{ background:'var(--surface)', borderRadius:14, padding:'16px 20px', border:'1px solid var(--border-light)', marginBottom:20, textAlign:'left' }}>
+            <div style={{ fontSize:12, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.05em', marginBottom:10 }}>Members</div>
+            {status.members?.map(m => (
+              <div key={m.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'6px 0' }}>
+                <span style={{ fontSize:13.5, color:'var(--text)', fontWeight:600 }}>{m.name}{m.is_me?' (You)':''}</span>
+                <span style={{ fontSize:10.5, fontWeight:700, padding:'2px 8px', borderRadius:20, background: m.family_role==='primary'?'rgba(255,184,77,.15)':'rgba(108,99,255,.12)', color: m.family_role==='primary'?'#FFB84D':'var(--accent)' }}>
+                  {m.family_role==='primary'?'👑 Head':'Member'}
+                </span>
+              </div>
+            ))}
+          </div>
+          <button onClick={() => { if(confirm('Leave this family? The head will no longer see your data.')) leaveMut.mutate(); }}
+            style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'11px 24px', borderRadius:12, border:'1.5px solid rgba(255,91,91,.3)', background:'var(--red-light)', color:'#FF5B5B', fontWeight:700, fontSize:14, cursor:'pointer' }}>
+            <LogOut size={15}/> Leave Family
+          </button>
+        </div>
+      </div>
+    </Shell>
+  );
+}
+
+/* ── Member detail modal (primary clicks a member) ── */
+function MemberDetailModal({ memberId, onClose, fmt, qc }) {
   const { data, isLoading } = useQuery({
     queryKey: ['family-member', memberId],
     queryFn: () => familyAPI.memberDetail(memberId).then(r => r.data.data),
+  });
+  const removeMut = useMutation({
+    mutationFn: () => familyAPI.removeMember(memberId),
+    onSuccess: () => { qc.invalidateQueries({ queryKey:['family-overview'] }); qc.invalidateQueries({ queryKey:['family-status'] }); onClose(); },
   });
 
   return (
     <div className="modal-overlay" onClick={e => e.target===e.currentTarget && onClose()}>
       <div className="modal" style={{ maxWidth:540, maxHeight:'90vh', overflowY:'auto' }}>
         <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:18 }}>
-          <div className="modal-title" style={{ margin:0, flex:1 }}>
-            {isLoading ? 'Loading…' : data?.member.name}
-          </div>
+          <div className="modal-title" style={{ margin:0, flex:1 }}>{isLoading ? 'Loading…' : data?.member.name}</div>
           <button onClick={onClose} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--text3)' }}><X size={20}/></button>
         </div>
 
         {isLoading ? <PageLoader /> : (
           <>
-            {/* Accounts */}
             <div style={{ fontSize:12, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.05em', marginBottom:10 }}>Accounts ({data.wallets.length})</div>
             <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:20 }}>
               {data.wallets.map(w => (
@@ -182,9 +362,8 @@ function MemberDetailModal({ memberId, onClose, fmt }) {
               {!data.wallets.length && <div style={{ fontSize:13, color:'var(--text3)', padding:'8px 0' }}>No accounts yet.</div>}
             </div>
 
-            {/* Recent transactions */}
             <div style={{ fontSize:12, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.05em', marginBottom:10 }}>Recent Transactions</div>
-            <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+            <div style={{ display:'flex', flexDirection:'column', gap:6, marginBottom:18 }}>
               {data.recent_transactions.map(tx => (
                 <div key={tx.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'9px 12px', borderRadius:9, background:'var(--surface2)' }}>
                   <span style={{ fontSize:15 }}>{tx.category_emoji || '💸'}</span>
@@ -199,6 +378,11 @@ function MemberDetailModal({ memberId, onClose, fmt }) {
               ))}
               {!data.recent_transactions.length && <div style={{ fontSize:13, color:'var(--text3)', padding:'8px 0' }}>No transactions yet.</div>}
             </div>
+
+            <button onClick={() => { if(confirm('Remove this member from the family?')) removeMut.mutate(); }}
+              style={{ width:'100%', padding:'10px', borderRadius:10, border:'1.5px solid rgba(255,91,91,.3)', background:'var(--red-light)', color:'#FF5B5B', fontWeight:700, fontSize:13, cursor:'pointer' }}>
+              Remove from family
+            </button>
           </>
         )}
       </div>

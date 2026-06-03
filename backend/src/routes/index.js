@@ -122,16 +122,17 @@ router.get('/admin/stats',                    auth, adminAuth, adminCtrl.getStat
 router.get('/admin/users',                    auth, adminAuth, adminCtrl.getUsers);
 router.patch('/admin/users/:userId/premium',  auth, adminAuth, adminCtrl.togglePremium);
 
-// Admin — Family management
+// Admin — read-only family oversight
 router.get('/admin/families',                       auth, adminAuth, adminCtrl.listFamilies);
-router.post('/admin/families',                      auth, adminAuth, adminCtrl.createFamily);
-router.patch('/admin/families/:familyId/members',   auth, adminAuth, adminCtrl.addFamilyMember);
-router.delete('/admin/families/members/:userId',    auth, adminAuth, adminCtrl.removeFamilyMember);
 
-// Family — primary member views family data
+// Family — consent-based: create (premium), join by code, leave, overview
 const familyCtrl = require('../controllers/familyController');
-router.get('/family/status',        auth, familyCtrl.getStatus);
-router.get('/family/overview',      auth, familyCtrl.getOverview);
-router.get('/family/member/:id',    auth, familyCtrl.getMemberDetail);
+router.get('/family/status',          auth, familyCtrl.getStatus);
+router.post('/family/create',         auth, familyCtrl.createFamily);
+router.post('/family/join',           auth, familyCtrl.joinFamily);
+router.post('/family/leave',          auth, familyCtrl.leaveFamily);
+router.post('/family/remove-member',  auth, familyCtrl.removeMember);
+router.get('/family/overview',        auth, familyCtrl.getOverview);
+router.get('/family/member/:id',      auth, familyCtrl.getMemberDetail);
 
 module.exports = router;
