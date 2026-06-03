@@ -517,6 +517,19 @@ export default function Dashboard() {
     ...(walletId ? { wallet_id:walletId } : {}),
   };
 
+  // Income/Expense breakdown modal: null | 'income' | 'expense'
+  const [breakdown, setBreakdown] = useState(null);
+  // Convert the active period into start/end dates for the transactions list endpoint
+  const breakdownRange = useMemo(() => {
+    if (qStart && qEnd) return { start_date: qStart, end_date: qEnd };
+    if (qMonth && qYear) {
+      const sd = `${qYear}-${String(qMonth).padStart(2,'0')}-01`;
+      const ed = qMonth === 12 ? `${qYear+1}-01-01` : `${qYear}-${String(qMonth+1).padStart(2,'0')}-01`;
+      return { start_date: sd, end_date: ed };
+    }
+    return {};
+  }, [qMonth, qYear, qStart, qEnd]);
+
   const { data: wallets } = useQuery({ queryKey:['wallets'], queryFn:() => walletsAPI.getAll().then(r=>r.data.data) });
   const { data: goals   } = useQuery({ queryKey:['goals'],   queryFn:() => goalsAPI.getAll().then(r=>r.data.data) });
   const { data: budgets } = useQuery({ queryKey:['budgets'],  queryFn:() => budgetsAPI.getAll().then(r=>r.data.data) });
@@ -711,8 +724,11 @@ export default function Dashboard() {
                 <span style={{ color:'#6b7280', fontWeight:400, marginLeft:3 }}>vs last month</span>
               </div>
               <div className={styles.overviewRow}>
-                {/* Income */}
-                <div style={{ display:'flex', alignItems:'center', gap:10, flex:1 }}>
+                {/* Income — click for breakdown */}
+                <div onClick={() => setBreakdown('income')} title="View income transactions"
+                  style={{ display:'flex', alignItems:'center', gap:10, flex:1, cursor:'pointer', borderRadius:10, padding:'4px', margin:'-4px', transition:'background .15s' }}
+                  onMouseEnter={e => e.currentTarget.style.background='rgba(55,214,122,.06)'}
+                  onMouseLeave={e => e.currentTarget.style.background=''}>
                   <div style={{
                     width:38, height:38, borderRadius:11, flexShrink:0,
                     background:'rgba(55,214,122,.12)',
@@ -721,7 +737,7 @@ export default function Dashboard() {
                     <img src="/income.png" alt="income" style={{ width:22, height:22, objectFit:'contain' }}/>
                   </div>
                   <div>
-                    <div className={styles.overviewColLabel}>{t('dash_income')}</div>
+                    <div className={styles.overviewColLabel} style={{ display:'flex', alignItems:'center', gap:3 }}>{t('dash_income')} <ChevronRight size={11}/></div>
                     <div className={styles.overviewColValue} style={{ color:'var(--green)' }}>
                       {fmt(d.income||0)}
                     </div>
@@ -731,8 +747,11 @@ export default function Dashboard() {
                 {/* Divider */}
                 <div style={{ width:1, background:'var(--border-light)', alignSelf:'stretch', flexShrink:0 }}/>
 
-                {/* Expenses */}
-                <div style={{ display:'flex', alignItems:'center', gap:10, flex:1, justifyContent:'flex-end' }}>
+                {/* Expenses — click for breakdown */}
+                <div onClick={() => setBreakdown('expense')} title="View expense transactions"
+                  style={{ display:'flex', alignItems:'center', gap:10, flex:1, justifyContent:'flex-end', cursor:'pointer', borderRadius:10, padding:'4px', margin:'-4px', transition:'background .15s' }}
+                  onMouseEnter={e => e.currentTarget.style.background='rgba(255,91,91,.06)'}
+                  onMouseLeave={e => e.currentTarget.style.background=''}>
                   <div style={{
                     width:38, height:38, borderRadius:11, flexShrink:0,
                     background:'rgba(255,91,91,.12)',
@@ -741,7 +760,7 @@ export default function Dashboard() {
                     <img src="/Financial decline.png" alt="expenses" style={{ width:22, height:22, objectFit:'contain' }}/>
                   </div>
                   <div>
-                    <div className={styles.overviewColLabel}>{t('dash_expenses')}</div>
+                    <div className={styles.overviewColLabel} style={{ display:'flex', alignItems:'center', gap:3 }}>{t('dash_expenses')} <ChevronRight size={11}/></div>
                     <div className={styles.overviewColValue} style={{ color:'var(--red)' }}>
                       {fmt(d.expense||0)}
                     </div>
@@ -1162,6 +1181,114 @@ export default function Dashboard() {
           </div>
 
         </div>
+      </div>
+
+      {breakdown && (
+        <BreakdownModal
+          type={breakdown}
+          range={breakdownRange}
+          walletId={walletId}
+          periodLabel={periodLabel}
+          fmt={fmt}
+          onClose={() => setBreakdown(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ── Income/Expense transaction breakdown modal ───────────────────────── */
+function BreakdownModal({ type, range, walletId, periodLabel, fmt, onClose }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ['breakdown', type, range, walletId],
+    queryFn: () => transactionsAPI.getAll({
+      ...range, type, ...(walletId ? { wallet_id: walletId } : {}), limit: 1000,
+    }).then(r => r.data.data),
+  });
+
+  const txns = (data || []).filter(t => t.type === type);
+  const total = txns.reduce((s, t) => s + parseFloat(t.amount || 0), 0);
+  const color = type === 'income' ? '#37D67A' : '#FF5B5B';
+
+  // Group by category
+  const groups = {};
+  txns.forEach(t => {
+    const key = t.category_name || 'Uncategorized';
+    if (!groups[key]) groups[key] = { name: key, emoji: t.category_emoji || '📌', total: 0, count: 0 };
+    groups[key].total += parseFloat(t.amount || 0);
+    groups[key].count++;
+  });
+  const grouped = Object.values(groups).sort((a, b) => b.total - a.total);
+
+  return (
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal" style={{ maxWidth: 520, maxHeight: '90vh', overflowY: 'auto' }}>
+        {/* Header */}
+        <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:6 }}>
+          <div style={{ width:40, height:40, borderRadius:12, background:`${color}1f`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18 }}>
+            {type === 'income' ? '📥' : '📤'}
+          </div>
+          <div style={{ flex:1 }}>
+            <div className="modal-title" style={{ margin:0 }}>{type === 'income' ? 'Income' : 'Expense'} Breakdown</div>
+            <div style={{ fontSize:12, color:'var(--text3)' }}>{periodLabel}</div>
+          </div>
+          <button onClick={onClose} style={{ background:'none', border:'none', fontSize:22, color:'var(--text3)', cursor:'pointer', lineHeight:1 }}>×</button>
+        </div>
+
+        {/* Total */}
+        <div style={{ background:`${color}12`, borderRadius:12, padding:'12px 16px', marginBottom:18, display:'flex', alignItems:'baseline', justifyContent:'space-between' }}>
+          <span style={{ fontSize:12.5, color:'var(--text3)', fontWeight:600 }}>Total · {txns.length} transaction{txns.length!==1?'s':''}</span>
+          <span className="mono" style={{ fontSize:20, fontWeight:800, color }}>{fmt(total)}</span>
+        </div>
+
+        {isLoading ? (
+          <div style={{ padding:30, textAlign:'center', color:'var(--text3)', fontSize:13 }}>Loading…</div>
+        ) : txns.length === 0 ? (
+          <div style={{ padding:30, textAlign:'center', color:'var(--text3)', fontSize:13 }}>No {type} transactions in this period.</div>
+        ) : (
+          <>
+            {/* By category */}
+            <div style={{ fontSize:11, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.05em', marginBottom:10 }}>By Category</div>
+            <div style={{ display:'flex', flexDirection:'column', gap:7, marginBottom:20 }}>
+              {grouped.map(g => {
+                const pct = total > 0 ? Math.round((g.total / total) * 100) : 0;
+                return (
+                  <div key={g.name} style={{ background:'var(--surface2)', borderRadius:11, padding:'10px 13px' }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:9, marginBottom:6 }}>
+                      <span style={{ fontSize:15 }}>{g.emoji}</span>
+                      <span style={{ flex:1, fontSize:13, fontWeight:600, color:'var(--text)' }}>{g.name}</span>
+                      <span style={{ fontSize:11, color:'var(--text3)' }}>{g.count}×</span>
+                      <span className="mono" style={{ fontSize:13.5, fontWeight:800, color }}>{fmt(g.total)}</span>
+                    </div>
+                    <div style={{ height:5, borderRadius:20, background:'var(--surface3)', overflow:'hidden' }}>
+                      <div style={{ height:'100%', width:`${pct}%`, background:color, borderRadius:20 }}/>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* All transactions */}
+            <div style={{ fontSize:11, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.05em', marginBottom:10 }}>All Transactions</div>
+            <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+              {txns.map(t => (
+                <div key={t.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'9px 12px', borderRadius:9, background:'var(--surface2)' }}>
+                  <span style={{ fontSize:14 }}>{t.category_emoji || '💸'}</span>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:12.5, fontWeight:600, color:'var(--text)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{t.description || t.payment_name || '—'}</div>
+                    <div style={{ fontSize:10.5, color:'var(--text3)' }}>
+                      {new Date(t.transaction_date).toLocaleDateString('en-IN',{ day:'numeric', month:'short' })}
+                      {t.wallet_name ? ` · ${t.wallet_name}` : ''}{t.category_name ? ` · ${t.category_name}` : ''}
+                    </div>
+                  </div>
+                  <span className="mono" style={{ fontSize:13, fontWeight:800, color, flexShrink:0 }}>
+                    {type === 'income' ? '+' : '−'}{fmt(parseFloat(t.amount))}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
