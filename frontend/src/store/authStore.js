@@ -19,6 +19,7 @@ const useAuthStore = create((set) => ({
   logout: () => {
     localStorage.removeItem('tracksy_token');
     localStorage.removeItem('tracksy_user');
+    localStorage.removeItem('tracksy-cache');   // drop persisted query cache
     set({ user: null, token: null, isAuthenticated: false });
   },
 }));

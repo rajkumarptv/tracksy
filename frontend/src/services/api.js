@@ -20,6 +20,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('tracksy_token');
       localStorage.removeItem('tracksy_user');
+      localStorage.removeItem('tracksy-cache');
       window.location.href = '/login';
     }
     return Promise.reject(error);
