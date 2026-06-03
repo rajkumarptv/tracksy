@@ -30,7 +30,7 @@ const getStatus = async (req, res) => {
   try {
     const userId = req.user.userId;
     const me = (await query(
-      `SELECT u.family_id, u.family_role, f.name AS family_name, f.family_code
+      `SELECT u.family_id, u.family_role, f.name AS family_name, f.family_code, f.share_mode
        FROM users u LEFT JOIN families f ON u.family_id=f.id
        WHERE u.id=$1`, [userId]
     )).rows[0];
@@ -48,6 +48,7 @@ const getStatus = async (req, res) => {
       in_family:   !!me?.family_id,
       role:        me?.family_role || null,
       family_name: me?.family_name || null,
+      share_mode:  me?.share_mode || null,
       // Only the primary sees/shares the code
       family_code: me?.family_role === 'primary' ? me.family_code : null,
       members,
@@ -67,9 +68,10 @@ const createFamily = async (req, res) => {
     const userId = req.user.userId;
     if (!(await isPremium(userId))) return premiumGate(res);
 
-    const { name } = req.body;
+    const { name, share_mode } = req.body;
     if (!name || !name.trim())
       return res.status(400).json({ success:false, message:'Family name is required' });
+    const mode = share_mode === 'shared' ? 'shared' : 'head_only';
 
     // Already in a family?
     const me = (await query('SELECT family_id FROM users WHERE id=$1', [userId])).rows[0];
@@ -85,13 +87,13 @@ const createFamily = async (req, res) => {
     }
 
     const fam = (await query(
-      'INSERT INTO families (name, primary_user_id, family_code) VALUES ($1,$2,$3) RETURNING id, name, family_code',
-      [name.trim(), userId, code]
+      'INSERT INTO families (name, primary_user_id, family_code, share_mode) VALUES ($1,$2,$3,$4) RETURNING id, name, family_code, share_mode',
+      [name.trim(), userId, code, mode]
     )).rows[0];
 
     await query(`UPDATE users SET family_id=$1, family_role='primary' WHERE id=$2`, [fam.id, userId]);
 
-    res.status(201).json({ success:true, data: { id: fam.id, name: fam.name, family_code: fam.family_code } });
+    res.status(201).json({ success:true, data: { id: fam.id, name: fam.name, family_code: fam.family_code, share_mode: fam.share_mode } });
   } catch (err) {
     console.error('Create family error:', err);
     res.status(500).json({ success:false, message:'Server error' });
@@ -183,11 +185,16 @@ const getOverview = async (req, res) => {
     if (!(await isPremium(userId))) return premiumGate(res);
 
     const me = (await query('SELECT family_id, family_role FROM users WHERE id=$1', [userId])).rows[0];
-    if (!me?.family_id || me.family_role !== 'primary')
+    if (!me?.family_id)
+      return res.status(403).json({ success:false, code:'NOT_PRIMARY',
+        message:'You are not in a family.' });
+
+    const family = (await query('SELECT id, name, family_code, share_mode FROM families WHERE id=$1', [me.family_id])).rows[0];
+
+    // head_only mode: only the primary may see the overview
+    if (family.share_mode !== 'shared' && me.family_role !== 'primary')
       return res.status(403).json({ success:false, code:'NOT_PRIMARY',
         message:'Only the family head can view the family overview.' });
-
-    const family  = (await query('SELECT id, name, family_code FROM families WHERE id=$1', [me.family_id])).rows[0];
     const members = (await query(
       `SELECT id, first_name, last_name, email, family_role, avatar_url
        FROM users WHERE family_id=$1 ORDER BY family_role='primary' DESC, created_at`,
@@ -249,7 +256,12 @@ const getMemberDetail = async (req, res) => {
     if (!(await isPremium(userId))) return premiumGate(res);
 
     const me = (await query('SELECT family_id, family_role FROM users WHERE id=$1', [userId])).rows[0];
-    if (!me?.family_id || me.family_role !== 'primary')
+    if (!me?.family_id)
+      return res.status(403).json({ success:false, message:'You are not in a family.' });
+
+    const family = (await query('SELECT share_mode FROM families WHERE id=$1', [me.family_id])).rows[0];
+    // head_only mode: only the primary may view member details
+    if (family?.share_mode !== 'shared' && me.family_role !== 'primary')
       return res.status(403).json({ success:false, message:'Only the family head can view member details.' });
 
     const member = (await query(

@@ -166,6 +166,8 @@ const migrate = async () => {
     `);
     // Unique join code so members can opt-in themselves (consent-based)
     await client.query(`ALTER TABLE families ADD COLUMN IF NOT EXISTS family_code VARCHAR(10) UNIQUE`);
+    // Visibility: 'head_only' = only primary sees members | 'shared' = everyone sees everyone
+    await client.query(`ALTER TABLE families ADD COLUMN IF NOT EXISTS share_mode VARCHAR(20) DEFAULT 'head_only'`);
     // Link users to a family + role: 'primary' (head) or 'member'
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS family_id UUID REFERENCES families(id) ON DELETE SET NULL`);
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS family_role VARCHAR(10)`);

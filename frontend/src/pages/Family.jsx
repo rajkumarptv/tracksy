@@ -22,15 +22,17 @@ export default function Family() {
     retry: false,
   });
 
-  const isPremium = user?.is_premium || status?.is_premium;
-  const inFamily  = status?.in_family;
-  const isPrimary = status?.role === 'primary';
+  const isPremium  = user?.is_premium || status?.is_premium;
+  const inFamily   = status?.in_family;
+  const isPrimary  = status?.role === 'primary';
+  const sharedMode = status?.share_mode === 'shared';
+  const canSeeOverview = inFamily && (isPrimary || sharedMode);
 
-  // Overview only fetched for primary members
+  // Overview fetched for primary, or any member in 'shared' mode
   const { data: overview, isLoading: ovLoading } = useQuery({
     queryKey: ['family-overview'],
     queryFn: () => familyAPI.overview().then(r => r.data.data),
-    enabled: !!isPremium && inFamily && isPrimary,
+    enabled: !!isPremium && canSeeOverview,
     retry: false,
   });
 
@@ -66,12 +68,12 @@ export default function Family() {
     return <SetupFamily qc={qc} />;
   }
 
-  /* ── 3. PREMIUM, MEMBER (not primary) → own status + leave ── */
-  if (!isPrimary) {
+  /* ── 3. head_only MEMBER (not primary, not shared) → own status + leave ── */
+  if (!canSeeOverview) {
     return <MemberView status={status} qc={qc} />;
   }
 
-  /* ── 4. PREMIUM, PRIMARY → full overview ── */
+  /* ── 4. PRIMARY, or SHARED-mode member → full overview ── */
   if (ovLoading || !overview) return <PageLoader />;
   const { family, members, combined, period } = overview;
   const monthLabel = `${MONTHS[period.month - 1]} ${period.year}`;
@@ -80,8 +82,17 @@ export default function Family() {
     <Shell title={`👨‍👩‍👧 ${family.name}`} subtitle={`Family overview · ${monthLabel}`} mobileTitle={family.name} mobileSub={`Family · ${monthLabel}`}>
       <div className="mob-content" style={{ padding:'28px 32px 40px', flex:1, overflow:'auto' }}>
 
-        {/* Invite code banner */}
-        <InviteCodeBar code={family.family_code} qc={qc} />
+        {/* Shared-mode badge */}
+        <div style={{ display:'inline-flex', alignItems:'center', gap:7, marginBottom:16, padding:'5px 12px', borderRadius:20, fontSize:11.5, fontWeight:700,
+          background: sharedMode ? 'rgba(55,214,122,.12)' : 'rgba(255,184,77,.12)', color: sharedMode ? '#37D67A' : '#FFB84D' }}>
+          {sharedMode ? '🤝 Shared — everyone sees everyone' : '👑 Head-only — only you see members'}
+        </div>
+
+        {/* Invite code banner — primary only */}
+        {isPrimary
+          ? <InviteCodeBar code={family.family_code} qc={qc} />
+          : <SharedMemberBar familyName={family.name} qc={qc} />
+        }
 
         {/* Combined totals */}
         <div className="mob-summary-scroll" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:24 }}>
@@ -143,9 +154,28 @@ export default function Family() {
       </div>
 
       {activeMember && (
-        <MemberDetailModal memberId={activeMember} onClose={() => setActiveMember(null)} fmt={fmt} qc={qc} />
+        <MemberDetailModal memberId={activeMember} onClose={() => setActiveMember(null)} fmt={fmt} qc={qc} canRemove={isPrimary} />
       )}
     </Shell>
+  );
+}
+
+/* ── Bar shown to a shared-mode member (no code, just leave) ── */
+function SharedMemberBar({ familyName, qc }) {
+  const leaveMut = useMutation({
+    mutationFn: () => familyAPI.leave(),
+    onSuccess: () => { qc.invalidateQueries({ queryKey:['family-status'] }); qc.invalidateQueries({ queryKey:['family-overview'] }); },
+  });
+  return (
+    <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap', background:'var(--surface)', borderRadius:14, padding:'14px 18px', marginBottom:20, border:'1px solid var(--border-light)' }}>
+      <div style={{ fontSize:13, color:'var(--text3)' }}>
+        You're a member of <strong style={{ color:'var(--text)' }}>{familyName}</strong>. Everyone here can see each other's finances.
+      </div>
+      <button onClick={() => { if(confirm('Leave this family? You will no longer see shared data and others won’t see yours.')) leaveMut.mutate(); }}
+        style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:6, padding:'7px 14px', borderRadius:10, border:'1.5px solid rgba(255,91,91,.3)', background:'var(--red-light)', color:'#FF5B5B', fontSize:12.5, fontWeight:700, cursor:'pointer' }}>
+        <LogOut size={13}/> Leave
+      </button>
+    </div>
   );
 }
 
@@ -198,11 +228,12 @@ function SetupFamily({ qc }) {
   const [mode, setMode] = useState(null); // 'create' | 'join'
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
+  const [shareMode, setShareMode] = useState('shared'); // default to shared (couples)
   const [err, setErr]   = useState('');
 
   const refresh = () => { qc.invalidateQueries({ queryKey:['family-status'] }); qc.invalidateQueries({ queryKey:['family-overview'] }); };
   const createMut = useMutation({
-    mutationFn: () => familyAPI.create(name),
+    mutationFn: () => familyAPI.create(name, shareMode),
     onSuccess: refresh,
     onError: e => setErr(e.response?.data?.message || 'Failed to create family'),
   });
@@ -257,6 +288,28 @@ function SetupFamily({ qc }) {
               <input autoFocus value={name} onChange={e=>{setName(e.target.value);setErr('');}} placeholder="e.g. The Kumar Family"
                 onKeyDown={e=>e.key==='Enter'&&name.trim()&&createMut.mutate()}
                 style={{ width:'100%', padding:'11px 14px', borderRadius:10, border:'1.5px solid var(--border)', background:'var(--surface2)', color:'var(--text)', fontSize:14, outline:'none', boxSizing:'border-box', marginBottom:16 }}/>
+
+              {/* Visibility mode */}
+              <label style={{ fontSize:12, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.05em', display:'block', marginBottom:8 }}>Who can see what?</label>
+              <div style={{ display:'grid', gap:8, marginBottom:16 }}>
+                {[
+                  { id:'shared',    icon:'🤝', title:'Shared (for couples)', desc:'Everyone sees everyone\'s transactions & dashboards' },
+                  { id:'head_only', icon:'👑', title:'Head-only (for parents)', desc:'Only you see members; they see only themselves' },
+                ].map(opt => (
+                  <button key={opt.id} type="button" onClick={() => setShareMode(opt.id)}
+                    style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 14px', borderRadius:12, cursor:'pointer', textAlign:'left',
+                      border: shareMode===opt.id ? '2px solid var(--accent)' : '1.5px solid var(--border)',
+                      background: shareMode===opt.id ? 'var(--accent-light)' : 'var(--surface2)' }}>
+                    <span style={{ fontSize:22 }}>{opt.icon}</span>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:13.5, fontWeight:700, color: shareMode===opt.id ? 'var(--accent)' : 'var(--text)' }}>{opt.title}</div>
+                      <div style={{ fontSize:11.5, color:'var(--text3)', marginTop:1 }}>{opt.desc}</div>
+                    </div>
+                    {shareMode===opt.id && <Check size={16} color="var(--accent)"/>}
+                  </button>
+                ))}
+              </div>
+
               <div style={{ display:'flex', gap:10 }}>
                 <button onClick={()=>{setMode(null);setErr('');}} style={{ flex:1, padding:'11px', borderRadius:10, border:'1.5px solid var(--border)', background:'var(--surface)', color:'var(--text3)', fontWeight:600, fontSize:14, cursor:'pointer' }}>Back</button>
                 <button onClick={()=>createMut.mutate()} disabled={!name.trim()||createMut.isPending}
@@ -331,7 +384,7 @@ function MemberView({ status, qc }) {
 }
 
 /* ── Member detail modal (primary clicks a member) ── */
-function MemberDetailModal({ memberId, onClose, fmt, qc }) {
+function MemberDetailModal({ memberId, onClose, fmt, qc, canRemove }) {
   const { data, isLoading } = useQuery({
     queryKey: ['family-member', memberId],
     queryFn: () => familyAPI.memberDetail(memberId).then(r => r.data.data),
@@ -379,10 +432,12 @@ function MemberDetailModal({ memberId, onClose, fmt, qc }) {
               {!data.recent_transactions.length && <div style={{ fontSize:13, color:'var(--text3)', padding:'8px 0' }}>No transactions yet.</div>}
             </div>
 
-            <button onClick={() => { if(confirm('Remove this member from the family?')) removeMut.mutate(); }}
-              style={{ width:'100%', padding:'10px', borderRadius:10, border:'1.5px solid rgba(255,91,91,.3)', background:'var(--red-light)', color:'#FF5B5B', fontWeight:700, fontSize:13, cursor:'pointer' }}>
-              Remove from family
-            </button>
+            {canRemove && (
+              <button onClick={() => { if(confirm('Remove this member from the family?')) removeMut.mutate(); }}
+                style={{ width:'100%', padding:'10px', borderRadius:10, border:'1.5px solid rgba(255,91,91,.3)', background:'var(--red-light)', color:'#FF5B5B', fontWeight:700, fontSize:13, cursor:'pointer' }}>
+                Remove from family
+              </button>
+            )}
           </>
         )}
       </div>
