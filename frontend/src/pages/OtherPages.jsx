@@ -22,6 +22,18 @@ const WALLET_GRADIENTS = [
   'linear-gradient(135deg,#6ab04c 0%,#badc58 100%)',
 ];
 
+// Pick readable ink (dark/light) for a given card background colour
+function cardInk(hex) {
+  let h = (hex || '#6C63FF').replace('#', '');
+  if (h.length === 3) h = h.split('').map(c => c + c).join('');
+  const r = parseInt(h.slice(0,2),16) || 0, g = parseInt(h.slice(2,4),16) || 0, b = parseInt(h.slice(4,6),16) || 0;
+  const lum = (0.299*r + 0.587*g + 0.114*b) / 255;   // perceived brightness 0–1
+  const dark = lum > 0.62;                            // light bg → dark text
+  return dark
+    ? { text:'#15151f', muted:'rgba(0,0,0,.6)', faint:'rgba(0,0,0,.45)', bar:'rgba(0,0,0,.15)', barFill:'rgba(0,0,0,.55)' }
+    : { text:'#ffffff', muted:'rgba(255,255,255,.78)', faint:'rgba(255,255,255,.6)', bar:'rgba(255,255,255,.25)', barFill:'rgba(255,255,255,.85)' };
+}
+
 const WALLET_ICONS = { visa:'💳',mastercard:'💳',paypal:'🅿️',bank:'🏦',cash:'💵',crypto:'₿',loan:'📋',asset:'📈',lending:'🤝',other:'👛',paytm:'🟦',phonepe:'💜',gpay:'🟣',irctc:'🚂',amazon_pay:'🛒',mobikwik:'💙',jio_money:'🔴',airtel_money:'❤️' };
 const WALLET_LABELS = { visa:'Visa',mastercard:'Mastercard',paypal:'PayPal',bank:'Bank Account',cash:'Cash',crypto:'Crypto',loan:'Loan',asset:'Asset',lending:'Lending',other:'Other',paytm:'Paytm Wallet',phonepe:'PhonePe',gpay:'Google Pay',irctc:'IRCTC Wallet',amazon_pay:'Amazon Pay',mobikwik:'MobiKwik',jio_money:'Jio Money',airtel_money:'Airtel Money' };
 
@@ -637,12 +649,13 @@ function AddWalletModal({ onClose, onSaved }) {
               </div>
 
               {/* Live preview card */}
+              {(() => { const ink = cardInk(form.color); return (
               <div style={{ borderRadius:16, padding:'16px 20px', marginBottom:4, background:`linear-gradient(135deg,${form.color},${form.color}bb)`, boxShadow:`0 6px 20px ${form.color}44` }}>
                 <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom: isCard && form.credit_limit ? 10 : 0 }}>
                   <span style={{ fontSize:26 }}>{selectedType.icon}</span>
                   <div style={{ flex:1 }}>
-                    <div style={{ fontSize:14, fontWeight:800, color:'#fff', letterSpacing:.2 }}>{form.name || 'Account Preview'}</div>
-                    <div style={{ fontSize:11.5, color:'rgba(255,255,255,.75)', marginTop:2 }}>
+                    <div style={{ fontSize:14, fontWeight:800, color:ink.text, letterSpacing:.2 }}>{form.name || 'Account Preview'}</div>
+                    <div style={{ fontSize:11.5, color:ink.muted, marginTop:2 }}>
                       {selectedType.label}{form.last_four ? ` *${form.last_four}` : ''}
                       {isCard
                         ? ` · ${fmt(parseFloat(form.balance||0))} owed`
@@ -651,24 +664,25 @@ function AddWalletModal({ onClose, onSaved }) {
                   </div>
                   {isCard && form.credit_limit && (
                     <div style={{ textAlign:'right' }}>
-                      <div style={{ fontSize:11, color:'rgba(255,255,255,.65)' }}>Limit</div>
-                      <div style={{ fontSize:13, fontWeight:800, color:'#fff' }}>{fmt(parseFloat(form.credit_limit||0))}</div>
+                      <div style={{ fontSize:11, color:ink.faint }}>Limit</div>
+                      <div style={{ fontSize:13, fontWeight:800, color:ink.text }}>{fmt(parseFloat(form.credit_limit||0))}</div>
                     </div>
                   )}
                 </div>
                 {/* Utilization bar on preview card */}
                 {isCard && form.credit_limit && (
                   <div>
-                    <div style={{ height:4, background:'rgba(255,255,255,.25)', borderRadius:20, overflow:'hidden' }}>
-                      <div style={{ height:'100%', width:`${utilPct}%`, background:'rgba(255,255,255,.85)', borderRadius:20, transition:'width .4s ease' }}/>
+                    <div style={{ height:4, background:ink.bar, borderRadius:20, overflow:'hidden' }}>
+                      <div style={{ height:'100%', width:`${utilPct}%`, background:ink.barFill, borderRadius:20, transition:'width .4s ease' }}/>
                     </div>
-                    <div style={{ display:'flex', justifyContent:'space-between', marginTop:5, fontSize:10.5, color:'rgba(255,255,255,.7)' }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', marginTop:5, fontSize:10.5, color:ink.faint }}>
                       <span>{utilPct}% used</span>
                       <span>Available: {fmt(Math.max(0,parseFloat(form.credit_limit)-parseFloat(form.balance||0)))}</span>
                     </div>
                   </div>
                 )}
               </div>
+              ); })()}
             </div>
 
             {mutation.isError && (
