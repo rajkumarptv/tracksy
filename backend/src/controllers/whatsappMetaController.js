@@ -89,9 +89,11 @@ const receive = async (req, res) => {
     const user = userRes.rows[0];
 
     let parsed = null;
+    let caption = null;   // category typed under the screenshot
 
     if (msg.type === 'image') {
-      // Screenshot → OCR → parse
+      // Screenshot → OCR → parse. Caption (if any) = category.
+      caption = (msg.image.caption || '').trim() || null;
       const buf  = await downloadMedia(msg.image.id);
       const text = await ocrImage(buf);
       parsed = parseReceipt(text);
@@ -119,12 +121,28 @@ const receive = async (req, res) => {
       if (dup.rows.length) { await sendReply(from, `✓ Already logged (ref ${parsed.ref}).`); return; }
     }
 
-    // Resolve category
-    const catName = guessCategory(parsed.merchant, parsed.type === 'expense');
+    // Resolve category — caption wins, else auto-guess
+    let catName = caption || guessCategory(parsed.merchant, parsed.type === 'expense');
     let categoryId = null;
     if (catName) {
-      const c = await query('SELECT id FROM categories WHERE (user_id=$1 OR is_default=true) AND name ILIKE $2 ORDER BY (user_id=$1) DESC LIMIT 1', [user.id, catName]);
-      categoryId = c.rows[0]?.id || null;
+      // Try to match an existing category (user's own first, then defaults)
+      const c = await query(
+        'SELECT id, name FROM categories WHERE (user_id=$1 OR is_default=true) AND name ILIKE $2 ORDER BY (user_id=$1) DESC LIMIT 1',
+        [user.id, catName]
+      );
+      if (c.rows.length) {
+        categoryId = c.rows[0].id;
+        catName    = c.rows[0].name;   // use the canonical name
+      } else if (caption) {
+        // Caption is a brand-new category → create it for this user
+        const created = await query(
+          `INSERT INTO categories (user_id, name, type, emoji, color, is_default)
+           VALUES ($1,$2,$3,'🏷️','#6C63FF',false) RETURNING id, name`,
+          [user.id, caption.slice(0,40), parsed.type === 'income' ? 'income' : 'expense']
+        );
+        categoryId = created.rows[0].id;
+        catName    = created.rows[0].name;
+      }
     }
 
     // Default wallet
