@@ -121,6 +121,10 @@ const waMeta = require('../controllers/whatsappMetaController');
 router.get('/whatsapp/meta/webhook',  waMeta.verify);    // Meta verification handshake
 router.post('/whatsapp/meta/webhook', waMeta.receive);   // Meta delivers messages here
 
+// Receipt scan (PWA share-target / in-app upload → OCR → review)
+const receiptCtrl = require('../controllers/receiptController');
+router.post('/receipt/scan', auth, upload.single('file'), receiptCtrl.scan);
+
 // Admin — requires valid JWT + is_admin flag
 router.get('/admin/stats',                    auth, adminAuth, adminCtrl.getStats);
 router.get('/admin/users',                    auth, adminAuth, adminCtrl.getUsers);

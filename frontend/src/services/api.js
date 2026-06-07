@@ -140,6 +140,15 @@ export const familyAPI = {
   memberDetail: (id) => api.get(`/family/member/${id}`),
 };
 
+// Receipt screenshot OCR (share-target / upload)
+export const receiptAPI = {
+  scan: (file) => {
+    const fd = new FormData();
+    fd.append('file', file, 'receipt.jpg');
+    return api.post('/receipt/scan', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
+};
+
 // Bank statement import
 export const importAPI = {
   preview:    (formData) => api.post('/import/preview', formData, {

@@ -1,16 +1,17 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { importAPI, walletsAPI, categoriesAPI } from '../services/api';
+import { importAPI, walletsAPI, categoriesAPI, receiptAPI, transactionsAPI } from '../services/api';
 import { Topbar } from '../components/ui';
-import { Upload, FileText, CheckCircle, AlertCircle, X, Check, GitMerge } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertCircle, X, Check, GitMerge, ScanSearch, Camera } from 'lucide-react';
 import { useT, useFmt } from '../i18n';
+import PaymentLogo from '../components/PaymentLogo';
 
 const SOURCE_OPTIONS = [
-  { id:'hdfc',    label:'HDFC Bank',   emoji:'🏦', color:'#003087', hint:'Download from NetBanking → Statements → CSV/TXT' },
-  { id:'paytm',   label:'Paytm',       emoji:'🟦', color:'#00B9F1', hint:'Paytm App → Passbook → Download Statement → PDF preferred (has your tags!) or CSV' },
-  { id:'phonepe', label:'PhonePe',     emoji:'💜', color:'#5f259f', hint:'PhonePe → Profile → Account Statement → Export CSV' },
-  { id:'gpay',    label:'GPay',        emoji:'🟣', color:'#4285F4', hint:'Google Takeout → Google Pay → transactions.csv' },
-  { id:'auto',    label:'Auto Detect', emoji:'🔍', color:'#6C63FF', hint:'Let Tracksy figure out the format automatically' },
+  { id:'hdfc',    label:'HDFC Bank',   logo:'bank',    color:'#003087', hint:'NetBanking → Statements → Download CSV / TXT' },
+  { id:'paytm',   label:'Paytm',       logo:'paytm',   color:'#00B9F1', hint:'Paytm App → Passbook → Download Statement → Excel (.xlsx) ⭐ Best! or PDF/CSV' },
+  { id:'phonepe', label:'PhonePe',     logo:'phonepe', color:'#5f259f', hint:'PhonePe → Profile → Account Statement → Export CSV' },
+  { id:'gpay',    label:'GPay',        logo:'gpay',    color:'#4285F4', hint:'Google Takeout → Google Pay → transactions.csv' },
+  { id:'auto',    label:'Auto Detect', logo:null,      color:'#6C63FF', hint:'Let Tracksy figure out the format automatically' },
 ];
 
 const TYPE_COLOR = { income:'#37D67A', expense:'#FF5B5B' };
@@ -46,6 +47,12 @@ export default function Import() {
   const [search,    setSearch]   = useState('');
   const [reconciled, setReconciled] = useState(false);
 
+  // Receipt scan (from Paytm/GPay "Share → Tracksy" or manual upload)
+  const [scanned,  setScanned]  = useState(null);  // parsed receipt for review
+  const [scanning, setScanning] = useState(false);
+  const [scanErr,  setScanErr]  = useState('');
+  const receiptRef = useRef();
+
   const { data: wallets = [] } = useQuery({
     queryKey: ['wallets'],
     queryFn: () => walletsAPI.getAll().then(r => r.data.data),
@@ -55,11 +62,41 @@ export default function Import() {
     queryFn: () => categoriesAPI.getAll().then(r => r.data.data),
   });
 
+  const runScan = async (file) => {
+    if (!file) return;
+    setScanning(true); setScanErr('');
+    try {
+      const res = await receiptAPI.scan(file);
+      setScanned(res.data.data);
+    } catch (e) {
+      setScanErr(e.response?.data?.message || 'Could not read the screenshot. Try a clearer image.');
+    }
+    setScanning(false);
+  };
+
+  // Picked up a shared image from the PWA share-target (Paytm → Share → Tracksy)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('shared') !== '1') return;
+    (async () => {
+      try {
+        const cache = await caches.open('tracksy-shared');
+        const resp  = await cache.match('/__shared_receipt');
+        if (resp) {
+          const blob = await resp.blob();
+          await cache.delete('/__shared_receipt');
+          await runScan(new File([blob], 'receipt.jpg', { type: blob.type || 'image/jpeg' }));
+        }
+        window.history.replaceState({}, '', '/import'); // clean the URL
+      } catch (_) {}
+    })();
+  }, []);
+
   // Only non-debt wallets for account selection
   const bankWallets = wallets.filter(w => !['visa','mastercard','loan'].includes(w.type));
 
   const previewMut = useMutation({
-    mutationFn: ({ content, filename }) => importAPI.preview(content, filename, source).then(r => r.data),
+    mutationFn: (formData) => importAPI.preview(formData).then(r => r.data),
     onSuccess: (data) => {
       setPreview(data.data);
       setRows(data.data.transactions.map((t, i) => ({ ...t, _id: i, skip: false, status: 'new' })));
@@ -92,21 +129,12 @@ export default function Import() {
 
   const handleFile = (file) => {
     if (!file) return;
-    const isPDF = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
-    const reader = new FileReader();
-    if (isPDF) {
-      reader.onload = (e) => {
-        // Send as base64
-        const base64 = btoa(
-          new Uint8Array(e.target.result).reduce((d, b) => d + String.fromCharCode(b), '')
-        );
-        previewMut.mutate({ pdfBase64: base64, filename: file.name, isPDF: true, source });
-      };
-      reader.readAsArrayBuffer(file);
-    } else {
-      reader.onload = (e) => previewMut.mutate({ content: e.target.result, filename: file.name, source });
-      reader.readAsText(file);
-    }
+    // Always send as multipart FormData — works for both PDF and CSV
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('filename', file.name);
+    fd.append('source', source || 'auto');
+    previewMut.mutate(fd);
   };
 
   const handleDrop = (e) => {
@@ -180,24 +208,67 @@ export default function Import() {
         {step === 1 && (
           <div style={{ maxWidth:600 }}>
 
+            {/* ── Scan a payment screenshot ── */}
+            <div style={{ marginBottom:22, padding:'16px 18px', borderRadius:16, border:'1.5px solid var(--accent)', background:'var(--accent-light)' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
+                <div style={{ width:42, height:42, borderRadius:12, background:'var(--accent)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                  <Camera size={22} color="#fff"/>
+                </div>
+                <div style={{ flex:1, minWidth:160 }}>
+                  <div style={{ fontSize:14, fontWeight:800, color:'var(--text)' }}>Scan a payment screenshot</div>
+                  <div style={{ fontSize:12, color:'var(--text3)' }}>Paytm / GPay / PhonePe receipt → auto-filled transaction</div>
+                </div>
+                <input ref={receiptRef} type="file" accept="image/*" style={{ display:'none' }}
+                  onChange={e => runScan(e.target.files[0])}/>
+                <button onClick={() => receiptRef.current?.click()} disabled={scanning}
+                  style={{ padding:'10px 18px', borderRadius:11, border:'none', background:'var(--accent)', color:'#fff', fontWeight:700, fontSize:13, cursor:'pointer', whiteSpace:'nowrap' }}>
+                  {scanning ? '⟳ Reading…' : '📷 Upload Screenshot'}
+                </button>
+              </div>
+              {scanErr && <div style={{ marginTop:10, fontSize:12.5, color:'#FF5B5B' }}>⚠️ {scanErr}</div>}
+              <div style={{ marginTop:10, fontSize:11.5, color:'var(--text3)' }}>
+                💡 Tip: install Tracksy to your home screen, then use <strong>Share → Tracksy</strong> directly from Paytm/GPay.
+              </div>
+            </div>
+
             {/* ── Source picker ── */}
             <div style={{ marginBottom:22 }}>
               <div style={{ fontSize:13, fontWeight:700, color:'var(--text2)', marginBottom:12 }}>
-                📂 Select your statement source:
+                📂 Or import a statement file:
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:10 }}>
-                {SOURCE_OPTIONS.map(opt => (
-                  <button key={opt.id} onClick={() => setSource(opt.id)}
-                    style={{
-                      padding:'12px 8px', borderRadius:14, border:'2px solid',
-                      borderColor: source===opt.id ? opt.color : 'var(--border)',
-                      background: source===opt.id ? `${opt.color}18` : 'var(--surface)',
-                      cursor:'pointer', textAlign:'center', transition:'all .15s',
-                    }}>
-                    <div style={{ fontSize:24, marginBottom:5 }}>{opt.emoji}</div>
-                    <div style={{ fontSize:11, fontWeight:700, color: source===opt.id ? opt.color : 'var(--text3)' }}>{opt.label}</div>
-                  </button>
-                ))}
+                {SOURCE_OPTIONS.map(opt => {
+                  const sel = source === opt.id;
+                  return (
+                    <button key={opt.id} onClick={() => setSource(opt.id)}
+                      style={{
+                        padding:'14px 8px 10px', borderRadius:16, border:'2px solid',
+                        borderColor: sel ? opt.color : 'var(--border)',
+                        background: sel ? `${opt.color}15` : 'var(--surface)',
+                        cursor:'pointer', textAlign:'center', transition:'all .18s',
+                        boxShadow: sel ? `0 4px 16px ${opt.color}30` : 'none',
+                        display:'flex', flexDirection:'column', alignItems:'center', gap:8,
+                      }}>
+                      {/* Logo or fallback icon */}
+                      <div style={{ position:'relative' }}>
+                        {opt.logo ? (
+                          <PaymentLogo method={opt.logo} size={40}
+                            style={{ borderRadius:12, boxShadow: sel ? `0 2px 10px ${opt.color}44` : '0 1px 4px rgba(0,0,0,.1)' }}/>
+                        ) : (
+                          <div style={{ width:40, height:40, borderRadius:12, background:`${opt.color}20`, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                            <ScanSearch size={20} color={opt.color}/>
+                          </div>
+                        )}
+                        {sel && (
+                          <div style={{ position:'absolute', top:-4, right:-4, width:16, height:16, borderRadius:'50%', background:opt.color, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                            <Check size={9} color="#fff" strokeWidth={3}/>
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ fontSize:11, fontWeight:700, color: sel ? opt.color : 'var(--text3)', lineHeight:1.2 }}>{opt.label}</div>
+                    </button>
+                  );
+                })}
               </div>
               {source && (
                 <div style={{ marginTop:10, fontSize:12, color:'var(--text3)', background:'var(--surface2)', borderRadius:9, padding:'8px 12px' }}>
@@ -218,7 +289,7 @@ export default function Import() {
                 background: dragOver?'rgba(108,99,255,.06)':'var(--surface)',
                 transition:'all .2s', marginBottom:16,
               }}>
-              <input ref={fileRef} type="file" accept=".txt,.csv,.pdf,.xls,.xlsx" style={{display:'none'}}
+              <input ref={fileRef} type="file" accept=".txt,.csv,.pdf,.xlsx,.xls" style={{display:'none'}}
                 onChange={e => handleFile(e.target.files[0])}/>
               <div style={{ width:64, height:64, borderRadius:20, background:'rgba(108,99,255,.1)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px' }}>
                 <Upload size={28} color="#6C63FF"/>
@@ -227,7 +298,7 @@ export default function Import() {
                 {dragOver ? 'Drop it here!' : 'Drop your statement here'}
               </div>
               <div style={{ fontSize:12.5, color:'var(--text3)', marginBottom:18 }}>
-                Supports <strong>PDF</strong> (Paytm) · CSV · TXT from banks and payment apps
+                Supports <strong>Excel .xlsx</strong> ⭐ · PDF · CSV · TXT
               </div>
               <div style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'10px 22px', borderRadius:20,
                 background:'linear-gradient(135deg,#6C63FF,#5B8CFF)', color:'#fff', fontWeight:700, fontSize:13,
@@ -253,9 +324,9 @@ export default function Import() {
               <div style={{ fontSize:11, fontWeight:700, color:'var(--text3)', marginBottom:8, textTransform:'uppercase', letterSpacing:'.06em' }}>Supported Formats</div>
               <div style={{ display:'flex', gap:7, flexWrap:'wrap' }}>
                 {[
-                  {l:'✅ Paytm PDF ⭐'},
+                  {l:'✅ Paytm Excel ⭐'},
+                  {l:'✅ Paytm PDF'},
                   {l:'✅ HDFC Bank CSV'},
-                  {l:'✅ Paytm CSV'},
                   {l:'✅ PhonePe CSV'},
                   {l:'✅ GPay CSV'},
                   {l:'🔜 ICICI / SBI'},
@@ -596,7 +667,126 @@ export default function Import() {
         )}
       </div>
 
+      {scanned && (
+        <ReceiptReviewModal
+          data={scanned}
+          wallets={wallets}
+          categories={categories}
+          fmt={fmt}
+          onClose={() => setScanned(null)}
+          onSaved={() => {
+            setScanned(null);
+            qc.invalidateQueries({ queryKey:['transactions'] });
+            qc.invalidateQueries({ queryKey:['dashboard-summary'] });
+            qc.invalidateQueries({ queryKey:['wallets'] });
+          }}
+        />
+      )}
+
       <style>{`@keyframes spin { to { transform:rotate(360deg); } }`}</style>
+    </div>
+  );
+}
+
+/* ── Review a scanned receipt before saving ───────────────────────────── */
+function ReceiptReviewModal({ data, wallets, categories, fmt, onClose, onSaved }) {
+  const [amount,   setAmount]   = useState(String(data.amount ?? ''));
+  const [type,     setType]     = useState(data.type || 'expense');
+  const [merchant, setMerchant] = useState(data.merchant || '');
+  const [date,     setDate]     = useState(data.date || new Date().toISOString().split('T')[0]);
+  const [catId,    setCatId]    = useState('');
+  const [walletId, setWalletId] = useState(wallets?.[0]?.id || '');
+  const [saving,   setSaving]   = useState(false);
+  const [err,      setErr]      = useState('');
+
+  const catOpts = (categories || []).filter(c => c.type === type || c.type === 'both');
+  const inputSt = { width:'100%', padding:'10px 13px', borderRadius:10, border:'1.5px solid var(--border)', background:'var(--surface2)', color:'var(--text)', fontSize:14, outline:'none', boxSizing:'border-box' };
+  const labelSt = { fontSize:11.5, fontWeight:700, color:'var(--text3)', marginBottom:5, display:'block', textTransform:'uppercase', letterSpacing:'.05em' };
+
+  const save = async () => {
+    if (!amount || parseFloat(amount) <= 0) { setErr('Enter a valid amount'); return; }
+    setSaving(true); setErr('');
+    try {
+      await transactionsAPI.create({
+        type, amount: parseFloat(amount),
+        description: merchant || 'Scanned receipt',
+        payment_name: `Scanned (${data.source || 'upi'})`,
+        wallet_id: walletId || null,
+        category_id: catId || null,
+        status: 'completed',
+        transaction_date: date,
+      });
+      onSaved();
+    } catch (e) {
+      setErr(e.response?.data?.message || 'Failed to save'); setSaving(false);
+    }
+  };
+
+  const typeColor = type === 'income' ? '#37D67A' : '#FF5B5B';
+
+  return (
+    <div className="modal-overlay" onClick={e => e.target===e.currentTarget && onClose()}>
+      <div className="modal" style={{ maxWidth:460 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:16 }}>
+          <div style={{ width:40, height:40, borderRadius:12, background:`${typeColor}1f`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18 }}>📷</div>
+          <div style={{ flex:1 }}>
+            <div className="modal-title" style={{ margin:0 }}>Review Scanned Receipt</div>
+            <div style={{ fontSize:12, color:'var(--text3)' }}>From {data.source || 'screenshot'}{data.ref ? ` · Ref ${data.ref}` : ''}</div>
+          </div>
+          <button onClick={onClose} style={{ background:'none', border:'none', fontSize:22, color:'var(--text3)', cursor:'pointer' }}>×</button>
+        </div>
+
+        {err && <div style={{ background:'var(--red-light)', color:'#FF5B5B', padding:'9px 13px', borderRadius:10, marginBottom:14, fontSize:13 }}>⚠️ {err}</div>}
+
+        {/* Type toggle */}
+        <div style={{ display:'flex', background:'var(--surface2)', borderRadius:12, padding:4, marginBottom:14, gap:4 }}>
+          {[['expense','📤 Expense','#FF5B5B'],['income','📥 Income','#37D67A']].map(([v,l,c]) => (
+            <button key={v} onClick={() => { setType(v); setCatId(''); }}
+              style={{ flex:1, padding:'8px', borderRadius:9, border:'none', cursor:'pointer', fontSize:13, fontWeight:700,
+                background: type===v ? `${c}1f` : 'transparent', color: type===v ? c : 'var(--text3)' }}>{l}</button>
+          ))}
+        </div>
+
+        <div style={{ display:'grid', gap:12 }}>
+          <div>
+            <label style={labelSt}>Amount *</label>
+            <input style={{ ...inputSt, fontSize:18, fontWeight:800, color:typeColor }} type="number" step="0.01" value={amount} onChange={e=>setAmount(e.target.value)} autoFocus/>
+          </div>
+          <div>
+            <label style={labelSt}>Merchant / Note</label>
+            <input style={inputSt} value={merchant} onChange={e=>setMerchant(e.target.value)}/>
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+            <div>
+              <label style={labelSt}>Category</label>
+              <select style={inputSt} value={catId} onChange={e=>setCatId(e.target.value)}>
+                <option value="">No category</option>
+                {catOpts.map(c => <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={labelSt}>Date</label>
+              <input style={inputSt} type="date" value={date} onChange={e=>setDate(e.target.value)}/>
+            </div>
+          </div>
+          <div>
+            <label style={labelSt}>Account</label>
+            <select style={inputSt} value={walletId} onChange={e=>setWalletId(e.target.value)}>
+              <option value="">No account</option>
+              {(wallets||[]).map(w => <option key={w.id} value={w.id}>{w.name}{w.last_four?` *${w.last_four}`:''}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div style={{ display:'flex', gap:10, marginTop:18, justifyContent:'flex-end' }}>
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button onClick={save} disabled={saving}
+            style={{ padding:'10px 24px', borderRadius:12, border:'none', fontWeight:700, fontSize:14, cursor:'pointer', color:'#fff',
+              background:'linear-gradient(135deg,#6C63FF,#5B8CFF)', boxShadow:'0 4px 14px rgba(108,99,255,.3)' }}>
+            {saving ? 'Saving…' : '✓ Save Transaction'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
