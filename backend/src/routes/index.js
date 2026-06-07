@@ -113,9 +113,13 @@ router.post('/categories', auth, res0.createCategory);
 router.put('/categories/:id', auth, res0.updateCategory);
 router.delete('/categories/:id', auth, res0.deleteCategory);
 
-// WhatsApp — webhook is public (Twilio calls it), savePhone is protected
-router.post('/whatsapp/webhook', waCtrl.webhook);
+// WhatsApp — savePhone is protected; webhook is public
 router.put('/whatsapp/phone', auth, waCtrl.savePhone);
+
+// WhatsApp via Meta Cloud API (screenshot OCR → transaction)
+const waMeta = require('../controllers/whatsappMetaController');
+router.get('/whatsapp/meta/webhook',  waMeta.verify);    // Meta verification handshake
+router.post('/whatsapp/meta/webhook', waMeta.receive);   // Meta delivers messages here
 
 // Admin — requires valid JWT + is_admin flag
 router.get('/admin/stats',                    auth, adminAuth, adminCtrl.getStats);
