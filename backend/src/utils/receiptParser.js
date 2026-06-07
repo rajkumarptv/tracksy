@@ -7,13 +7,28 @@ const MONTHS = { jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',
 function parseReceipt(rawText) {
   const text = (rawText || '').replace(/\r/g, '');
   const lc   = text.toLowerCase();
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
 
-  // ── Amount: ₹ / Rs / INR followed by a number ──
-  const amtMatch =
-       text.match(/(?:₹|rs\.?|inr)\s*([\d,]+(?:\.\d{1,2})?)/i)
-    || text.match(/\b([\d,]{2,})(?:\.\d{2})?\s*(?:paid|sent|received)/i);
-  if (!amtMatch) return null;
-  const amount = parseFloat(amtMatch[1].replace(/,/g, ''));
+  // ── Amount detection (OCR often mangles the ₹ glyph) ──
+  let amount = 0;
+  // 1) Currency-prefixed: ₹ / Rs / INR  (also accept mangled symbols like z, t, =, %, @, e before a number)
+  let am = text.match(/(?:₹|rs\.?|inr)\s*([\d,]+(?:\.\d{1,2})?)/i);
+  // 2) A line that is just a (mangled-symbol +) number, e.g. "₹1", "z1", "=250.00"
+  if (!am) am = text.match(/(?:^|\n)\s*[^\w\n]{0,2}\s*([\d,]{1,7}(?:\.\d{1,2})?)\s*(?:✓|\n|$)/);
+  // 3) Number right before/after a payment keyword
+  if (!am) am = text.match(/(?:paid|sent|received|amount)\D{0,6}([\d,]+(?:\.\d{1,2})?)/i);
+  if (am) amount = parseFloat(am[1].replace(/,/g, ''));
+
+  // 4) Last resort: the most "money-like" standalone number in the top half
+  if (!amount) {
+    const cands = lines.slice(0, Math.ceil(lines.length/2))
+      .map(l => l.match(/^[^\w]{0,2}([\d,]{1,7}(?:\.\d{1,2})?)$/))
+      .filter(Boolean)
+      .map(m => parseFloat(m[1].replace(/,/g,'')))
+      .filter(n => n > 0 && n < 10000000 && String(n).length <= 7);
+    if (cands.length) amount = cands[0];
+  }
+
   if (!amount || amount <= 0) return null;
 
   // ── Source app ──
