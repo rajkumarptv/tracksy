@@ -11,8 +11,8 @@ function parseReceipt(rawText) {
 
   // ── Amount detection (OCR often mangles the ₹ glyph) ──
   let amount = 0;
-  // 1) Currency-prefixed: ₹ / Rs / INR  (also accept mangled symbols like z, t, =, %, @, e before a number)
-  let am = text.match(/(?:₹|rs\.?|inr)\s*([\d,]+(?:\.\d{1,2})?)/i);
+  // 1) Currency-prefixed: ₹ / Rs / INR / bare R (OCR reads ₹ as "R" or "Rs")
+  let am = text.match(/(?:₹|rs\.?|inr|\bR)\s*([\d,]+(?:\.\d{1,2})?)/i);
   // 2) A line that is just a (mangled-symbol +) number, e.g. "₹1", "z1", "=250.00"
   if (!am) am = text.match(/(?:^|\n)\s*[^\w\n]{0,2}\s*([\d,]{1,7}(?:\.\d{1,2})?)\s*(?:✓|\n|$)/);
   // 3) Number right before/after a payment keyword
@@ -58,14 +58,14 @@ function parseReceipt(rawText) {
   // ── Reference number ──
   const ref = (text.match(/(?:Ref(?:erence)?\.?\s*(?:No\.?|number)?|UPI (?:transaction|txn) ID|Transaction ID|Order ID)\s*[:\-]?\s*([A-Za-z0-9]{6,})/i) || [])[1] || null;
 
-  // ── Date (e.g. "07 Jun, 12:23 PM" or "07 Jun 2026" or "Jun 07") ──
+  // ── Date — scan ALL "DD Mon [YYYY]" matches, pick first with a real month ──
   let date = null;
-  let d = text.match(/(\d{1,2})\s+([A-Za-z]{3})[a-z]*\.?(?:\s*,?\s*(\d{4}))?/);
-  if (d && MONTHS[d[2].toLowerCase()]) {
-    const yr = d[3] || new Date().getFullYear();
-    date = `${yr}-${MONTHS[d[2].toLowerCase()]}-${d[1].padStart(2,'0')}`;
-  } else {
-    d = text.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+  for (const m of text.matchAll(/(\d{1,2})\s+([A-Za-z]{3})[a-z]*\.?(?:\s*,?\s*(\d{4}))?/g)) {
+    const mon = MONTHS[m[2].toLowerCase()];
+    if (mon) { date = `${m[3] || new Date().getFullYear()}-${mon}-${m[1].padStart(2,'0')}`; break; }
+  }
+  if (!date) {
+    const d = text.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
     if (d) { const y = d[3].length===2?'20'+d[3]:d[3]; date = `${y}-${d[2].padStart(2,'0')}-${d[1].padStart(2,'0')}`; }
   }
   if (!date) date = new Date().toISOString().split('T')[0];
