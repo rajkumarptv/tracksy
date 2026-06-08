@@ -1,5 +1,6 @@
 const { query } = require('../db');
 const pdfParse  = require('pdf-parse');
+const XLSX      = require('xlsx');
 
 /* ══════════════════════════════════════════════════════════════════
    HELPERS
@@ -437,6 +438,105 @@ async function parsePaytmPDF(buffer) {
   return transactions;
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   Paytm Excel (XLSX/XLS) Parser
+   Sheet: "Passbook"
+   Columns: Date (DD/MM/YYYY) | Time | Transaction Details | ... | Amount | UPI Ref No. | ... | Tags
+   Amount: negative string = debit/expense, positive = credit/income, commas as thousands sep
+══════════════════════════════════════════════════════════════════════════ */
+function parsePaytmExcel(buffer) {
+  const wb = XLSX.read(buffer, { type: 'buffer', cellDates: false });
+
+  // Find Passbook sheet (case-insensitive)
+  const sheetName = wb.SheetNames.find(n => /passbook/i.test(n)) || wb.SheetNames[0];
+  const ws        = wb.Sheets[sheetName];
+  const rows      = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+
+  if (!rows.length) return [];
+
+  // Find header row (contains "Date" and "Amount")
+  let headerIdx = -1;
+  for (let i = 0; i < Math.min(rows.length, 10); i++) {
+    const r = rows[i].map(c => String(c).trim().toLowerCase());
+    if (r.includes('date') && r.includes('amount')) { headerIdx = i; break; }
+  }
+  if (headerIdx === -1) return [];
+
+  const headers = rows[headerIdx].map(c => String(c).trim());
+
+  // Column indexes
+  const col = (name) => headers.findIndex(h => h.toLowerCase().includes(name.toLowerCase()));
+  const colDate    = col('date');
+  const colDesc    = col('transaction details');
+  const colAmount  = col('amount');
+  const colRef     = col('upi ref');
+  const colTags    = col('tags');
+  const colComment = col('comment');
+  const colRemark  = col('remarks');
+
+  const transactions = [];
+
+  for (let i = headerIdx + 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || row.every(c => !c)) continue; // skip empty rows
+
+    const dateRaw = String(row[colDate] || '').trim();
+    const desc    = String(row[colDesc]    || '').trim();
+    const amtRaw  = String(row[colAmount]  || '').trim();
+    const ref     = String(row[colRef]     || '').trim();
+    const tags    = String(row[colTags]    || '').trim();
+    const comment = String(row[colComment] || row[colRemark] || '').trim();
+
+    if (!dateRaw || !amtRaw || amtRaw === '' || amtRaw === '0') continue;
+
+    // Skip self transfers
+    if (/self transfer/i.test(tags) || /self transfer/i.test(desc)) continue;
+
+    // Parse date DD/MM/YYYY → YYYY-MM-DD
+    const dateParts = dateRaw.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+    if (!dateParts) continue;
+    const date = `${dateParts[3]}-${dateParts[2].padStart(2,'0')}-${dateParts[1].padStart(2,'0')}`;
+
+    // Parse amount — remove commas, convert to number
+    const amtNum = parseFloat(amtRaw.replace(/,/g, ''));
+    if (isNaN(amtNum) || amtNum === 0) continue;
+
+    const isDebit = amtNum < 0;
+    const amount  = Math.abs(amtNum);
+    const type    = isDebit ? 'expense' : 'income';
+
+    // Extract merchant from description
+    let merchant = desc
+      .replace(/^Paid to\s+/i, '')
+      .replace(/^Money sent to\s+/i, '')
+      .replace(/^Money received from\s+/i, '')
+      .replace(/^Recharge of\s+/i, 'Recharge ')
+      .replace(/^Automatic payment for\s+/i, '')
+      .replace(/^Bill Payment of\s+/i, '')
+      .trim();
+    merchant = toTitleCase(merchant.substring(0, 50));
+
+    // Map Paytm tag → category
+    const tagClean  = tags.replace(/^#\s*/,'').replace(/^[✈🏧💰✈️]*\s*/,'').trim().toLowerCase();
+    const category  = PAYTM_TAG_MAP[tagClean] || detectCategory(desc + ' ' + comment, merchant, isDebit);
+
+    transactions.push({
+      date,
+      narration:   desc.substring(0, 120),
+      merchant,
+      description: comment || merchant,
+      amount,
+      type,
+      category,
+      ref_number:  ref || null,
+      paytm_tag:   tags,
+      source:      'paytm_excel',
+    });
+  }
+
+  return transactions;
+}
+
 /* ── Auto-detect format and parse ── */
 function autoDetectAndParse(content, filename, source) {
   const lower = (filename||'').toLowerCase();
@@ -478,19 +578,39 @@ function autoDetectAndParse(content, filename, source) {
 /* ── POST /api/import/preview ── */
 const previewStatement = async (req, res) => {
   try {
-    const { content, filename, source, isPDF, pdfBase64 } = req.body;
-    if (!content && !pdfBase64) return res.status(400).json({ success:false, message:'No file content provided' });
+    // req.file  = multer file upload (PDF / any binary)
+    // req.body  = JSON fields (content, filename, source for CSV)
+    const file     = req.file;                              // from multer
+    const { content, filename: bodyFilename, source } = req.body;
+    const filename = file?.originalname || bodyFilename || '';
+
+    if (!file && !content) {
+      return res.status(400).json({ success:false, message:'No file content provided' });
+    }
 
     let parsed, detectedSource;
 
-    // PDF path
-    if (isPDF || pdfBase64 || (filename||'').toLowerCase().endsWith('.pdf')) {
-      const buf = Buffer.from(pdfBase64 || content, 'base64');
-      parsed = await parsePaytmPDF(buf);
+    const lname  = filename.toLowerCase();
+    const isExcel = file && (lname.endsWith('.xlsx') || lname.endsWith('.xls') ||
+                    file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+                    file.mimetype === 'application/vnd.ms-excel');
+    const isPDF  = !isExcel && file &&
+                   (file.mimetype === 'application/pdf' || lname.endsWith('.pdf'));
+
+    if (isExcel) {
+      // ── Excel (best quality — has clean amounts + tags) ──
+      parsed = parsePaytmExcel(file.buffer);
+      detectedSource = 'paytm_excel';
+      if (!parsed.length) return res.status(400).json({ success:false, message:'No transactions found in Excel. Make sure the file has a Passbook sheet.' });
+    } else if (isPDF && file) {
+      // ── PDF fallback ──
+      parsed = await parsePaytmPDF(file.buffer);
       detectedSource = 'paytm_pdf';
       if (!parsed.length) return res.status(400).json({ success:false, message:'No transactions found in PDF. Make sure it is a Paytm UPI statement.' });
     } else {
-      const result = autoDetectAndParse(content, filename, source);
+      // ── CSV / TXT ──
+      const textContent = file ? file.buffer.toString('utf-8') : content;
+      const result = autoDetectAndParse(textContent, filename, source);
       parsed = result.parsed;
       detectedSource = result.source;
       if (!parsed.length) return res.status(400).json({ success:false, message:'No transactions found. Make sure it is a valid CSV statement.' });

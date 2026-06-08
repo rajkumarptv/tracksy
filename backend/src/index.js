@@ -13,11 +13,21 @@ const isProd = process.env.NODE_ENV === 'production';
 // Gzip every response (API JSON + JS/CSS) — big win on mobile networks
 app.use(compression({ level: 6, threshold: 512 }));
 
-// Middleware
+// Allowed front-end origins (comma-separated CLIENT_URL/FRONTEND_URL + localhost + *.vercel.app)
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  process.env.FRONTEND_URL,
+  'https://app.topfindstoday.in',
+  'http://localhost:3000',
+  'http://localhost:5173',
+].filter(Boolean);
+
 app.use(cors({
-  origin: isProd
-    ? [process.env.CLIENT_URL || 'https://app.topfindstoday.in']
-    : (process.env.CLIENT_URL || 'http://localhost:3000'),
+  origin(origin, cb) {
+    // allow same-origin / curl (no origin), listed origins, and any *.vercel.app preview
+    if (!origin || allowedOrigins.includes(origin) || /\.vercel\.app$/.test(origin)) return cb(null, true);
+    return cb(null, true); // be permissive — JWT-protected API, no cookies
+  },
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -37,12 +47,13 @@ app.use('/api', routes);
 // Health check
 app.get('/health', (_req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
 
-// Serve React build in production
-if (isProd) {
-  // Works both locally (backend/src → ../../frontend/dist)
-  // and on Render/Railway (started from repo root → frontend/dist)
-  const buildPath = path.join(__dirname, '../../frontend/dist');
+// Serve React build only if it exists (local/tunnel setup).
+// On Render the frontend lives on Vercel, so this is skipped → API-only.
+const fs = require('fs');
+const buildPath = path.join(__dirname, '../../frontend/dist');
+const serveFrontend = isProd && fs.existsSync(path.join(buildPath, 'index.html'));
 
+if (serveFrontend) {
   // 1) Hashed JS/CSS assets — cache 1 year (safe: hash changes on each build)
   app.use('/assets', express.static(path.join(buildPath, 'assets'), {
     maxAge: '1y', immutable: true,
@@ -66,7 +77,8 @@ if (isProd) {
     res.sendFile(path.join(buildPath, 'index.html'));
   });
 } else {
-  // 404 for API-only dev mode
+  // API-only (Render / dev): non-API routes return JSON 404
+  app.get('/', (_req, res) => res.json({ status: 'Tracksy API', ok: true }));
   app.use((_req, res) => res.status(404).json({ success: false, message: 'Route not found' }));
 }
 

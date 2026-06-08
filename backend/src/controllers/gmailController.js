@@ -3,7 +3,8 @@ const jwt = require('jsonwebtoken');
 const { query } = require('../db');
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5000';
-const REDIRECT_URI = `${FRONTEND_URL}/api/gmail/callback`;
+const API_URL      = process.env.API_URL || FRONTEND_URL;   // API's own URL for OAuth callback
+const REDIRECT_URI = `${API_URL}/api/gmail/callback`;
 const GMAIL_SCOPE  = 'https://www.googleapis.com/auth/gmail.readonly';
 
 function oauthClient() {

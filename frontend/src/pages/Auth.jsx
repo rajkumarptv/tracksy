@@ -60,8 +60,9 @@ function AuthShell({ children }) {
 
 /* ── Social OAuth buttons ──────────────────────────────────────────────────── */
 function SocialButtons() {
-  const handleGoogle = () => { window.location.href = '/api/auth/google'; };
-  const handleFacebook = () => { window.location.href = '/api/auth/facebook'; };
+  const API_BASE = import.meta.env.VITE_API_URL || '/api';   // full Render URL in prod
+  const handleGoogle = () => { window.location.href = `${API_BASE}/auth/google`; };
+  const handleFacebook = () => { window.location.href = `${API_BASE}/auth/facebook`; };
 
   return (
     <div>

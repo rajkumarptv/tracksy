@@ -1,24 +1,23 @@
+# Render — backend API only (frontend is on Vercel, DB on Supabase)
 services:
   - type: web
-    name: tracksy
+    name: tracksy-api
     runtime: node
-    buildCommand: cd frontend && npm install && npm run build && cd ../backend && npm install
-    startCommand: node backend/src/index.js
+    rootDir: backend
+    plan: free
+    buildCommand: npm install
+    startCommand: node src/index.js
+    healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 10000
       - key: JWT_EXPIRES_IN
         value: 30d
-      - key: JWT_SECRET
-        generateValue: true
-      - key: DATABASE_URL
-        fromDatabase:
-          name: tracksy-db
-          property: connectionString
-
-databases:
-  - name: tracksy-db
-    databaseName: tracksy
-    user: tracksy
+      # Set these in the Render dashboard (Environment tab):
+      #   DATABASE_URL      → from Supabase
+      #   JWT_SECRET        → any long random string
+      #   ENCRYPTION_KEY    → copy from your local backend/.env
+      #   FRONTEND_URL      → your Vercel URL (https://tracksy.vercel.app)
+      #   API_URL           → this Render URL (https://tracksy-api.onrender.com)
+      #   GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET
+      #   META_WA_TOKEN / META_WA_PHONE_ID / META_WA_VERIFY_TOKEN (optional)

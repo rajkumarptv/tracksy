@@ -2,7 +2,22 @@ node_modules/
 dist/
 build/
 .env
+.env.*
+!.env.example
 *.log
 .DS_Store
 coverage/
 .vite/
+
+# Local-only / sensitive — never push to GitHub
+*.sql
+*.zip
+backend/server.err
+deploy/
+tunnel-wrapper.js
+cloudflare-tunnel.ps1
+start-tunnel.bat
+start.ps1
+
+backend/*.traineddata
+*.traineddata

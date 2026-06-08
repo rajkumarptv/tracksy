@@ -5,6 +5,9 @@ const jwt  = require('jsonwebtoken');
 const { query } = require('../db');
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+// Where OAuth callbacks land — the API's own public URL.
+// Defaults to FRONTEND_URL for the single-domain (tunnel) setup.
+const API_URL = process.env.API_URL || FRONTEND_URL;
 
 // ── Shared: find-or-create user from OAuth profile ────────────────────────────
 async function findOrCreate({ provider, id, email, firstName, lastName, avatar }) {
@@ -46,7 +49,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   passport.use(new GoogleStrategy({
     clientID:     process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL:  `${FRONTEND_URL}/api/auth/google/callback`,
+    callbackURL:  `${API_URL}/api/auth/google/callback`,
   }, async (accessToken, refreshToken, profile, done) => {
     try {
       const user = await findOrCreate({
@@ -67,7 +70,7 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
   passport.use(new FacebookStrategy({
     clientID:     process.env.FACEBOOK_APP_ID,
     clientSecret: process.env.FACEBOOK_APP_SECRET,
-    callbackURL:  `${FRONTEND_URL}/api/auth/facebook/callback`,
+    callbackURL:  `${API_URL}/api/auth/facebook/callback`,
     profileFields: ['id', 'emails', 'name', 'picture.type(large)'],
   }, async (accessToken, refreshToken, profile, done) => {
     try {
