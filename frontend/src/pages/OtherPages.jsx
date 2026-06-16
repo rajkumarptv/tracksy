@@ -112,14 +112,93 @@ export function Wallet() {
 
   if (isLoading) return <PageLoader />;
 
-  const DEBT_WALLET_TYPES = ['visa','mastercard','loan'];
+  const renderWalletCard = (w, i) => {
+    const isLiab = isLiabilityType(w.type);
+    const bal    = parseFloat(w.balance || 0);
+    const utilPct = w.credit_limit ? Math.min(100, Math.round((Math.abs(bal) / parseFloat(w.credit_limit)) * 100)) : 0;
+    return (
+      <div key={w.id} style={{
+        background: WALLET_GRADIENTS[i % WALLET_GRADIENTS.length],
+        borderRadius:22, padding:'24px 26px', color:'#fff',
+        boxShadow:'0 8px 32px rgba(0,0,0,.15)',
+        position:'relative', overflow:'hidden', transition:'all .22s ease',
+      }}
+      onMouseEnter={e=>e.currentTarget.style.transform='translateY(-4px)'}
+      onMouseLeave={e=>e.currentTarget.style.transform=''}>
+        <div style={{ position:'absolute', top:-30, right:-30, width:100, height:100, background:'rgba(255,255,255,.07)', borderRadius:'50%' }}/>
+        <div style={{ position:'absolute', bottom:-20, left:'60%', width:70, height:70, background:'rgba(255,255,255,.05)', borderRadius:'50%' }}/>
+
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:18, position:'relative', zIndex:1 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            <PaymentLogo method={w.type} size={32} style={{ borderRadius:8 }}/>
+            <div>
+              <div style={{ fontSize:13, fontWeight:700, opacity:.9 }}>{w.name}</div>
+              <div style={{ fontSize:11, opacity:.65, textTransform:'capitalize' }}>
+                {WALLET_LABELS[w.type] || w.type} {isLiab ? '· Liability' : '· Asset'}
+              </div>
+            </div>
+          </div>
+          <button onClick={() => { if(confirm(t('wallet_remove_confirm'))) deleteMutation.mutate(w.id); }}
+            style={{ background:'rgba(255,255,255,.15)', border:'none', color:'#fff', borderRadius:8, padding:'5px 10px', cursor:'pointer', fontSize:12, fontWeight:600, backdropFilter:'blur(4px)' }}>
+            {t('wallet_remove')}
+          </button>
+        </div>
+
+        {w.last_four && (
+          <div style={{ fontSize:14, letterSpacing:4, opacity:.7, marginBottom:16, fontFamily:'Space Grotesk, Inter, sans-serif', position:'relative', zIndex:1 }}>
+            •••• •••• •••• {w.last_four}
+          </div>
+        )}
+
+        <div style={{ position:'relative', zIndex:1 }}>
+          {isLiab ? (
+            <>
+              <div style={{ fontSize:10, opacity:.65, textTransform:'uppercase', letterSpacing:'.07em', marginBottom:4 }}>{t('wallet_outstanding')}</div>
+              <div style={{ fontSize:24, fontWeight:900, fontFamily:'Space Grotesk, Inter, sans-serif', letterSpacing:-0.5 }}>
+                {fmt(Math.abs(bal))}
+              </div>
+              {w.credit_limit && (
+                <div style={{ marginTop:10 }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', fontSize:10, opacity:.75, marginBottom:4 }}>
+                    <span>Limit: {fmt(parseFloat(w.credit_limit))}</span>
+                    <span>{utilPct}% {t('wallet_used')}</span>
+                  </div>
+                  <div style={{ height:4, background:'rgba(255,255,255,.25)', borderRadius:20, overflow:'hidden' }}>
+                    <div style={{ height:'100%', borderRadius:20, background:'rgba(255,255,255,.85)', transition:'width .4s', width:`${utilPct}%` }}/>
+                  </div>
+                </div>
+              )}
+              {w.emi_amount && (
+                <div style={{ fontSize:11, opacity:.7, marginTop:8 }}>EMI: {fmt(parseFloat(w.emi_amount))}/mo</div>
+              )}
+            </>
+          ) : (
+            <>
+              <div style={{ fontSize:10, opacity:.65, textTransform:'uppercase', letterSpacing:'.07em', marginBottom:4 }}>{t('wallet_balance')}</div>
+              <div style={{ fontSize:24, fontWeight:900, fontFamily:'Space Grotesk, Inter, sans-serif', letterSpacing:-0.5 }}>
+                {fmt(bal)}
+              </div>
+              {w.invested_amount && (
+                <div style={{ fontSize:11, opacity:.7, marginTop:6 }}>
+                  Invested: {fmt(parseFloat(w.invested_amount))} · {bal >= parseFloat(w.invested_amount) ? '📈' : '📉'} {((bal - parseFloat(w.invested_amount)) / parseFloat(w.invested_amount) * 100).toFixed(1)}%
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const atWalletLimit = !user?.is_premium && (wallets||[]).length >= FREE_WALLET_LIMIT;
   const openAddWallet = () => atWalletLimit ? openWalletPremium() : setShowModal(true);
-  const totalAssets  = (wallets||[]).filter(w => !DEBT_WALLET_TYPES.includes(w.type)).reduce((s,w) => s + parseFloat(w.balance||0), 0);
-  const totalDebt    = (wallets||[]).filter(w => DEBT_WALLET_TYPES.includes(w.type)).reduce((s,w) => s + Math.abs(parseFloat(w.balance||0)), 0);
+  const assetWallets     = (wallets||[]).filter(w => !isLiabilityType(w.type));
+  const liabilityWallets = (wallets||[]).filter(w => isLiabilityType(w.type));
+  const totalAssets  = assetWallets.reduce((s,w) => s + parseFloat(w.balance||0), 0);
+  const totalDebt    = liabilityWallets.reduce((s,w) => s + Math.abs(parseFloat(w.balance||0)), 0);
   const netWorth     = totalAssets - totalDebt;
   const totalCards   = (wallets||[]).filter(w => ['visa','mastercard'].includes(w.type)).length;
-  const totalLoans   = (wallets||[]).filter(w => w.type === 'loan').length;
+  const totalLoans   = (wallets||[]).filter(w => ['home_loan','vehicle_loan','personal_loan','gold_loan','education_loan','loan','emi'].includes(w.type)).length;
 
   return (
     <div style={{ display:'flex', flexDirection:'column', height:'100%' }}>
@@ -183,24 +262,24 @@ export function Wallet() {
       <div className="mob-content" style={{ padding:'28px 32px 40px', flex:1, overflow:'auto' }}>
 
         {/* Summary cards */}
-        <div className="mob-summary-scroll" style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14, marginBottom:24 }}>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))', gap:14, marginBottom:24 }}>
           {[
-            { label:t('dash_net_worth'),      value: fmt(netWorth),    icon:<span style={{fontSize:18,fontWeight:800,color:'#6C63FF',lineHeight:1}}>{currencySymbol}</span>, bg:'rgba(108,99,255,.1)', color: netWorth >= 0 ? '#6C63FF' : '#FF5B5B', sub: netWorth >= 0 ? t('wallet_positive') : t('wallet_negative') },
-            { label:t('wallet_total_assets'), value: fmt(totalAssets), icon:<WalletIcon size={20} color="#37D67A"/>,  bg:'rgba(55,214,122,.1)', color:'#37D67A', sub:t('wallet_all_accounts') },
-            { label:t('wallet_total_debt'),   value: fmt(totalDebt),   icon:<CreditCard size={20} color="#FF5B5B"/>,  bg:'rgba(255,91,91,.1)',  color:'#FF5B5B', sub:t('wallet_cards_loans') },
-          ].map(({ label, value, icon, bg, color, sub }) => (
+            { label:t('dash_net_worth'),      value: fmt(netWorth),    icon:<span style={{fontSize:22,fontWeight:800,color:'#6C63FF',lineHeight:1,fontFamily:'Space Grotesk,sans-serif'}}>{currencySymbol}</span>, bg:'rgba(108,99,255,.15)', color: netWorth >= 0 ? '#6C63FF' : '#FF5B5B', sub: netWorth >= 0 ? t('wallet_positive') : t('wallet_negative'), border:'rgba(108,99,255,.2)' },
+            { label:t('wallet_total_assets'), value: fmt(totalAssets), icon:<WalletIcon size={22} color="#00C896"/>,  bg:'rgba(0,200,150,.15)', color:'#00C896', sub:t('wallet_all_accounts'), border:'rgba(0,200,150,.2)' },
+            { label:t('wallet_total_debt'),   value: fmt(totalDebt),   icon:<CreditCard size={22} color="#FF5B5B"/>,  bg:'rgba(255,91,91,.15)',  color:'#FF5B5B', sub:t('wallet_cards_loans'), border:'rgba(255,91,91,.2)' },
+          ].map(({ label, value, icon, bg, color, sub, border }) => (
             <div key={label} style={{
-              background:'var(--surface)', borderRadius:20, padding:'16px 18px',
-              boxShadow:'0 4px 24px rgba(108,99,255,.08)', border:'1px solid var(--border-light)',
-              display:'flex', alignItems:'center', gap:14,
+              background:'var(--surface)', borderRadius:18, padding:'18px 20px',
+              boxShadow:'0 2px 16px rgba(108,99,255,.07)', border:`1px solid ${border}`,
+              display:'flex', flexDirection:'row', alignItems:'center', gap:16,
             }}>
-              <div style={{ width:42, height:42, borderRadius:12, background:bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+              <div style={{ width:52, height:52, borderRadius:14, background:bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                 {icon}
               </div>
-              <div>
-                <div style={{ fontSize:11, color:'var(--text3)', fontWeight:600, marginBottom:4 }}>{label}</div>
-                <div className="mono" style={{ fontSize:16, fontWeight:800, color, letterSpacing:-0.3, lineHeight:1 }}>{value}</div>
-                <div style={{ fontSize:10.5, color:'var(--text3)', marginTop:3 }}>{sub}</div>
+              <div style={{ display:'flex', flexDirection:'column', gap:2, minWidth:0, flex:1 }}>
+                <div style={{ fontSize:11, fontWeight:600, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.05em', whiteSpace:'nowrap' }}>{label}</div>
+                <div className="mono" style={{ fontSize:18, fontWeight:900, color, letterSpacing:-0.5, lineHeight:1.2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{value}</div>
+                <div style={{ fontSize:11.5, color:'var(--text3)', fontWeight:500 }}>{sub}</div>
               </div>
             </div>
           ))}
@@ -228,79 +307,60 @@ export function Wallet() {
           </div>
         )}
 
+        {/* Net Worth hero banner */}
+        <div style={{ background:'linear-gradient(135deg,#4C3BC4,#6C63FF)', borderRadius:20, padding:'20px 24px', marginBottom:20, color:'#fff', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:16 }}>
+          <div>
+            <div style={{ fontSize:11, fontWeight:700, opacity:.7, textTransform:'uppercase', letterSpacing:'.1em', marginBottom:4 }}>Net Worth</div>
+            <div style={{ fontSize:28, fontWeight:900, fontFamily:'Space Grotesk,Inter,sans-serif', letterSpacing:-1 }}>
+              {netWorth < 0 ? '-' : ''}{fmt(Math.abs(netWorth))}
+            </div>
+            <div style={{ fontSize:11, opacity:.65, marginTop:2 }}>Total Assets − Total Liabilities</div>
+          </div>
+          <div style={{ display:'flex', gap:24 }}>
+            <div style={{ textAlign:'right' }}>
+              <div style={{ fontSize:11, fontWeight:700, opacity:.7, textTransform:'uppercase', letterSpacing:'.07em' }}>Assets</div>
+              <div style={{ fontSize:18, fontWeight:800, color:'#37D67A' }}>{fmt(totalAssets)}</div>
+              <div style={{ fontSize:11, opacity:.55 }}>{assetWallets.length} accounts</div>
+            </div>
+            <div style={{ width:1, background:'rgba(255,255,255,.2)' }}/>
+            <div style={{ textAlign:'right' }}>
+              <div style={{ fontSize:11, fontWeight:700, opacity:.7, textTransform:'uppercase', letterSpacing:'.07em' }}>Liabilities</div>
+              <div style={{ fontSize:18, fontWeight:800, color:'#FF7B7B' }}>{fmt(totalDebt)}</div>
+              <div style={{ fontSize:11, opacity:.55 }}>{liabilityWallets.length} accounts</div>
+            </div>
+          </div>
+        </div>
+
         {/* Wallet cards */}
         <div style={{ marginBottom:24 }}>
-          <div style={{ fontSize:12, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.07em', marginBottom:14 }}>
-            {t('wallet_your_accounts')} ({(wallets||[]).length})
-          </div>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(min(280px,100%),1fr))', gap:16 }}>
-            {(wallets||[]).map((w,i) => (
-              <div key={w.id} style={{
-                background: WALLET_GRADIENTS[i % WALLET_GRADIENTS.length],
-                borderRadius:22, padding:'24px 26px', color:'#fff',
-                boxShadow:'0 8px 32px rgba(0,0,0,.15)',
-                position:'relative', overflow:'hidden',
-                transition:'all .22s ease',
-              }}
-              onMouseEnter={e=>e.currentTarget.style.transform='translateY(-4px)'}
-              onMouseLeave={e=>e.currentTarget.style.transform=''}>
-
-                {/* Decorative circles */}
-                <div style={{ position:'absolute', top:-30, right:-30, width:100, height:100, background:'rgba(255,255,255,.07)', borderRadius:'50%' }}/>
-                <div style={{ position:'absolute', bottom:-20, left:'60%', width:70, height:70, background:'rgba(255,255,255,.05)', borderRadius:'50%' }}/>
-
-                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:18, position:'relative', zIndex:1 }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                    <PaymentLogo method={w.type} size={32} style={{ borderRadius:8 }}/>
-                    <div>
-                      <div style={{ fontSize:13, fontWeight:700, opacity:.9 }}>{w.name}</div>
-                      <div style={{ fontSize:11, opacity:.65, textTransform:'capitalize' }}>{WALLET_LABELS[w.type]||w.type}</div>
-                    </div>
-                  </div>
-                  <button onClick={() => { if(confirm(t('wallet_remove_confirm'))) deleteMutation.mutate(w.id); }}
-                    style={{ background:'rgba(255,255,255,.15)', border:'none', color:'#fff', borderRadius:8, padding:'5px 10px', cursor:'pointer', fontSize:12, fontWeight:600, backdropFilter:'blur(4px)' }}>
-                    {t('wallet_remove')}
-                  </button>
-                </div>
-
-                {w.last_four && (
-                  <div style={{ fontSize:14, letterSpacing:4, opacity:.7, marginBottom:16, fontFamily:'Space Grotesk, Inter, sans-serif', position:'relative', zIndex:1 }}>
-                    •••• •••• •••• {w.last_four}
-                  </div>
-                )}
-
-                <div style={{ position:'relative', zIndex:1 }}>
-                  {/* Debt: show outstanding + limit bar */}
-                  {['visa','mastercard','loan'].includes(w.type) ? (
-                    <>
-                      <div style={{ fontSize:10, opacity:.65, textTransform:'uppercase', letterSpacing:'.07em', marginBottom:4 }}>{t('wallet_outstanding')}</div>
-                      <div style={{ fontSize:24, fontWeight:900, fontFamily:'Space Grotesk, Inter, sans-serif', letterSpacing:-0.5 }}>
-                        {fmt(Math.abs(parseFloat(w.balance||0)))}
-                      </div>
-                      {w.credit_limit && (
-                        <div style={{ marginTop:10 }}>
-                          <div style={{ display:'flex', justifyContent:'space-between', fontSize:10, opacity:.75, marginBottom:4 }}>
-                            <span>Limit: {fmt(parseFloat(w.credit_limit))}</span>
-                            <span>{Math.min(100,Math.round((Math.abs(parseFloat(w.balance||0))/parseFloat(w.credit_limit))*100))}% {t('wallet_used')}</span>
-                          </div>
-                          <div style={{ height:4, background:'rgba(255,255,255,.25)', borderRadius:20, overflow:'hidden' }}>
-                            <div style={{ height:'100%', borderRadius:20, background:'rgba(255,255,255,.85)', transition:'width .4s', width:`${Math.min(100,Math.round((Math.abs(parseFloat(w.balance||0))/parseFloat(w.credit_limit))*100))}%` }}/>
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <div style={{ fontSize:10, opacity:.65, textTransform:'uppercase', letterSpacing:'.07em', marginBottom:4 }}>{t('wallet_balance')}</div>
-                      <div style={{ fontSize:24, fontWeight:900, fontFamily:'Space Grotesk, Inter, sans-serif', letterSpacing:-0.5 }}>
-                        {fmt(parseFloat(w.balance||0))}
-                      </div>
-                    </>
-                  )}
+          {/* Assets section */}
+          {assetWallets.length > 0 && (
+            <>
+              <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14 }}>
+                <div style={{ width:8, height:8, borderRadius:'50%', background:'#37D67A' }}/>
+                <div style={{ fontSize:12, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.07em' }}>
+                  Assets — {fmt(totalAssets)}
                 </div>
               </div>
-            ))}
-          </div>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(min(280px,100%),1fr))', gap:16, marginBottom:24 }}>
+                {assetWallets.map((w,i) => renderWalletCard(w, i))}
+              </div>
+            </>
+          )}
+          {/* Liabilities section */}
+          {liabilityWallets.length > 0 && (
+            <>
+              <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14 }}>
+                <div style={{ width:8, height:8, borderRadius:'50%', background:'#FF5B5B' }}/>
+                <div style={{ fontSize:12, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.07em' }}>
+                  Liabilities — {fmt(totalDebt)}
+                </div>
+              </div>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(min(280px,100%),1fr))', gap:16, marginBottom:24 }}>
+                {liabilityWallets.map((w,i) => renderWalletCard(w, i + assetWallets.length))}
+              </div>
+            </>
+          )}
 
           {!(wallets||[]).length && (
             <div style={{ background:'var(--surface)', borderRadius:20, boxShadow:'0 4px 24px rgba(108,99,255,.08)', border:'1px solid var(--border-light)', padding:'48px', textAlign:'center', color:'var(--text3)', fontSize:14 }}>
@@ -321,11 +381,11 @@ export function Wallet() {
             {t('wallet_recent')}
           </div>
           <div style={{ overflowX:'auto' }}>
-            <table style={{ width:'100%', borderCollapse:'collapse' }}>
+            <table style={{ width:'100%', minWidth:480, borderCollapse:'collapse' }}>
               <thead>
                 <tr style={{ background:'var(--surface2)' }}>
                   {[t('tx_col_date'),t('tx_col_amount'),t('tx_col_name'),t('nav_accounts'),t('tx_col_status')].map(h => (
-                    <th key={h} style={{ fontSize:11, fontWeight:700, color:'var(--text3)', textAlign:'left', padding:'12px 18px', borderBottom:'1px solid var(--border-light)', textTransform:'uppercase', letterSpacing:'.06em', whiteSpace:'nowrap' }}>{h}</th>
+                    <th key={h} style={{ fontSize:11, fontWeight:700, color:'var(--text3)', textAlign:'left', padding:'12px 14px', borderBottom:'1px solid var(--border-light)', textTransform:'uppercase', letterSpacing:'.06em', whiteSpace:'nowrap' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -335,19 +395,19 @@ export function Wallet() {
                     onMouseEnter={e=>e.currentTarget.style.background='var(--surface2)'}
                     onMouseLeave={e=>e.currentTarget.style.background=''}
                     style={{ transition:'background .1s' }}>
-                    <td style={{ padding:'12px 18px', borderBottom:'1px solid var(--border-light)', fontSize:12.5, color:'var(--text3)' }}>
+                    <td style={{ padding:'11px 14px', borderBottom:'1px solid var(--border-light)', fontSize:12, color:'var(--text3)', whiteSpace:'nowrap' }}>
                       {new Date(tx.transaction_date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
                     </td>
-                    <td style={{ padding:'12px 18px', borderBottom:'1px solid var(--border-light)' }}>
+                    <td style={{ padding:'11px 14px', borderBottom:'1px solid var(--border-light)', whiteSpace:'nowrap' }}>
                       <AmountText amount={tx.amount} type={tx.type}/>
                     </td>
-                    <td style={{ padding:'12px 18px', borderBottom:'1px solid var(--border-light)', fontSize:13, fontWeight:600, color:'var(--text)' }}>
+                    <td style={{ padding:'11px 14px', borderBottom:'1px solid var(--border-light)', fontSize:13, fontWeight:600, color:'var(--text)', maxWidth:180, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
                       {tx.payment_name || tx.description}
                     </td>
-                    <td style={{ padding:'12px 18px', borderBottom:'1px solid var(--border-light)', fontSize:12.5, color:'var(--text3)' }}>
+                    <td style={{ padding:'11px 14px', borderBottom:'1px solid var(--border-light)', fontSize:12, color:'var(--text3)', whiteSpace:'nowrap', maxWidth:120, overflow:'hidden', textOverflow:'ellipsis' }}>
                       {tx.wallet_name}
                     </td>
-                    <td style={{ padding:'12px 18px', borderBottom:'1px solid var(--border-light)' }}>
+                    <td style={{ padding:'11px 14px', borderBottom:'1px solid var(--border-light)' }}>
                       <StatusChip status={tx.status}/>
                     </td>
                   </tr>
@@ -376,40 +436,70 @@ export function Wallet() {
   );
 }
 
-const ACCOUNT_TYPES = [
-  { group:'Credit Cards', items:[
-    { value:'visa',        icon:'💳', label:'Visa',            color:'#FF5B5B', bg:'rgba(255,91,91,.12)'   },
-    { value:'mastercard',  icon:'💳', label:'Mastercard',      color:'#FF5B5B', bg:'rgba(255,91,91,.12)'   },
-  ]},
+/* ── Assets & Liabilities type system ── */
+const ASSET_TYPES = [
   { group:'Bank & Cash', items:[
-    { value:'bank',        icon:'🏦', label:'Bank Account',    color:'#5B8CFF', bg:'rgba(91,140,255,.12)'  },
-    { value:'cash',        icon:'💵', label:'Cash',            color:'#37D67A', bg:'rgba(55,214,122,.12)'  },
+    { value:'bank',         icon:'🏦', label:'Bank Account',        color:'#5B8CFF', bg:'rgba(91,140,255,.14)'  },
+    { value:'cash',         icon:'💵', label:'Cash',                color:'#37D67A', bg:'rgba(55,214,122,.14)'  },
   ]},
-  { group:'UPI & Digital Wallets', items:[
-    { value:'gpay',        icon:'🟣', label:'Google Pay',      color:'#4285F4', bg:'rgba(66,133,244,.12)'  },
-    { value:'phonepe',     icon:'💜', label:'PhonePe',         color:'#5f259f', bg:'rgba(95,37,159,.12)'   },
-    { value:'paytm',       icon:'🟦', label:'Paytm Wallet',    color:'#00B9F1', bg:'rgba(0,185,241,.12)'   },
-    { value:'amazon_pay',  icon:'🛒', label:'Amazon Pay',      color:'#FF9900', bg:'rgba(255,153,0,.12)'   },
-    { value:'mobikwik',    icon:'💙', label:'MobiKwik',        color:'#3b5bdb', bg:'rgba(59,91,219,.12)'   },
-    { value:'jio_money',   icon:'🔴', label:'Jio Money',       color:'#e03131', bg:'rgba(224,49,49,.12)'   },
-    { value:'airtel_money',icon:'❤️', label:'Airtel Money',    color:'#e03131', bg:'rgba(224,49,49,.12)'   },
-    { value:'paypal',      icon:'🅿️', label:'PayPal',          color:'#6C63FF', bg:'rgba(108,99,255,.12)'  },
+  { group:'Digital Wallets & UPI', items:[
+    { value:'gpay',         icon:'🟣', label:'Google Pay',          color:'#4285F4', bg:'rgba(66,133,244,.14)'  },
+    { value:'phonepe',      icon:'💜', label:'PhonePe',             color:'#5f259f', bg:'rgba(95,37,159,.14)'   },
+    { value:'paytm',        icon:'🟦', label:'Paytm',               color:'#00B9F1', bg:'rgba(0,185,241,.14)'   },
+    { value:'amazon_pay',   icon:'🛒', label:'Amazon Pay',          color:'#FF9900', bg:'rgba(255,153,0,.14)'   },
+    { value:'mobikwik',     icon:'💙', label:'MobiKwik',            color:'#3b5bdb', bg:'rgba(59,91,219,.14)'   },
+    { value:'jio_money',    icon:'🔴', label:'Jio Money',           color:'#e03131', bg:'rgba(224,49,49,.14)'   },
+    { value:'airtel_money', icon:'❤️', label:'Airtel Money',        color:'#e03131', bg:'rgba(224,49,49,.14)'   },
+    { value:'paypal',       icon:'🅿️', label:'PayPal',              color:'#003087', bg:'rgba(0,48,135,.14)'   },
+    { value:'irctc',        icon:'🚂', label:'IRCTC Wallet',        color:'#2563eb', bg:'rgba(37,99,235,.14)'   },
   ]},
-  { group:'Travel Wallets', items:[
-    { value:'irctc',       icon:'🚂', label:'IRCTC Wallet',    color:'#2563eb', bg:'rgba(37,99,235,.12)'   },
+  { group:'Investments', items:[
+    { value:'fd',           icon:'🏛️', label:'Fixed Deposit',       color:'#00C896', bg:'rgba(0,200,150,.14)'  },
+    { value:'mutual_fund',  icon:'📊', label:'Mutual Funds',        color:'#6C63FF', bg:'rgba(108,99,255,.14)' },
+    { value:'stocks',       icon:'📈', label:'Stocks',              color:'#37D67A', bg:'rgba(55,214,122,.14)'  },
+    { value:'gold',         icon:'🪙', label:'Gold',                color:'#FFB84D', bg:'rgba(255,184,77,.14)'  },
+    { value:'crypto',       icon:'₿',  label:'Crypto',              color:'#F7931A', bg:'rgba(247,147,26,.14)'  },
+    { value:'epf',          icon:'🛡️', label:'EPF / PPF',           color:'#A29BFE', bg:'rgba(162,155,254,.14)' },
   ]},
-  { group:'Investments & Other', items:[
-    { value:'crypto',      icon:'₿',  label:'Crypto',          color:'#FFB84D', bg:'rgba(255,184,77,.12)'  },
-    { value:'asset',       icon:'📈', label:'Asset',           color:'#00CEC9', bg:'rgba(0,206,201,.12)'   },
-    { value:'loan',        icon:'📋', label:'Loan',            color:'#FFB84D', bg:'rgba(255,184,77,.12)'  },
-    { value:'lending',     icon:'🤝', label:'Lending',         color:'#A29BFE', bg:'rgba(162,155,254,.12)' },
-    { value:'other',       icon:'👛', label:'Other',           color:'#636E72', bg:'rgba(99,110,114,.12)'  },
+  { group:'Other Assets', items:[
+    { value:'real_estate',  icon:'🏠', label:'Real Estate',         color:'#FF79A8', bg:'rgba(255,121,168,.14)' },
+    { value:'lending',      icon:'🤝', label:'Money Lent',          color:'#00CEC9', bg:'rgba(0,206,201,.14)'  },
+    { value:'asset',        icon:'💼', label:'Other Asset',         color:'#636E72', bg:'rgba(99,110,114,.14)'  },
   ]},
 ];
 
-const ALL_TYPES = ACCOUNT_TYPES.flatMap(g => g.items);
+const LIABILITY_TYPES = [
+  { group:'Credit Cards', items:[
+    { value:'visa',         icon:'💳', label:'Visa Card',           color:'#FF5B5B', bg:'rgba(255,91,91,.14)'   },
+    { value:'mastercard',   icon:'💳', label:'Mastercard',          color:'#EB001B', bg:'rgba(235,0,27,.14)'    },
+  ]},
+  { group:'Loans', items:[
+    { value:'home_loan',    icon:'🏠', label:'Home Loan',           color:'#FF5B5B', bg:'rgba(255,91,91,.14)'   },
+    { value:'vehicle_loan', icon:'🚗', label:'Vehicle Loan',        color:'#FFB84D', bg:'rgba(255,184,77,.14)'  },
+    { value:'personal_loan',icon:'💼', label:'Personal Loan',       color:'#FF79A8', bg:'rgba(255,121,168,.14)' },
+    { value:'gold_loan',    icon:'🪙', label:'Gold Loan',           color:'#FFB84D', bg:'rgba(255,184,77,.14)'  },
+    { value:'education_loan',icon:'🎓',label:'Education Loan',      color:'#5B8CFF', bg:'rgba(91,140,255,.14)'  },
+    { value:'loan',         icon:'📋', label:'Other Loan',          color:'#A29BFE', bg:'rgba(162,155,254,.14)' },
+  ]},
+  { group:'Buy Now Pay Later & Borrowings', items:[
+    { value:'bnpl',         icon:'🛍️', label:'BNPL',                color:'#FF79A8', bg:'rgba(255,121,168,.14)' },
+    { value:'family_borrow',icon:'👨‍👩‍👧', label:'Family Borrowing',   color:'#FFB84D', bg:'rgba(255,184,77,.14)'  },
+    { value:'emi',          icon:'📅', label:'EMI',                 color:'#6C63FF', bg:'rgba(108,99,255,.14)'  },
+  ]},
+];
+
+const ALL_TYPES = [
+  ...ASSET_TYPES.flatMap(g => g.items),
+  ...LIABILITY_TYPES.flatMap(g => g.items),
+];
+
+const LIABILITY_VALS = new Set(['visa','mastercard','home_loan','vehicle_loan','personal_loan','gold_loan','education_loan','loan','bnpl','family_borrow','emi']);
+const isLiabilityType = t => LIABILITY_VALS.has(t);
 
 function AccountTypePicker({ value, onChange }) {
+  const [tab, setTab] = useState(isLiabilityType(value) ? 'liability' : 'asset');
+  const groups = tab === 'asset' ? ASSET_TYPES : LIABILITY_TYPES;
+
   return (
     <div>
       <style>{`
@@ -419,39 +509,70 @@ function AccountTypePicker({ value, onChange }) {
         }
         .type-card {
           display:flex; flex-direction:column; align-items:center; justify-content:center;
-          gap:6px; padding:12px 6px; border-radius:14px; cursor:pointer;
+          position:relative;
+          gap:5px; padding:11px 6px; border-radius:14px; cursor:pointer;
           border:1.5px solid var(--border); background:var(--surface);
           transition:all .18s cubic-bezier(.34,1.56,.64,1);
-          animation:typeCardIn .22s ease both;
-          user-select:none;
+          animation:typeCardIn .18s ease both;
+          user-select:none; text-align:center;
         }
-        .type-card:hover { transform:translateY(-3px) scale(1.04); box-shadow:0 6px 20px rgba(108,99,255,.15); }
-        .type-card.selected { transform:translateY(-2px) scale(1.03); }
+        .type-card:hover { transform:translateY(-2px) scale(1.04); box-shadow:0 6px 20px rgba(108,99,255,.15); }
       `}</style>
-      {ACCOUNT_TYPES.map((group, gi) => (
+
+      {/* Asset / Liability toggle */}
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:18 }}>
+        <button onClick={() => { setTab('asset'); onChange('bank'); }}
+          style={{ padding:'12px 0', borderRadius:14, border: tab==='asset' ? '2px solid #37D67A' : '1.5px solid var(--border)',
+            background: tab==='asset' ? 'rgba(55,214,122,.12)' : 'var(--surface)', cursor:'pointer',
+            display:'flex', flexDirection:'column', alignItems:'center', gap:4, transition:'all .2s' }}>
+          <span style={{ fontSize:22 }}>💰</span>
+          <span style={{ fontSize:13, fontWeight:700, color: tab==='asset' ? '#37D67A' : 'var(--text)' }}>Assets</span>
+          <span style={{ fontSize:10.5, color:'var(--text3)' }}>Bank, FD, Gold, Stocks…</span>
+        </button>
+        <button onClick={() => { setTab('liability'); onChange('visa'); }}
+          style={{ padding:'12px 0', borderRadius:14, border: tab==='liability' ? '2px solid #FF5B5B' : '1.5px solid var(--border)',
+            background: tab==='liability' ? 'rgba(255,91,91,.10)' : 'var(--surface)', cursor:'pointer',
+            display:'flex', flexDirection:'column', alignItems:'center', gap:4, transition:'all .2s' }}>
+          <span style={{ fontSize:22 }}>💸</span>
+          <span style={{ fontSize:13, fontWeight:700, color: tab==='liability' ? '#FF5B5B' : 'var(--text)' }}>Liabilities</span>
+          <span style={{ fontSize:10.5, color:'var(--text3)' }}>Loans, Cards, BNPL…</span>
+        </button>
+      </div>
+
+      {/* Formula hint */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, marginBottom:14,
+        padding:'8px 14px', background:'var(--surface2)', borderRadius:10, border:'1px solid var(--border-light)' }}>
+        <span style={{ fontSize:12, color:'var(--text3)', fontWeight:500 }}>Net Worth</span>
+        <span style={{ fontSize:12, color:'var(--text3)' }}>=</span>
+        <span style={{ fontSize:12, fontWeight:700, color:'#37D67A' }}>Total Assets</span>
+        <span style={{ fontSize:12, color:'var(--text3)' }}>−</span>
+        <span style={{ fontSize:12, fontWeight:700, color:'#FF5B5B' }}>Total Liabilities</span>
+      </div>
+
+      {/* Type grid */}
+      {groups.map((group, gi) => (
         <div key={group.group} style={{ marginBottom:14 }}>
           <div style={{ fontSize:10.5, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.08em', marginBottom:8 }}>
             {group.group}
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:8 }}>
-            {group.items.map((t, ti) => {
-              const sel = value === t.value;
+            {group.items.map((item, ti) => {
+              const sel = value === item.value;
               return (
-                <div key={t.value}
-                  className={`type-card${sel ? ' selected' : ''}`}
+                <div key={item.value}
+                  className="type-card"
                   style={{
-                    animationDelay: `${(gi * 4 + ti) * 30}ms`,
-                    border: sel ? `1.5px solid ${t.color}` : '1.5px solid var(--border)',
-                    background: sel ? t.bg : 'var(--surface)',
-                    boxShadow: sel ? `0 4px 16px ${t.color}33` : 'none',
+                    animationDelay: `${(gi * 4 + ti) * 25}ms`,
+                    border: sel ? `2px solid ${item.color}` : '1.5px solid var(--border)',
+                    background: sel ? item.bg : 'var(--surface)',
+                    boxShadow: sel ? `0 4px 16px ${item.color}33` : 'none',
                   }}
-                  onClick={() => onChange(t.value)}>
-                  <PaymentLogo method={t.value} size={36}
-                    style={{ boxShadow: sel ? `0 4px 14px ${t.color}55` : 'none', transition:'box-shadow .18s', opacity: sel ? 1 : 0.82 }}/>
-                  <div style={{ fontSize:11, fontWeight:700, color: sel ? t.color : 'var(--text3)', textAlign:'center', lineHeight:1.2 }}>{t.label}</div>
+                  onClick={() => onChange(item.value)}>
+                  <span style={{ fontSize:24, lineHeight:1 }}>{item.icon}</span>
+                  <div style={{ fontSize:10, fontWeight:700, color: sel ? item.color : 'var(--text3)', lineHeight:1.2 }}>{item.label}</div>
                   {sel && (
-                    <div style={{ position:'absolute', top:6, right:6, width:14, height:14, borderRadius:'50%', background:t.color, display:'flex', alignItems:'center', justifyContent:'center' }}>
-                      <svg width="8" height="8" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke="#fff" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <div style={{ position:'absolute', top:5, right:5, width:13, height:13, borderRadius:'50%', background:item.color, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                      <svg width="7" height="7" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke="#fff" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     </div>
                   )}
                 </div>
@@ -483,8 +604,9 @@ function calcPaymentDue(billDay) {
 function AddWalletModal({ onClose, onSaved }) {
   const fmt = useFmtWallet();
   const [form, setForm] = useState({
-    name:'', type:'visa', last_four:'', balance:'', color:'#6C63FF',
-    credit_limit:'', bill_date:'',
+    name:'', type:'bank', last_four:'', balance:'', color:'#5B8CFF',
+    credit_limit:'', bill_date:'', emi_amount:'', interest_rate:'', person_name:'',
+    maturity_date:'', invested_amount:'',
   });
   const [step, setStep] = useState(1);
   const { openPremium: openModalPremium } = usePremiumStore();
@@ -495,6 +617,12 @@ function AddWalletModal({ onClose, onSaved }) {
   });
 
   const isCard     = ['visa','mastercard'].includes(form.type);
+  const isLoan     = ['home_loan','vehicle_loan','personal_loan','gold_loan','education_loan','loan','emi'].includes(form.type);
+  const isBNPL     = form.type === 'bnpl';
+  const isFamilyBorrow = form.type === 'family_borrow';
+  const isLiability = isLiabilityType(form.type);
+  const isInvestment = ['fd','mutual_fund','stocks','gold','crypto','epf','real_estate'].includes(form.type);
+  const isLending  = form.type === 'lending';
   const selectedType = ALL_TYPES.find(t => t.value === form.type) || ALL_TYPES[0];
 
   const paymentDue  = isCard ? calcPaymentDue(form.bill_date) : null;
@@ -561,21 +689,31 @@ function AddWalletModal({ onClose, onSaved }) {
                   }/>
               </div>
 
-              {/* ── CREDIT CARD specific fields ── */}
-              {isCard ? (
+              {/* ── Category badge ── */}
+              <div style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'5px 12px', borderRadius:20, marginBottom:14,
+                background: isLiability ? 'rgba(255,91,91,.10)' : 'rgba(55,214,122,.10)',
+                border: `1px solid ${isLiability ? 'rgba(255,91,91,.3)' : 'rgba(55,214,122,.3)'}` }}>
+                <span style={{ fontSize:13 }}>{isLiability ? '💸' : '💰'}</span>
+                <span style={{ fontSize:11.5, fontWeight:700, color: isLiability ? '#FF5B5B' : '#37D67A' }}>
+                  {isLiability ? 'Liability — reduces Net Worth' : 'Asset — increases Net Worth'}
+                </span>
+              </div>
+
+              {/* ── CREDIT CARD fields ── */}
+              {isCard && (
                 <>
                   <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
                     <div className="form-group">
-                      <label className="form-label">Outstanding Balance ($)</label>
+                      <label className="form-label">Outstanding Balance ₹</label>
                       <input className="form-input" type="number" min="0" step="0.01"
                         value={form.balance} onChange={e=>setForm(f=>({...f,balance:e.target.value}))}
                         placeholder="Amount currently owed"/>
                     </div>
                     <div className="form-group">
-                      <label className="form-label">Total Credit Limit ($)</label>
+                      <label className="form-label">Credit Limit ₹</label>
                       <input className="form-input" type="number" min="0" step="0.01"
                         value={form.credit_limit} onChange={e=>setForm(f=>({...f,credit_limit:e.target.value}))}
-                        placeholder="e.g. 100000"/>
+                        placeholder="e.g. 1,00,000"/>
                     </div>
                     <div className="form-group">
                       <label className="form-label">Last 4 Digits</label>
@@ -584,44 +722,159 @@ function AddWalletModal({ onClose, onSaved }) {
                         placeholder="4321"/>
                     </div>
                     <div className="form-group">
-                      <label className="form-label">Bill Generation Date <span style={{color:'var(--text3)',fontWeight:400}}>(day of month)</span></label>
+                      <label className="form-label">Bill Date <span style={{color:'var(--text3)',fontWeight:400}}>(day of month)</span></label>
                       <input className="form-input" type="number" min="1" max="31"
                         value={form.bill_date} onChange={e=>setForm(f=>({...f,bill_date:e.target.value}))}
                         placeholder="e.g. 15"/>
                     </div>
                   </div>
-
-                  {/* Auto-calculated payment due */}
                   {paymentDue && (
                     <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:4 }}>
                       <div style={{ background:'rgba(55,214,122,.08)', border:'1px solid rgba(55,214,122,.25)', borderRadius:12, padding:'12px 14px' }}>
-                        <div style={{ fontSize:11, fontWeight:600, color:'#37D67A', marginBottom:3 }}>📅 Payment Due Date</div>
+                        <div style={{ fontSize:11, fontWeight:600, color:'#37D67A', marginBottom:3 }}>📅 Payment Due</div>
                         <div style={{ fontSize:15, fontWeight:800, color:'var(--text)' }}>
-                          {paymentDue.toLocaleDateString('en-US',{day:'numeric',month:'long',year:'numeric'})}
+                          {paymentDue.toLocaleDateString('en-IN',{day:'numeric',month:'long'})}
                         </div>
                         <div style={{ fontSize:11, color:'var(--text3)', marginTop:2 }}>Bill date + 20 days</div>
                       </div>
                       {form.credit_limit && form.balance && (
-                        <div style={{ background: utilPct>80?'rgba(255,91,91,.08)':utilPct>50?'rgba(255,184,77,.08)':'rgba(55,214,122,.08)', border:`1px solid ${utilPct>80?'rgba(255,91,91,.25)':utilPct>50?'rgba(255,184,77,.25)':'rgba(55,214,122,.25)'}`, borderRadius:12, padding:'12px 14px' }}>
-                          <div style={{ fontSize:11, fontWeight:600, color: utilPct>80?'#FF5B5B':utilPct>50?'#FFB84D':'#37D67A', marginBottom:6 }}>
-                            💳 Utilization — {utilPct}%
-                          </div>
+                        <div style={{ background: utilPct>80?'rgba(255,91,91,.08)':'rgba(55,214,122,.08)', border:`1px solid ${utilPct>80?'rgba(255,91,91,.25)':'rgba(55,214,122,.25)'}`, borderRadius:12, padding:'12px 14px' }}>
+                          <div style={{ fontSize:11, fontWeight:600, color: utilPct>80?'#FF5B5B':'#37D67A', marginBottom:6 }}>💳 Utilization {utilPct}%</div>
                           <div style={{ height:6, background:'var(--surface3)', borderRadius:20, overflow:'hidden' }}>
-                            <div style={{ height:'100%', width:`${utilPct}%`, borderRadius:20, transition:'width .4s', background: utilPct>80?'#FF5B5B':utilPct>50?'#FFB84D':'#37D67A' }}/>
-                          </div>
-                          <div style={{ fontSize:11, color:'var(--text3)', marginTop:4 }}>
-                            {fmt(parseFloat(form.balance||0))} of {fmt(parseFloat(form.credit_limit||0))} used
+                            <div style={{ height:'100%', width:`${utilPct}%`, borderRadius:20, background: utilPct>80?'#FF5B5B':'#37D67A' }}/>
                           </div>
                         </div>
                       )}
                     </div>
                   )}
                 </>
-              ) : (
-                /* ── Non-card fields ── */
+              )}
+
+              {/* ── LOAN fields ── */}
+              {isLoan && (
                 <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
                   <div className="form-group">
-                    <label className="form-label">Initial Balance ($)</label>
+                    <label className="form-label">Outstanding Balance ₹</label>
+                    <input className="form-input" type="number" min="0" step="0.01"
+                      value={form.balance} onChange={e=>setForm(f=>({...f,balance:e.target.value}))}
+                      placeholder="Remaining principal"/>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Monthly EMI ₹</label>
+                    <input className="form-input" type="number" min="0"
+                      value={form.emi_amount} onChange={e=>setForm(f=>({...f,emi_amount:e.target.value}))}
+                      placeholder="e.g. 15,000"/>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Interest Rate % p.a.</label>
+                    <input className="form-input" type="number" min="0" max="50" step="0.1"
+                      value={form.interest_rate} onChange={e=>setForm(f=>({...f,interest_rate:e.target.value}))}
+                      placeholder="e.g. 8.5"/>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Bill Date <span style={{color:'var(--text3)',fontWeight:400}}>(day)</span></label>
+                    <input className="form-input" type="number" min="1" max="31"
+                      value={form.bill_date} onChange={e=>setForm(f=>({...f,bill_date:e.target.value}))}
+                      placeholder="e.g. 5"/>
+                  </div>
+                </div>
+              )}
+
+              {/* ── BNPL fields ── */}
+              {isBNPL && (
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                  <div className="form-group">
+                    <label className="form-label">Outstanding ₹</label>
+                    <input className="form-input" type="number" min="0"
+                      value={form.balance} onChange={e=>setForm(f=>({...f,balance:e.target.value}))}
+                      placeholder="Amount owed"/>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Next Payment Date</label>
+                    <input className="form-input" type="date"
+                      value={form.bill_date} onChange={e=>setForm(f=>({...f,bill_date:e.target.value}))}/>
+                  </div>
+                </div>
+              )}
+
+              {/* ── FAMILY BORROW fields ── */}
+              {isFamilyBorrow && (
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                  <div className="form-group">
+                    <label className="form-label">Amount Borrowed ₹</label>
+                    <input className="form-input" type="number" min="0"
+                      value={form.balance} onChange={e=>setForm(f=>({...f,balance:e.target.value}))}
+                      placeholder="0.00"/>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Borrowed From</label>
+                    <input className="form-input"
+                      value={form.person_name} onChange={e=>setForm(f=>({...f,person_name:e.target.value}))}
+                      placeholder="Name of person"/>
+                  </div>
+                </div>
+              )}
+
+              {/* ── INVESTMENT fields (FD, MF, Stocks, Gold, Crypto, EPF) ── */}
+              {isInvestment && (
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                  <div className="form-group">
+                    <label className="form-label">
+                      {form.type==='fd' ? 'Principal Amount ₹' : form.type==='real_estate' ? 'Current Market Value ₹' : 'Current Value ₹'}
+                    </label>
+                    <input className="form-input" type="number" min="0"
+                      value={form.balance} onChange={e=>setForm(f=>({...f,balance:e.target.value}))}
+                      placeholder="0.00"/>
+                  </div>
+                  {['mutual_fund','stocks','gold','crypto'].includes(form.type) && (
+                    <div className="form-group">
+                      <label className="form-label">Amount Invested ₹</label>
+                      <input className="form-input" type="number" min="0"
+                        value={form.invested_amount} onChange={e=>setForm(f=>({...f,invested_amount:e.target.value}))}
+                        placeholder="Cost basis"/>
+                    </div>
+                  )}
+                  {form.type === 'fd' && (
+                    <>
+                      <div className="form-group">
+                        <label className="form-label">Interest Rate % p.a.</label>
+                        <input className="form-input" type="number" min="0" step="0.1"
+                          value={form.interest_rate} onChange={e=>setForm(f=>({...f,interest_rate:e.target.value}))}
+                          placeholder="e.g. 7.1"/>
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Maturity Date</label>
+                        <input className="form-input" type="date"
+                          value={form.maturity_date} onChange={e=>setForm(f=>({...f,maturity_date:e.target.value}))}/>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* ── LENDING / Money lent ── */}
+              {isLending && (
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                  <div className="form-group">
+                    <label className="form-label">Amount Lent ₹</label>
+                    <input className="form-input" type="number" min="0"
+                      value={form.balance} onChange={e=>setForm(f=>({...f,balance:e.target.value}))}
+                      placeholder="0.00"/>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Lent To</label>
+                    <input className="form-input"
+                      value={form.person_name} onChange={e=>setForm(f=>({...f,person_name:e.target.value}))}
+                      placeholder="Name of person"/>
+                  </div>
+                </div>
+              )}
+
+              {/* ── BANK / CASH / WALLET fields ── */}
+              {!isCard && !isLoan && !isBNPL && !isFamilyBorrow && !isInvestment && !isLending && (
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                  <div className="form-group">
+                    <label className="form-label">Current Balance ₹</label>
                     <input className="form-input" type="number" value={form.balance}
                       onChange={e=>setForm(f=>({...f,balance:e.target.value}))} placeholder="0.00"/>
                   </div>
@@ -634,6 +887,25 @@ function AddWalletModal({ onClose, onSaved }) {
                   )}
                 </div>
               )}
+
+              {/* Returns preview for investments */}
+              {isInvestment && form.balance && form.invested_amount && parseFloat(form.invested_amount) > 0 && (() => {
+                const gain = parseFloat(form.balance) - parseFloat(form.invested_amount);
+                const pct  = (gain / parseFloat(form.invested_amount) * 100).toFixed(1);
+                const pos  = gain >= 0;
+                return (
+                  <div style={{ padding:'10px 14px', borderRadius:12, marginBottom:4,
+                    background: pos ? 'rgba(55,214,122,.08)' : 'rgba(255,91,91,.08)',
+                    border: `1px solid ${pos ? 'rgba(55,214,122,.25)' : 'rgba(255,91,91,.25)'}` }}>
+                    <div style={{ fontSize:11, fontWeight:600, color: pos?'#37D67A':'#FF5B5B', marginBottom:2 }}>
+                      {pos ? '📈 Unrealised Gain' : '📉 Unrealised Loss'}
+                    </div>
+                    <div style={{ fontSize:16, fontWeight:800, color: pos?'#37D67A':'#FF5B5B' }}>
+                      {pos?'+':''}{fmt(gain,{noDecimals:true})} ({pct}%)
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Color picker — always shown */}
               <div className="form-group">
@@ -694,11 +966,10 @@ function AddWalletModal({ onClose, onSaved }) {
               <button className="btn btn-ghost" onClick={() => setStep(1)}>← Back</button>
               <button className="btn btn-primary" disabled={mutation.isPending || !form.name.trim()}
                 onClick={() => {
-                  const DEBT_TYPES = ['visa','mastercard','loan'];
                   const bal = parseFloat(form.balance || 0);
                   mutation.mutate({
                     ...form,
-                    balance:  DEBT_TYPES.includes(form.type) ? -Math.abs(bal) : Math.abs(bal),
+                    balance: isLiabilityType(form.type) ? -Math.abs(bal) : Math.abs(bal),
                     due_date: paymentDue ? paymentDue.toISOString().split('T')[0] : undefined,
                     emi_day:  form.bill_date ? parseInt(form.bill_date) : undefined,
                   });

@@ -108,25 +108,25 @@ export default function Goals() {
         )}
 
         {/* Summary cards */}
-        <div className="mob-summary-scroll" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:24 }}>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:14, marginBottom:24 }}>
           {[
-            { label:t('goals_total_goals'),        value: goals?.length || 0,                sub:t('goals_active_sub'),                   icon:<Target size={20} color="#6C63FF"/>,    bg:'rgba(108,99,255,.1)', color:'#6C63FF' },
-            { label:t('goals_total_saved_label'),  value: fmt(totalSaved,{noDecimals:true}), sub:t('goals_across_goals'),                  icon:<DollarSign size={20} color="#37D67A"/>, bg:'rgba(55,214,122,.1)', color:'#37D67A' },
-            { label:t('goals_total_target_label'), value: fmt(totalTarget,{noDecimals:true}),sub:t('goals_overall_target'),                icon:<TrendingUp size={20} color="#5B8CFF"/>,  bg:'rgba(91,140,255,.1)', color:'#5B8CFF' },
-            { label:t('goals_completed_label'),    value: completed,                         sub:`${avgProgress.toFixed(0)}% avg`,         icon:<Calendar size={20} color="#FFB84D"/>,   bg:'rgba(255,184,77,.1)', color:'#FFB84D' },
-          ].map(({ label, value, sub, icon, bg, color }) => (
+            { label:t('goals_total_goals'),        value: goals?.length || 0,                sub:t('goals_active_sub'),          icon:<Target size={22} color="#6C63FF"/>,     bg:'rgba(108,99,255,.15)', color:'#6C63FF', border:'rgba(108,99,255,.2)' },
+            { label:t('goals_total_saved_label'),  value: fmt(totalSaved,{noDecimals:true}), sub:t('goals_across_goals'),        icon:<DollarSign size={22} color="#00C896"/>,  bg:'rgba(0,200,150,.15)',  color:'#00C896', border:'rgba(0,200,150,.2)'  },
+            { label:t('goals_total_target_label'), value: fmt(totalTarget,{noDecimals:true}),sub:t('goals_overall_target'),      icon:<TrendingUp size={22} color="#5B8CFF"/>,  bg:'rgba(91,140,255,.15)', color:'#5B8CFF', border:'rgba(91,140,255,.2)' },
+            { label:t('goals_completed_label'),    value: completed,                         sub:`${avgProgress.toFixed(0)}% avg progress`, icon:<Calendar size={22} color="#FFB84D"/>, bg:'rgba(255,184,77,.15)', color:'#FFB84D', border:'rgba(255,184,77,.2)' },
+          ].map(({ label, value, sub, icon, bg, color, border }) => (
             <div key={label} style={{
-              background:'var(--surface)', borderRadius:20, padding:'16px 18px',
-              boxShadow:'0 4px 24px rgba(108,99,255,.08)', border:'1px solid var(--border-light)',
-              display:'flex', alignItems:'center', gap:14,
+              background:'var(--surface)', borderRadius:18, padding:'18px 20px',
+              boxShadow:'0 2px 16px rgba(108,99,255,.07)', border:`1px solid ${border}`,
+              display:'flex', flexDirection:'row', alignItems:'center', gap:16,
             }}>
-              <div style={{ width:42, height:42, borderRadius:12, background:bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+              <div style={{ width:52, height:52, borderRadius:14, background:bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                 {icon}
               </div>
-              <div>
-                <div style={{ fontSize:11, color:'var(--text3)', fontWeight:600, marginBottom:4 }}>{label}</div>
-                <div className="mono" style={{ fontSize:16, fontWeight:800, color, letterSpacing:-0.3, lineHeight:1 }}>{value}</div>
-                <div style={{ fontSize:10.5, color:'var(--text3)', marginTop:3 }}>{sub}</div>
+              <div style={{ display:'flex', flexDirection:'column', gap:2, minWidth:0, flex:1 }}>
+                <div style={{ fontSize:11, fontWeight:600, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.05em', whiteSpace:'nowrap' }}>{label}</div>
+                <div className="mono" style={{ fontSize:20, fontWeight:900, color, letterSpacing:-0.5, lineHeight:1.2, wordBreak:'break-all' }}>{value}</div>
+                <div style={{ fontSize:11.5, color:'var(--text3)', fontWeight:500 }}>{sub}</div>
               </div>
             </div>
           ))}

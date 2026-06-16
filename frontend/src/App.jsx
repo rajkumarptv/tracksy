@@ -22,9 +22,12 @@ const Recurring    = lazy(() => import('./pages/Recurring'));
 const Family       = lazy(() => import('./pages/Family'));
 const Admin        = lazy(() => import('./pages/Admin'));
 // OtherPages exports several — wrap each in its own lazy chunk
-const Wallet     = lazy(() => import('./pages/OtherPages').then(m => ({ default: m.Wallet })));
-const Analytics  = lazy(() => import('./pages/OtherPages').then(m => ({ default: m.Analytics })));
-const Settings   = lazy(() => import('./pages/OtherPages').then(m => ({ default: m.Settings })));
+const Wallet       = lazy(() => import('./pages/OtherPages').then(m => ({ default: m.Wallet })));
+const Analytics    = lazy(() => import('./pages/OtherPages').then(m => ({ default: m.Analytics })));
+const Settings     = lazy(() => import('./pages/OtherPages').then(m => ({ default: m.Settings })));
+const Investments  = lazy(() => import('./pages/Investments'));
+const DebtReduction= lazy(() => import('./pages/DebtReduction'));
+const Challenges   = lazy(() => import('./pages/Challenges'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -86,6 +89,9 @@ export default function App() {
               <Route path="recurring" element={<Recurring />} />
               <Route path="family" element={<Family />} />
               <Route path="settings" element={<Settings />} />
+              <Route path="investments" element={<Investments />} />
+              <Route path="debt-reduction" element={<DebtReduction />} />
+              <Route path="challenges" element={<Challenges />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/" replace />} />

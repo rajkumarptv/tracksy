@@ -95,19 +95,22 @@ export default function Family() {
         }
 
         {/* Combined totals */}
-        <div className="mob-summary-scroll" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:24 }}>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))', gap:12, marginBottom:24 }}>
           {[
-            { label:'Family Income',  value: fmt(combined.income),  icon:<TrendingUp size={20} color="#37D67A"/>, bg:'rgba(55,214,122,.1)', color:'#37D67A' },
-            { label:'Family Expense', value: fmt(combined.expense), icon:<TrendingDown size={20} color="#FF5B5B"/>, bg:'rgba(255,91,91,.1)', color:'#FF5B5B' },
-            { label: combined.net >= 0 ? 'Net Saved' : 'Over Budget', value: fmt(Math.abs(combined.net)), icon:<Wallet size={20} color="#6C63FF"/>, bg:'rgba(108,99,255,.1)', color: combined.net >= 0 ? '#37D67A' : '#FF5B5B' },
-            { label:'Total Net Worth', value: fmt(combined.net_balance), icon:<Users size={20} color="#5B8CFF"/>, bg:'rgba(91,140,255,.1)', color:'#5B8CFF' },
-          ].map(({ label, value, icon, bg, color }) => (
-            <div key={label} style={{ background:'var(--surface)', borderRadius:18, padding:'16px 18px', boxShadow:'0 4px 20px rgba(108,99,255,.08)', border:'1px solid var(--border-light)', display:'flex', alignItems:'center', gap:13 }}>
-              <div style={{ width:42, height:42, borderRadius:12, background:bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{icon}</div>
-              <div style={{ minWidth:0 }}>
-                <div style={{ fontSize:11, color:'var(--text3)', fontWeight:600, marginBottom:3 }}>{label}</div>
-                <div className="mono" style={{ fontSize:16, fontWeight:800, color }}>{value}</div>
-              </div>
+            { label:'Family Income',  value: fmt(combined.income),          sub:'This month',                                    icon:<TrendingUp size={20} color="#00C896"/>,   bg:'rgba(0,200,150,.12)',  color:'#00C896', border:'rgba(0,200,150,.2)'  },
+            { label:'Family Expense', value: fmt(combined.expense),         sub:'This month',                                    icon:<TrendingDown size={20} color="#FF5B5B"/>, bg:'rgba(255,91,91,.12)',  color:'#FF5B5B', border:'rgba(255,91,91,.2)'  },
+            { label: combined.net >= 0 ? 'Net Saved' : 'Over Budget', value: fmt(Math.abs(combined.net)), sub: combined.net >= 0 ? 'Positive' : 'Deficit', icon:<Wallet size={20} color="#6C63FF"/>, bg:'rgba(108,99,255,.12)', color: combined.net >= 0 ? '#00C896' : '#FF5B5B', border: combined.net >= 0 ? 'rgba(0,200,150,.2)' : 'rgba(255,91,91,.2)' },
+            { label:'Total Net Worth', value: fmt(combined.net_balance),    sub:'All accounts',                                  icon:<Users size={20} color="#5B8CFF"/>,        bg:'rgba(91,140,255,.12)', color:'#5B8CFF', border:'rgba(91,140,255,.2)' },
+          ].map(({ label, value, sub, icon, bg, color, border }) => (
+            <div key={label} style={{
+              background:'var(--surface)', borderRadius:18, padding:'18px 16px',
+              boxShadow:'0 2px 16px rgba(108,99,255,.07)', border:`1px solid ${border}`,
+              display:'flex', flexDirection:'column', alignItems:'flex-start',
+            }}>
+              <div style={{ width:40, height:40, borderRadius:12, background:bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginBottom:12 }}>{icon}</div>
+              <div style={{ fontSize:11, fontWeight:600, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.05em', marginBottom:4, whiteSpace:'nowrap' }}>{label}</div>
+              <div className="mono" style={{ fontSize:20, fontWeight:900, color, letterSpacing:-0.5, lineHeight:1.1, marginBottom:4, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:'100%' }}>{value}</div>
+              <div style={{ fontSize:11, color:'var(--text3)', fontWeight:500, whiteSpace:'nowrap' }}>{sub}</div>
             </div>
           ))}
         </div>

@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import { transactionsAPI, categoriesAPI, walletsAPI } from '../services/api';
 import { Topbar, AmountText, StatusChip, PageLoader, EmptyState } from '../components/ui';
 import { Plus, Upload, TrendingUp, TrendingDown, ArrowLeftRight, Search, SlidersHorizontal, Calendar, ChevronDown, Info } from 'lucide-react';
@@ -263,7 +264,20 @@ export default function Transactions() {
   const [filters, setFilters] = useState({ type: 'all', search: '' });
   const [showModal, setShowModal] = useState(false);
   const [editTx, setEditTx]   = useState(null);
+  const [addType, setAddType] = useState(null); // pre-selected type from FAB
   const [showSearch, setShowSearch] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Auto-open add modal when navigated from the FAB with ?add=income|expense|transfer
+  useEffect(() => {
+    const type = searchParams.get('add');
+    if (type && ['income','expense','transfer'].includes(type)) {
+      setEditTx(null);
+      setAddType(type);
+      setShowModal(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, []);
 
   /* ── Date filter: Monthly / Weekly ── */
   const now = new Date();
@@ -820,7 +834,8 @@ export default function Transactions() {
       {showModal && (
         <TransactionModal
           tx={editTx}
-          onClose={() => { setShowModal(false); setEditTx(null); }}
+          initialType={editTx ? undefined : addType}
+          onClose={() => { setShowModal(false); setEditTx(null); setAddType(null); }}
           onSaved={() => {
             qc.invalidateQueries({ queryKey:['transactions'] });
             qc.invalidateQueries({ queryKey:['dashboard-summary'] });
@@ -938,7 +953,7 @@ function NewCategoryInline({ txType, onCreated, onCancel }) {
   );
 }
 
-function TransactionModal({ tx, onClose, onSaved, onDelete }) {
+function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
   const t   = useT();
   const fmt = useFmt();
   const qc  = useQueryClient();
@@ -949,7 +964,7 @@ function TransactionModal({ tx, onClose, onSaved, onDelete }) {
 
   /* ── Type ──────────────────────────────────────────────── */
   const [txType, setTxType] = useState(
-    tx?.type === 'transfer' ? 'expense' : (tx?.type || 'expense')
+    initialType || (tx?.type === 'transfer' ? 'expense' : (tx?.type || 'expense'))
   );
   const isTransfer = txType === 'transfer';
 

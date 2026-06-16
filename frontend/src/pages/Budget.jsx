@@ -112,27 +112,30 @@ export default function Budget() {
         )}
 
         {/* Summary row */}
-        <div className="mob-summary-scroll" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:24 }}>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:14, marginBottom:24 }}>
           {[
-            { label:t('budget_total'),  value: fmt(totalBudget,{noDecimals:true}), sub:t('dash_this_month'),                   icon:'💰', bg:'rgba(108,99,255,.1)', color:'#6C63FF' },
-            { label:t('budget_spent'),  value: fmt(totalSpent,{noDecimals:true}),  sub:`${totalPct.toFixed(0)}% ${t('dash_used')}`, icon:'📤', bg:'rgba(255,91,91,.1)',  color:'#FF5B5B' },
-            { label:t('budget_remaining'), value: fmt(remaining,{noDecimals:true}), sub:t('dash_left'),                icon:'🎯', bg:'rgba(55,214,122,.1)', color:'#37D67A' },
-            { label:t('budget_health'), value: atRisk > 0 ? `${atRisk} ⚠️` : `✓ ${t('budget_on_track')}`, sub:`${onTrack} ${t('budget_on_track')}`,
-              icon: atRisk > 0 ? '⚠️' : '✅', bg: atRisk > 0 ? 'rgba(255,184,77,.12)' : 'rgba(55,214,122,.1)',
-              color: atRisk > 0 ? '#FFB84D' : '#37D67A' },
-          ].map(({ label, value, sub, icon, bg, color }) => (
+            { label: t('budget_total'),     value: fmt(totalBudget,{noDecimals:true}), sub: t('dash_this_month'),           icon: <PieChart size={22} color="#6C63FF"/>,      bg:'rgba(108,99,255,.15)', color:'#6C63FF', border:'rgba(108,99,255,.2)' },
+            { label: t('budget_spent'),     value: fmt(totalSpent,{noDecimals:true}),  sub: `${totalPct.toFixed(0)}% used`, icon: <AlertTriangle size={22} color="#FF5B5B"/>, bg:'rgba(255,91,91,.15)',  color:'#FF5B5B', border:'rgba(255,91,91,.2)'  },
+            { label: t('budget_remaining'), value: fmt(remaining,{noDecimals:true}),   sub: 'Available to spend',           icon: <CheckCircle size={22} color="#00C896"/>,   bg:'rgba(0,200,150,.15)',  color:'#00C896', border:'rgba(0,200,150,.2)'  },
+            { label: t('budget_health'),    value: atRisk > 0 ? `${atRisk} At Risk` : `${onTrack} OK`, sub: atRisk > 0 ? 'Needs attention' : 'All on track',
+              icon: atRisk > 0 ? <AlertTriangle size={22} color="#FFB84D"/> : <CheckCircle size={22} color="#00C896"/>,
+              bg: atRisk > 0 ? 'rgba(255,184,77,.15)' : 'rgba(0,200,150,.15)',
+              color: atRisk > 0 ? '#FFB84D' : '#00C896',
+              border: atRisk > 0 ? 'rgba(255,184,77,.2)' : 'rgba(0,200,150,.2)',
+            },
+          ].map(({ label, value, sub, icon, bg, color, border }) => (
             <div key={label} style={{
-              background:'var(--surface)', borderRadius:20, padding:'16px 18px',
-              boxShadow:'0 4px 24px rgba(108,99,255,.08)', border:'1px solid var(--border-light)',
-              display:'flex', alignItems:'center', gap:14,
+              background:'var(--surface)', borderRadius:18, padding:'18px 20px',
+              boxShadow:'0 2px 16px rgba(108,99,255,.07)', border:`1px solid ${border}`,
+              display:'flex', flexDirection:'row', alignItems:'center', gap:16,
             }}>
-              <div style={{ width:42, height:42, borderRadius:12, background:bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, flexShrink:0 }}>
+              <div style={{ width:52, height:52, borderRadius:14, background:bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                 {icon}
               </div>
-              <div>
-                <div style={{ fontSize:11, color:'var(--text3)', fontWeight:600, marginBottom:4 }}>{label}</div>
-                <div className="mono" style={{ fontSize:16, fontWeight:800, color, letterSpacing:-0.3, lineHeight:1 }}>{value}</div>
-                <div style={{ fontSize:10.5, color:'var(--text3)', marginTop:3 }}>{sub}</div>
+              <div style={{ display:'flex', flexDirection:'column', gap:2, minWidth:0, flex:1 }}>
+                <div style={{ fontSize:11, fontWeight:600, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.05em', whiteSpace:'nowrap' }}>{label}</div>
+                <div className="mono" style={{ fontSize:20, fontWeight:900, color, letterSpacing:-0.5, lineHeight:1.2, wordBreak:'break-all' }}>{value}</div>
+                <div style={{ fontSize:11.5, color:'var(--text3)', fontWeight:500 }}>{sub}</div>
               </div>
             </div>
           ))}

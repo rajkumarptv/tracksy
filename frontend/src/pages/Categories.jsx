@@ -229,7 +229,7 @@ function CategoryCard({ cat, onEdit, onDelete, readOnly }) {
       </div>
 
       <div style={{ flex:1, minWidth:0 }}>
-        <div style={{ fontWeight:700, fontSize:13.5, color:'var(--text)', marginBottom:4, wordBreak:'break-word', lineHeight:1.3 }}>
+        <div style={{ fontWeight:700, fontSize:13.5, color:'var(--text)', marginBottom:4, lineHeight:1.3, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
           {cat.name}
         </div>
         <span style={{ fontSize:11, padding:'2px 8px', borderRadius:20, background:tmap.bg, color:tmap.color, fontWeight:700 }}>

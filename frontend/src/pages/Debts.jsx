@@ -108,19 +108,29 @@ export default function Debts() {
       <div className="mob-content" style={{ padding:'28px 32px 40px', flex:1, overflow:'auto' }}>
 
         {/* Summary Cards */}
-        <div className="mob-summary-scroll" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:24 }}>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:14, marginBottom:24 }}>
           {[
-            { label:t('wallet_total_debt'),  value: fmt(totalDebt,{noDecimals:true}),   sub:`${debts.length} active`, icon:<CreditCard size={22} color="#FF5B5B"/>,  bg:'rgba(255,91,91,.1)',   vc:'#FF5B5B' },
-            { label:t('debts_credit'),       value: fmt(cards.reduce((s,w)=>s+Math.abs(parseFloat(w.balance||0)),0),{noDecimals:true}), sub:`${cards.length} cards`, icon:<span style={{fontSize:22}}>💳</span>, bg:'rgba(255,91,91,.08)', vc:'var(--text)' },
-            { label:t('debts_loans'),        value: fmt(loans.reduce((s,w)=>s+Math.abs(parseFloat(w.balance||0)),0),{noDecimals:true}), sub:`${loans.length} loans`, icon:<span style={{fontSize:22}}>📋</span>, bg:'rgba(255,184,77,.1)',  vc:'var(--text)' },
-            { label:'Est. Monthly',          value: fmt(estMonthly,{noDecimals:true}),  sub:'EMIs + min payments',   icon:<TrendingDown size={22} color="#6C63FF"/>, bg:'rgba(108,99,255,.1)', vc:'var(--text)' },
-          ].map(({ label, value, sub, icon, bg, vc }) => (
-            <div key={label} style={{ background:'var(--surface)', borderRadius:20, padding:'16px 14px', boxShadow:'0 4px 24px rgba(108,99,255,.08)', border:'1px solid var(--border-light)', display:'flex', alignItems:'center', gap:12 }}>
-              <div style={{ width:44, height:44, borderRadius:13, background:bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{icon}</div>
-              <div style={{ minWidth:0 }}>
-                <div style={{ fontSize:11, color:'var(--text3)', fontWeight:500, marginBottom:2 }}>{label}</div>
-                <div className="mono" style={{ fontSize:16, fontWeight:800, color:vc, marginBottom:2 }}>{value}</div>
-                <div style={{ fontSize:11, color:'var(--text3)' }}>{sub}</div>
+            { label:t('wallet_total_debt'), value: fmt(totalDebt,{noDecimals:true}), sub:`${debts.length} active`,   icon:<CreditCard size={22} color="#FF5B5B"/>,   bg:'rgba(255,91,91,.14)',   color:'#FF5B5B'      },
+            { label:t('debts_credit'),      value: fmt(cards.reduce((s,w)=>s+Math.abs(parseFloat(w.balance||0)),0),{noDecimals:true}), sub:`${cards.length} cards`,  icon:<span style={{fontSize:20}}>💳</span>,    bg:'rgba(255,91,91,.1)',    color:'var(--text)'  },
+            { label:t('debts_loans'),       value: fmt(loans.reduce((s,w)=>s+Math.abs(parseFloat(w.balance||0)),0),{noDecimals:true}), sub:`${loans.length} loans`,  icon:<span style={{fontSize:20}}>📋</span>,    bg:'rgba(255,184,77,.14)',  color:'var(--text)'  },
+            { label:'Est. Monthly',         value: fmt(estMonthly,{noDecimals:true}),                                                  sub:'EMIs & payments',         icon:<TrendingDown size={22} color="#6C63FF"/>, bg:'rgba(108,99,255,.14)', color:'#6C63FF'      },
+          ].map(({ label, value, sub, icon, bg, color }) => (
+            <div key={label} style={{
+              background:'var(--surface)', borderRadius:16, padding:'18px 20px',
+              boxShadow:'0 2px 16px rgba(0,0,0,.07)', border:'1px solid var(--border-light)',
+              display:'flex', flexDirection:'row', alignItems:'center', gap:16,
+              transition:'box-shadow .2s, transform .15s',
+            }}
+              onMouseEnter={e=>{e.currentTarget.style.boxShadow='0 6px 24px rgba(108,99,255,.13)';e.currentTarget.style.transform='translateY(-1px)';}}
+              onMouseLeave={e=>{e.currentTarget.style.boxShadow='0 2px 16px rgba(0,0,0,.07)';e.currentTarget.style.transform='translateY(0)';}}
+            >
+              <div style={{ width:52, height:52, borderRadius:14, background:bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                {icon}
+              </div>
+              <div style={{ minWidth:0, flex:1 }}>
+                <div style={{ fontSize:12, fontWeight:500, color:'var(--text3)', marginBottom:3, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{label}</div>
+                <div className="mono" style={{ fontSize:22, fontWeight:900, color, letterSpacing:-0.5, lineHeight:1.2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{value}</div>
+                <div style={{ fontSize:11.5, fontWeight:600, color:'var(--text3)', marginTop:2, whiteSpace:'nowrap' }}>{sub}</div>
               </div>
             </div>
           ))}
