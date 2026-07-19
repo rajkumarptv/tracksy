@@ -185,15 +185,23 @@ const getRecentTransactions = async (req, res) => {
 const getCategoryBreakdown = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { year, month } = req.query;
+    const { year, month, start_date, end_date } = req.query;
     const now = new Date();
-    const y = parseInt(year) || now.getFullYear();
-    const startDate = month
-      ? `${y}-${String(parseInt(month)).padStart(2,'0')}-01`
-      : `${y}-01-01`;
-    const endDate = month
-      ? (parseInt(month) === 12 ? `${y+1}-01-01` : `${y}-${String(parseInt(month)+1).padStart(2,'0')}-01`)
-      : `${y+1}-01-01`;
+    let startDate, endDate;
+    if (start_date && end_date) {
+      startDate = start_date;
+      const endDt = new Date(end_date);
+      endDt.setDate(endDt.getDate() + 1);
+      endDate = endDt.toISOString().split('T')[0];
+    } else {
+      const y = parseInt(year) || now.getFullYear();
+      startDate = month
+        ? `${y}-${String(parseInt(month)).padStart(2,'0')}-01`
+        : `${y}-01-01`;
+      endDate = month
+        ? (parseInt(month) === 12 ? `${y+1}-01-01` : `${y}-${String(parseInt(month)+1).padStart(2,'0')}-01`)
+        : `${y+1}-01-01`;
+    }
 
     const result = await query(`
       SELECT

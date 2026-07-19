@@ -130,10 +130,10 @@ export default function DebtReduction() {
           <>
             {/* KPI Cards */}
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:14, marginBottom:24 }}>
-              <KpiCard icon={<TrendingDown size={22} color="#FF5B5B"/>} iconBg="rgba(255,91,91,.14)" label="Total Debt"      value={fmt(totalDebt,{noDecimals:true})} sub={`${debts.length} debts`}/>
-              <KpiCard icon={<Target size={22} color="#6C63FF"/>}       iconBg="rgba(108,99,255,.14)" label="Min Monthly"    value={fmt(minMonthly,{noDecimals:true})} sub="minimum payments"/>
-              <KpiCard icon={<Zap size={22} color="#37D67A"/>}          iconBg="rgba(55,214,122,.14)" label="Interest Saved" value={fmt(interestSaved > 0 ? interestSaved : 0,{noDecimals:true})} sub={extra > 0 ? `with ₹${extra.toLocaleString('en-IN')} extra/mo` : 'add extra payment'} subColor={interestSaved>0?'#37D67A':'var(--text3)'}/>
-              <KpiCard icon={<Trophy size={22} color="#FFB84D"/>}       iconBg="rgba(255,184,77,.14)" label="Debt-Free In"   value={monthsToLabel(active.months)} sub={monthsSaved > 0 ? `${monthsSaved}mo faster than baseline` : 'add extra to save time'} subColor={monthsSaved>0?'#37D67A':'var(--text3)'}/>
+              <KpiCard icon={<TrendingDown size={22} color="#EC4899"/>} iconBg="rgba(236,72,153,.14)" label="Total Debt"      value={fmt(totalDebt,{noDecimals:true})} sub={`${debts.length} debts`}/>
+              <KpiCard icon={<Target size={22} color="#8B5CF6"/>}       iconBg="rgba(139,92,246,.14)" label="Min Monthly"    value={fmt(minMonthly,{noDecimals:true})} sub="minimum payments"/>
+              <KpiCard icon={<Zap size={22} color="#22C55E"/>}          iconBg="rgba(34,197,94,.14)" label="Interest Saved" value={fmt(interestSaved > 0 ? interestSaved : 0,{noDecimals:true})} sub={extra > 0 ? `with ₹${extra.toLocaleString('en-IN')} extra/mo` : 'add extra payment'} subColor={interestSaved>0?'#22C55E':'var(--text3)'}/>
+              <KpiCard icon={<Trophy size={22} color="#F59E0B"/>}       iconBg="rgba(245,158,11,.14)" label="Debt-Free In"   value={monthsToLabel(active.months)} sub={monthsSaved > 0 ? `${monthsSaved}mo faster than baseline` : 'add extra to save time'} subColor={monthsSaved>0?'#22C55E':'var(--text3)'}/>
             </div>
 
             {/* Extra Payment Slider */}
@@ -160,13 +160,13 @@ export default function DebtReduction() {
             {/* Strategy Comparison */}
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:20 }}>
               {[
-                { id:'avalanche', label:'Debt Avalanche', emoji:'❄️', desc:'Highest interest rate first', color:'#6C63FF', bg:'rgba(108,99,255,.08)', borderColor:'rgba(108,99,255,.3)', result: avalanche },
-                { id:'snowball',  label:'Debt Snowball',  emoji:'⛄', desc:'Smallest balance first',      color:'#5B8CFF', bg:'rgba(91,140,255,.08)', borderColor:'rgba(91,140,255,.3)',  result: snowball  },
+                { id:'avalanche', label:'Debt Avalanche', emoji:'❄️', desc:'Highest interest rate first', color:'#8B5CF6', bg:'rgba(139,92,246,.08)', borderColor:'rgba(139,92,246,.3)', result: avalanche },
+                { id:'snowball',  label:'Debt Snowball',  emoji:'⛄', desc:'Smallest balance first',      color:'#3B82F6', bg:'rgba(59,130,246,.08)', borderColor:'rgba(59,130,246,.3)',  result: snowball  },
               ].map(s=>(
                 <div key={s.id} onClick={()=>setMethod(s.id)}
                   style={{ background: method===s.id ? s.bg : 'var(--surface)', borderRadius:18, padding:'20px 22px', border:`2px solid ${method===s.id ? s.color : 'var(--border-light)'}`, cursor:'pointer', transition:'all .18s', position:'relative', overflow:'hidden' }}>
                   {recommended === s.id && (
-                    <div style={{ position:'absolute', top:12, right:12, fontSize:10.5, fontWeight:700, color:'#37D67A', background:'rgba(55,214,122,.12)', borderRadius:8, padding:'2px 8px', border:'1px solid rgba(55,214,122,.25)' }}>✦ Recommended</div>
+                    <div style={{ position:'absolute', top:12, right:12, fontSize:10.5, fontWeight:700, color:'#22C55E', background:'rgba(34,197,94,.12)', borderRadius:8, padding:'2px 8px', border:'1px solid rgba(34,197,94,.25)' }}>✦ Recommended</div>
                   )}
                   <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14 }}>
                     <span style={{ fontSize:26 }}>{s.emoji}</span>
@@ -206,15 +206,15 @@ export default function DebtReduction() {
                 <AreaChart data={active.schedule} margin={{ top:4, right:4, left:-20, bottom:0 }}>
                   <defs>
                     <linearGradient id="debtGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#FF5B5B" stopOpacity={0.2}/>
-                      <stop offset="100%" stopColor="#FF5B5B" stopOpacity={0}/>
+                      <stop offset="0%" stopColor="#EC4899" stopOpacity={0.2}/>
+                      <stop offset="100%" stopColor="#EC4899" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
                   <CartesianGrid vertical={false} stroke="var(--border-light)" strokeDasharray="3 3"/>
                   <XAxis dataKey="month" tick={{ fontSize:10, fill:'var(--text3)' }} axisLine={false} tickLine={false}/>
                   <YAxis tick={{ fontSize:9, fill:'var(--text3)' }} axisLine={false} tickLine={false} tickFormatter={v=>v>=1000?`${(v/1000).toFixed(0)}k`:v}/>
                   <Tooltip contentStyle={{ borderRadius:10, fontSize:12, border:'1px solid var(--border)', background:'var(--surface)' }} formatter={(v)=>[fmt(v,{noDecimals:true}),'Remaining']}/>
-                  <Area type="monotone" dataKey="balance" stroke="#FF5B5B" strokeWidth={2.5} fill="url(#debtGrad)" dot={false} activeDot={{ r:4 }}/>
+                  <Area type="monotone" dataKey="balance" stroke="#EC4899" strokeWidth={2.5} fill="url(#debtGrad)" dot={false} activeDot={{ r:4 }}/>
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -233,18 +233,18 @@ export default function DebtReduction() {
                   const meta = DEBT_META[d.type] || '📋';
                   return (
                     <div key={d.id} style={{ display:'flex', alignItems:'center', gap:14, padding:'12px 14px', background:'var(--surface2)', borderRadius:13 }}>
-                      <div style={{ width:28, height:28, borderRadius:8, background: i===0?'rgba(108,99,255,.2)':'var(--surface3)', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:800, fontSize:13, color: i===0?'var(--accent)':'var(--text3)', flexShrink:0 }}>{i+1}</div>
+                      <div style={{ width:28, height:28, borderRadius:8, background: i===0?'rgba(139,92,246,.2)':'var(--surface3)', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:800, fontSize:13, color: i===0?'var(--accent)':'var(--text3)', flexShrink:0 }}>{i+1}</div>
                       <span style={{ fontSize:18, flexShrink:0 }}>{meta}</span>
                       <div style={{ flex:1, minWidth:0 }}>
                         <div style={{ display:'flex', justifyContent:'space-between', marginBottom:5 }}>
                           <span style={{ fontSize:13, fontWeight:600, color:'var(--text)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{d.name}</span>
                           <div style={{ display:'flex', gap:10, flexShrink:0 }}>
                             <span style={{ fontSize:12, fontWeight:700, color:'var(--text)', fontFamily:'Space Grotesk,sans-serif' }}>{fmt(bal,{noDecimals:true})}</span>
-                            <span style={{ fontSize:11.5, fontWeight:600, color:'#FF5B5B', background:'rgba(255,91,91,.1)', borderRadius:6, padding:'1px 7px' }}>{rate}%</span>
+                            <span style={{ fontSize:11.5, fontWeight:600, color:'#EC4899', background:'rgba(236,72,153,.1)', borderRadius:6, padding:'1px 7px' }}>{rate}%</span>
                           </div>
                         </div>
                         <div style={{ height:5, background:'var(--surface3)', borderRadius:20, overflow:'hidden' }}>
-                          <div style={{ height:'100%', width:`${pct}%`, background: i===0?'var(--accent)':'#FF5B5B', borderRadius:20, opacity: 1 - i*0.15 }}/>
+                          <div style={{ height:'100%', width:`${pct}%`, background: i===0?'var(--accent)':'#EC4899', borderRadius:20, opacity: 1 - i*0.15 }}/>
                         </div>
                       </div>
                       {i === 0 && <div style={{ fontSize:10, fontWeight:700, color:'var(--accent)', background:'var(--accent-light)', borderRadius:7, padding:'3px 8px', flexShrink:0, whiteSpace:'nowrap' }}>FOCUS</div>}

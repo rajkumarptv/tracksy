@@ -2,24 +2,24 @@ import { useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  House, ArrowsLeftRight, ChartPie, Target, X,
+  House, Wallet, ChartPie, Target, X,
   ArrowUp, ArrowDown, ArrowsClockwise
 } from '@phosphor-icons/react';
 import styles from './BottomNav.module.css';
 
 const LEFT_TABS = [
-  { path: '/',             Icon: House,           label: 'Home',         color: '#6C63FF' },
-  { path: '/transactions', Icon: ArrowsLeftRight, label: 'Transactions', color: '#FF5B5B' },
+  { path: '/',       Icon: House,  label: 'Dashboard', color: '#22C55E' },
+  { path: '/wallet', Icon: Wallet, label: 'Accounts',  color: '#3B82F6' },
 ];
 const RIGHT_TABS = [
-  { path: '/budget',       Icon: ChartPie,        label: 'Budget',       color: '#5B8CFF' },
-  { path: '/goals',        Icon: Target,          label: 'Goals',        color: '#FFB300' },
+  { path: '/budget', Icon: ChartPie, label: 'Budget', color: '#8B5CF6' },
+  { path: '/goals',  Icon: Target,   label: 'Goals',  color: '#F59E0B' },
 ];
 
 const ACTION_OPTIONS = [
-  { key: 'income',   icon: ArrowUp,          label: 'Income',   color: '#00C896', bg: 'rgba(0,200,150,.13)',  route: '/transactions?add=income'   },
-  { key: 'expense',  icon: ArrowDown,        label: 'Expense',  color: '#FF5B5B', bg: 'rgba(255,91,91,.13)',  route: '/transactions?add=expense'  },
-  { key: 'transfer', icon: ArrowsClockwise,  label: 'Transfer', color: '#6C63FF', bg: 'rgba(108,99,255,.13)', route: '/transactions?add=transfer' },
+  { key: 'income',   icon: ArrowUp,          label: 'Income',   color: '#22C55E', bg: 'rgba(34,197,94,.13)',   route: '/transactions?add=income'   },
+  { key: 'expense',  icon: ArrowDown,        label: 'Expense',  color: '#EC4899', bg: 'rgba(236,72,153,.13)',  route: '/transactions?add=expense'  },
+  { key: 'transfer', icon: ArrowsClockwise,  label: 'Transfer', color: '#8B5CF6', bg: 'rgba(139,92,246,.13)',  route: '/transactions?add=transfer' },
 ];
 
 function Tab({ path, Icon, label, color }) {
@@ -82,28 +82,30 @@ export default function BottomNav() {
               transition={{ duration: 0.18 }}
               onClick={() => setOpen(false)} />
 
-            <motion.div className={styles.actionSheet}
-              initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 420, damping: 32 }}>
+            <motion.div className={styles.actionSheetOuter}
+              initial={{ y: 12, opacity: 0, scale: 0.94 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: 12, opacity: 0, scale: 0.94 }}
+              transition={{ type: 'spring', stiffness: 480, damping: 34 }}>
 
-              <div className={styles.sheetHandle} />
-              <div className={styles.sheetTitle}>Add Transaction</div>
-
-              <div className={styles.actionGrid}>
-                {ACTION_OPTIONS.map(({ key, icon: Icon, label, color, bg, route }) => (
-                  <motion.button key={key} className={styles.actionCard}
-                    style={{ background: bg, borderColor: `${color}35` }}
-                    whileTap={{ scale: 0.93 }}
-                    onClick={() => handleAction(route)}>
-                    <div className={styles.actionIconWrap} style={{ background: `${color}22` }}>
-                      <Icon size={26} color={color} weight="bold" />
-                    </div>
-                    <span className={styles.actionLabel} style={{ color }}>{label}</span>
-                  </motion.button>
-                ))}
+              <div className={styles.actionSheet}>
+                <div className={styles.sheetLabel}>Add Transaction</div>
+                <div className={styles.actionRow}>
+                  {ACTION_OPTIONS.map(({ key, icon: Icon, label, color, route }, i) => (
+                    <motion.button key={key} className={styles.actionItem}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.04 }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => handleAction(route)}>
+                      <div className={styles.actionIconWrap} style={{ background: `${color}18`, border: `1.5px solid ${color}30` }}>
+                        <Icon size={20} color={color} weight="bold" />
+                      </div>
+                      <span className={styles.actionLabel} style={{ color }}>{label}</span>
+                    </motion.button>
+                  ))}
+                </div>
               </div>
-
-              <button className={styles.sheetCancel} onClick={() => setOpen(false)}>Cancel</button>
             </motion.div>
           </>
         )}

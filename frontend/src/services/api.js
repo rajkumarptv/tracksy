@@ -60,6 +60,21 @@ export const transactionsAPI = {
   exportCSV: (params) => api.get('/transactions/export/csv', { params, responseType: 'blob' }),
 };
 
+// Bills (receipt attachments per transaction)
+export const billsAPI = {
+  upload: (txId, file) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    return api.post(`/transactions/${txId}/bills`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+  },
+  getAll: (txId) => api.get(`/transactions/${txId}/bills`),
+  fileUrl: (billId) => {
+    const base = import.meta.env.VITE_API_URL || '/api';
+    return `${base}/bills/${billId}/file`;
+  },
+  delete: (billId) => api.delete(`/bills/${billId}`),
+};
+
 // Budgets
 export const budgetsAPI = {
   getAll: (params) => api.get('/budgets', { params }),
@@ -84,6 +99,7 @@ export const walletsAPI = {
   update: (id, data) => api.put(`/wallets/${id}`, data),
   delete: (id) => api.delete(`/wallets/${id}`),
   reconcile: (id, actual_balance) => api.post(`/wallets/${id}/reconcile`, { actual_balance }),
+  pay: (id, data) => api.post(`/wallets/${id}/payment`, data),
 };
 
 // Recurring transactions
@@ -147,6 +163,11 @@ export const receiptAPI = {
     fd.append('file', file, 'receipt.jpg');
     return api.post('/receipt/scan', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
   },
+};
+
+// Broker integrations
+export const brokerAPI = {
+  dhanHoldings: (access_token, client_id) => api.post('/broker/dhan/holdings', { access_token, client_id }),
 };
 
 // Bank statement import

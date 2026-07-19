@@ -1,14 +1,15 @@
 import { useState, useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, LineChart, Line, XAxis, YAxis, CartesianGrid, AreaChart, Area } from 'recharts';
-import { TrendingUp, TrendingDown, Plus, Trash2, RefreshCw, BarChart2, DollarSign, Percent, Activity, Award, ChevronRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, Plus, Trash2, RefreshCw, BarChart2, DollarSign, Percent, Activity, Award, ChevronRight, Link2, AlertCircle, CheckCircle2, X, Loader } from 'lucide-react';
 import { Topbar } from '../components/ui';
 import { useFmt } from '../i18n';
+import { brokerAPI } from '../services/api';
 
 const ASSET_TYPES = [
-  { value:'stock',   label:'Stocks',         emoji:'📈', color:'#6C63FF', bg:'rgba(108,99,255,.15)' },
-  { value:'mf',      label:'Mutual Funds',   emoji:'🏦', color:'#37D67A', bg:'rgba(55,214,122,.15)' },
-  { value:'etf',     label:'ETFs',           emoji:'📊', color:'#5B8CFF', bg:'rgba(91,140,255,.15)' },
-  { value:'gold',    label:'Gold',           emoji:'🥇', color:'#FFB84D', bg:'rgba(255,184,77,.15)' },
+  { value:'stock',   label:'Stocks',         emoji:'📈', color:'#8B5CF6', bg:'rgba(139,92,246,.15)' },
+  { value:'mf',      label:'Mutual Funds',   emoji:'🏦', color:'#22C55E', bg:'rgba(34,197,94,.15)' },
+  { value:'etf',     label:'ETFs',           emoji:'📊', color:'#3B82F6', bg:'rgba(59,130,246,.15)' },
+  { value:'gold',    label:'Gold',           emoji:'🥇', color:'#F59E0B', bg:'rgba(245,158,11,.15)' },
   { value:'fd',      label:'Fixed Deposits', emoji:'🏛️', color:'#00CEC9', bg:'rgba(0,206,201,.15)'  },
   { value:'bond',    label:'Bonds',          emoji:'📋', color:'#A29BFE', bg:'rgba(162,155,254,.15)'},
   { value:'crypto',  label:'Crypto',         emoji:'₿',  color:'#FF7675', bg:'rgba(255,118,117,.15)'},
@@ -34,7 +35,7 @@ function KpiCard({ icon, iconBg, label, value, change, changePos }) {
         <div style={{ fontSize:12, fontWeight:500, color:'var(--text3)', marginBottom:3 }}>{label}</div>
         <div style={{ fontSize:22, fontWeight:900, color:'var(--text)', letterSpacing:-0.5, fontFamily:'Space Grotesk,sans-serif', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{value}</div>
         {change !== undefined && (
-          <div style={{ fontSize:11.5, fontWeight:600, color: isPos ? '#37D67A':'#FF5B5B', marginTop:2 }}>
+          <div style={{ fontSize:11.5, fontWeight:600, color: isPos ? '#22C55E':'#EC4899', marginTop:2 }}>
             {isPos?'▲':'▼'} {Math.abs(parseFloat(change)||0).toFixed(2)}% overall
           </div>
         )}
@@ -79,10 +80,10 @@ function AddModal({ onSave, onClose }) {
             <div><label className="form-label">Purchase Date</label><input className="form-input" type="date" value={form.date} onChange={e=>set('date',e.target.value)}/></div>
           </div>
           {invested > 0 && (
-            <div style={{ background: pl >= 0 ? 'rgba(55,214,122,.08)':'rgba(255,91,91,.08)', borderRadius:12, padding:'12px 16px', border:`1px solid ${pl>=0?'rgba(55,214,122,.2)':'rgba(255,91,91,.2)'}` }}>
+            <div style={{ background: pl >= 0 ? 'rgba(34,197,94,.08)':'rgba(236,72,153,.08)', borderRadius:12, padding:'12px 16px', border:`1px solid ${pl>=0?'rgba(34,197,94,.2)':'rgba(236,72,153,.2)'}` }}>
               <div style={{ display:'flex', justifyContent:'space-between' }}>
                 <div><div style={{ fontSize:11, color:'var(--text3)' }}>Invested</div><div style={{ fontSize:16, fontWeight:800, color:'var(--text)', fontFamily:'Space Grotesk,sans-serif' }}>₹{invested.toLocaleString('en-IN',{minimumFractionDigits:2})}</div></div>
-                <div style={{ textAlign:'right' }}><div style={{ fontSize:11, color:'var(--text3)' }}>P&L</div><div style={{ fontSize:16, fontWeight:800, color: pl>=0?'#37D67A':'#FF5B5B', fontFamily:'Space Grotesk,sans-serif' }}>{pl>=0?'+':''}₹{Math.abs(pl).toLocaleString('en-IN',{minimumFractionDigits:2})}</div></div>
+                <div style={{ textAlign:'right' }}><div style={{ fontSize:11, color:'var(--text3)' }}>P&L</div><div style={{ fontSize:16, fontWeight:800, color: pl>=0?'#22C55E':'#EC4899', fontFamily:'Space Grotesk,sans-serif' }}>{pl>=0?'+':''}₹{Math.abs(pl).toLocaleString('en-IN',{minimumFractionDigits:2})}</div></div>
               </div>
             </div>
           )}
@@ -99,7 +100,90 @@ function AddModal({ onSave, onClose }) {
   );
 }
 
-const PIE_COLORS = ['#6C63FF','#37D67A','#5B8CFF','#FFB84D','#00CEC9','#A29BFE','#FF7675'];
+const PIE_COLORS = ['#8B5CF6','#22C55E','#3B82F6','#F59E0B','#00CEC9','#A29BFE','#FF7675'];
+
+const DHAN_STORAGE_KEY = 'tracksy_dhan_creds';
+function loadDhanCreds() {
+  try { return JSON.parse(localStorage.getItem(DHAN_STORAGE_KEY) || 'null'); } catch { return null; }
+}
+
+/* ── Dhan Connect Modal ── */
+function DhanModal({ onImport, onClose }) {
+  const [clientId, setClientId] = useState('');
+  const [accessToken, setAccessToken] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const connect = async () => {
+    if (!clientId.trim() || !accessToken.trim()) { setError('Both fields are required'); return; }
+    setLoading(true); setError('');
+    try {
+      const res = await brokerAPI.dhanHoldings(accessToken.trim(), clientId.trim());
+      const { holdings, funds } = res.data.data;
+      localStorage.setItem(DHAN_STORAGE_KEY, JSON.stringify({ clientId: clientId.trim(), accessToken: accessToken.trim() }));
+      onImport(holdings, funds);
+      onClose();
+    } catch (e) {
+      setError(e.response?.data?.message || e.message || 'Connection failed');
+    } finally { setLoading(false); }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal" style={{ maxWidth: 480 }} onClick={e => e.stopPropagation()}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+            <div style={{ width:40, height:40, borderRadius:12, background:'linear-gradient(135deg,#00B4D8,#0077B6)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <span style={{ fontSize:18 }}>🏦</span>
+            </div>
+            <div>
+              <div className="modal-title" style={{ margin:0, fontSize:16 }}>Connect Dhan Account</div>
+              <div style={{ fontSize:11.5, color:'var(--text3)', marginTop:1 }}>Free API · Real-time holdings sync</div>
+            </div>
+          </div>
+          <button onClick={onClose} style={{ background:'none', border:'none', fontSize:22, color:'var(--text3)', cursor:'pointer', lineHeight:1 }}><X size={18}/></button>
+        </div>
+
+        {/* Steps */}
+        <div style={{ background:'var(--surface2)', borderRadius:12, padding:'12px 16px', marginBottom:18, fontSize:12.5, color:'var(--text2)', lineHeight:1.7 }}>
+          <div style={{ fontWeight:700, marginBottom:6, color:'var(--text)' }}>How to get your Dhan credentials:</div>
+          <div>1. Open <strong>Dhan app</strong> → Menu → <strong>Dhan HQ</strong></div>
+          <div>2. Tap <strong>"Generate Access Token"</strong></div>
+          <div>3. Copy your <strong>Client ID</strong> and <strong>Access Token</strong> here</div>
+          <div style={{ marginTop:6, color:'var(--text3)', fontSize:11.5 }}>⚠️ Token expires daily — re-sync any time to refresh</div>
+        </div>
+
+        <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
+          <div>
+            <label className="form-label">Dhan Client ID</label>
+            <input className="form-input" value={clientId} onChange={e => setClientId(e.target.value)} placeholder="e.g. 1100123456" autoComplete="off"/>
+          </div>
+          <div>
+            <label className="form-label">Access Token</label>
+            <textarea className="form-input" value={accessToken} onChange={e => setAccessToken(e.target.value)}
+              placeholder="Paste your Dhan access token here..."
+              style={{ height:80, resize:'vertical', fontFamily:'monospace', fontSize:11 }}/>
+          </div>
+
+          {error && (
+            <div style={{ display:'flex', alignItems:'center', gap:8, background:'rgba(236,72,153,.1)', border:'1px solid rgba(236,72,153,.25)', borderRadius:10, padding:'10px 14px' }}>
+              <AlertCircle size={15} color="#EC4899"/>
+              <span style={{ fontSize:12.5, color:'#EC4899', fontWeight:500 }}>{error}</span>
+            </div>
+          )}
+
+          <div style={{ display:'flex', gap:10, marginTop:4 }}>
+            <button className="btn btn-ghost" style={{ flex:1 }} onClick={onClose} disabled={loading}>Cancel</button>
+            <button onClick={connect} disabled={loading}
+              style={{ flex:2, background:'linear-gradient(135deg,#00B4D8,#0077B6)', color:'#fff', border:'none', borderRadius:10, padding:'11px', fontWeight:700, fontSize:14, cursor: loading?'not-allowed':'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8, opacity: loading ? 0.7 : 1 }}>
+              {loading ? <><Loader size={15} style={{ animation:'spin 1s linear infinite' }}/> Connecting…</> : <><Link2 size={15}/> Fetch Holdings</>}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function Investments() {
   const fmt = useFmt();
@@ -107,10 +191,55 @@ export default function Investments() {
   const [showAdd, setShowAdd] = useState(false);
   const [filterType, setFilterType] = useState('all');
   const [deleteId, setDeleteId] = useState(null);
+  const [showDhan, setShowDhan] = useState(false);
+  const [dhanCreds, setDhanCreds] = useState(loadDhanCreds);
+  const [dhanFunds, setDhanFunds] = useState(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState('');
 
   const save = (h) => { setHoldings(h); saveHoldings(h); };
   const addHolding = (h) => save([...holdings, h]);
   const removeHolding = (id) => { save(holdings.filter(h=>h.id!==id)); setDeleteId(null); };
+
+  const importDhanHoldings = (dhanHoldings, funds) => {
+    const mapped = dhanHoldings.map(h => ({
+      id: `dhan_${h.isin || h.tradingSymbol}_${Date.now()}`,
+      name: h.tradingSymbol,
+      type: 'stock',
+      units: h.totalQty,
+      buyPrice: h.avgCostPrice,
+      currentPrice: h.lastTradedPrice || h.avgCostPrice,
+      date: new Date().toISOString().split('T')[0],
+      source: 'dhan',
+      isin: h.isin,
+      exchange: h.exchange,
+    }));
+    // Merge: replace existing dhan holdings, keep manual ones
+    const manual = holdings.filter(h => h.source !== 'dhan');
+    save([...manual, ...mapped]);
+    if (funds) setDhanFunds(funds);
+    setSyncMsg(`✅ Imported ${mapped.length} holdings from Dhan`);
+    setTimeout(() => setSyncMsg(''), 4000);
+  };
+
+  const resyncDhan = async () => {
+    if (!dhanCreds) { setShowDhan(true); return; }
+    setSyncing(true); setSyncMsg('');
+    try {
+      const res = await brokerAPI.dhanHoldings(dhanCreds.accessToken, dhanCreds.clientId);
+      importDhanHoldings(res.data.data.holdings, res.data.data.funds);
+    } catch (e) {
+      setSyncMsg(`❌ ${e.response?.data?.message || 'Sync failed — token may have expired'}`);
+      setTimeout(() => setSyncMsg(''), 5000);
+    } finally { setSyncing(false); }
+  };
+
+  const disconnectDhan = () => {
+    localStorage.removeItem(DHAN_STORAGE_KEY);
+    setDhanCreds(null);
+    setDhanFunds(null);
+    save(holdings.filter(h => h.source !== 'dhan'));
+  };
 
   const filtered = filterType === 'all' ? holdings : holdings.filter(h=>h.type===filterType);
 
@@ -132,7 +261,7 @@ export default function Investments() {
   return (
     <div style={{ display:'flex', flexDirection:'column', minHeight:'100vh' }}>
       <Topbar title="Investments" subtitle="Track your portfolio across all asset classes">
-        <button className="btn btn-primary btn-sm" style={{ display:'flex', alignItems:'center', gap:6, background:'linear-gradient(135deg,#6C63FF,#5B8CFF)', border:'none' }} onClick={()=>setShowAdd(true)}>
+        <button className="btn btn-primary btn-sm" style={{ display:'flex', alignItems:'center', gap:6, background:'linear-gradient(135deg,#8B5CF6,#3B82F6)', border:'none' }} onClick={()=>setShowAdd(true)}>
           <Plus size={13}/> Add Holding
         </button>
       </Topbar>
@@ -141,10 +270,55 @@ export default function Investments() {
 
         {/* KPI Row */}
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:14, marginBottom:24 }}>
-          <KpiCard icon={<BarChart2 size={22} color="#6C63FF"/>} iconBg="rgba(108,99,255,.14)" label="Portfolio Value"    value={fmt(stats.totalCurrent)} change={stats.plPct} changePos={stats.plPct>=0}/>
-          <KpiCard icon={<DollarSign size={22} color="#5B8CFF"/>} iconBg="rgba(91,140,255,.14)" label="Total Invested"   value={fmt(stats.totalInvested)}/>
-          <KpiCard icon={stats.totalPL>=0?<TrendingUp size={22} color="#37D67A"/>:<TrendingDown size={22} color="#FF5B5B"/>} iconBg={stats.totalPL>=0?'rgba(55,214,122,.14)':'rgba(255,91,91,.14)'} label="Total P&L" value={`${stats.totalPL>=0?'+':''}${fmt(stats.totalPL)}`} change={stats.plPct} changePos={stats.totalPL>=0}/>
-          <KpiCard icon={<Activity size={22} color="#FFB84D"/>} iconBg="rgba(255,184,77,.14)" label="Holdings" value={`${holdings.length} assets`}/>
+          <KpiCard icon={<BarChart2 size={22} color="#8B5CF6"/>} iconBg="rgba(139,92,246,.14)" label="Portfolio Value"    value={fmt(stats.totalCurrent)} change={stats.plPct} changePos={stats.plPct>=0}/>
+          <KpiCard icon={<DollarSign size={22} color="#3B82F6"/>} iconBg="rgba(59,130,246,.14)" label="Total Invested"   value={fmt(stats.totalInvested)}/>
+          <KpiCard icon={stats.totalPL>=0?<TrendingUp size={22} color="#22C55E"/>:<TrendingDown size={22} color="#EC4899"/>} iconBg={stats.totalPL>=0?'rgba(34,197,94,.14)':'rgba(236,72,153,.14)'} label="Total P&L" value={`${stats.totalPL>=0?'+':''}${fmt(stats.totalPL)}`} change={stats.plPct} changePos={stats.totalPL>=0}/>
+          <KpiCard icon={<Activity size={22} color="#F59E0B"/>} iconBg="rgba(245,158,11,.14)" label="Holdings" value={`${holdings.length} assets`}/>
+        </div>
+
+        {/* Broker Connect Banner */}
+        <div style={{ marginBottom:20 }}>
+          {dhanCreds ? (
+            <div style={{ background:'linear-gradient(135deg,rgba(0,180,216,.08),rgba(0,119,182,.08))', border:'1.5px solid rgba(0,180,216,.25)', borderRadius:16, padding:'14px 20px', display:'flex', alignItems:'center', gap:14 }}>
+              <div style={{ width:38, height:38, borderRadius:11, background:'linear-gradient(135deg,#00B4D8,#0077B6)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                <span style={{ fontSize:18 }}>🏦</span>
+              </div>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                  <CheckCircle2 size={14} color="#00B4D8"/>
+                  <span style={{ fontSize:13.5, fontWeight:700, color:'var(--text)' }}>Dhan Connected</span>
+                  <span style={{ fontSize:11, color:'var(--text3)', background:'var(--surface2)', borderRadius:6, padding:'1px 7px' }}>ID: {dhanCreds.clientId}</span>
+                </div>
+                <div style={{ fontSize:12, color:'var(--text3)', marginTop:2 }}>
+                  {holdings.filter(h=>h.source==='dhan').length} holdings synced
+                  {dhanFunds ? ` · Available: ₹${dhanFunds.availableBalance.toLocaleString('en-IN',{maximumFractionDigits:0})}` : ''}
+                </div>
+              </div>
+              {syncMsg && <span style={{ fontSize:12, color: syncMsg.startsWith('✅')?'#22C55E':'#EC4899', fontWeight:600 }}>{syncMsg}</span>}
+              <button onClick={resyncDhan} disabled={syncing}
+                style={{ display:'flex', alignItems:'center', gap:6, background:'rgba(0,180,216,.15)', border:'1px solid rgba(0,180,216,.3)', borderRadius:9, padding:'7px 14px', fontSize:12.5, fontWeight:700, color:'#00B4D8', cursor: syncing?'not-allowed':'pointer', flexShrink:0 }}>
+                {syncing ? <Loader size={13} style={{ animation:'spin 1s linear infinite' }}/> : <RefreshCw size={13}/>}
+                {syncing ? 'Syncing…' : 'Re-sync'}
+              </button>
+              <button onClick={disconnectDhan} style={{ background:'none', border:'none', color:'var(--text3)', cursor:'pointer', padding:4, flexShrink:0 }} title="Disconnect Dhan">
+                <X size={16}/>
+              </button>
+            </div>
+          ) : (
+            <div style={{ background:'var(--surface)', border:'1.5px dashed var(--border)', borderRadius:16, padding:'16px 20px', display:'flex', alignItems:'center', gap:14, cursor:'pointer' }} onClick={() => setShowDhan(true)}>
+              <div style={{ width:38, height:38, borderRadius:11, background:'linear-gradient(135deg,#00B4D8,#0077B6)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                <span style={{ fontSize:18 }}>🏦</span>
+              </div>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:13.5, fontWeight:700, color:'var(--text)' }}>Connect Dhan Account <span style={{ fontSize:11, color:'#22C55E', background:'rgba(34,197,94,.1)', borderRadius:6, padding:'1px 8px', marginLeft:4 }}>FREE</span></div>
+                <div style={{ fontSize:12, color:'var(--text3)', marginTop:2 }}>Auto-import your stocks & ETF holdings from Dhan via free API</div>
+              </div>
+              {syncMsg && <span style={{ fontSize:12, color:'#EC4899', fontWeight:600 }}>{syncMsg}</span>}
+              <button style={{ display:'flex', alignItems:'center', gap:6, background:'linear-gradient(135deg,#00B4D8,#0077B6)', border:'none', borderRadius:9, padding:'8px 16px', fontSize:13, fontWeight:700, color:'#fff', cursor:'pointer', flexShrink:0 }}>
+                <Link2 size={13}/> Connect
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Charts Row */}
@@ -160,15 +334,15 @@ export default function Investments() {
                 <AreaChart data={MOCK_TREND} margin={{ top:4, right:4, left:-20, bottom:0 }}>
                   <defs>
                     <linearGradient id="portGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#6C63FF" stopOpacity={0.22}/>
-                      <stop offset="100%" stopColor="#6C63FF" stopOpacity={0}/>
+                      <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.22}/>
+                      <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
                   <CartesianGrid vertical={false} stroke="var(--border-light)" strokeDasharray="3 3"/>
                   <XAxis dataKey="name" tick={{ fontSize:10, fill:'var(--text3)' }} axisLine={false} tickLine={false}/>
                   <YAxis tick={{ fontSize:9, fill:'var(--text3)' }} axisLine={false} tickLine={false} tickFormatter={v=>v>=1000?`${(v/1000).toFixed(0)}k`:v}/>
                   <Tooltip contentStyle={{ borderRadius:10, fontSize:12, border:'1px solid var(--border)', background:'var(--surface)' }} formatter={v=>[fmt(v),'Value']}/>
-                  <Area type="monotone" dataKey="value" stroke="#6C63FF" strokeWidth={2.5} fill="url(#portGrad)" dot={false} activeDot={{ r:4 }}/>
+                  <Area type="monotone" dataKey="value" stroke="#8B5CF6" strokeWidth={2.5} fill="url(#portGrad)" dot={false} activeDot={{ r:4 }}/>
                 </AreaChart>
               </ResponsiveContainer>
             )}
@@ -270,11 +444,11 @@ export default function Investments() {
                         <td style={{ padding:'12px 14px', borderBottom:'1px solid var(--border-light)', fontSize:12.5, color:'var(--text3)', whiteSpace:'nowrap' }}>₹{invested.toLocaleString('en-IN',{maximumFractionDigits:0})}</td>
                         <td style={{ padding:'12px 14px', borderBottom:'1px solid var(--border-light)', fontSize:13, fontWeight:700, color:'var(--text)', whiteSpace:'nowrap', fontFamily:'Space Grotesk,sans-serif' }}>₹{current.toLocaleString('en-IN',{maximumFractionDigits:0})}</td>
                         <td style={{ padding:'12px 14px', borderBottom:'1px solid var(--border-light)', whiteSpace:'nowrap' }}>
-                          <div style={{ fontSize:13, fontWeight:800, color: pl>=0?'#37D67A':'#FF5B5B', fontFamily:'Space Grotesk,sans-serif' }}>{pl>=0?'+':''}₹{Math.abs(pl).toLocaleString('en-IN',{maximumFractionDigits:0})}</div>
-                          <div style={{ fontSize:10.5, color: pl>=0?'#37D67A':'#FF5B5B', fontWeight:600 }}>{plPct>=0?'+':''}{plPct.toFixed(2)}%</div>
+                          <div style={{ fontSize:13, fontWeight:800, color: pl>=0?'#22C55E':'#EC4899', fontFamily:'Space Grotesk,sans-serif' }}>{pl>=0?'+':''}₹{Math.abs(pl).toLocaleString('en-IN',{maximumFractionDigits:0})}</div>
+                          <div style={{ fontSize:10.5, color: pl>=0?'#22C55E':'#EC4899', fontWeight:600 }}>{plPct>=0?'+':''}{plPct.toFixed(2)}%</div>
                         </td>
                         <td style={{ padding:'12px 14px', borderBottom:'1px solid var(--border-light)' }}>
-                          <button onClick={()=>setDeleteId(h.id)} style={{ background:'rgba(255,91,91,.1)', border:'none', borderRadius:8, padding:'5px 8px', cursor:'pointer', color:'#FF5B5B' }}>
+                          <button onClick={()=>setDeleteId(h.id)} style={{ background:'rgba(236,72,153,.1)', border:'none', borderRadius:8, padding:'5px 8px', cursor:'pointer', color:'#EC4899' }}>
                             <Trash2 size={13}/>
                           </button>
                         </td>
@@ -289,6 +463,8 @@ export default function Investments() {
       </div>
 
       {showAdd && <AddModal onSave={addHolding} onClose={()=>setShowAdd(false)}/>}
+      {showDhan && <DhanModal onImport={importDhanHoldings} onClose={()=>setShowDhan(false)}/>}
+      <style>{`@keyframes spin { from { transform:rotate(0deg) } to { transform:rotate(360deg) } }`}</style>
       {deleteId && (
         <div className="modal-overlay" onClick={()=>setDeleteId(null)}>
           <div className="modal" style={{ maxWidth:360 }} onClick={e=>e.stopPropagation()}>
@@ -296,7 +472,7 @@ export default function Investments() {
             <p style={{ color:'var(--text3)', fontSize:14, marginBottom:20 }}>This holding will be permanently removed.</p>
             <div style={{ display:'flex', gap:10 }}>
               <button className="btn btn-ghost" style={{ flex:1 }} onClick={()=>setDeleteId(null)}>Cancel</button>
-              <button className="btn btn-danger" style={{ flex:1, background:'#FF5B5B', color:'#fff', border:'none', borderRadius:10, padding:'10px', fontWeight:700, cursor:'pointer' }} onClick={()=>removeHolding(deleteId)}>Remove</button>
+              <button className="btn btn-danger" style={{ flex:1, background:'#EC4899', color:'#fff', border:'none', borderRadius:10, padding:'10px', fontWeight:700, cursor:'pointer' }} onClick={()=>removeHolding(deleteId)}>Remove</button>
             </div>
           </div>
         </div>

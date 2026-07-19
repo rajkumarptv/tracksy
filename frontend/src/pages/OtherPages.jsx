@@ -14,7 +14,7 @@ const WALLET_MONTHS = ['January','February','March','April','May','June','July',
 const WALLET_YEARS  = [_now.getFullYear(), _now.getFullYear()-1, _now.getFullYear()-2];
 
 const WALLET_GRADIENTS = [
-  'linear-gradient(135deg,#6C63FF 0%,#5B8CFF 100%)',
+  'linear-gradient(135deg,#8B5CF6 0%,#3B82F6 100%)',
   'linear-gradient(135deg,#1A1033 0%,#3d3473 100%)',
   'linear-gradient(135deg,#00b894 0%,#55efc4 100%)',
   'linear-gradient(135deg,#e17055 0%,#fd79a8 100%)',
@@ -24,7 +24,7 @@ const WALLET_GRADIENTS = [
 
 // Pick readable ink (dark/light) for a given card background colour
 function cardInk(hex) {
-  let h = (hex || '#6C63FF').replace('#', '');
+  let h = (hex || '#8B5CF6').replace('#', '');
   if (h.length === 3) h = h.split('').map(c => c + c).join('');
   const r = parseInt(h.slice(0,2),16) || 0, g = parseInt(h.slice(2,4),16) || 0, b = parseInt(h.slice(4,6),16) || 0;
   const lum = (0.299*r + 0.587*g + 0.114*b) / 255;   // perceived brightness 0–1
@@ -215,7 +215,7 @@ export function Wallet() {
       <div className="mob-hide">
         <Topbar title={t('wallet_title')} subtitle={t('wallet_sub')}>
           <button className="btn btn-primary btn-sm"
-            style={{ display:'flex', alignItems:'center', gap:6, background: atWalletLimit ? 'linear-gradient(135deg,#FFB84D,#FF79A8)' : 'linear-gradient(135deg,#6C63FF,#5B8CFF)', border:'none', boxShadow:'0 4px 14px rgba(108,99,255,.35)' }}
+            style={{ display:'flex', alignItems:'center', gap:6, background: atWalletLimit ? 'linear-gradient(135deg,#F59E0B,#FF79A8)' : 'linear-gradient(135deg,#8B5CF6,#3B82F6)', border:'none', boxShadow:'0 4px 14px rgba(139,92,246,.35)' }}
             onClick={openAddWallet}>
             {atWalletLimit ? t('wallet_upgrade_add') : <><Plus size={13}/> {t('wallet_add')}</>}
           </button>
@@ -264,13 +264,13 @@ export function Wallet() {
         {/* Summary cards */}
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))', gap:14, marginBottom:24 }}>
           {[
-            { label:t('dash_net_worth'),      value: fmt(netWorth),    icon:<span style={{fontSize:22,fontWeight:800,color:'#6C63FF',lineHeight:1,fontFamily:'Space Grotesk,sans-serif'}}>{currencySymbol}</span>, bg:'rgba(108,99,255,.15)', color: netWorth >= 0 ? '#6C63FF' : '#FF5B5B', sub: netWorth >= 0 ? t('wallet_positive') : t('wallet_negative'), border:'rgba(108,99,255,.2)' },
+            { label:t('dash_net_worth'),      value: fmt(netWorth),    icon:<span style={{fontSize:22,fontWeight:800,color:'#8B5CF6',lineHeight:1,fontFamily:'Space Grotesk,sans-serif'}}>{currencySymbol}</span>, bg:'rgba(139,92,246,.15)', color: netWorth >= 0 ? '#8B5CF6' : '#EC4899', sub: netWorth >= 0 ? t('wallet_positive') : t('wallet_negative'), border:'rgba(139,92,246,.2)' },
             { label:t('wallet_total_assets'), value: fmt(totalAssets), icon:<WalletIcon size={22} color="#00C896"/>,  bg:'rgba(0,200,150,.15)', color:'#00C896', sub:t('wallet_all_accounts'), border:'rgba(0,200,150,.2)' },
-            { label:t('wallet_total_debt'),   value: fmt(totalDebt),   icon:<CreditCard size={22} color="#FF5B5B"/>,  bg:'rgba(255,91,91,.15)',  color:'#FF5B5B', sub:t('wallet_cards_loans'), border:'rgba(255,91,91,.2)' },
+            { label:t('wallet_total_debt'),   value: fmt(totalDebt),   icon:<CreditCard size={22} color="#EC4899"/>,  bg:'rgba(236,72,153,.15)',  color:'#EC4899', sub:t('wallet_cards_loans'), border:'rgba(236,72,153,.2)' },
           ].map(({ label, value, icon, bg, color, sub, border }) => (
             <div key={label} style={{
               background:'var(--surface)', borderRadius:18, padding:'18px 20px',
-              boxShadow:'0 2px 16px rgba(108,99,255,.07)', border:`1px solid ${border}`,
+              boxShadow:'0 2px 16px rgba(139,92,246,.07)', border:`1px solid ${border}`,
               display:'flex', flexDirection:'row', alignItems:'center', gap:16,
             }}>
               <div style={{ width:52, height:52, borderRadius:14, background:bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
@@ -289,18 +289,18 @@ export function Wallet() {
         {!user?.is_premium && (
           <div style={{
             display:'flex', alignItems:'center', gap:12, padding:'11px 16px', borderRadius:14, marginBottom:16,
-            background: atWalletLimit ? 'rgba(255,184,77,.1)' : 'rgba(108,99,255,.06)',
-            border: atWalletLimit ? '1px solid rgba(255,184,77,.35)' : '1px solid rgba(108,99,255,.15)',
+            background: atWalletLimit ? 'rgba(245,158,11,.1)' : 'rgba(139,92,246,.06)',
+            border: atWalletLimit ? '1px solid rgba(245,158,11,.35)' : '1px solid rgba(139,92,246,.15)',
           }}>
             <span style={{ fontSize:18 }}>{atWalletLimit ? '🔒' : '📊'}</span>
             <span style={{ fontSize:13, color:'var(--text2)', flex:1 }}>
               {atWalletLimit
-                ? <><strong style={{color:'#FFB84D'}}>{t('wallet_limit_banner')}</strong> — {t('wallet_free_limit')} {FREE_WALLET_LIMIT} accounts.</>
+                ? <><strong style={{color:'#F59E0B'}}>{t('wallet_limit_banner')}</strong> — {t('wallet_free_limit')} {FREE_WALLET_LIMIT} accounts.</>
                 : <>{(wallets||[]).length} / {FREE_WALLET_LIMIT} {t('wallet_free_used')}.</>}
             </span>
             {atWalletLimit && (
               <button onClick={openWalletPremium}
-                style={{ fontSize:12, fontWeight:700, padding:'5px 14px', borderRadius:20, background:'linear-gradient(135deg,#FFB84D,#FF79A8)', border:'none', color:'#fff', cursor:'pointer', whiteSpace:'nowrap' }}>
+                style={{ fontSize:12, fontWeight:700, padding:'5px 14px', borderRadius:20, background:'linear-gradient(135deg,#F59E0B,#FF79A8)', border:'none', color:'#fff', cursor:'pointer', whiteSpace:'nowrap' }}>
                 {t('wallet_upgrade_btn')}
               </button>
             )}
@@ -308,7 +308,7 @@ export function Wallet() {
         )}
 
         {/* Net Worth hero banner */}
-        <div style={{ background:'linear-gradient(135deg,#4C3BC4,#6C63FF)', borderRadius:20, padding:'20px 24px', marginBottom:20, color:'#fff', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:16 }}>
+        <div style={{ background:'linear-gradient(135deg,#4C3BC4,#8B5CF6)', borderRadius:20, padding:'20px 24px', marginBottom:20, color:'#fff', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:16 }}>
           <div>
             <div style={{ fontSize:11, fontWeight:700, opacity:.7, textTransform:'uppercase', letterSpacing:'.1em', marginBottom:4 }}>Net Worth</div>
             <div style={{ fontSize:28, fontWeight:900, fontFamily:'Space Grotesk,Inter,sans-serif', letterSpacing:-1 }}>
@@ -319,7 +319,7 @@ export function Wallet() {
           <div style={{ display:'flex', gap:24 }}>
             <div style={{ textAlign:'right' }}>
               <div style={{ fontSize:11, fontWeight:700, opacity:.7, textTransform:'uppercase', letterSpacing:'.07em' }}>Assets</div>
-              <div style={{ fontSize:18, fontWeight:800, color:'#37D67A' }}>{fmt(totalAssets)}</div>
+              <div style={{ fontSize:18, fontWeight:800, color:'#22C55E' }}>{fmt(totalAssets)}</div>
               <div style={{ fontSize:11, opacity:.55 }}>{assetWallets.length} accounts</div>
             </div>
             <div style={{ width:1, background:'rgba(255,255,255,.2)' }}/>
@@ -337,7 +337,7 @@ export function Wallet() {
           {assetWallets.length > 0 && (
             <>
               <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14 }}>
-                <div style={{ width:8, height:8, borderRadius:'50%', background:'#37D67A' }}/>
+                <div style={{ width:8, height:8, borderRadius:'50%', background:'#22C55E' }}/>
                 <div style={{ fontSize:12, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.07em' }}>
                   Assets — {fmt(totalAssets)}
                 </div>
@@ -351,7 +351,7 @@ export function Wallet() {
           {liabilityWallets.length > 0 && (
             <>
               <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14 }}>
-                <div style={{ width:8, height:8, borderRadius:'50%', background:'#FF5B5B' }}/>
+                <div style={{ width:8, height:8, borderRadius:'50%', background:'#EC4899' }}/>
                 <div style={{ fontSize:12, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.07em' }}>
                   Liabilities — {fmt(totalDebt)}
                 </div>
@@ -363,12 +363,12 @@ export function Wallet() {
           )}
 
           {!(wallets||[]).length && (
-            <div style={{ background:'var(--surface)', borderRadius:20, boxShadow:'0 4px 24px rgba(108,99,255,.08)', border:'1px solid var(--border-light)', padding:'48px', textAlign:'center', color:'var(--text3)', fontSize:14 }}>
+            <div style={{ background:'var(--surface)', borderRadius:20, boxShadow:'0 4px 24px rgba(139,92,246,.08)', border:'1px solid var(--border-light)', padding:'48px', textAlign:'center', color:'var(--text3)', fontSize:14 }}>
               <div style={{ fontSize:48, marginBottom:12 }}>💳</div>
               <div style={{ fontWeight:700, fontSize:15, color:'var(--text)', marginBottom:6 }}>{t('wallet_empty')}</div>
               <div style={{ marginBottom:20 }}>{t('wallet_empty_desc')}</div>
               <button className="btn btn-primary" onClick={openAddWallet}
-                style={{ background: atWalletLimit ? 'linear-gradient(135deg,#FFB84D,#FF79A8)' : 'linear-gradient(135deg,#6C63FF,#5B8CFF)', border:'none' }}>
+                style={{ background: atWalletLimit ? 'linear-gradient(135deg,#F59E0B,#FF79A8)' : 'linear-gradient(135deg,#8B5CF6,#3B82F6)', border:'none' }}>
                 {atWalletLimit ? '👑 Upgrade to Add More' : t('wallet_add')}
               </button>
             </div>
@@ -376,7 +376,7 @@ export function Wallet() {
         </div>
 
         {/* Recent activity */}
-        <div style={{ background:'var(--surface)', borderRadius:22, boxShadow:'0 4px 24px rgba(108,99,255,.08)', border:'1px solid var(--border-light)', overflow:'hidden' }}>
+        <div style={{ background:'var(--surface)', borderRadius:22, boxShadow:'0 4px 24px rgba(139,92,246,.08)', border:'1px solid var(--border-light)', overflow:'hidden' }}>
           <div style={{ padding:'18px 22px', borderBottom:'1px solid var(--border-light)', fontWeight:700, fontSize:15, color:'var(--text)' }}>
             {t('wallet_recent')}
           </div>
@@ -439,8 +439,8 @@ export function Wallet() {
 /* ── Assets & Liabilities type system ── */
 const ASSET_TYPES = [
   { group:'Bank & Cash', items:[
-    { value:'bank',         icon:'🏦', label:'Bank Account',        color:'#5B8CFF', bg:'rgba(91,140,255,.14)'  },
-    { value:'cash',         icon:'💵', label:'Cash',                color:'#37D67A', bg:'rgba(55,214,122,.14)'  },
+    { value:'bank',         icon:'🏦', label:'Bank Account',        color:'#3B82F6', bg:'rgba(59,130,246,.14)'  },
+    { value:'cash',         icon:'💵', label:'Cash',                color:'#22C55E', bg:'rgba(34,197,94,.14)'  },
   ]},
   { group:'Digital Wallets & UPI', items:[
     { value:'gpay',         icon:'🟣', label:'Google Pay',          color:'#4285F4', bg:'rgba(66,133,244,.14)'  },
@@ -455,9 +455,9 @@ const ASSET_TYPES = [
   ]},
   { group:'Investments', items:[
     { value:'fd',           icon:'🏛️', label:'Fixed Deposit',       color:'#00C896', bg:'rgba(0,200,150,.14)'  },
-    { value:'mutual_fund',  icon:'📊', label:'Mutual Funds',        color:'#6C63FF', bg:'rgba(108,99,255,.14)' },
-    { value:'stocks',       icon:'📈', label:'Stocks',              color:'#37D67A', bg:'rgba(55,214,122,.14)'  },
-    { value:'gold',         icon:'🪙', label:'Gold',                color:'#FFB84D', bg:'rgba(255,184,77,.14)'  },
+    { value:'mutual_fund',  icon:'📊', label:'Mutual Funds',        color:'#8B5CF6', bg:'rgba(139,92,246,.14)' },
+    { value:'stocks',       icon:'📈', label:'Stocks',              color:'#22C55E', bg:'rgba(34,197,94,.14)'  },
+    { value:'gold',         icon:'🪙', label:'Gold',                color:'#F59E0B', bg:'rgba(245,158,11,.14)'  },
     { value:'crypto',       icon:'₿',  label:'Crypto',              color:'#F7931A', bg:'rgba(247,147,26,.14)'  },
     { value:'epf',          icon:'🛡️', label:'EPF / PPF',           color:'#A29BFE', bg:'rgba(162,155,254,.14)' },
   ]},
@@ -470,21 +470,21 @@ const ASSET_TYPES = [
 
 const LIABILITY_TYPES = [
   { group:'Credit Cards', items:[
-    { value:'visa',         icon:'💳', label:'Visa Card',           color:'#FF5B5B', bg:'rgba(255,91,91,.14)'   },
+    { value:'visa',         icon:'💳', label:'Visa Card',           color:'#EC4899', bg:'rgba(236,72,153,.14)'   },
     { value:'mastercard',   icon:'💳', label:'Mastercard',          color:'#EB001B', bg:'rgba(235,0,27,.14)'    },
   ]},
   { group:'Loans', items:[
-    { value:'home_loan',    icon:'🏠', label:'Home Loan',           color:'#FF5B5B', bg:'rgba(255,91,91,.14)'   },
-    { value:'vehicle_loan', icon:'🚗', label:'Vehicle Loan',        color:'#FFB84D', bg:'rgba(255,184,77,.14)'  },
+    { value:'home_loan',    icon:'🏠', label:'Home Loan',           color:'#EC4899', bg:'rgba(236,72,153,.14)'   },
+    { value:'vehicle_loan', icon:'🚗', label:'Vehicle Loan',        color:'#F59E0B', bg:'rgba(245,158,11,.14)'  },
     { value:'personal_loan',icon:'💼', label:'Personal Loan',       color:'#FF79A8', bg:'rgba(255,121,168,.14)' },
-    { value:'gold_loan',    icon:'🪙', label:'Gold Loan',           color:'#FFB84D', bg:'rgba(255,184,77,.14)'  },
-    { value:'education_loan',icon:'🎓',label:'Education Loan',      color:'#5B8CFF', bg:'rgba(91,140,255,.14)'  },
+    { value:'gold_loan',    icon:'🪙', label:'Gold Loan',           color:'#F59E0B', bg:'rgba(245,158,11,.14)'  },
+    { value:'education_loan',icon:'🎓',label:'Education Loan',      color:'#3B82F6', bg:'rgba(59,130,246,.14)'  },
     { value:'loan',         icon:'📋', label:'Other Loan',          color:'#A29BFE', bg:'rgba(162,155,254,.14)' },
   ]},
   { group:'Buy Now Pay Later & Borrowings', items:[
     { value:'bnpl',         icon:'🛍️', label:'BNPL',                color:'#FF79A8', bg:'rgba(255,121,168,.14)' },
-    { value:'family_borrow',icon:'👨‍👩‍👧', label:'Family Borrowing',   color:'#FFB84D', bg:'rgba(255,184,77,.14)'  },
-    { value:'emi',          icon:'📅', label:'EMI',                 color:'#6C63FF', bg:'rgba(108,99,255,.14)'  },
+    { value:'family_borrow',icon:'👨‍👩‍👧', label:'Family Borrowing',   color:'#F59E0B', bg:'rgba(245,158,11,.14)'  },
+    { value:'emi',          icon:'📅', label:'EMI',                 color:'#8B5CF6', bg:'rgba(139,92,246,.14)'  },
   ]},
 ];
 
@@ -516,25 +516,25 @@ function AccountTypePicker({ value, onChange }) {
           animation:typeCardIn .18s ease both;
           user-select:none; text-align:center;
         }
-        .type-card:hover { transform:translateY(-2px) scale(1.04); box-shadow:0 6px 20px rgba(108,99,255,.15); }
+        .type-card:hover { transform:translateY(-2px) scale(1.04); box-shadow:0 6px 20px rgba(139,92,246,.15); }
       `}</style>
 
       {/* Asset / Liability toggle */}
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:18 }}>
         <button onClick={() => { setTab('asset'); onChange('bank'); }}
-          style={{ padding:'12px 0', borderRadius:14, border: tab==='asset' ? '2px solid #37D67A' : '1.5px solid var(--border)',
-            background: tab==='asset' ? 'rgba(55,214,122,.12)' : 'var(--surface)', cursor:'pointer',
+          style={{ padding:'12px 0', borderRadius:14, border: tab==='asset' ? '2px solid #22C55E' : '1.5px solid var(--border)',
+            background: tab==='asset' ? 'rgba(34,197,94,.12)' : 'var(--surface)', cursor:'pointer',
             display:'flex', flexDirection:'column', alignItems:'center', gap:4, transition:'all .2s' }}>
           <span style={{ fontSize:22 }}>💰</span>
-          <span style={{ fontSize:13, fontWeight:700, color: tab==='asset' ? '#37D67A' : 'var(--text)' }}>Assets</span>
+          <span style={{ fontSize:13, fontWeight:700, color: tab==='asset' ? '#22C55E' : 'var(--text)' }}>Assets</span>
           <span style={{ fontSize:10.5, color:'var(--text3)' }}>Bank, FD, Gold, Stocks…</span>
         </button>
         <button onClick={() => { setTab('liability'); onChange('visa'); }}
-          style={{ padding:'12px 0', borderRadius:14, border: tab==='liability' ? '2px solid #FF5B5B' : '1.5px solid var(--border)',
-            background: tab==='liability' ? 'rgba(255,91,91,.10)' : 'var(--surface)', cursor:'pointer',
+          style={{ padding:'12px 0', borderRadius:14, border: tab==='liability' ? '2px solid #EC4899' : '1.5px solid var(--border)',
+            background: tab==='liability' ? 'rgba(236,72,153,.10)' : 'var(--surface)', cursor:'pointer',
             display:'flex', flexDirection:'column', alignItems:'center', gap:4, transition:'all .2s' }}>
           <span style={{ fontSize:22 }}>💸</span>
-          <span style={{ fontSize:13, fontWeight:700, color: tab==='liability' ? '#FF5B5B' : 'var(--text)' }}>Liabilities</span>
+          <span style={{ fontSize:13, fontWeight:700, color: tab==='liability' ? '#EC4899' : 'var(--text)' }}>Liabilities</span>
           <span style={{ fontSize:10.5, color:'var(--text3)' }}>Loans, Cards, BNPL…</span>
         </button>
       </div>
@@ -544,9 +544,9 @@ function AccountTypePicker({ value, onChange }) {
         padding:'8px 14px', background:'var(--surface2)', borderRadius:10, border:'1px solid var(--border-light)' }}>
         <span style={{ fontSize:12, color:'var(--text3)', fontWeight:500 }}>Net Worth</span>
         <span style={{ fontSize:12, color:'var(--text3)' }}>=</span>
-        <span style={{ fontSize:12, fontWeight:700, color:'#37D67A' }}>Total Assets</span>
+        <span style={{ fontSize:12, fontWeight:700, color:'#22C55E' }}>Total Assets</span>
         <span style={{ fontSize:12, color:'var(--text3)' }}>−</span>
-        <span style={{ fontSize:12, fontWeight:700, color:'#FF5B5B' }}>Total Liabilities</span>
+        <span style={{ fontSize:12, fontWeight:700, color:'#EC4899' }}>Total Liabilities</span>
       </div>
 
       {/* Type grid */}
@@ -586,7 +586,7 @@ function AccountTypePicker({ value, onChange }) {
 }
 
 const PRESET_CARD_COLORS = [
-  '#6C63FF','#5B8CFF','#FF5B5B','#37D67A','#FFB84D',
+  '#8B5CF6','#3B82F6','#EC4899','#22C55E','#F59E0B',
   '#FF79A8','#00CEC9','#A29BFE','#636E72','#2D3436',
 ];
 
@@ -604,7 +604,7 @@ function calcPaymentDue(billDay) {
 function AddWalletModal({ onClose, onSaved }) {
   const fmt = useFmtWallet();
   const [form, setForm] = useState({
-    name:'', type:'bank', last_four:'', balance:'', color:'#5B8CFF',
+    name:'', type:'bank', last_four:'', balance:'', color:'#3B82F6',
     credit_limit:'', bill_date:'', emi_amount:'', interest_rate:'', person_name:'',
     maturity_date:'', invested_amount:'',
   });
@@ -665,7 +665,7 @@ function AddWalletModal({ onClose, onSaved }) {
             <div style={{ display:'flex', gap:10, marginTop:4, justifyContent:'flex-end' }}>
               <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
               <button className="btn btn-primary" onClick={() => setStep(2)}
-                style={{ background:'linear-gradient(135deg,#6C63FF,#5B8CFF)', border:'none', boxShadow:'0 4px 14px rgba(108,99,255,.35)' }}>
+                style={{ background:'linear-gradient(135deg,#8B5CF6,#3B82F6)', border:'none', boxShadow:'0 4px 14px rgba(139,92,246,.35)' }}>
                 Continue →
               </button>
             </div>
@@ -691,10 +691,10 @@ function AddWalletModal({ onClose, onSaved }) {
 
               {/* ── Category badge ── */}
               <div style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'5px 12px', borderRadius:20, marginBottom:14,
-                background: isLiability ? 'rgba(255,91,91,.10)' : 'rgba(55,214,122,.10)',
-                border: `1px solid ${isLiability ? 'rgba(255,91,91,.3)' : 'rgba(55,214,122,.3)'}` }}>
+                background: isLiability ? 'rgba(236,72,153,.10)' : 'rgba(34,197,94,.10)',
+                border: `1px solid ${isLiability ? 'rgba(236,72,153,.3)' : 'rgba(34,197,94,.3)'}` }}>
                 <span style={{ fontSize:13 }}>{isLiability ? '💸' : '💰'}</span>
-                <span style={{ fontSize:11.5, fontWeight:700, color: isLiability ? '#FF5B5B' : '#37D67A' }}>
+                <span style={{ fontSize:11.5, fontWeight:700, color: isLiability ? '#EC4899' : '#22C55E' }}>
                   {isLiability ? 'Liability — reduces Net Worth' : 'Asset — increases Net Worth'}
                 </span>
               </div>
@@ -730,18 +730,18 @@ function AddWalletModal({ onClose, onSaved }) {
                   </div>
                   {paymentDue && (
                     <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:4 }}>
-                      <div style={{ background:'rgba(55,214,122,.08)', border:'1px solid rgba(55,214,122,.25)', borderRadius:12, padding:'12px 14px' }}>
-                        <div style={{ fontSize:11, fontWeight:600, color:'#37D67A', marginBottom:3 }}>📅 Payment Due</div>
+                      <div style={{ background:'rgba(34,197,94,.08)', border:'1px solid rgba(34,197,94,.25)', borderRadius:12, padding:'12px 14px' }}>
+                        <div style={{ fontSize:11, fontWeight:600, color:'#22C55E', marginBottom:3 }}>📅 Payment Due</div>
                         <div style={{ fontSize:15, fontWeight:800, color:'var(--text)' }}>
                           {paymentDue.toLocaleDateString('en-IN',{day:'numeric',month:'long'})}
                         </div>
                         <div style={{ fontSize:11, color:'var(--text3)', marginTop:2 }}>Bill date + 20 days</div>
                       </div>
                       {form.credit_limit && form.balance && (
-                        <div style={{ background: utilPct>80?'rgba(255,91,91,.08)':'rgba(55,214,122,.08)', border:`1px solid ${utilPct>80?'rgba(255,91,91,.25)':'rgba(55,214,122,.25)'}`, borderRadius:12, padding:'12px 14px' }}>
-                          <div style={{ fontSize:11, fontWeight:600, color: utilPct>80?'#FF5B5B':'#37D67A', marginBottom:6 }}>💳 Utilization {utilPct}%</div>
+                        <div style={{ background: utilPct>80?'rgba(236,72,153,.08)':'rgba(34,197,94,.08)', border:`1px solid ${utilPct>80?'rgba(236,72,153,.25)':'rgba(34,197,94,.25)'}`, borderRadius:12, padding:'12px 14px' }}>
+                          <div style={{ fontSize:11, fontWeight:600, color: utilPct>80?'#EC4899':'#22C55E', marginBottom:6 }}>💳 Utilization {utilPct}%</div>
                           <div style={{ height:6, background:'var(--surface3)', borderRadius:20, overflow:'hidden' }}>
-                            <div style={{ height:'100%', width:`${utilPct}%`, borderRadius:20, background: utilPct>80?'#FF5B5B':'#37D67A' }}/>
+                            <div style={{ height:'100%', width:`${utilPct}%`, borderRadius:20, background: utilPct>80?'#EC4899':'#22C55E' }}/>
                           </div>
                         </div>
                       )}
@@ -895,12 +895,12 @@ function AddWalletModal({ onClose, onSaved }) {
                 const pos  = gain >= 0;
                 return (
                   <div style={{ padding:'10px 14px', borderRadius:12, marginBottom:4,
-                    background: pos ? 'rgba(55,214,122,.08)' : 'rgba(255,91,91,.08)',
-                    border: `1px solid ${pos ? 'rgba(55,214,122,.25)' : 'rgba(255,91,91,.25)'}` }}>
-                    <div style={{ fontSize:11, fontWeight:600, color: pos?'#37D67A':'#FF5B5B', marginBottom:2 }}>
+                    background: pos ? 'rgba(34,197,94,.08)' : 'rgba(236,72,153,.08)',
+                    border: `1px solid ${pos ? 'rgba(34,197,94,.25)' : 'rgba(236,72,153,.25)'}` }}>
+                    <div style={{ fontSize:11, fontWeight:600, color: pos?'#22C55E':'#EC4899', marginBottom:2 }}>
                       {pos ? '📈 Unrealised Gain' : '📉 Unrealised Loss'}
                     </div>
-                    <div style={{ fontSize:16, fontWeight:800, color: pos?'#37D67A':'#FF5B5B' }}>
+                    <div style={{ fontSize:16, fontWeight:800, color: pos?'#22C55E':'#EC4899' }}>
                       {pos?'+':''}{fmt(gain,{noDecimals:true})} ({pct}%)
                     </div>
                   </div>
@@ -958,7 +958,7 @@ function AddWalletModal({ onClose, onSaved }) {
             </div>
 
             {mutation.isError && (
-              <div style={{ marginTop:10, padding:'10px 14px', borderRadius:10, background:'rgba(255,91,91,.1)', border:'1px solid rgba(255,91,91,.3)', color:'#FF5B5B', fontSize:12, fontWeight:500 }}>
+              <div style={{ marginTop:10, padding:'10px 14px', borderRadius:10, background:'rgba(236,72,153,.1)', border:'1px solid rgba(236,72,153,.3)', color:'#EC4899', fontSize:12, fontWeight:500 }}>
                 ⚠️ {mutation.error?.response?.data?.message || mutation.error?.message || 'Failed to add account. Please try again.'}
               </div>
             )}
@@ -974,7 +974,7 @@ function AddWalletModal({ onClose, onSaved }) {
                     emi_day:  form.bill_date ? parseInt(form.bill_date) : undefined,
                   });
                 }}
-                style={{ background:'linear-gradient(135deg,#6C63FF,#5B8CFF)', border:'none', boxShadow:'0 4px 14px rgba(108,99,255,.35)' }}>
+                style={{ background:'linear-gradient(135deg,#8B5CF6,#3B82F6)', border:'none', boxShadow:'0 4px 14px rgba(139,92,246,.35)' }}>
                 {mutation.isPending ? '⏳ Adding…' : 'Add Account'}
               </button>
             </div>
@@ -997,7 +997,7 @@ export function Analytics() {
   const fmt = useFmtWallet();
   const year = new Date().getFullYear();
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const PIE_COLORS = ['#6C63FF','#5B8CFF','#37D67A','#FFB84D','#FF5B5B','#A29BFE','#00CEC9','#636E72'];
+  const PIE_COLORS = ['#8B5CF6','#3B82F6','#22C55E','#F59E0B','#EC4899','#A29BFE','#00CEC9','#636E72'];
 
   const mf   = useQ2({ queryKey:['money-flow', year],          queryFn:() => dashboardAPI.moneyFlow({ year }).then(r=>r.data.data) });
   const cats = useQ2({ queryKey:['category-breakdown', year],  queryFn:() => dashboardAPI.categoryBreakdown({ year }).then(r=>r.data.data) });
@@ -1027,19 +1027,19 @@ export function Analytics() {
         <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr', gap:16, marginBottom:16 }}>
 
           {/* Income vs Expense bar chart */}
-          <div style={{ background:'var(--surface)', borderRadius:22, padding:'22px 24px', boxShadow:'0 4px 24px rgba(108,99,255,.08)', border:'1px solid var(--border-light)' }}>
+          <div style={{ background:'var(--surface)', borderRadius:22, padding:'22px 24px', boxShadow:'0 4px 24px rgba(139,92,246,.08)', border:'1px solid var(--border-light)' }}>
             <div style={{ fontWeight:700, fontSize:15, color:'var(--text)', marginBottom:6 }}>{t('analytics_income_vs')} — {year}</div>
             <div style={{ fontSize:12, color:'var(--text3)', marginBottom:18 }}>{t('analytics_monthly_comp')}</div>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={flowData} barGap={4} barCategoryGap="25%">
                 <defs>
                   <linearGradient id="incBar" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#6C63FF" stopOpacity={1}/>
-                    <stop offset="100%" stopColor="#5B8CFF" stopOpacity={.8}/>
+                    <stop offset="0%" stopColor="#8B5CF6" stopOpacity={1}/>
+                    <stop offset="100%" stopColor="#3B82F6" stopOpacity={.8}/>
                   </linearGradient>
                   <linearGradient id="expBar" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#FF5B5B" stopOpacity={.7}/>
-                    <stop offset="100%" stopColor="#FF5B5B" stopOpacity={.3}/>
+                    <stop offset="0%" stopColor="#EC4899" stopOpacity={.7}/>
+                    <stop offset="100%" stopColor="#EC4899" stopOpacity={.3}/>
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="name" tick={{ fontSize:11, fill:'var(--text3)' }} axisLine={false} tickLine={false}/>
@@ -1053,7 +1053,7 @@ export function Analytics() {
           </div>
 
           {/* Category donut */}
-          <div style={{ background:'var(--surface)', borderRadius:22, padding:'22px 24px', boxShadow:'0 4px 24px rgba(108,99,255,.08)', border:'1px solid var(--border-light)' }}>
+          <div style={{ background:'var(--surface)', borderRadius:22, padding:'22px 24px', boxShadow:'0 4px 24px rgba(139,92,246,.08)', border:'1px solid var(--border-light)' }}>
             <div style={{ fontWeight:700, fontSize:15, color:'var(--text)', marginBottom:4 }}>{t('analytics_cat_exp')}</div>
             <div style={{ fontSize:12, color:'var(--text3)', marginBottom:14 }}>{year} · {t('analytics_all_months')}</div>
             {pieData.length === 0 ? (
@@ -1098,25 +1098,25 @@ export function Analytics() {
         </div>
 
         {/* Area chart */}
-        <div style={{ background:'var(--surface)', borderRadius:22, padding:'22px 24px', boxShadow:'0 4px 24px rgba(108,99,255,.08)', border:'1px solid var(--border-light)' }}>
+        <div style={{ background:'var(--surface)', borderRadius:22, padding:'22px 24px', boxShadow:'0 4px 24px rgba(139,92,246,.08)', border:'1px solid var(--border-light)' }}>
           <div style={{ fontWeight:700, fontSize:15, color:'var(--text)', marginBottom:4 }}>{t('analytics_cash_flow')}</div>
           <div style={{ fontSize:12, color:'var(--text3)', marginBottom:18 }}>{t('analytics_cash_flow_sub')}</div>
           <ResponsiveContainer width="100%" height={160}>
             <AreaChart data={flowData} margin={{ top:5, right:4, left:-20, bottom:0 }}>
               <defs>
                 <linearGradient id="areaInc" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#6C63FF" stopOpacity={.18}/>
-                  <stop offset="95%" stopColor="#6C63FF" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#8B5CF6" stopOpacity={.18}/>
+                  <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}/>
                 </linearGradient>
                 <linearGradient id="areaExp" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#FF5B5B" stopOpacity={.15}/>
-                  <stop offset="95%" stopColor="#FF5B5B" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#EC4899" stopOpacity={.15}/>
+                  <stop offset="95%" stopColor="#EC4899" stopOpacity={0}/>
                 </linearGradient>
               </defs>
               <XAxis dataKey="name" tick={{ fontSize:11, fill:'var(--text3)' }} axisLine={false} tickLine={false}/>
               <RTooltip formatter={(v,n)=>[fmt(v),n]} contentStyle={tooltipStyle}/>
-              <Area type="monotone" dataKey="income"  stroke="#6C63FF" strokeWidth={2.5} fill="url(#areaInc)" name="Income"  dot={false}/>
-              <Area type="monotone" dataKey="expense" stroke="#FF5B5B" strokeWidth={2}   fill="url(#areaExp)" name="Expense" dot={false}/>
+              <Area type="monotone" dataKey="income"  stroke="#8B5CF6" strokeWidth={2.5} fill="url(#areaInc)" name="Income"  dot={false}/>
+              <Area type="monotone" dataKey="expense" stroke="#EC4899" strokeWidth={2}   fill="url(#areaExp)" name="Expense" dot={false}/>
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -1185,13 +1185,13 @@ export function Settings() {
         <div style={{ maxWidth:680 }}>
 
           {saved && (
-            <div style={{ background:'rgba(55,214,122,.12)', color:'#00a86b', padding:'12px 16px', borderRadius:14, marginBottom:20, fontSize:13.5, fontWeight:600, display:'flex', alignItems:'center', gap:8 }}>
+            <div style={{ background:'rgba(34,197,94,.12)', color:'#22C55E', padding:'12px 16px', borderRadius:14, marginBottom:20, fontSize:13.5, fontWeight:600, display:'flex', alignItems:'center', gap:8 }}>
               {t('settings_saved')}
             </div>
           )}
 
           {/* Profile hero */}
-          <div style={{ background:'linear-gradient(135deg,#6C63FF 0%,#5B8CFF 100%)', borderRadius:22, padding:'28px 32px', marginBottom:20, color:'#fff', display:'flex', alignItems:'center', gap:20, boxShadow:'0 8px 32px rgba(108,99,255,.3)', position:'relative', overflow:'hidden' }}>
+          <div style={{ background:'linear-gradient(135deg,#8B5CF6 0%,#3B82F6 100%)', borderRadius:22, padding:'28px 32px', marginBottom:20, color:'#fff', display:'flex', alignItems:'center', gap:20, boxShadow:'0 8px 32px rgba(139,92,246,.3)', position:'relative', overflow:'hidden' }}>
             <div style={{ position:'absolute', top:-30, right:-30, width:100, height:100, background:'rgba(255,255,255,.08)', borderRadius:'50%' }}/>
             <div style={{ position:'absolute', bottom:-20, right:80, width:60, height:60, background:'rgba(255,255,255,.05)', borderRadius:'50%' }}/>
             <div style={{ width:64, height:64, borderRadius:'50%', background:'rgba(255,255,255,.2)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:22, fontWeight:700, flexShrink:0, backdropFilter:'blur(10px)', border:'2px solid rgba(255,255,255,.3)' }}>
@@ -1202,12 +1202,12 @@ export function Settings() {
               <div style={{ fontSize:13, opacity:.8, marginTop:2 }}>{user?.email}</div>
               <div style={{ display:'flex', gap:8, marginTop:8, alignItems:'center' }}>
                 {user?.is_premium ? (
-                  <span style={{ fontSize:11, background:'rgba(255,184,77,.25)', border:'1px solid rgba(255,184,77,.4)', borderRadius:20, padding:'3px 12px', fontWeight:700, color:'#FFB84D' }}>✨ Premium</span>
+                  <span style={{ fontSize:11, background:'rgba(245,158,11,.25)', border:'1px solid rgba(245,158,11,.4)', borderRadius:20, padding:'3px 12px', fontWeight:700, color:'#F59E0B' }}>✨ Premium</span>
                 ) : (
                   <>
                     <span style={{ fontSize:11, background:'rgba(255,255,255,.2)', borderRadius:20, padding:'3px 10px', fontWeight:600 }}>{t('settings_free_plan')}</span>
                     <button onClick={() => openPremium()}
-                      style={{ fontSize:11, background:'rgba(255,184,77,.25)', border:'1px solid rgba(255,184,77,.5)', borderRadius:20, padding:'3px 10px', fontWeight:700, color:'#FFE4A0', cursor:'pointer' }}>
+                      style={{ fontSize:11, background:'rgba(245,158,11,.25)', border:'1px solid rgba(245,158,11,.5)', borderRadius:20, padding:'3px 10px', fontWeight:700, color:'#FFE4A0', cursor:'pointer' }}>
                       {t('settings_upgrade_btn')}
                     </button>
                   </>
@@ -1217,7 +1217,7 @@ export function Settings() {
           </div>
 
           {/* Profile form */}
-          <SectionCard icon={<User size={18} color="#6C63FF"/>} title={t('settings_profile')}>
+          <SectionCard icon={<User size={18} color="#8B5CF6"/>} title={t('settings_profile')}>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
               <div className="form-group">
                 <label className="form-label">{t('settings_first_name')}</label>
@@ -1229,13 +1229,13 @@ export function Settings() {
               </div>
             </div>
             <button className="btn btn-primary" disabled={mutation.isPending} onClick={()=>mutation.mutate(form)}
-              style={{ background:'linear-gradient(135deg,#6C63FF,#5B8CFF)', border:'none', boxShadow:'0 4px 14px rgba(108,99,255,.35)' }}>
+              style={{ background:'linear-gradient(135deg,#8B5CF6,#3B82F6)', border:'none', boxShadow:'0 4px 14px rgba(139,92,246,.35)' }}>
               {mutation.isPending ? t('modal_saving') : t('settings_save')}
             </button>
           </SectionCard>
 
           {/* Currency & Region */}
-          <SectionCard icon={<Globe size={18} color="#5B8CFF"/>} title={t('settings_currency_region')}>
+          <SectionCard icon={<Globe size={18} color="#3B82F6"/>} title={t('settings_currency_region')}>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
               <div className="form-group">
                 <label className="form-label">{t('settings_currency')}</label>
@@ -1266,7 +1266,7 @@ export function Settings() {
           <GmailSection user={user} openPremium={openPremium} />
 
           {/* Data Backup */}
-          <SectionCard icon={<Download size={18} color="#5B8CFF"/>} title="Data Backup & Export">
+          <SectionCard icon={<Download size={18} color="#3B82F6"/>} title="Data Backup & Export">
             <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:16, flexWrap:'wrap' }}>
               <div style={{ flex:1 }}>
                 <div style={{ fontSize:13.5, color:'var(--text)', lineHeight:1.6, marginBottom:10 }}>
@@ -1279,23 +1279,23 @@ export function Settings() {
                 </div>
               </div>
               <button onClick={handleExport} disabled={exporting}
-                style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 20px', borderRadius:12, fontWeight:700, fontSize:13.5, cursor:'pointer', flexShrink:0, background: exportDone?'rgba(55,214,122,.15)':'var(--accent-light)', border: exportDone?'1.5px solid #37D67A':'1.5px solid var(--accent)', color: exportDone?'#37D67A':'var(--accent)', transition:'all .2s' }}>
+                style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 20px', borderRadius:12, fontWeight:700, fontSize:13.5, cursor:'pointer', flexShrink:0, background: exportDone?'rgba(34,197,94,.15)':'var(--accent-light)', border: exportDone?'1.5px solid #22C55E':'1.5px solid var(--accent)', color: exportDone?'#22C55E':'var(--accent)', transition:'all .2s' }}>
                 <Download size={15}/> {exporting ? 'Exporting…' : exportDone ? '✓ Downloaded!' : 'Export JSON'}
               </button>
             </div>
           </SectionCard>
 
           {/* Reset Data */}
-          <SectionCard icon={<Trash2 size={18} color="#FF5B5B"/>} title="Reset Data">
+          <SectionCard icon={<Trash2 size={18} color="#EC4899"/>} title="Reset Data">
             <div style={{ fontSize:13.5, color:'var(--text3)', marginBottom:16, lineHeight:1.6 }}>
               Permanently delete selected data. <strong style={{color:'var(--red)'}}>This cannot be undone.</strong> Export a backup first.
             </div>
             <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
               {[
-                { scope:'transactions', label:'Clear All Transactions',      desc:'Remove every income & expense record',       color:'#FFB84D', bg:'rgba(255,184,77,.1)' },
-                { scope:'budgets',      label:'Delete All Budgets',           desc:'Remove all monthly budget configurations',   color:'#5B8CFF', bg:'rgba(91,140,255,.1)'  },
-                { scope:'goals',        label:'Delete All Goals',             desc:'Remove all saving goals and progress',       color:'#37D67A', bg:'rgba(55,214,122,.1)'  },
-                { scope:'all',          label:'⚠️ Reset Everything',           desc:'Wipe all data — wallets, transactions, budgets, goals & categories', color:'#FF5B5B', bg:'rgba(255,91,91,.1)'   },
+                { scope:'transactions', label:'Clear All Transactions',      desc:'Remove every income & expense record',       color:'#F59E0B', bg:'rgba(245,158,11,.1)' },
+                { scope:'budgets',      label:'Delete All Budgets',           desc:'Remove all monthly budget configurations',   color:'#3B82F6', bg:'rgba(59,130,246,.1)'  },
+                { scope:'goals',        label:'Delete All Goals',             desc:'Remove all saving goals and progress',       color:'#22C55E', bg:'rgba(34,197,94,.1)'  },
+                { scope:'all',          label:'⚠️ Reset Everything',           desc:'Wipe all data — wallets, transactions, budgets, goals & categories', color:'#EC4899', bg:'rgba(236,72,153,.1)'   },
               ].map(({ scope, label, desc, color, bg }) => (
                 <div key={scope} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px', borderRadius:14, background:bg, border:`1px solid ${color}22`, gap:12 }}>
                   <div style={{ flex:1 }}>
@@ -1315,34 +1315,34 @@ export function Settings() {
 
           {/* Admin panel button — only for admins */}
           {user?.is_admin && (
-            <div onClick={() => navigate3('/admin')} style={{ cursor:'pointer', background:'linear-gradient(135deg,#1a1a2e 0%,#16213e 100%)', borderRadius:20, padding:'18px 24px', marginBottom:16, display:'flex', alignItems:'center', gap:16, boxShadow:'0 4px 24px rgba(108,99,255,.15)', border:'1px solid rgba(108,99,255,.4)', transition:'transform .2s' }}
+            <div onClick={() => navigate3('/admin')} style={{ cursor:'pointer', background:'linear-gradient(135deg,#1a1a2e 0%,#16213e 100%)', borderRadius:20, padding:'18px 24px', marginBottom:16, display:'flex', alignItems:'center', gap:16, boxShadow:'0 4px 24px rgba(139,92,246,.15)', border:'1px solid rgba(139,92,246,.4)', transition:'transform .2s' }}
               onMouseEnter={e=>e.currentTarget.style.transform='translateY(-2px)'}
               onMouseLeave={e=>e.currentTarget.style.transform=''}>
-              <div style={{ width:46, height:46, borderRadius:14, background:'linear-gradient(135deg,#6C63FF,#a29bfe)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+              <div style={{ width:46, height:46, borderRadius:14, background:'linear-gradient(135deg,#8B5CF6,#a29bfe)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M4 4h7v7H4V4zm0 9h7v7H4v-7zm9-9h7v7h-7V4zm0 9h7v7h-7v-7z"/></svg>
               </div>
               <div style={{ flex:1 }}>
                 <div style={{ fontSize:15, fontWeight:800, color:'#fff', marginBottom:3 }}>Admin Dashboard</div>
                 <div style={{ fontSize:12.5, color:'rgba(255,255,255,.5)' }}>Users, stats, premium management & more</div>
               </div>
-              <div style={{ background:'rgba(108,99,255,.25)', border:'1px solid rgba(108,99,255,.5)', borderRadius:12, padding:'8px 16px', color:'#a29bfe', fontSize:13, fontWeight:700, flexShrink:0 }}>
+              <div style={{ background:'rgba(139,92,246,.25)', border:'1px solid rgba(139,92,246,.5)', borderRadius:12, padding:'8px 16px', color:'#a29bfe', fontSize:13, fontWeight:700, flexShrink:0 }}>
                 Open →
               </div>
             </div>
           )}
 
           {/* Plan info teaser — only for free users */}
-          {!user?.is_premium && <div onClick={() => openPremium()} style={{ cursor:'pointer', background:'linear-gradient(135deg,#1a1033 0%,#2d2055 100%)', borderRadius:20, padding:'22px 24px', marginBottom:16, display:'flex', alignItems:'center', gap:16, boxShadow:'0 4px 24px rgba(108,99,255,.2)', border:'1px solid rgba(108,99,255,.3)', transition:'transform .2s' }}
+          {!user?.is_premium && <div onClick={() => openPremium()} style={{ cursor:'pointer', background:'linear-gradient(135deg,#1a1033 0%,#2d2055 100%)', borderRadius:20, padding:'22px 24px', marginBottom:16, display:'flex', alignItems:'center', gap:16, boxShadow:'0 4px 24px rgba(139,92,246,.2)', border:'1px solid rgba(139,92,246,.3)', transition:'transform .2s' }}
             onMouseEnter={e=>e.currentTarget.style.transform='translateY(-2px)'}
             onMouseLeave={e=>e.currentTarget.style.transform=''}>
-            <div style={{ width:46, height:46, borderRadius:14, background:'rgba(255,184,77,.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-              <Crown size={22} color="#FFB84D"/>
+            <div style={{ width:46, height:46, borderRadius:14, background:'rgba(245,158,11,.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+              <Crown size={22} color="#F59E0B"/>
             </div>
             <div style={{ flex:1 }}>
               <div style={{ fontSize:15, fontWeight:800, color:'#fff', marginBottom:3 }}>Unlock Premium Features</div>
               <div style={{ fontSize:12.5, color:'rgba(255,255,255,.6)' }}>AI insights, unlimited accounts, priority support & more.</div>
             </div>
-            <div style={{ background:'linear-gradient(135deg,#FFB84D,#FF79A8)', borderRadius:12, padding:'8px 18px', color:'#fff', fontSize:13, fontWeight:700, flexShrink:0 }}>
+            <div style={{ background:'linear-gradient(135deg,#F59E0B,#FF79A8)', borderRadius:12, padding:'8px 18px', color:'#fff', fontSize:13, fontWeight:700, flexShrink:0 }}>
               ₹100/mo →
             </div>
           </div>}
@@ -1398,7 +1398,7 @@ function NotificationPrefsSection() {
   const display = local || {};
 
   return (
-    <SectionCard icon={<Bell size={18} color="#FFB84D"/>} title="Notifications">
+    <SectionCard icon={<Bell size={18} color="#F59E0B"/>} title="Notifications">
       {isLoading ? (
         <div style={{ fontSize:13, color:'var(--text3)', padding:'12px 0' }}>Loading preferences…</div>
       ) : (
@@ -1415,10 +1415,10 @@ function NotificationPrefsSection() {
           ))}
           <div style={{ display:'flex', alignItems:'center', gap:12, marginTop:14 }}>
             <button onClick={handleSave} disabled={saving}
-              style={{ padding:'9px 20px', borderRadius:11, background:'linear-gradient(135deg,#6C63FF,#5B8CFF)', color:'#fff', border:'none', fontWeight:700, fontSize:13, cursor:'pointer', opacity: saving ? .7 : 1 }}>
+              style={{ padding:'9px 20px', borderRadius:11, background:'linear-gradient(135deg,#8B5CF6,#3B82F6)', color:'#fff', border:'none', fontWeight:700, fontSize:13, cursor:'pointer', opacity: saving ? .7 : 1 }}>
               {saving ? 'Saving…' : 'Save Preferences'}
             </button>
-            {savedNotif && <span style={{ fontSize:12.5, color:'#37D67A', fontWeight:600 }}>✅ Saved!</span>}
+            {savedNotif && <span style={{ fontSize:12.5, color:'#22C55E', fontWeight:600 }}>✅ Saved!</span>}
           </div>
         </>
       )}
@@ -1463,7 +1463,7 @@ function ChangePasswordSection({ user }) {
   const eyeBtn = { position:'absolute', right:10, background:'none', border:'none', cursor:'pointer', color:'var(--text3)', display:'flex', padding:4 };
 
   return (
-    <SectionCard icon={<Shield size={18} color="#37D67A"/>} title="Security">
+    <SectionCard icon={<Shield size={18} color="#22C55E"/>} title="Security">
       {/* Change Password */}
       <div style={{ borderBottom:'1px solid var(--border-light)' }}>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 0', cursor:'pointer' }}
@@ -1479,8 +1479,8 @@ function ChangePasswordSection({ user }) {
 
         {open && !user?.oauth_provider && (
           <div style={{ paddingBottom:16 }}>
-            {error && <div style={{ background:'rgba(255,91,91,.1)', border:'1px solid rgba(255,91,91,.3)', borderRadius:10, padding:'9px 13px', marginBottom:12, color:'#FF5B5B', fontSize:13 }}>{error}</div>}
-            {success && <div style={{ background:'rgba(55,214,122,.1)', border:'1px solid rgba(55,214,122,.3)', borderRadius:10, padding:'9px 13px', marginBottom:12, color:'#37D67A', fontSize:13 }}>{success}</div>}
+            {error && <div style={{ background:'rgba(236,72,153,.1)', border:'1px solid rgba(236,72,153,.3)', borderRadius:10, padding:'9px 13px', marginBottom:12, color:'#EC4899', fontSize:13 }}>{error}</div>}
+            {success && <div style={{ background:'rgba(34,197,94,.1)', border:'1px solid rgba(34,197,94,.3)', borderRadius:10, padding:'9px 13px', marginBottom:12, color:'#22C55E', fontSize:13 }}>{success}</div>}
 
             {[
               { key:'current_password', label:'Current Password', show:showCurrent, toggle:()=>setShowCurrent(s=>!s) },
@@ -1501,7 +1501,7 @@ function ChangePasswordSection({ user }) {
             ))}
 
             <button onClick={handleChangePwd} disabled={saving}
-              style={{ marginTop:4, padding:'9px 20px', borderRadius:11, background:'linear-gradient(135deg,#37D67A,#00b894)', color:'#fff', border:'none', fontWeight:700, fontSize:13, cursor:'pointer', opacity: saving ? .7 : 1, display:'flex', alignItems:'center', gap:8 }}>
+              style={{ marginTop:4, padding:'9px 20px', borderRadius:11, background:'linear-gradient(135deg,#22C55E,#00b894)', color:'#fff', border:'none', fontWeight:700, fontSize:13, cursor:'pointer', opacity: saving ? .7 : 1, display:'flex', alignItems:'center', gap:8 }}>
               <Key size={14}/> {saving ? 'Changing…' : 'Change Password'}
             </button>
           </div>
@@ -1535,8 +1535,8 @@ function ResetModal({ scope, onClose }) {
     <div className="modal-overlay" onClick={e => e.target===e.currentTarget && onClose()}>
       <div className="modal" style={{ maxWidth:420 }}>
         <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:12, marginBottom:20, textAlign:'center' }}>
-          <div style={{ width:56, height:56, borderRadius:18, background:'rgba(255,91,91,.12)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-            <AlertTriangle size={28} color="#FF5B5B"/>
+          <div style={{ width:56, height:56, borderRadius:18, background:'rgba(236,72,153,.12)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <AlertTriangle size={28} color="#EC4899"/>
           </div>
           <div style={{ fontSize:18, fontWeight:800, color:'var(--text)' }}>Delete {labels[scope]}?</div>
           <div style={{ fontSize:13.5, color:'var(--text3)', lineHeight:1.6 }}>
@@ -1553,13 +1553,13 @@ function ResetModal({ scope, onClose }) {
             <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
               <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
               <button className="btn" disabled={confirm !== 'DELETE' || mutation.isPending} onClick={() => mutation.mutate()}
-                style={{ background:'linear-gradient(135deg,#FF5B5B,#FF79A8)', border:'none', boxShadow:'0 4px 14px rgba(255,91,91,.35)', color:'#fff', padding:'8px 20px', borderRadius:10, fontWeight:700, cursor: confirm==='DELETE'?'pointer':'not-allowed', opacity: confirm==='DELETE'?1:.5 }}>
+                style={{ background:'linear-gradient(135deg,#EC4899,#FF79A8)', border:'none', boxShadow:'0 4px 14px rgba(236,72,153,.35)', color:'#fff', padding:'8px 20px', borderRadius:10, fontWeight:700, cursor: confirm==='DELETE'?'pointer':'not-allowed', opacity: confirm==='DELETE'?1:.5 }}>
                 {mutation.isPending ? 'Deleting…' : 'Delete Permanently'}
               </button>
             </div>
           </>
         ) : (
-          <div style={{ textAlign:'center', padding:'12px 0', fontSize:15, fontWeight:700, color:'#37D67A' }}>
+          <div style={{ textAlign:'center', padding:'12px 0', fontSize:15, fontWeight:700, color:'#22C55E' }}>
             ✅ Data deleted. Refreshing…
           </div>
         )}
@@ -1622,17 +1622,17 @@ export function PremiumModal({ onClose }) {
 
         {/* Header */}
         <div style={{ background:'linear-gradient(135deg,#1a1033 0%,#2d2055 100%)', padding:'28px 32px', position:'relative', overflow:'hidden' }}>
-          <div style={{ position:'absolute', top:-20, right:-20, width:80, height:80, background:'rgba(255,184,77,.1)', borderRadius:'50%' }}/>
-          <div style={{ position:'absolute', bottom:-30, left:40, width:60, height:60, background:'rgba(108,99,255,.15)', borderRadius:'50%' }}/>
+          <div style={{ position:'absolute', top:-20, right:-20, width:80, height:80, background:'rgba(245,158,11,.1)', borderRadius:'50%' }}/>
+          <div style={{ position:'absolute', bottom:-30, left:40, width:60, height:60, background:'rgba(139,92,246,.15)', borderRadius:'50%' }}/>
           <button onClick={onClose} style={{ position:'absolute', top:16, right:16, background:'rgba(255,255,255,.1)', border:'none', borderRadius:8, cursor:'pointer', padding:'4px 8px', color:'rgba(255,255,255,.7)', fontSize:16 }}>✕</button>
           <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:8 }}>
-            <Crown size={28} color="#FFB84D"/>
+            <Crown size={28} color="#F59E0B"/>
             <div style={{ fontSize:22, fontWeight:900, color:'#fff', letterSpacing:-0.5 }}>Tracksy Premium</div>
           </div>
           <div style={{ fontSize:14, color:'rgba(255,255,255,.7)' }}>Unlock the full power of your personal finance</div>
-          <div style={{ display:'inline-flex', alignItems:'baseline', gap:4, marginTop:18, background:'rgba(255,184,77,.2)', borderRadius:12, padding:'8px 18px', border:'1px solid rgba(255,184,77,.3)' }}>
-            <span style={{ fontSize:13, color:'#FFB84D', fontWeight:700 }}>₹</span>
-            <span style={{ fontSize:36, fontWeight:900, color:'#FFB84D', letterSpacing:-1 }}>100</span>
+          <div style={{ display:'inline-flex', alignItems:'baseline', gap:4, marginTop:18, background:'rgba(245,158,11,.2)', borderRadius:12, padding:'8px 18px', border:'1px solid rgba(245,158,11,.3)' }}>
+            <span style={{ fontSize:13, color:'#F59E0B', fontWeight:700 }}>₹</span>
+            <span style={{ fontSize:36, fontWeight:900, color:'#F59E0B', letterSpacing:-1 }}>100</span>
             <span style={{ fontSize:13, color:'rgba(255,255,255,.6)' }}>/month</span>
           </div>
         </div>
@@ -1649,8 +1649,8 @@ export function PremiumModal({ onClose }) {
               </div>
             </div>
             {/* Premium */}
-            <div style={{ borderRadius:16, overflow:'hidden', border:'1.5px solid rgba(255,184,77,.35)' }}>
-              <div style={{ background:'rgba(255,184,77,.08)', padding:'12px 16px', fontWeight:800, fontSize:14, color:'#FFB84D', borderBottom:'1px solid var(--border-light)' }}>Premium ✨</div>
+            <div style={{ borderRadius:16, overflow:'hidden', border:'1.5px solid rgba(245,158,11,.35)' }}>
+              <div style={{ background:'rgba(245,158,11,.08)', padding:'12px 16px', fontWeight:800, fontSize:14, color:'#F59E0B', borderBottom:'1px solid var(--border-light)' }}>Premium ✨</div>
               <div style={{ padding:'12px 16px', maxHeight:280, overflowY:'auto' }}>
                 {premiumFeatures.map(f => <div key={f} style={{ fontSize:12.5, color:'var(--text)', padding:'4px 0', display:'flex', gap:7 }}>✅ {f}</div>)}
               </div>
@@ -1658,7 +1658,7 @@ export function PremiumModal({ onClose }) {
           </div>
 
           <button onClick={handleUpgrade} disabled={upgrading}
-            style={{ width:'100%', padding:'14px', borderRadius:14, background:'linear-gradient(135deg,#FFB84D,#FF79A8)', border:'none', color:'#fff', fontSize:16, fontWeight:800, cursor:'pointer', boxShadow:'0 6px 20px rgba(255,184,77,.4)', letterSpacing:-0.2, transition:'opacity .15s', opacity:upgrading?.8:1 }}
+            style={{ width:'100%', padding:'14px', borderRadius:14, background:'linear-gradient(135deg,#F59E0B,#FF79A8)', border:'none', color:'#fff', fontSize:16, fontWeight:800, cursor:'pointer', boxShadow:'0 6px 20px rgba(245,158,11,.4)', letterSpacing:-0.2, transition:'opacity .15s', opacity:upgrading?.8:1 }}
             onMouseEnter={e=>e.currentTarget.style.opacity='.9'}
             onMouseLeave={e=>e.currentTarget.style.opacity='1'}>
             {upgrading ? 'Opening…' : '✨ Upgrade to Premium — ₹100/month'}
@@ -1674,7 +1674,7 @@ export function PremiumModal({ onClose }) {
 
 function SectionCard({ icon, title, children }) {
   return (
-    <div style={{ background:'var(--surface)', borderRadius:20, padding:'22px 24px', boxShadow:'0 4px 24px rgba(108,99,255,.08)', border:'1px solid var(--border-light)', marginBottom:16 }}>
+    <div style={{ background:'var(--surface)', borderRadius:20, padding:'22px 24px', boxShadow:'0 4px 24px rgba(139,92,246,.08)', border:'1px solid var(--border-light)', marginBottom:16 }}>
       <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:20 }}>
         <div style={{ width:34, height:34, borderRadius:10, background:'var(--accent-light)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
           {icon}
@@ -1733,7 +1733,7 @@ function GmailSection({ user, openPremium }) {
             <div style={{ marginTop:6, fontSize:12, color:'var(--text3)' }}>🔒 Read-only access. We only scan transaction alerts.</div>
           </div>
           <button onClick={openPremium}
-            style={{ padding:'10px 20px', borderRadius:12, border:'none', background:'linear-gradient(135deg,#FFB84D,#FF79A8)', color:'#fff', fontWeight:700, fontSize:13.5, cursor:'pointer', flexShrink:0 }}>
+            style={{ padding:'10px 20px', borderRadius:12, border:'none', background:'linear-gradient(135deg,#F59E0B,#FF79A8)', color:'#fff', fontWeight:700, fontSize:13.5, cursor:'pointer', flexShrink:0 }}>
             ✨ Upgrade
           </button>
         </div>
@@ -1751,12 +1751,12 @@ function GmailSection({ user, openPremium }) {
       ) : (
         <div>
           {justConnected && (
-            <div style={{ background:'rgba(55,214,122,.12)', color:'#00a86b', padding:'10px 14px', borderRadius:10, marginBottom:14, fontSize:13, fontWeight:600 }}>
+            <div style={{ background:'rgba(34,197,94,.12)', color:'#22C55E', padding:'10px 14px', borderRadius:10, marginBottom:14, fontSize:13, fontWeight:600 }}>
               ✓ Gmail connected! Run your first sync below.
             </div>
           )}
           <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14 }}>
-            <span style={{ width:9, height:9, borderRadius:'50%', background:'#37D67A', flexShrink:0 }}/>
+            <span style={{ width:9, height:9, borderRadius:'50%', background:'#22C55E', flexShrink:0 }}/>
             <span style={{ fontSize:13.5, fontWeight:600, color:'var(--text)' }}>Connected</span>
             <span style={{ fontSize:12, color:'var(--text3)' }}>
               · Last sync: {status?.last_sync ? new Date(status.last_sync).toLocaleString('en-IN',{ day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : 'never'}
@@ -1767,7 +1767,7 @@ function GmailSection({ user, openPremium }) {
           <label style={{ display:'flex', alignItems:'center', gap:10, marginBottom:16, cursor:'pointer' }}>
             <div onClick={() => toggleMut.mutate(!status.sync_enabled)} style={{
               width:40, height:22, borderRadius:11, flexShrink:0, position:'relative', transition:'background .2s',
-              background: status?.sync_enabled ? '#37D67A' : 'var(--surface3)',
+              background: status?.sync_enabled ? '#22C55E' : 'var(--surface3)',
             }}>
               <div style={{ position:'absolute', top:3, left: status?.sync_enabled ? 21 : 3, width:16, height:16, borderRadius:'50%', background:'#fff', transition:'left .2s', boxShadow:'0 1px 3px rgba(0,0,0,.3)' }}/>
             </div>
@@ -1782,11 +1782,11 @@ function GmailSection({ user, openPremium }) {
 
           <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
             <button onClick={() => syncMut.mutate()} disabled={syncMut.isPending}
-              style={{ display:'flex', alignItems:'center', gap:7, padding:'10px 18px', borderRadius:12, border:'none', background:'linear-gradient(135deg,#6C63FF,#5B8CFF)', color:'#fff', fontWeight:700, fontSize:13.5, cursor:'pointer' }}>
+              style={{ display:'flex', alignItems:'center', gap:7, padding:'10px 18px', borderRadius:12, border:'none', background:'linear-gradient(135deg,#8B5CF6,#3B82F6)', color:'#fff', fontWeight:700, fontSize:13.5, cursor:'pointer' }}>
               {syncMut.isPending ? '⟳ Syncing…' : '↻ Sync Now'}
             </button>
             <button onClick={() => { if(confirm('Disconnect Gmail? Nightly auto-import will stop.')) disconnectMut.mutate(); }}
-              style={{ padding:'10px 18px', borderRadius:12, border:'1.5px solid rgba(255,91,91,.3)', background:'var(--red-light)', color:'#FF5B5B', fontWeight:700, fontSize:13.5, cursor:'pointer' }}>
+              style={{ padding:'10px 18px', borderRadius:12, border:'1.5px solid rgba(236,72,153,.3)', background:'var(--red-light)', color:'#EC4899', fontWeight:700, fontSize:13.5, cursor:'pointer' }}>
               Disconnect
             </button>
           </div>

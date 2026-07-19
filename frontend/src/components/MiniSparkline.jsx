@@ -5,7 +5,7 @@
  *   color   - stroke/fill colour
  *   height  - SVG height in px (default 32)
  */
-export default function MiniSparkline({ data = [], color = '#6C63FF', height = 32 }) {
+export default function MiniSparkline({ data = [], color = '#8B5CF6', height = 32 }) {
   if (!data || data.length < 2) {
     return (
       <div style={{ height, display:'flex', alignItems:'center', justifyContent:'center' }}>

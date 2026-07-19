@@ -1,778 +1,633 @@
-/* ══════════════════════════════════════════════════════
-   DASHBOARD — FinWise-style layout
-══════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════
+   Dashboard — FinMate reference design
+   Light + dark theme colors are inline (JS); this file = layout
+═══════════════════════════════════════════════════════════ */
 
 .page {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background: var(--bg);
+  min-height: 100%;
+  overflow-y: auto;
+  transition: background .25s ease;
 }
 
-.content {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px 32px;
-  max-width: 1400px;
-  width: 100%;
+.inner {
+  max-width: 1280px;
   margin: 0 auto;
-  box-sizing: border-box;
+  padding: 28px 32px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
-/* ── Desktop topbar wrapper ── */
-.desktopTopbar { display: block; }
-
-/* ── Top bar ── */
-.topbarDate {
+/* ── Header ────────────────────────────────────────────── */
+.header {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--text2);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 6px 12px;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
-.accountDropdown {
+.headerLeft {
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: var(--surface);
-  border: 1.5px solid var(--accent);
-  border-radius: 10px;
-  padding: 5px 10px 5px 10px;
-  position: relative;
+  gap: 16px;
 }
 
-.accountSelect {
-  appearance: none;
-  background: transparent;
+.avatarWrap { position: relative; flex-shrink: 0; }
+
+.avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8B5CF6, #8B5CF6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 800;
+  overflow: hidden;
+}
+
+.onlineDot {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 3px solid;
+}
+
+.greetTitle {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  line-height: 1.15;
+}
+
+.greetSub { font-size: 14px; margin-top: 3px; }
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 14px;
+  width: 230px;
+}
+
+.searchBox input {
   border: none;
   outline: none;
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--accent);
-  cursor: pointer;
-  padding-right: 20px;
+  background: transparent;
+  font-size: 13.5px;
+  width: 100%;
   font-family: inherit;
 }
 
-/* ── Stat Cards Row ── */
-.statsRow {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-}
-
-.statCard {
-  background: var(--surface);
-  border: 1px solid var(--border-light);
-  border-radius: 16px;
-  padding: 18px 20px;
-  box-shadow: 0 2px 16px rgba(0,0,0,.08);
-  transition: box-shadow .2s, transform .15s;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 16px;
-}
-.statCard:hover {
-  box-shadow: 0 6px 28px rgba(108,99,255,.13);
-  transform: translateY(-1px);
-}
-
-.statIcon {
-  width: 52px;
-  height: 52px;
+.iconBtn {
+  position: relative;
+  width: 44px;
+  height: 44px;
   border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  cursor: pointer;
 }
 
-.statContent {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  flex: 1;
-}
-
-.statLabel {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text3);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.statValue {
-  font-size: 22px;
-  font-weight: 900;
-  color: var(--text);
-  letter-spacing: -0.5px;
-  font-family: 'Space Grotesk', 'Inter', sans-serif;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.2;
-  margin: 2px 0;
-}
-
-.statChange {
-  font-size: 11.5px;
-  font-weight: 600;
+.bellBadge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 19px;
+  height: 19px;
+  border-radius: 10px;
+  background: #8B5CF6;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
   display: flex;
   align-items: center;
-  gap: 2px;
-  white-space: nowrap;
+  justify-content: center;
+  padding: 0 5px;
 }
 
-.statProgress {
-  margin-top: 6px;
-  height: 5px;
-  background: var(--surface3);
-  border-radius: 20px;
-  overflow: hidden;
-}
-
-/* ── Section Card ── */
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border-light);
-  border-radius: 18px;
-  padding: 20px 22px;
-  box-shadow: 0 2px 12px rgba(0,0,0,.05);
-}
-
-.cardHead {
+.iconBtnSm {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: none;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* ── Grid: named areas keep left/right rows aligned ────── */
+.grid {
+  display: grid;
+  grid-template-columns: 1.55fr 1fr;
+  grid-template-areas:
+    "salary  insight"
+    "balance flow"
+    "spend   recent";
+  gap: 24px;
+}
+
+.grid > * { min-width: 0; }
+
+.salaryCard     { grid-area: salary; }
+.insightDesktop { grid-area: insight; min-width: 0; }
+.balanceCard    { grid-area: balance; }
+.flowCard       { grid-area: flow; }
+.spendCard      { grid-area: spend; }
+.recentCard     { grid-area: recent; }
+
+.chartWrap, .flowBody > *, .spendBody > * { min-width: 0; }
+
+/* insight card fills its row so it matches the salary card height */
+.insightDesktop > * { height: 100%; box-sizing: border-box; }
+
+/* ── Shared card bits ──────────────────────────────────── */
+.cardHeadRow {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 10px;
 }
 
 .cardTitle {
-  font-size: 14.5px;
+  font-size: 17px;
   font-weight: 700;
-  color: var(--text);
+  letter-spacing: -0.2px;
 }
 
-.cardSub {
-  font-size: 11px;
-  color: var(--text3);
-  margin-top: 2px;
-}
-
-/* ── 2-col row ── */
-.row2col {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-/* ── 3-col row ── */
-.row3col {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 16px;
-}
-
-/* ── Chart legend ── */
-.chartLegend {
-  display: flex;
-  gap: 16px;
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border-light);
-  flex-wrap: wrap;
-}
-
-.legendItem {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11.5px;
-  color: var(--text3);
-  font-weight: 500;
-}
-
-/* ── Period badge ── */
-.periodBadge {
-  font-size: 11px;
-  color: var(--text3);
-  font-weight: 500;
-  background: var(--surface2);
-  border-radius: 8px;
-  padding: 4px 10px;
-  white-space: nowrap;
-}
-
-/* ── Select pill ── */
-.selectPill {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text);
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 5px 10px;
-  cursor: pointer;
-  outline: none;
-}
-
-/* ── Pie chart layout ── */
-.pieRow {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.pieCenter {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  text-align: center;
-  pointer-events: none;
-}
-
-.pieCenterValue {
-  font-size: 13px;
-  font-weight: 900;
-  color: var(--text);
-  font-family: 'Space Grotesk', sans-serif;
-  line-height: 1.2;
-}
-
-.pieCenterLabel {
-  font-size: 9px;
-  color: var(--text3);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .05em;
-  margin-top: 2px;
-}
-
-.pieLegend {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex: 1;
-  min-width: 0;
-}
-
-.pieLegendRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* ── Savings tracker ── */
-.savingsTrackerRow {
-  display: flex;
-  gap: 16px;
-  align-items: flex-start;
-}
-
-.savingsGoalPanel {
-  flex-shrink: 0;
-  width: 110px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding-top: 10px;
-}
-
-.savingsGoalItem { display: flex; flex-direction: column; gap: 3px; }
-.savingsGoalLabel { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .05em; }
-.savingsGoalValue { font-size: 14px; font-weight: 800; color: var(--text); font-family: 'Space Grotesk', sans-serif; }
-.savingsGoalBar {
-  height: 5px;
-  background: var(--surface3);
-  border-radius: 20px;
-  overflow: hidden;
-}
-
-/* ── Budget row ── */
-.budgetRow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.budgetRowIcon {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.budgetTrack {
-  position: relative;
-  height: 7px;
-  background: var(--surface3);
-  border-radius: 20px;
-  overflow: visible;
-}
-
-.budgetBudgetMarker {
-  position: absolute;
-  top: -3px;
-  width: 2px;
-  height: 13px;
-  background: #5B8CFF;
-  border-radius: 2px;
-  transform: translateX(-50%);
-}
-
-/* ── Subscription row ── */
-.subRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  border-radius: 11px;
-  background: var(--surface2);
-}
-
-.subIcon {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: var(--surface3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  flex-shrink: 0;
-}
-
-.subTotal {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border-light);
-}
-
-/* ── Debt row ── */
-.debtRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  border-radius: 11px;
-  background: var(--surface2);
-}
-
-.debtIcon {
-  width: 38px;
-  height: 38px;
-  border-radius: 11px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-/* ── Insight row ── */
-.insightRow {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 10px 12px;
-  background: var(--surface2);
-  border-radius: 11px;
-}
-
-/* ── Goal row ── */
-.goalRow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.goalIcon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.goalTrack {
-  height: 7px;
-  background: var(--surface3);
-  border-radius: 20px;
-  overflow: hidden;
-}
-
-/* ── Annual report grid ── */
-.annualGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-}
-
-.annualCell {
-  background: var(--surface2);
-  border-radius: 12px;
-  padding: 12px 14px;
-}
-
-/* ── Utility ── */
-.viewAllBtn {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--accent);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-  white-space: nowrap;
-}
-.viewAllBtn:hover { text-decoration: underline; }
-
-.emptyState {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  color: var(--text3);
-  font-size: 13px;
-  padding: 24px 0;
-  gap: 6px;
-}
-
-.chartTip {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 10px 14px;
-  font-size: 12px;
-  box-shadow: 0 8px 24px rgba(0,0,0,.12);
-}
-.chartTipLabel {
-  font-weight: 600;
-  margin-bottom: 4px;
-  color: var(--text3);
-  font-size: 11px;
-}
-
-/* ══════════════════════════════════════════════════════
-   MOBILE HERO HEADER
-══════════════════════════════════════════════════════ */
-.mobileHero {
-  display: none;
-}
-
-.mobileHeroInner {
-  background: linear-gradient(135deg, #4C3BC4 0%, #6C63FF 60%, #7B73FF 100%);
-  padding: 20px 20px 28px;
-  position: relative;
-  overflow: hidden;
-}
-
-.mobileHeroInner::before {
-  content: '';
-  position: absolute;
-  top: -40px; right: -40px;
-  width: 180px; height: 180px;
-  border-radius: 50%;
-  background: rgba(255,255,255,.06);
-}
-.mobileHeroInner::after {
-  content: '';
-  position: absolute;
-  bottom: -20px; left: 30px;
-  width: 100px; height: 100px;
-  border-radius: 50%;
-  background: rgba(255,255,255,.04);
-}
-
-.mobileGreeting {
-  font-size: 20px;
-  font-weight: 800;
-  color: #fff;
-  margin-bottom: 2px;
-  position: relative; z-index: 1;
-}
-
-.mobileGreetingSub {
-  font-size: 13px;
-  color: rgba(255,255,255,.75);
-  margin-bottom: 20px;
-  position: relative; z-index: 1;
-}
-
-.mobileHeroControls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  position: relative; z-index: 1;
-}
-
-.mobilePeriodPill {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(255,255,255,.18);
-  border: 1px solid rgba(255,255,255,.25);
-  border-radius: 20px;
-  padding: 7px 14px;
-  color: #fff;
-  font-size: 13px;
-  font-weight: 600;
-  backdrop-filter: blur(6px);
-  cursor: pointer;
-  flex: 1;
-}
-
-.mobileAccountPill {
+.periodPill {
   display: flex;
   align-items: center;
   gap: 5px;
-  background: rgba(255,255,255,.18);
-  border: 1px solid rgba(255,255,255,.25);
-  border-radius: 20px;
-  padding: 7px 12px;
-  color: #fff;
-  font-size: 12px;
+  padding: 7px 14px;
+  border-radius: 12px;
+  font-size: 12.5px;
   font-weight: 600;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.mobileAccountSelect {
-  appearance: none;
-  background: transparent;
-  border: none;
-  outline: none;
-  font-size: 12px;
-  font-weight: 700;
-  color: #fff;
   cursor: pointer;
   font-family: inherit;
-  padding-right: 2px;
+  white-space: nowrap;
 }
 
-/* Net Worth Hero card */
-.nwHeroCard {
-  background: var(--surface);
-  border-radius: 0 0 24px 24px;
-  margin-top: -12px;
-  padding: 22px 20px 20px;
-  box-shadow: 0 4px 24px rgba(0,0,0,.10);
-  display: none;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.nwHeroLabel {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text3);
-  text-transform: uppercase;
-  letter-spacing: .06em;
-}
-
-.nwHeroValue {
-  font-size: 32px;
-  font-weight: 900;
-  color: var(--text);
-  letter-spacing: -1px;
-  font-family: 'Space Grotesk', sans-serif;
-  line-height: 1.1;
-}
-
-.nwHeroChange {
-  font-size: 13px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 2px;
-}
-
-.nwHeroGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border-light);
-}
-
-.nwHeroGridItem {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.nwHeroGridLabel {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text3);
-  text-transform: uppercase;
-  letter-spacing: .04em;
-}
-
-.nwHeroGridValue {
-  font-size: 16px;
-  font-weight: 800;
-  font-family: 'Space Grotesk', sans-serif;
-  line-height: 1.2;
-}
-
-.nwHeroGridChange {
-  font-size: 11px;
-  font-weight: 600;
+.linkBtn {
   display: flex;
   align-items: center;
   gap: 3px;
-}
-
-/* Quick Actions */
-.quickActions {
-  display: none;
-}
-
-.quickActionsRow {
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-  scrollbar-width: none;
-}
-.quickActionsRow::-webkit-scrollbar { display: none; }
-
-.quickActionBtn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-  cursor: pointer;
-  border: none;
   background: none;
+  border: none;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
   padding: 0;
 }
 
-.quickActionIcon {
-  width: 52px;
-  height: 52px;
+/* ── Salary card ───────────────────────────────────────── */
+.salaryCard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  border-radius: 28px;
+  transition: box-shadow .2s ease;
+}
+
+.salaryIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ── Account Balance card ──────────────────────────────── */
+.balanceCard {
+  position: relative;
+  padding: 26px 28px 24px;
+  border-radius: 32px;
+}
+
+.balanceBig {
+  font-size: 42px;
+  font-weight: 800;
+  letter-spacing: -1.5px;
+  margin-top: 16px;
+  font-family: 'Space Grotesk', Inter, sans-serif;
+  line-height: 1;
+}
+
+.chartWrap { margin-top: 8px; }
+
+.viewDetailsBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 11px 20px;
+  border-radius: 14px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  margin-top: 4px;
+  transition: transform .15s ease;
+}
+.viewDetailsBtn:hover { transform: translateY(-2px); }
+
+/* ── AI Insights placement: desktop = right column, mobile = top ── */
+.insightMobile { display: none; }
+.insightDesktop { display: block; }
+
+@media (max-width: 768px) {
+  .insightMobile { display: block; }
+  .insightDesktop { display: none; }
+}
+
+/* ── AI Insights card ──────────────────────────────────── */
+.insightCard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 20px;
+  border-radius: 28px;
+  min-height: 96px;
+  box-sizing: border-box;
+}
+
+.insightIcon {
+  width: 48px;
+  height: 48px;
   border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--surface);
-  border: 1px solid var(--border-light);
-  box-shadow: 0 2px 10px rgba(0,0,0,.06);
+  flex-shrink: 0;
+  box-shadow: 0 6px 18px rgba(139,92,246,.4);
+  animation: insightGlow 2.6s ease-in-out infinite;
 }
 
-.quickActionLabel {
-  font-size: 11px;
+.insightPulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  animation: pulseDot 1.6s ease-in-out infinite;
+}
+
+@keyframes insightGlow {
+  0%, 100% { box-shadow: 0 6px 18px rgba(139,92,246,.4); }
+  50%      { box-shadow: 0 6px 26px rgba(139,92,246,.7); }
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: .4; transform: scale(.7); }
+}
+
+/* ── Responsive money numbers (Space Grotesk, weight 800) ── */
+.numLg { font-size: 22px; font-weight: 800; font-family: 'Space Grotesk', Inter, sans-serif; }
+.numMd { font-size: 19px; font-weight: 800; font-family: 'Space Grotesk', Inter, sans-serif; }
+.numSm { font-size: 16px; font-weight: 800; font-family: 'Space Grotesk', Inter, sans-serif; }
+.numXs { font-size: 14px; font-weight: 800; font-family: 'Space Grotesk', Inter, sans-serif; }
+
+@media (max-width: 768px) {
+  .numLg { font-size: 17px; }
+  .numMd { font-size: 15px; }
+  .numSm { font-size: 13.5px; }
+  .numXs { font-size: 12.5px; }
+}
+
+/* ── Money Flow card ───────────────────────────────────── */
+.flowCard {
+  padding: 24px 26px;
+  border-radius: 32px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.flowHeadIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flowBody {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  margin-top: 22px;
+  flex: 1;
+  align-items: center;
+}
+
+.flowLeft { min-width: 0; }
+
+.flowItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.flowItemIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.flowBar {
+  height: 7px;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.netRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.netRow > div:first-child { white-space: nowrap; }
+
+.flowTiles {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.flowTile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 14px;
+  border-radius: 18px;
+  cursor: pointer;
+}
+
+.flowTileIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ── Top Spending card ─────────────────────────────────── */
+.spendCard {
+  padding: 26px 28px 22px;
+  border-radius: 32px;
+}
+
+.spendBody {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 24px;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.donutWrap { position: relative; width: 240px; max-width: 100%; aspect-ratio: 1 / 1; }
+
+.mobileSearchBtn { display: none; }
+
+.donutCenter {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.donutCenterLabel { font-size: 13px; }
+.donutCenterAmt   { font-size: 22px; font-weight: 800; }
+
+@media (max-width: 768px) {
+  .donutCenterLabel { font-size: 11px; }
+  .donutCenterAmt   { font-size: 16px; }
+}
+@media (max-width: 480px) {
+  .donutCenterLabel { font-size: 10px; }
+  .donutCenterAmt   { font-size: 13.5px; }
+}
+
+.spendLegend {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  min-width: 0;
+}
+
+.spendRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.spendRowIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.spendRowName {
+  flex: 1;
+  font-size: 14px;
   font-weight: 600;
-  color: var(--text3);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* ══════════════════════════════════════════════════════
-   RESPONSIVE
-══════════════════════════════════════════════════════ */
-@media (max-width: 1200px) {
-  .statsRow    { grid-template-columns: repeat(2, 1fr); }
-  .row3col     { grid-template-columns: 1fr 1fr; }
-  .row3col > :last-child { grid-column: 1 / -1; }
+.spendRowAmt {
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'Space Grotesk', Inter, sans-serif;
 }
 
-@media (max-width: 900px) {
-  .row2col  { grid-template-columns: 1fr; }
-  .row3col  { grid-template-columns: 1fr; }
-  .row3col > :last-child { grid-column: auto; }
-  .savingsTrackerRow { flex-direction: column; }
-  .savingsGoalPanel  { width: 100%; flex-direction: row; flex-wrap: wrap; gap: 16px; }
+.spendRowPct {
+  font-size: 13px;
+  font-weight: 600;
+  width: 40px;
+  text-align: right;
+}
+
+.spendFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
+.walletArt {
+  position: relative;
+  font-size: 34px;
+  filter: drop-shadow(0 6px 12px rgba(139,92,246,.35));
+  animation: floaty 3.4s ease-in-out infinite;
+}
+
+.walletSpark {
+  position: absolute;
+  top: -8px;
+  right: -12px;
+  font-size: 13px;
+  color: #A78BFA;
+  animation: sparkle 2.2s ease-in-out infinite;
+}
+
+@keyframes floaty {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+
+@keyframes sparkle {
+  0%, 100% { opacity: .3; transform: scale(.8); }
+  50%      { opacity: 1;  transform: scale(1.15); }
+}
+
+/* ── Recent Transactions card ──────────────────────────── */
+.recentCard {
+  padding: 24px 26px;
+  border-radius: 32px;
+}
+
+.recentList {
+  display: flex;
+  flex-direction: column;
+  margin-top: 8px;
+}
+
+.recentRow {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 13px 0;
+}
+
+.recentIconInc {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ═══ Responsive ════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "insight"
+      "salary"
+      "balance"
+      "flow"
+      "spend"
+      "recent";
+  }
 }
 
 @media (max-width: 768px) {
-  /* Show mobile hero, hide desktop topbar */
-  .mobileHero  { display: block; }
-  .nwHeroCard  { display: flex; }
-  .quickActions { display: block; }
-
-  /* Hide desktop topbar on mobile */
-  .desktopTopbar { display: none !important; }
-
-  .content {
-    padding: 12px 14px calc(80px + env(safe-area-inset-bottom, 0px));
-    gap: 12px;
+  /* insight renders above the grid on mobile; collapse its grid row */
+  .grid {
+    grid-template-areas:
+      "salary"
+      "balance"
+      "flow"
+      "spend"
+      "recent";
   }
-
-  /* All rows → single column */
-  .statsRow   { grid-template-columns: 1fr; gap: 10px; }
-  .row2col    { grid-template-columns: 1fr; }
-  .row3col    { grid-template-columns: 1fr; }
-  .row3col > :last-child { grid-column: auto; }
-
-  /* Bigger, touch-friendly stat cards */
-  .statCard {
-    padding: 16px 18px;
-    border-radius: 18px;
-    gap: 14px;
-  }
-  .statIcon {
-    width: 48px;
-    height: 48px;
-    border-radius: 13px;
-  }
-  .statValue  { font-size: 20px; }
-  .statLabel  { font-size: 12px; }
-  .statChange { font-size: 11px; }
-
-  /* Cards */
-  .card {
-    border-radius: 18px;
-    padding: 18px 16px;
-  }
-  .cardTitle  { font-size: 15px; }
-
-  /* Pie chart → stacked on mobile */
-  .pieRow {
-    flex-direction: column;
-    align-items: center;
-  }
-  .pieLegend {
-    width: 100%;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .pieLegendRow {
-    min-width: 45%;
-    flex: 1;
-  }
-
-  /* Savings tracker */
-  .savingsTrackerRow  { flex-direction: column; }
-  .savingsGoalPanel   { width: 100%; flex-direction: row; flex-wrap: wrap; gap: 16px; }
 }
 
+@media (max-width: 768px) {
+  .inner { padding: 14px 14px 104px; gap: 11px; }
+
+  .greetTitle { font-size: 16px; }
+  .greetSub   { font-size: 11px; }
+  .avatar     { width: 42px; height: 42px; }
+  .searchBox  { display: none; }
+
+  /* circular header buttons like the reference */
+  .mobileSearchBtn { display: flex; }
+  .iconBtn { width: 38px; height: 38px; border-radius: 50%; }
+
+  .cardTitle { font-size: 14px; }
+
+  .salaryCard  { padding: 12px 14px; border-radius: 18px; gap: 10px; }
+  .salaryIcon  { width: 40px; height: 40px; }
+
+  .balanceCard { padding: 15px 14px; border-radius: 20px; }
+  .balanceBig  { font-size: 23px; margin-top: 8px; letter-spacing: -0.8px; }
+
+  .flowCard    { padding: 16px 15px; border-radius: 22px; }
+  .spendCard   { padding: 16px 15px; border-radius: 22px; }
+  .recentCard  { padding: 15px 15px; border-radius: 22px; }
+
+  .recentRow  { padding: 10px 0; }
+  .chartWrap  { margin-top: 2px; }
+
+  /* Money Flow keeps 2 columns like the reference */
+  .flowBody { grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+  .flowTile { padding: 11px 9px; gap: 8px; }
+  .flowTileIcon { width: 34px; height: 34px; }
+
+  /* Donut left + legend right like the reference */
+  .spendBody {
+    grid-template-columns: 150px 1fr;
+    gap: 14px;
+    align-items: center;
+  }
+  .donutWrap { width: 150px; }
+  .spendRowIcon { width: 28px; height: 28px; }
+  .spendRowName { font-size: 12.5px; }
+  .spendRowAmt  { font-size: 12.5px; }
+  .spendRowPct  { font-size: 12px; width: 34px; }
+}
+
+/* Very narrow phones / split windows — give the legend text room */
 @media (max-width: 480px) {
-  .annualGrid { grid-template-columns: 1fr; }
-  .nwHeroValue { font-size: 28px; }
+  .spendBody { grid-template-columns: 116px 1fr; gap: 10px; }
+  .donutWrap { width: 116px; }
+  .spendRow { gap: 8px; }
+  .spendRowIcon { width: 26px; height: 26px; border-radius: 8px; }
+  .spendRowName { font-size: 12px; }
+  .spendRowAmt  { font-size: 12px; }
+  .spendRowPct  { font-size: 11.5px; width: 30px; }
+
+  .flowBody { gap: 10px; }
+  .flowTile { padding: 10px 8px; gap: 7px; }
+  .flowTile > svg:last-child { display: none; } /* hide chevron when cramped */
+  .flowTileIcon { width: 32px; height: 32px; border-radius: 10px; }
 }

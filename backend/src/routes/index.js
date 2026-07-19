@@ -86,6 +86,7 @@ router.post('/wallets', auth, res0.createWallet);
 router.put('/wallets/:id', auth, res0.updateWallet);
 router.delete('/wallets/:id', auth, res0.deleteWallet);
 router.post('/wallets/:id/reconcile', auth, res0.reconcileWallet);
+router.post('/wallets/:id/payment', auth, res0.payLiability);
 
 // Net worth history
 router.get('/net-worth/history', auth, res0.getNetWorthHistory);
@@ -142,6 +143,10 @@ router.post('/gmail/sync',        auth, gmailCtrl.syncNow);
 router.post('/gmail/toggle',      auth, gmailCtrl.toggleSync);
 router.post('/gmail/disconnect',  auth, gmailCtrl.disconnect);
 
+// Broker integrations (Dhan)
+const brokerCtrl = require('../controllers/brokerController');
+router.post('/broker/dhan/holdings', auth, brokerCtrl.getDhanHoldings);
+
 // Family — consent-based: create (premium), join by code, leave, overview
 const familyCtrl = require('../controllers/familyController');
 router.get('/family/status',          auth, familyCtrl.getStatus);
@@ -151,5 +156,13 @@ router.post('/family/leave',          auth, familyCtrl.leaveFamily);
 router.post('/family/remove-member',  auth, familyCtrl.removeMember);
 router.get('/family/overview',        auth, familyCtrl.getOverview);
 router.get('/family/member/:id',      auth, familyCtrl.getMemberDetail);
+
+// Bill attachments — upload per transaction, serve file, delete
+const billCtrl = require('../controllers/billController');
+const billUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
+router.post('/transactions/:id/bills', auth, billUpload.single('file'), billCtrl.uploadBill);
+router.get('/transactions/:id/bills',  auth, billCtrl.getBills);
+router.get('/bills/:billId/file',      billCtrl.serveFile); // token via ?t= query param or Bearer header
+router.delete('/bills/:billId',        auth, billCtrl.deleteBill);
 
 module.exports = router;

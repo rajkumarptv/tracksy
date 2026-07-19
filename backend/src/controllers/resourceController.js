@@ -110,27 +110,27 @@ const createWallet = async (req, res) => {
         });
       }
     }
-    const { name, type, last_four, balance, color, credit_limit, interest_rate, total_loan_amount, emi_amount, emi_day, due_date } = req.body;
+    const { name, type, last_four, balance, color, credit_limit, interest_rate, total_loan_amount, emi_amount, emi_day, due_date, start_date } = req.body;
     const result = await query(`
-      INSERT INTO wallets (user_id, name, type, last_four, balance, color, credit_limit, interest_rate, total_loan_amount, emi_amount, emi_day, due_date)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *
+      INSERT INTO wallets (user_id, name, type, last_four, balance, color, credit_limit, interest_rate, total_loan_amount, emi_amount, emi_day, due_date, start_date)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *
     `, [req.user.userId, encrypt(name), type, last_four, balance || 0, color || '#6c5ce7',
         credit_limit || null, interest_rate || null, total_loan_amount || null,
-        emi_amount || null, emi_day || null, due_date || null]);
+        emi_amount || null, emi_day || null, due_date || null, start_date || null]);
     res.status(201).json({ success: true, data: decryptWallet(result.rows[0]) });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
 
 const updateWallet = async (req, res) => {
   try {
-    const { name, type, last_four, balance, color, credit_limit, interest_rate, total_loan_amount, emi_amount, emi_day, due_date } = req.body;
+    const { name, type, last_four, balance, color, credit_limit, interest_rate, total_loan_amount, emi_amount, emi_day, due_date, start_date } = req.body;
     const result = await query(`
       UPDATE wallets SET name=$1, type=$2, last_four=$3, balance=$4, color=$5,
-        credit_limit=$6, interest_rate=$7, total_loan_amount=$8, emi_amount=$9, emi_day=$10, due_date=$11, updated_at=NOW()
-      WHERE id=$12 AND user_id=$13 RETURNING *
+        credit_limit=$6, interest_rate=$7, total_loan_amount=$8, emi_amount=$9, emi_day=$10, due_date=$11, start_date=$12, updated_at=NOW()
+      WHERE id=$13 AND user_id=$14 RETURNING *
     `, [encrypt(name), type, last_four, balance || 0, color || '#6c5ce7',
         credit_limit || null, interest_rate || null, total_loan_amount || null,
-        emi_amount || null, emi_day || null, due_date || null,
+        emi_amount || null, emi_day || null, due_date || null, start_date || null,
         req.params.id, req.user.userId]);
     if (!result.rows.length) return res.status(404).json({ success: false, message: 'Wallet not found' });
     res.json({ success: true, data: decryptWallet(result.rows[0]) });
@@ -348,6 +348,61 @@ const reconcileWallet = async (req, res) => {
   }
 };
 
+// ===== LIABILITY PAYMENT (loan / card repayment; interest vs principal) =====
+// body: { amount, apply_to: 'principal'|'interest', from_wallet_id?, note?, accrue? }
+const payLiability = async (req, res) => {
+  try {
+    const { encrypt } = require('../utils/crypto');
+    const { amount, apply_to = 'interest', from_wallet_id, note, accrue } = req.body;
+    const amt = parseFloat(amount);
+    if (!amt || amt <= 0) return res.status(400).json({ success: false, message: 'Enter a valid amount' });
+
+    const wRes = await query('SELECT * FROM wallets WHERE id=$1 AND user_id=$2', [req.params.id, req.user.userId]);
+    if (!wRes.rows.length) return res.status(404).json({ success: false, message: 'Liability not found' });
+    const w = wRes.rows[0];
+
+    // balance is stored NEGATIVE for liabilities (outstanding owed)
+    let outstanding = Math.abs(parseFloat(w.balance || 0));
+    let principal   = parseFloat(w.total_loan_amount || 0);
+
+    // Optional: accrue interest up to now before applying payment (gold-loan style)
+    if (accrue && w.interest_rate && w.start_date && principal > 0) {
+      const start = new Date(w.start_date);
+      const months = Math.max(0, Math.floor((Date.now() - start.getTime()) / (1000*60*60*24*30.4375)));
+      const accrued = principal * (parseFloat(w.interest_rate)/100/12) * months;
+      // outstanding already reflects historic value; we only top-up if outstanding < principal+accrued isn't tracked — skip double counting
+    }
+
+    // Apply payment: reduces outstanding either way; PRINCIPAL also lowers future-interest base
+    const payAmt = Math.min(amt, outstanding || amt);
+    outstanding = Math.max(0, outstanding - payAmt);
+    if (apply_to === 'principal') principal = Math.max(0, principal - payAmt);
+
+    const newBalance = -outstanding; // keep negative sign for liability
+    await query(
+      'UPDATE wallets SET balance=$1, total_loan_amount=$2, updated_at=NOW() WHERE id=$3 AND user_id=$4',
+      [newBalance, principal || null, w.id, req.user.userId]
+    );
+
+    // If paid from a source account, deduct there + log an expense transaction
+    if (from_wallet_id) {
+      await query('UPDATE wallets SET balance = balance - $1, updated_at=NOW() WHERE id=$2 AND user_id=$3',
+        [payAmt, from_wallet_id, req.user.userId]);
+      await query(`
+        INSERT INTO transactions (user_id, wallet_id, type, amount, payment_name, description, transaction_date, status)
+        VALUES ($1,$2,'expense',$3,$4,$5,NOW(),'completed')
+      `, [req.user.userId, from_wallet_id, payAmt,
+          encrypt(`${apply_to === 'principal' ? 'Principal' : 'Interest'} Payment`),
+          encrypt(note || 'Loan repayment')]);
+    }
+
+    res.json({ success: true, message: 'Payment recorded', new_outstanding: outstanding, principal, applied: apply_to });
+  } catch (err) {
+    console.error('payLiability error:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
 // ===== NET WORTH SNAPSHOTS =====
 const getNetWorthHistory = async (req, res) => {
   try {
@@ -421,5 +476,5 @@ module.exports = {
   getAllWallets, createWallet, updateWallet, deleteWallet,
   getAllCategories, createCategory, updateCategory, deleteCategory,
   exportData, resetData,
-  exportCSV, reconcileWallet, getNetWorthHistory, saveNetWorthSnapshot,
+  exportCSV, reconcileWallet, payLiability, getNetWorthHistory, saveNetWorthSnapshot,
 };

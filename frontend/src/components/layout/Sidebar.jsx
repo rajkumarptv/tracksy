@@ -4,7 +4,7 @@ import {
   House, ArrowsLeftRight, Wallet, Target, ChartPie,
   Users, Tag, CreditCard, ArrowsClockwise, TrendUp,
   UploadSimple, Gear, Moon, Sun, Crown, SignOut, X,
-  Question, ChartLineUp, Scales, Trophy
+  Question, ChartLineUp, Scales, Trophy, Lightbulb
 } from '@phosphor-icons/react';
 import useAuthStore from '../../store/authStore';
 import useThemeStore from '../../store/themeStore';
@@ -13,20 +13,21 @@ import { useT } from '../../i18n';
 import styles from './Sidebar.module.css';
 
 const NAV_ITEMS = [
-  { path: '/',             tKey: 'nav_dashboard',    Icon: House,           color: '#6C63FF', bg: 'rgba(108,99,255,.15)' },
-  { path: '/transactions', tKey: 'nav_transactions', Icon: ArrowsLeftRight, color: '#FF5B5B', bg: 'rgba(255,91,91,.15)'  },
-  { path: '/wallet',       tKey: 'nav_accounts',     Icon: Wallet,          color: '#00C896', bg: 'rgba(0,200,150,.15)'  },
-  { path: '/goals',        tKey: 'nav_goals',        Icon: Target,          color: '#FFB300', bg: 'rgba(255,179,0,.15)'  },
-  { path: '/budget',       tKey: 'nav_budget',       Icon: ChartPie,        color: '#5B8CFF', bg: 'rgba(91,140,255,.15)' },
-  { path: '/family',       label: 'Family',          Icon: Users,           color: '#FF6EC7', bg: 'rgba(255,110,199,.15)'},
-  { path: '/categories',   tKey: 'nav_categories',   Icon: Tag,             color: '#A29BFE', bg: 'rgba(162,155,254,.15)'},
-  { path: '/investments',   label: 'Investments',     Icon: ChartLineUp,     color: '#37D67A', bg: 'rgba(55,214,122,.15)' },
-  { path: '/debts',        tKey: 'nav_debts',        Icon: CreditCard,      color: '#FF5B5B', bg: 'rgba(255,91,91,.15)'  },
-  { path: '/debt-reduction',label:'Debt Reduction',  Icon: Scales,          color: '#FFB84D', bg: 'rgba(255,184,77,.15)' },
-  { path: '/challenges',   label: 'Challenges',      Icon: Trophy,          color: '#A29BFE', bg: 'rgba(162,155,254,.15)'},
-  { path: '/recurring',    tKey: 'nav_recurring',    Icon: ArrowsClockwise, color: '#00CEC9', bg: 'rgba(0,206,201,.15)'  },
-  { path: '/analytics',    tKey: 'nav_analytics',    Icon: TrendUp,         color: '#5B8CFF', bg: 'rgba(91,140,255,.15)' },
-  { path: '/import',       tKey: 'nav_import',       Icon: UploadSimple,    color: '#FDCB6E', bg: 'rgba(253,203,110,.15)'},
+  { path: '/',             tKey: 'nav_dashboard',    Icon: House,           color: '#22C55E', bg: 'rgba(34,197,94,.12)'   },
+  { path: '/transactions', tKey: 'nav_transactions', Icon: ArrowsLeftRight, color: '#EC4899', bg: 'rgba(236,72,153,.12)'  },
+  { path: '/wallet',       tKey: 'nav_accounts',     Icon: Wallet,          color: '#3B82F6', bg: 'rgba(59,130,246,.12)'  },
+  { path: '/goals',        tKey: 'nav_goals',        Icon: Target,          color: '#F59E0B', bg: 'rgba(245,158,11,.12)'  },
+  { path: '/budget',       tKey: 'nav_budget',       Icon: ChartPie,        color: '#8B5CF6', bg: 'rgba(139,92,246,.12)'  },
+  { path: '/family',       label: 'Family',          Icon: Users,           color: '#EC4899', bg: 'rgba(236,72,153,.12)'  },
+  { path: '/categories',   tKey: 'nav_categories',   Icon: Tag,             color: '#A78BFA', bg: 'rgba(167,139,250,.12)' },
+  { path: '/investments',   label: 'Investments',     Icon: ChartLineUp,     color: '#22C55E', bg: 'rgba(34,197,94,.12)'   },
+  { path: '/debts',        tKey: 'nav_debts',        Icon: CreditCard,      color: '#EC4899', bg: 'rgba(236,72,153,.12)'  },
+  { path: '/debt-reduction',label:'Debt Reduction',  Icon: Scales,          color: '#F59E0B', bg: 'rgba(245,158,11,.12)'  },
+  { path: '/challenges',   label: 'Challenges',      Icon: Trophy,          color: '#8B5CF6', bg: 'rgba(139,92,246,.12)'  },
+  { path: '/recurring',    tKey: 'nav_recurring',    Icon: ArrowsClockwise, color: '#00CEC9', bg: 'rgba(0,206,201,.12)'   },
+  { path: '/insights',     label: 'Smart Insights',  Icon: Lightbulb,       color: '#F59E0B', bg: 'rgba(245,158,11,.12)'  },
+  { path: '/analytics',    tKey: 'nav_analytics',    Icon: TrendUp,         color: '#3B82F6', bg: 'rgba(59,130,246,.12)'  },
+  { path: '/import',       tKey: 'nav_import',       Icon: UploadSimple,    color: '#A78BFA', bg: 'rgba(167,139,250,.12)' },
 ];
 
 function AnimatedNavItem({ path, tKey, label, Icon, color, bg, t, onClose }) {
@@ -37,12 +38,13 @@ function AnimatedNavItem({ path, tKey, label, Icon, color, bg, t, onClose }) {
       end={path === '/'}
       onClick={onClose}
       className={({ isActive }) => `${styles.navItem}${isActive ? ' ' + styles.active : ''}`}
+      style={({ isActive }) => isActive ? { background: bg, color } : undefined}
     >
       {({ isActive }) => (
         <>
           <motion.span
             className={styles.navIconWrap}
-            style={{ background: isActive ? bg : 'transparent', '--icon-color': color }}
+            style={{ background: 'transparent', '--icon-color': color }}
             whileHover={{ scale: 1.12, y: -1 }}
             whileTap={{ scale: 0.92 }}
             transition={{ type: 'spring', stiffness: 400, damping: 20 }}
@@ -52,17 +54,6 @@ function AnimatedNavItem({ path, tKey, label, Icon, color, bg, t, onClose }) {
               weight={isActive ? 'fill' : 'regular'}
               color={isActive ? color : 'var(--text3)'}
             />
-            {isActive && (
-              <motion.span
-                className={styles.iconGlow}
-                style={{ background: color }}
-                layoutId="activeGlow"
-                initial={{ opacity: 0, scale: 0.6 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-              />
-            )}
           </motion.span>
           <span className={styles.navLabel}>{label || t(tKey)}</span>
           {isActive && (
@@ -128,12 +119,12 @@ export default function Sidebar({ isOpen, onClose }) {
               <>
                 <motion.span
                   className={styles.navIconWrap}
-                  style={{ background: isActive ? 'rgba(108,99,255,.15)' : 'transparent' }}
+                  style={{ background: isActive ? 'rgba(139,92,246,.12)' : 'transparent' }}
                   whileHover={{ scale: 1.12, y: -1 }}
                   whileTap={{ scale: 0.92 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                 >
-                  <Gear size={18} weight={isActive ? 'fill' : 'regular'} color={isActive ? '#6C63FF' : 'var(--text3)'} />
+                  <Gear size={18} weight={isActive ? 'fill' : 'regular'} color={isActive ? '#8B5CF6' : 'var(--text3)'} />
                 </motion.span>
                 <span className={styles.navLabel}>{t('nav_settings')}</span>
               </>
@@ -162,12 +153,12 @@ export default function Sidebar({ isOpen, onClose }) {
               <>
                 <motion.span
                   className={styles.navIconWrap}
-                  style={{ background: isActive ? 'rgba(108,99,255,.15)' : 'transparent' }}
+                  style={{ background: isActive ? 'rgba(139,92,246,.12)' : 'transparent' }}
                   whileHover={{ scale: 1.12, y: -1 }}
                   whileTap={{ scale: 0.92 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                 >
-                  <Question size={18} weight={isActive ? 'fill' : 'regular'} color={isActive ? '#6C63FF' : 'var(--text3)'} />
+                  <Question size={18} weight={isActive ? 'fill' : 'regular'} color={isActive ? '#8B5CF6' : 'var(--text3)'} />
                 </motion.span>
                 <span className={styles.navLabel}>{t('nav_help')}</span>
               </>

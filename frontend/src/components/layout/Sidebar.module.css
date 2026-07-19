@@ -26,18 +26,16 @@
 }
 .logoIcon {
   width: 40px; height: 40px;
-  background: linear-gradient(135deg, #6C63FF, #a29bfe);
+  background: linear-gradient(135deg, #22C55E, #4ADE80);
   border-radius: 13px;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 4px 14px rgba(108,99,255,.4);
+  box-shadow: 0 4px 14px rgba(34,197,94,.4);
   overflow: hidden;
 }
 .logoName {
   font-size: 19px; font-weight: 800; letter-spacing: -0.6px;
-  background: linear-gradient(135deg, var(--accent), #a29bfe);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text);
 }
 .closeBtn {
   margin-left: auto;
@@ -86,10 +84,9 @@
   color: var(--text);
 }
 .navItem.active {
-  color: var(--text);
-  font-weight: 600;
-  background: transparent;
+  font-weight: 700;
 }
+.navItem.active .navLabel { color: inherit; }
 
 /* Icon wrapper — the pop shape */
 .navIconWrap {
@@ -131,7 +128,7 @@
 .upgradeBanner {
   margin: 6px 10px 10px;
   padding: 16px;
-  background: linear-gradient(135deg, #6C63FF 0%, #a29bfe 100%);
+  background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
   border-radius: 18px;
   position: relative; overflow: hidden; cursor: pointer;
   flex-shrink: 0;
@@ -162,7 +159,7 @@
 }
 .upgradeBtn {
   display: inline-flex; align-items: center; gap: 5px;
-  background: rgba(255,255,255,.95); color: #6C63FF;
+  background: rgba(255,255,255,.95); color: #8B5CF6;
   font-size: 12px; font-weight: 800;
   padding: 6px 14px; border-radius: 20px;
   border: none; cursor: pointer;
@@ -191,10 +188,10 @@
 }
 .avatar {
   width: 34px; height: 34px; border-radius: 50%;
-  background: linear-gradient(135deg, #a29bfe, var(--accent));
+  background: linear-gradient(135deg, #A78BFA, var(--accent));
   display: flex; align-items: center; justify-content: center;
   color: #fff; font-size: 12px; font-weight: 800; flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(108,99,255,.3);
+  box-shadow: 0 2px 8px rgba(139,92,246,.3);
 }
 .avatarInfo   { flex: 1; min-width: 0; }
 .avatarName   { font-size: 12.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

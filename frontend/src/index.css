@@ -2,70 +2,150 @@
 
 /* ─── Light mode ─────────────────────────────────── */
 :root {
-  --bg:           #F2F3FB;
-  --surface:      #FFFFFF;
-  --surface2:     #F7F8FF;
-  --surface3:     #ECEEFF;
-  --border:       #E4E6F0;
-  --border-light: #EFF0F8;
-  --accent:       #6C63FF;
-  --accent-hover: #5A52E0;
-  --accent-light: #EDE9FF;
-  --accent-glow:  rgba(108,99,255,.15);
-  --green:        #00C896;
-  --green-light:  #D0F9EE;
-  --red:          #FF5B5B;
-  --red-light:    #FFEBEB;
-  --amber:        #FFB300;
-  --amber-light:  #FFF3CC;
-  --blue:         #3D9EFF;
-  --blue-light:   #E0F0FF;
-  --text:         #1A1033;
-  --text2:        #5A5478;
-  --text3:        #9896B2;
-  --sidebar-w:    240px;
-  --topbar-h:     68px;
-  --radius:       18px;
-  --radius-sm:    12px;
-  --radius-xs:    8px;
-  --shadow-sm:    0 1px 4px rgba(108,99,255,.06), 0 2px 8px rgba(0,0,0,.04);
-  --shadow:       0 2px 12px rgba(108,99,255,.08), 0 4px 16px rgba(0,0,0,.05);
-  --shadow-md:    0 4px 24px rgba(108,99,255,.12), 0 8px 32px rgba(0,0,0,.07);
-  --shadow-lg:    0 8px 48px rgba(108,99,255,.18), 0 16px 64px rgba(0,0,0,.10);
-  --transition:   all .18s cubic-bezier(.4,0,.2,1);
-  --sidebar-bg:   #FFFFFF;
-  --topbar-bg:    rgba(242,243,251,.85);
+  /* Backgrounds — from design JSON */
+  --bg:             #FEFEFE;
+  --surface:        #FFFFFF;
+  --surface2:       #F7F8FF;
+  --surface3:       #F2F4F7;
+  --border:         #E4E6F0;
+  --border-light:   #F2F4F7;
+
+  /* Brand — purple per design JSON */
+  --accent:         #8B5CF6;
+  --accent-hover:   #7C3AED;
+  --accent-light:   #EDE9FF;
+  --accent-soft:    #A78BFA;
+  --accent-glow:    rgba(139,92,246,.15);
+
+  /* Semantic colours — from design JSON */
+  --green:          #22C55E;
+  --green-dark:     #16A34A;
+  --green-light:    #DCFCE7;
+  --green-border:   #BBF7D0;
+  --green-fill:     #F0FDF4;
+  --green-soft:     rgba(34,197,94,.15);
+  --red:            #EC4899;
+  --red-light:      #FCE7F3;
+  --red-soft:       rgba(236,72,153,.15);
+  --pink:           #EC4899;
+  --pink-soft:      rgba(236,72,153,.15);
+  --orange:         #F59E0B;
+  --orange-light:   #FEF3C7;
+  --orange-soft:    rgba(245,158,11,.15);
+  --blue:           #3B82F6;
+  --blue-alt:       #60A5FA;
+  --blue-light:     #DBEAFE;
+  --blue-soft:      rgba(59,130,246,.15);
+  --teal:           #00CEC9;
+  --teal-soft:      rgba(0,206,201,.15);
+  --amber:          #F59E0B;
+  --amber-light:    #FEF3C7;
+
+  /* Text — from design JSON */
+  --text:           #101828;
+  --text2:          #667085;
+  --text3:          #98A2B3;
+
+  /* Layout */
+  --sidebar-w:      240px;
+  --topbar-h:       68px;
+  --radius:         20px;
+  --radius-sm:      14px;
+  --radius-xs:      10px;
+  --radius-pill:    100px;
+
+  /* Shadows — from design JSON */
+  --shadow-sm:      0 4px 16px rgba(16,24,40,.06);
+  --shadow:         0 6px 24px rgba(16,24,40,.07);
+  --shadow-md:      0 10px 40px rgba(16,24,40,.08);
+  --shadow-lg:      0 20px 60px rgba(16,24,40,.10);
+  --transition:     all .18s cubic-bezier(.4,0,.2,1);
+
+  /* Component-specific */
+  --sidebar-bg:     #FFFFFF;
+  --topbar-bg:      rgba(250,250,251,.92);
+  --nav-bg:         #FFFFFF;
+  --nav-border:     #F2F4F7;
+  --card-bg:        #FFFFFF;
+  --input-bg:       #F7F8FF;
+  --input-border:   #E4E6F0;
+
+  /* Special card backgrounds — LIGHT in light mode */
+  --card-account-bg:     #FFFFFF;
+  --card-account-border: rgba(0,0,0,.08);
+  --card-balance-bg:     #FFFFFF;
+  --card-balance-border: #BBF7D0;
+  --card-flow-bg:        #FFFFFF;
+  --card-flow-border:    #E9D5FF;
 }
 
 /* ─── Dark mode ──────────────────────────────────── */
 [data-theme="dark"] {
-  --bg:           #0B0B1A;
-  --surface:      #12122A;
-  --surface2:     #181834;
-  --surface3:     #1E1E42;
-  --border:       #252550;
-  --border-light: #1E1E45;
-  --accent:       #7B6FFF;
-  --accent-hover: #6C63FF;
-  --accent-light: #1E1B45;
-  --accent-glow:  rgba(123,111,255,.20);
-  --green:        #00D4A8;
-  --green-light:  #0C2E27;
-  --red:          #FF6B6B;
-  --red-light:    #2D1414;
-  --amber:        #FFB300;
-  --amber-light:  #2D2500;
-  --blue:         #5BB8FF;
-  --blue-light:   #0D1F35;
-  --text:         #EFECFF;
-  --text2:        #A09BBF;
-  --text3:        #6B677F;
-  --shadow-sm:    0 1px 4px rgba(0,0,0,.4);
-  --shadow:       0 2px 12px rgba(0,0,0,.5);
-  --shadow-md:    0 4px 24px rgba(0,0,0,.6);
-  --shadow-lg:    0 8px 48px rgba(0,0,0,.7);
-  --sidebar-bg:   #0F0F26;
-  --topbar-bg:    rgba(11,11,26,.85);
+  /* Backgrounds — deep navy per design JSON */
+  --bg:             #020617;
+  --surface:        #061428;
+  --surface2:       #0A1F3A;
+  --surface3:       #0D2545;
+  --border:         rgba(255,255,255,.08);
+  --border-light:   rgba(255,255,255,.05);
+
+  /* Brand accent — violet purple per design JSON */
+  --accent:         #8B5CF6;
+  --accent-hover:   #7C3AED;
+  --accent-light:   rgba(139,92,246,.15);
+  --accent-soft:    #A78BFA;
+  --accent-glow:    rgba(139,92,246,.25);
+
+  /* Semantic colours — from design JSON */
+  --green:          #2BFF88;
+  --green-dark:     #00D97E;
+  --green-light:    #03200F;
+  --green-soft:     rgba(43,255,136,.15);
+  --green-glow:     rgba(43,255,136,.25);
+  --red:            #FF4D8D;
+  --red-light:      #2D0A1A;
+  --red-soft:       rgba(255,77,141,.15);
+  --pink:           #FF4D8D;
+  --pink-soft:      rgba(255,77,141,.15);
+  --orange:         #FF9D00;
+  --orange-light:   #2D1E00;
+  --orange-soft:    rgba(255,157,0,.15);
+  --blue:           #4F8DFF;
+  --blue-alt:       #3D9EFF;
+  --blue-light:     #051530;
+  --blue-soft:      rgba(79,141,255,.15);
+  --teal:           #00CEC9;
+  --teal-soft:      rgba(0,206,201,.15);
+  --amber:          #FFB300;
+  --amber-light:    #2D2500;
+
+  /* Text — from design JSON */
+  --text:           #FFFFFF;
+  --text2:          #B8C2D1;
+  --text3:          #A7B1C2;
+
+  /* Shadows */
+  --shadow-sm:      0 2px 8px rgba(0,0,0,.5);
+  --shadow:         0 4px 20px rgba(0,0,0,.6);
+  --shadow-md:      0 8px 32px rgba(0,0,0,.65);
+  --shadow-lg:      0 20px 40px rgba(0,0,0,.75);
+
+  /* Component-specific */
+  --sidebar-bg:     #04122F;
+  --topbar-bg:      rgba(2,6,23,.92);
+  --nav-bg:         #081629;
+  --nav-border:     rgba(255,255,255,.06);
+  --card-bg:        #061428;
+  --input-bg:       #0A1F3A;
+  --input-border:   rgba(255,255,255,.1);
+
+  /* Special card backgrounds — always dark (same in both modes) */
+  --card-account-bg:     linear-gradient(135deg, #08263A 0%, #081A42 100%);
+  --card-account-border: rgba(79,141,255,.2);
+  --card-balance-bg:     linear-gradient(135deg, #08222D 0%, #061B38 100%);
+  --card-balance-border: rgba(43,255,136,.4);
+  --card-flow-bg:        linear-gradient(135deg, #0B1136 0%, #09152B 100%);
+  --card-flow-border:    rgba(139,92,246,.25);
 }
 
 /* ─── Reset & Base ───────────────────────────────── */
@@ -297,6 +377,125 @@ input, select, textarea { font-family: 'Inter', sans-serif; }
   .mobile-only      { display: none !important; }
 }
 
+/* ══════════════════════════════════════════════════════
+   GLOBAL DARK MODE OVERRIDES
+   Applied to every element via CSS variables — ensures
+   100% consistent dark theme across all pages/components
+══════════════════════════════════════════════════════ */
+
+/* ── Inputs, selects, textareas ── */
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--text);
+  color-scheme: dark;
+}
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder { color: var(--text3); }
+[data-theme="dark"] input:focus,
+[data-theme="dark"] select:focus,
+[data-theme="dark"] textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(123,111,255,.18);
+  background: var(--surface2);
+}
+[data-theme="dark"] select option {
+  background: var(--surface2);
+  color: var(--text);
+}
+
+/* ── Cards ── */
+[data-theme="dark"] .card {
+  background: var(--surface);
+  border-color: var(--border-light);
+  box-shadow: var(--shadow-sm);
+}
+[data-theme="dark"] .card-flat { background: var(--surface2); border-color: var(--border-light); }
+
+/* ── Buttons ── */
+[data-theme="dark"] .btn-ghost {
+  background: var(--surface2);
+  border-color: var(--border);
+  color: var(--text2);
+}
+[data-theme="dark"] .btn-ghost:hover { background: var(--surface3); color: var(--text); }
+[data-theme="dark"] .btn-danger  { background: rgba(236,72,153,.12);  color: var(--red); }
+[data-theme="dark"] .btn-success { background: rgba(34,197,94,.12); color: var(--green); }
+
+/* ── Chips ── */
+[data-theme="dark"] .chip-success { background: rgba(43,255,136,.15);  color: var(--green); }
+[data-theme="dark"] .chip-pending { background: rgba(255,157,0,.15);   color: var(--amber); }
+[data-theme="dark"] .chip-failed  { background: rgba(255,77,141,.15);  color: var(--red); }
+[data-theme="dark"] .chip-income  { background: rgba(43,255,136,.15);  color: var(--green); }
+[data-theme="dark"] .chip-expense { background: rgba(255,77,141,.15);  color: var(--red); }
+[data-theme="dark"] .chip-accent  { background: rgba(139,92,246,.18);  color: var(--accent); }
+
+/* ── Modal ── */
+[data-theme="dark"] .modal {
+  background: var(--surface);
+  border-color: var(--border);
+  box-shadow: 0 24px 80px rgba(0,0,0,.8);
+}
+[data-theme="dark"] .modal-overlay { background: rgba(4,6,14,.75); }
+
+/* ── Tables ── */
+[data-theme="dark"] table { color: var(--text); }
+[data-theme="dark"] th    { background: var(--surface2); color: var(--text3); border-color: var(--border); }
+[data-theme="dark"] td    { border-color: var(--border-light); }
+[data-theme="dark"] tr:hover td { background: var(--surface2); }
+
+/* ── Scrollbar in dark mode ── */
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: var(--border); }
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+/* ── Dividers ── */
+[data-theme="dark"] hr { border-color: var(--border-light); }
+
+/* ── Tooltips / popovers ── */
+[data-theme="dark"] [role="tooltip"],
+[data-theme="dark"] [data-radix-popper-content-wrapper] {
+  background: var(--surface2) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--text) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,.6) !important;
+}
+
+/* ── Recharts dark mode ── */
+[data-theme="dark"] .recharts-cartesian-grid-horizontal line,
+[data-theme="dark"] .recharts-cartesian-grid-vertical  line {
+  stroke: var(--border-light);
+}
+[data-theme="dark"] .recharts-text { fill: var(--text3); }
+[data-theme="dark"] .recharts-tooltip-wrapper .recharts-default-tooltip {
+  background: var(--surface2) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+}
+
+/* ── Skeleton loader dark mode ── */
+[data-theme="dark"] .react-loading-skeleton {
+  --base-color:      #1A1C35 !important;
+  --highlight-color: #252550 !important;
+}
+
+/* ── Amount colours (global utility classes) ── */
+.amount-income   { color: var(--green);  font-weight: 700; }
+.amount-expense  { color: var(--red);    font-weight: 700; }
+.amount-transfer { color: var(--blue);   font-weight: 700; }
+.amount-neutral  { color: var(--text);   font-weight: 700; }
+
+/* ── Bottom nav dark mode ── */
+[data-theme="dark"] .bottomNavBar {
+  background: var(--nav-bg);
+  border-top-color: var(--nav-border);
+}
+
+/* ── Page transition ── */
+.page-enter        { animation: fadeInUp .22s ease both; }
+.page-enter-delay  { animation: fadeInUp .3s  ease .06s both; }
+
 /* ─── Global mobile page/grid overrides ──────────── */
 @media (max-width: 768px) {
   /* Topbar hidden on mobile — AppLayout mobileBar takes over */
@@ -367,11 +566,11 @@ input, select, textarea { font-family: 'Inter', sans-serif; }
     width: 58px;
     height: 58px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #6C63FF, #5B8CFF);
+    background: linear-gradient(135deg, #8B5CF6, #A78BFA);
     border: none;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 8px 28px rgba(108,99,255,.45);
+    box-shadow: 0 8px 28px rgba(139,92,246,.45);
     cursor: pointer;
     z-index: 100;
     transition: transform .18s ease;
@@ -380,8 +579,8 @@ input, select, textarea { font-family: 'Inter', sans-serif; }
 
   /* Red FAB (for Debts) */
   .mob-fab-red {
-    background: linear-gradient(135deg, #FF5B5B, #FF79A8);
-    box-shadow: 0 8px 28px rgba(255,91,91,.4);
+    background: linear-gradient(135deg, #EC4899, #F472B6);
+    box-shadow: 0 8px 28px rgba(236,72,153,.4);
   }
 
   /* Summary cards — compact 3-col grid, all visible on screen */

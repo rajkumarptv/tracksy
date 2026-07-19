@@ -14,7 +14,7 @@ function AuthShell({ children }) {
       {/* Left decorative panel */}
       <div className="hide-mobile" style={{
         width:'42%', flexShrink:0,
-        background:'linear-gradient(160deg,#6C63FF 0%,#a29bfe 55%,#fd79a8 100%)',
+        background:'linear-gradient(160deg,#8B5CF6 0%,#a29bfe 55%,#fd79a8 100%)',
         display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
         position:'relative', overflow:'hidden', padding:48,
       }}>
@@ -48,7 +48,7 @@ function AuthShell({ children }) {
 
         {/* Logo */}
         <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:32 }}>
-          <img src="/icons/logo.png" alt="Tracksy" style={{ width:44, height:44, borderRadius:12, objectFit:'cover', boxShadow:'0 4px 14px rgba(108,99,255,.35)' }} />
+          <img src="/icons/logo.png" alt="Tracksy" style={{ width:44, height:44, borderRadius:12, objectFit:'cover', boxShadow:'0 4px 14px rgba(139,92,246,.35)' }} />
           <span style={{ fontSize:22, fontWeight:800, letterSpacing:-0.5, background:'linear-gradient(135deg,var(--accent),#a29bfe)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>Tracksy</span>
         </div>
 
@@ -363,9 +363,9 @@ export function ResetPassword() {
       )}
 
       {success ? (
-        <div style={{ background:'rgba(55,214,122,.1)', border:'1.5px solid rgba(55,214,122,.3)', borderRadius:14, padding:'20px', textAlign:'center' }}>
+        <div style={{ background:'rgba(34,197,94,.1)', border:'1.5px solid rgba(34,197,94,.3)', borderRadius:14, padding:'20px', textAlign:'center' }}>
           <div style={{ fontSize:32, marginBottom:10 }}>✅</div>
-          <div style={{ fontSize:15, fontWeight:700, color:'#37D67A', marginBottom:6 }}>Password reset successfully!</div>
+          <div style={{ fontSize:15, fontWeight:700, color:'#22C55E', marginBottom:6 }}>Password reset successfully!</div>
           <div style={{ fontSize:13, color:'var(--text3)' }}>Redirecting to login in 3 seconds…</div>
         </div>
       ) : (

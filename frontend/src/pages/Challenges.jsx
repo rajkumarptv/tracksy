@@ -9,20 +9,20 @@ const BADGE_KEY   = 'tracksy_badges';
 /* ── Challenge Templates ── */
 const TEMPLATES = [
   {
-    id:'52week', title:'52-Week Savings Challenge', emoji:'📅', color:'#6C63FF', bg:'rgba(108,99,255,.12)',
+    id:'52week', title:'52-Week Savings Challenge', emoji:'📅', color:'#8B5CF6', bg:'rgba(139,92,246,.12)',
     desc:'Save increasing amounts each week — ₹100 week 1, ₹200 week 2... up to ₹5,200 in week 52.',
     target: 52*(52+1)/2*100, // ₹1,37,800
     category:'savings', duration:52, unit:'weeks',
     milestones:[{ at:13, label:'Quarter done! 🌱' },{ at:26, label:'Halfway there! 🎯' },{ at:39, label:'75% complete! 🔥' },{ at:52, label:'Challenge Complete! 🏆' }],
   },
   {
-    id:'nospend', title:'No-Spend Challenge', emoji:'🚫', color:'#FF5B5B', bg:'rgba(255,91,91,.12)',
+    id:'nospend', title:'No-Spend Challenge', emoji:'🚫', color:'#EC4899', bg:'rgba(236,72,153,.12)',
     desc:'Avoid all non-essential spending for 30 days. Only pay for necessities.',
     target:30, category:'discipline', duration:30, unit:'days',
     milestones:[{ at:7, label:'1 week strong! 💪' },{ at:14, label:'2 weeks done! 🌟' },{ at:30, label:'30-day champion! 🏆' }],
   },
   {
-    id:'emergency', title:'Emergency Fund Challenge', emoji:'🛡️', color:'#37D67A', bg:'rgba(55,214,122,.12)',
+    id:'emergency', title:'Emergency Fund Challenge', emoji:'🛡️', color:'#22C55E', bg:'rgba(34,197,94,.12)',
     desc:'Build a 3-month emergency fund. Save consistently until you reach your goal.',
     target: 0, // user sets it
     category:'savings', duration:90, unit:'days',
@@ -30,7 +30,7 @@ const TEMPLATES = [
     customTarget:true,
   },
   {
-    id:'vacation', title:'Vacation Savings Challenge', emoji:'✈️', color:'#5B8CFF', bg:'rgba(91,140,255,.12)',
+    id:'vacation', title:'Vacation Savings Challenge', emoji:'✈️', color:'#3B82F6', bg:'rgba(59,130,246,.12)',
     desc:'Save for your dream vacation. Set your target and save every week until you get there.',
     target: 0, // user sets it
     category:'goal', duration:52, unit:'weeks',
@@ -38,7 +38,7 @@ const TEMPLATES = [
     customTarget:true,
   },
   {
-    id:'roundup', title:'Round-Up Savings Challenge', emoji:'🪙', color:'#FFB84D', bg:'rgba(255,184,77,.12)',
+    id:'roundup', title:'Round-Up Savings Challenge', emoji:'🪙', color:'#F59E0B', bg:'rgba(245,158,11,.12)',
     desc:'Round up every purchase to the nearest ₹100 and save the difference. Small amounts add up!',
     target: 12000,
     category:'savings', duration:365, unit:'days',
@@ -78,10 +78,10 @@ function progressPct(c) {
 /* ── Level system ── */
 function userLevel(totalSaved, completedCount) {
   const pts = totalSaved / 100 + completedCount * 500;
-  if (pts >= 5000) return { level:5, title:'Finance Master', color:'#FFB84D', emoji:'👑' };
-  if (pts >= 2000) return { level:4, title:'Savings Pro',    color:'#6C63FF', emoji:'💎' };
-  if (pts >= 800)  return { level:3, title:'Goal Getter',    color:'#37D67A', emoji:'🎯' };
-  if (pts >= 200)  return { level:2, title:'Saver',          color:'#5B8CFF', emoji:'⭐' };
+  if (pts >= 5000) return { level:5, title:'Finance Master', color:'#F59E0B', emoji:'👑' };
+  if (pts >= 2000) return { level:4, title:'Savings Pro',    color:'#8B5CF6', emoji:'💎' };
+  if (pts >= 800)  return { level:3, title:'Goal Getter',    color:'#22C55E', emoji:'🎯' };
+  if (pts >= 200)  return { level:2, title:'Saver',          color:'#3B82F6', emoji:'⭐' };
   return { level:1, title:'Beginner',       color:'#A29BFE', emoji:'🌱' };
 }
 
@@ -199,10 +199,10 @@ export default function Challenges() {
         {/* ── KPI Cards ── */}
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(160px,1fr))', gap:12, marginBottom:24 }}>
           {[
-            { icon:<Flame size={22} color="#FF5B5B"/>, iconBg:'rgba(255,91,91,.14)', label:'Active',    value:`${activeChallenges.length}` },
-            { icon:<Trophy size={22} color="#FFB84D"/>, iconBg:'rgba(255,184,77,.14)', label:'Completed', value:`${completedCount}` },
-            { icon:<Star size={22} color="#6C63FF"/>  , iconBg:'rgba(108,99,255,.14)', label:'Badges',    value:`${badges.length} / ${BADGES.length}` },
-            { icon:<TrendingUp size={22} color="#37D67A"/>, iconBg:'rgba(55,214,122,.14)', label:'Streak', value:`${getStreak(challenges.flatMap(c=>c.checkIns))}d 🔥` },
+            { icon:<Flame size={22} color="#EC4899"/>, iconBg:'rgba(236,72,153,.14)', label:'Active',    value:`${activeChallenges.length}` },
+            { icon:<Trophy size={22} color="#F59E0B"/>, iconBg:'rgba(245,158,11,.14)', label:'Completed', value:`${completedCount}` },
+            { icon:<Star size={22} color="#8B5CF6"/>  , iconBg:'rgba(139,92,246,.14)', label:'Badges',    value:`${badges.length} / ${BADGES.length}` },
+            { icon:<TrendingUp size={22} color="#22C55E"/>, iconBg:'rgba(34,197,94,.14)', label:'Streak', value:`${getStreak(challenges.flatMap(c=>c.checkIns))}d 🔥` },
           ].map(({ icon, iconBg, label, value })=>(
             <div key={label} style={{ background:'var(--surface)', borderRadius:16, padding:'16px 18px', border:'1px solid var(--border-light)', boxShadow:'0 2px 12px rgba(0,0,0,.05)', display:'flex', alignItems:'center', gap:14 }}>
               <div style={{ width:44, height:44, borderRadius:12, background:iconBg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{icon}</div>
@@ -224,7 +224,7 @@ export default function Challenges() {
               </button>
             ))}
           </div>
-          <button className="btn btn-primary btn-sm" style={{ display:'flex', alignItems:'center', gap:6, background:'linear-gradient(135deg,#6C63FF,#5B8CFF)', border:'none' }} onClick={()=>setShowAdd(true)}>
+          <button className="btn btn-primary btn-sm" style={{ display:'flex', alignItems:'center', gap:6, background:'linear-gradient(135deg,#8B5CF6,#3B82F6)', border:'none' }} onClick={()=>setShowAdd(true)}>
             <Plus size={13}/> New Challenge
           </button>
         </div>
@@ -247,7 +247,7 @@ export default function Challenges() {
               const nextMilestone = c.milestones?.find(m => pct < m.at);
               const [checkAmt, setCheckAmt] = useState('');
               return (
-                <div key={c.id} style={{ background:'var(--surface)', borderRadius:20, padding:'20px 22px', border:`1.5px solid ${c.completed?'rgba(55,214,122,.3)':'var(--border-light)'}`, boxShadow:'0 2px 16px rgba(0,0,0,.06)', position:'relative', overflow:'hidden' }}>
+                <div key={c.id} style={{ background:'var(--surface)', borderRadius:20, padding:'20px 22px', border:`1.5px solid ${c.completed?'rgba(34,197,94,.3)':'var(--border-light)'}`, boxShadow:'0 2px 16px rgba(0,0,0,.06)', position:'relative', overflow:'hidden' }}>
                   {/* Delete */}
                   <button onClick={()=>deleteChallenge(c.id)}
                     style={{ position:'absolute', top:14, right:14, background:'var(--surface2)', border:'none', borderRadius:8, padding:'4px 6px', cursor:'pointer', color:'var(--text3)' }}>
@@ -260,8 +260,8 @@ export default function Challenges() {
                     <div style={{ flex:1, minWidth:0 }}>
                       <div style={{ fontSize:14, fontWeight:700, color:'var(--text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', paddingRight:24 }}>{c.title}</div>
                       <div style={{ display:'flex', gap:8, marginTop:4 }}>
-                        {streak > 0 && <span style={{ fontSize:11, fontWeight:700, color:'#FF5B5B', background:'rgba(255,91,91,.1)', borderRadius:7, padding:'2px 8px' }}>🔥 {streak}d streak</span>}
-                        {c.completed && <span style={{ fontSize:11, fontWeight:700, color:'#37D67A', background:'rgba(55,214,122,.12)', borderRadius:7, padding:'2px 8px' }}>✓ Completed</span>}
+                        {streak > 0 && <span style={{ fontSize:11, fontWeight:700, color:'#EC4899', background:'rgba(236,72,153,.1)', borderRadius:7, padding:'2px 8px' }}>🔥 {streak}d streak</span>}
+                        {c.completed && <span style={{ fontSize:11, fontWeight:700, color:'#22C55E', background:'rgba(34,197,94,.12)', borderRadius:7, padding:'2px 8px' }}>✓ Completed</span>}
                       </div>
                     </div>
                   </div>
@@ -314,11 +314,11 @@ export default function Challenges() {
             {BADGES.map(b=>{
               const earned = badges.includes(b.id);
               return (
-                <div key={b.id} style={{ background: earned?'var(--surface)':'var(--surface2)', borderRadius:14, padding:'14px 14px', border:`1.5px solid ${earned?'rgba(108,99,255,.25)':'var(--border-light)'}`, textAlign:'center', opacity: earned?1:0.5, transition:'all .2s' }}>
+                <div key={b.id} style={{ background: earned?'var(--surface)':'var(--surface2)', borderRadius:14, padding:'14px 14px', border:`1.5px solid ${earned?'rgba(139,92,246,.25)':'var(--border-light)'}`, textAlign:'center', opacity: earned?1:0.5, transition:'all .2s' }}>
                   <div style={{ fontSize:28, marginBottom:6, filter: earned?'none':'grayscale(1)' }}>{b.emoji}</div>
                   <div style={{ fontSize:12, fontWeight:700, color: earned?'var(--text)':'var(--text3)' }}>{b.label}</div>
                   <div style={{ fontSize:10.5, color:'var(--text3)', marginTop:3, lineHeight:1.3 }}>{b.desc}</div>
-                  {earned && <div style={{ fontSize:10, fontWeight:700, color:'#37D67A', marginTop:6 }}>✓ Earned</div>}
+                  {earned && <div style={{ fontSize:10, fontWeight:700, color:'#22C55E', marginTop:6 }}>✓ Earned</div>}
                 </div>
               );
             })}

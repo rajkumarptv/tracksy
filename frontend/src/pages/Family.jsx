@@ -54,7 +54,7 @@ export default function Family() {
               🔒 Members join only with your code — nobody's data is shared without consent.
             </div>
             <button onClick={openPremium}
-              style={{ padding:'12px 28px', borderRadius:12, border:'none', background:'linear-gradient(135deg,#FFB84D,#FF79A8)', color:'#fff', fontWeight:800, fontSize:15, cursor:'pointer', boxShadow:'0 4px 16px rgba(255,184,77,.4)' }}>
+              style={{ padding:'12px 28px', borderRadius:12, border:'none', background:'linear-gradient(135deg,#F59E0B,#FF79A8)', color:'#fff', fontWeight:800, fontSize:15, cursor:'pointer', boxShadow:'0 4px 16px rgba(245,158,11,.4)' }}>
               ✨ Upgrade to Premium
             </button>
           </div>
@@ -84,7 +84,7 @@ export default function Family() {
 
         {/* Shared-mode badge */}
         <div style={{ display:'inline-flex', alignItems:'center', gap:7, marginBottom:16, padding:'5px 12px', borderRadius:20, fontSize:11.5, fontWeight:700,
-          background: sharedMode ? 'rgba(55,214,122,.12)' : 'rgba(255,184,77,.12)', color: sharedMode ? '#37D67A' : '#FFB84D' }}>
+          background: sharedMode ? 'rgba(34,197,94,.12)' : 'rgba(245,158,11,.12)', color: sharedMode ? '#22C55E' : '#F59E0B' }}>
           {sharedMode ? '🤝 Shared — everyone sees everyone' : '👑 Head-only — only you see members'}
         </div>
 
@@ -98,13 +98,13 @@ export default function Family() {
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))', gap:12, marginBottom:24 }}>
           {[
             { label:'Family Income',  value: fmt(combined.income),          sub:'This month',                                    icon:<TrendingUp size={20} color="#00C896"/>,   bg:'rgba(0,200,150,.12)',  color:'#00C896', border:'rgba(0,200,150,.2)'  },
-            { label:'Family Expense', value: fmt(combined.expense),         sub:'This month',                                    icon:<TrendingDown size={20} color="#FF5B5B"/>, bg:'rgba(255,91,91,.12)',  color:'#FF5B5B', border:'rgba(255,91,91,.2)'  },
-            { label: combined.net >= 0 ? 'Net Saved' : 'Over Budget', value: fmt(Math.abs(combined.net)), sub: combined.net >= 0 ? 'Positive' : 'Deficit', icon:<Wallet size={20} color="#6C63FF"/>, bg:'rgba(108,99,255,.12)', color: combined.net >= 0 ? '#00C896' : '#FF5B5B', border: combined.net >= 0 ? 'rgba(0,200,150,.2)' : 'rgba(255,91,91,.2)' },
-            { label:'Total Net Worth', value: fmt(combined.net_balance),    sub:'All accounts',                                  icon:<Users size={20} color="#5B8CFF"/>,        bg:'rgba(91,140,255,.12)', color:'#5B8CFF', border:'rgba(91,140,255,.2)' },
+            { label:'Family Expense', value: fmt(combined.expense),         sub:'This month',                                    icon:<TrendingDown size={20} color="#EC4899"/>, bg:'rgba(236,72,153,.12)',  color:'#EC4899', border:'rgba(236,72,153,.2)'  },
+            { label: combined.net >= 0 ? 'Net Saved' : 'Over Budget', value: fmt(Math.abs(combined.net)), sub: combined.net >= 0 ? 'Positive' : 'Deficit', icon:<Wallet size={20} color="#8B5CF6"/>, bg:'rgba(139,92,246,.12)', color: combined.net >= 0 ? '#00C896' : '#EC4899', border: combined.net >= 0 ? 'rgba(0,200,150,.2)' : 'rgba(236,72,153,.2)' },
+            { label:'Total Net Worth', value: fmt(combined.net_balance),    sub:'All accounts',                                  icon:<Users size={20} color="#3B82F6"/>,        bg:'rgba(59,130,246,.12)', color:'#3B82F6', border:'rgba(59,130,246,.2)' },
           ].map(({ label, value, sub, icon, bg, color, border }) => (
             <div key={label} style={{
               background:'var(--surface)', borderRadius:18, padding:'18px 16px',
-              boxShadow:'0 2px 16px rgba(108,99,255,.07)', border:`1px solid ${border}`,
+              boxShadow:'0 2px 16px rgba(139,92,246,.07)', border:`1px solid ${border}`,
               display:'flex', flexDirection:'column', alignItems:'flex-start',
             }}>
               <div style={{ width:40, height:40, borderRadius:12, background:bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, marginBottom:12 }}>{icon}</div>
@@ -121,18 +121,18 @@ export default function Family() {
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))', gap:14 }}>
           {members.map(m => (
             <div key={m.id} onClick={() => m.is_me ? null : setActiveMember(m.id)}
-              style={{ background:'var(--surface)', borderRadius:18, padding:'18px 20px', border:'1px solid var(--border-light)', boxShadow:'0 4px 20px rgba(108,99,255,.06)', cursor: m.is_me ? 'default' : 'pointer', transition:'transform .2s' }}
+              style={{ background:'var(--surface)', borderRadius:18, padding:'18px 20px', border:'1px solid var(--border-light)', boxShadow:'0 4px 20px rgba(139,92,246,.06)', cursor: m.is_me ? 'default' : 'pointer', transition:'transform .2s' }}
               onMouseEnter={e => { if(!m.is_me) e.currentTarget.style.transform='translateY(-3px)'; }}
               onMouseLeave={e => e.currentTarget.style.transform=''}>
               <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:14 }}>
-                <div style={{ width:44, height:44, borderRadius:'50%', background:'linear-gradient(135deg,#6C63FF,#a29bfe)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontWeight:800, color:'#fff', flexShrink:0 }}>
+                <div style={{ width:44, height:44, borderRadius:'50%', background:'linear-gradient(135deg,#8B5CF6,#a29bfe)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontWeight:800, color:'#fff', flexShrink:0 }}>
                   {m.name.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase()}
                 </div>
                 <div style={{ flex:1, minWidth:0 }}>
                   <div style={{ fontSize:14.5, fontWeight:700, color:'var(--text)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
                     {m.name}{m.is_me ? ' (You)' : ''}
                   </div>
-                  <span style={{ fontSize:10.5, fontWeight:700, padding:'2px 8px', borderRadius:20, background: m.role==='primary' ? 'rgba(255,184,77,.15)' : 'rgba(108,99,255,.12)', color: m.role==='primary' ? '#FFB84D' : 'var(--accent)' }}>
+                  <span style={{ fontSize:10.5, fontWeight:700, padding:'2px 8px', borderRadius:20, background: m.role==='primary' ? 'rgba(245,158,11,.15)' : 'rgba(139,92,246,.12)', color: m.role==='primary' ? '#F59E0B' : 'var(--accent)' }}>
                     {m.role === 'primary' ? '👑 Head' : 'Member'}
                   </span>
                 </div>
@@ -140,9 +140,9 @@ export default function Family() {
               </div>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
                 {[
-                  { l:'Income',    v:fmt(m.income),  c:'#37D67A' },
-                  { l:'Expense',   v:fmt(m.expense), c:'#FF5B5B' },
-                  { l:'Net',       v:`${m.net>=0?'+':''}${fmt(m.net)}`, c: m.net>=0?'#37D67A':'#FF5B5B' },
+                  { l:'Income',    v:fmt(m.income),  c:'#22C55E' },
+                  { l:'Expense',   v:fmt(m.expense), c:'#EC4899' },
+                  { l:'Net',       v:`${m.net>=0?'+':''}${fmt(m.net)}`, c: m.net>=0?'#22C55E':'#EC4899' },
                   { l:'Net Worth', v:fmt(m.net_balance), c:'var(--text)' },
                 ].map(s => (
                   <div key={s.l} style={{ background:'var(--surface2)', borderRadius:10, padding:'9px 11px' }}>
@@ -175,7 +175,7 @@ function SharedMemberBar({ familyName, qc }) {
         You're a member of <strong style={{ color:'var(--text)' }}>{familyName}</strong>. Everyone here can see each other's finances.
       </div>
       <button onClick={() => { if(confirm('Leave this family? You will no longer see shared data and others won’t see yours.')) leaveMut.mutate(); }}
-        style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:6, padding:'7px 14px', borderRadius:10, border:'1.5px solid rgba(255,91,91,.3)', background:'var(--red-light)', color:'#FF5B5B', fontSize:12.5, fontWeight:700, cursor:'pointer' }}>
+        style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:6, padding:'7px 14px', borderRadius:10, border:'1.5px solid rgba(236,72,153,.3)', background:'var(--red-light)', color:'#EC4899', fontSize:12.5, fontWeight:700, cursor:'pointer' }}>
         <LogOut size={13}/> Leave
       </button>
     </div>
@@ -219,7 +219,7 @@ function InviteCodeBar({ code, qc }) {
         </button>
       </div>
       <button onClick={() => { if(confirm('Disband this family? All members will be removed.')) leaveMut.mutate(); }}
-        style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:6, padding:'7px 14px', borderRadius:10, border:'1.5px solid rgba(255,91,91,.3)', background:'var(--red-light)', color:'#FF5B5B', fontSize:12.5, fontWeight:700, cursor:'pointer' }}>
+        style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:6, padding:'7px 14px', borderRadius:10, border:'1.5px solid rgba(236,72,153,.3)', background:'var(--red-light)', color:'#EC4899', fontSize:12.5, fontWeight:700, cursor:'pointer' }}>
         <LogOut size={13}/> Disband
       </button>
     </div>
@@ -256,15 +256,15 @@ function SetupFamily({ qc }) {
             <div style={{ fontSize:13.5, color:'var(--text3)' }}>Start a family as head, or join one with a code.</div>
           </div>
 
-          {err && <div style={{ background:'var(--red-light)', color:'#FF5B5B', padding:'10px 14px', borderRadius:10, marginBottom:16, fontSize:13 }}>⚠️ {err}</div>}
+          {err && <div style={{ background:'var(--red-light)', color:'#EC4899', padding:'10px 14px', borderRadius:10, marginBottom:16, fontSize:13 }}>⚠️ {err}</div>}
 
           {/* Choice cards */}
           {!mode && (
             <div style={{ display:'grid', gap:12 }}>
               <button onClick={() => { setMode('create'); setErr(''); }}
                 style={{ display:'flex', alignItems:'center', gap:14, padding:'18px 20px', borderRadius:16, border:'1.5px solid var(--border)', background:'var(--surface)', cursor:'pointer', textAlign:'left' }}>
-                <div style={{ width:46, height:46, borderRadius:13, background:'rgba(108,99,255,.12)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                  <Plus size={22} color="#6C63FF"/>
+                <div style={{ width:46, height:46, borderRadius:13, background:'rgba(139,92,246,.12)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                  <Plus size={22} color="#8B5CF6"/>
                 </div>
                 <div>
                   <div style={{ fontSize:15, fontWeight:700, color:'var(--text)' }}>Create a family</div>
@@ -273,8 +273,8 @@ function SetupFamily({ qc }) {
               </button>
               <button onClick={() => { setMode('join'); setErr(''); }}
                 style={{ display:'flex', alignItems:'center', gap:14, padding:'18px 20px', borderRadius:16, border:'1.5px solid var(--border)', background:'var(--surface)', cursor:'pointer', textAlign:'left' }}>
-                <div style={{ width:46, height:46, borderRadius:13, background:'rgba(55,214,122,.12)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                  <UserPlus size={22} color="#37D67A"/>
+                <div style={{ width:46, height:46, borderRadius:13, background:'rgba(34,197,94,.12)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                  <UserPlus size={22} color="#22C55E"/>
                 </div>
                 <div>
                   <div style={{ fontSize:15, fontWeight:700, color:'var(--text)' }}>Join a family</div>
@@ -316,7 +316,7 @@ function SetupFamily({ qc }) {
               <div style={{ display:'flex', gap:10 }}>
                 <button onClick={()=>{setMode(null);setErr('');}} style={{ flex:1, padding:'11px', borderRadius:10, border:'1.5px solid var(--border)', background:'var(--surface)', color:'var(--text3)', fontWeight:600, fontSize:14, cursor:'pointer' }}>Back</button>
                 <button onClick={()=>createMut.mutate()} disabled={!name.trim()||createMut.isPending}
-                  style={{ flex:2, padding:'11px', borderRadius:10, border:'none', background:'linear-gradient(135deg,#6C63FF,#5B8CFF)', color:'#fff', fontWeight:700, fontSize:14, cursor:'pointer', opacity:(!name.trim())?.6:1 }}>
+                  style={{ flex:2, padding:'11px', borderRadius:10, border:'none', background:'linear-gradient(135deg,#8B5CF6,#3B82F6)', color:'#fff', fontWeight:700, fontSize:14, cursor:'pointer', opacity:(!name.trim())?.6:1 }}>
                   {createMut.isPending ? 'Creating…' : 'Create Family'}
                 </button>
               </div>
@@ -330,13 +330,13 @@ function SetupFamily({ qc }) {
               <input autoFocus value={code} onChange={e=>{setCode(e.target.value.toUpperCase());setErr('');}} placeholder="ABC123" maxLength={6}
                 onKeyDown={e=>e.key==='Enter'&&code.trim()&&joinMut.mutate()}
                 style={{ width:'100%', padding:'11px 14px', borderRadius:10, border:'1.5px solid var(--border)', background:'var(--surface2)', color:'var(--text)', fontSize:20, fontWeight:800, letterSpacing:4, textAlign:'center', outline:'none', boxSizing:'border-box', marginBottom:12, fontFamily:'monospace' }}/>
-              <div style={{ fontSize:12, color:'var(--text3)', background:'rgba(255,184,77,.08)', borderRadius:9, padding:'9px 12px', marginBottom:16 }}>
+              <div style={{ fontSize:12, color:'var(--text3)', background:'rgba(245,158,11,.08)', borderRadius:9, padding:'9px 12px', marginBottom:16 }}>
                 ⚠️ By joining, the family head will be able to see your accounts and spending.
               </div>
               <div style={{ display:'flex', gap:10 }}>
                 <button onClick={()=>{setMode(null);setErr('');}} style={{ flex:1, padding:'11px', borderRadius:10, border:'1.5px solid var(--border)', background:'var(--surface)', color:'var(--text3)', fontWeight:600, fontSize:14, cursor:'pointer' }}>Back</button>
                 <button onClick={()=>joinMut.mutate()} disabled={!code.trim()||joinMut.isPending}
-                  style={{ flex:2, padding:'11px', borderRadius:10, border:'none', background:'linear-gradient(135deg,#37D67A,#00b894)', color:'#fff', fontWeight:700, fontSize:14, cursor:'pointer', opacity:(!code.trim())?.6:1 }}>
+                  style={{ flex:2, padding:'11px', borderRadius:10, border:'none', background:'linear-gradient(135deg,#22C55E,#00b894)', color:'#fff', fontWeight:700, fontSize:14, cursor:'pointer', opacity:(!code.trim())?.6:1 }}>
                   {joinMut.isPending ? 'Joining…' : 'Join Family'}
                 </button>
               </div>
@@ -370,14 +370,14 @@ function MemberView({ status, qc }) {
             {status.members?.map(m => (
               <div key={m.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'6px 0' }}>
                 <span style={{ fontSize:13.5, color:'var(--text)', fontWeight:600 }}>{m.name}{m.is_me?' (You)':''}</span>
-                <span style={{ fontSize:10.5, fontWeight:700, padding:'2px 8px', borderRadius:20, background: m.family_role==='primary'?'rgba(255,184,77,.15)':'rgba(108,99,255,.12)', color: m.family_role==='primary'?'#FFB84D':'var(--accent)' }}>
+                <span style={{ fontSize:10.5, fontWeight:700, padding:'2px 8px', borderRadius:20, background: m.family_role==='primary'?'rgba(245,158,11,.15)':'rgba(139,92,246,.12)', color: m.family_role==='primary'?'#F59E0B':'var(--accent)' }}>
                   {m.family_role==='primary'?'👑 Head':'Member'}
                 </span>
               </div>
             ))}
           </div>
           <button onClick={() => { if(confirm('Leave this family? The head will no longer see your data.')) leaveMut.mutate(); }}
-            style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'11px 24px', borderRadius:12, border:'1.5px solid rgba(255,91,91,.3)', background:'var(--red-light)', color:'#FF5B5B', fontWeight:700, fontSize:14, cursor:'pointer' }}>
+            style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'11px 24px', borderRadius:12, border:'1.5px solid rgba(236,72,153,.3)', background:'var(--red-light)', color:'#EC4899', fontWeight:700, fontSize:14, cursor:'pointer' }}>
             <LogOut size={15}/> Leave Family
           </button>
         </div>
@@ -412,7 +412,7 @@ function MemberDetailModal({ memberId, onClose, fmt, qc, canRemove }) {
               {data.wallets.map(w => (
                 <div key={w.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'10px 14px', borderRadius:10, background:'var(--surface2)' }}>
                   <span style={{ fontSize:13, fontWeight:600, color:'var(--text)' }}>{w.name}{w.last_four?` ••${w.last_four}`:''}</span>
-                  <span className="mono" style={{ fontSize:13.5, fontWeight:800, color: parseFloat(w.balance)>=0?'var(--text)':'#FF5B5B' }}>{fmt(w.balance)}</span>
+                  <span className="mono" style={{ fontSize:13.5, fontWeight:800, color: parseFloat(w.balance)>=0?'var(--text)':'#EC4899' }}>{fmt(w.balance)}</span>
                 </div>
               ))}
               {!data.wallets.length && <div style={{ fontSize:13, color:'var(--text3)', padding:'8px 0' }}>No accounts yet.</div>}
@@ -427,7 +427,7 @@ function MemberDetailModal({ memberId, onClose, fmt, qc, canRemove }) {
                     <div style={{ fontSize:12.5, fontWeight:600, color:'var(--text)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{tx.description || tx.payment_name}</div>
                     <div style={{ fontSize:10.5, color:'var(--text3)' }}>{new Date(tx.transaction_date).toLocaleDateString('en-IN',{day:'numeric',month:'short'})} · {tx.category_name || 'Uncategorized'}</div>
                   </div>
-                  <span className="mono" style={{ fontSize:13, fontWeight:800, color: tx.type==='income'?'#37D67A':'#FF5B5B' }}>
+                  <span className="mono" style={{ fontSize:13, fontWeight:800, color: tx.type==='income'?'#22C55E':'#EC4899' }}>
                     {tx.type==='income'?'+':'−'}{fmt(tx.amount)}
                   </span>
                 </div>
@@ -437,7 +437,7 @@ function MemberDetailModal({ memberId, onClose, fmt, qc, canRemove }) {
 
             {canRemove && (
               <button onClick={() => { if(confirm('Remove this member from the family?')) removeMut.mutate(); }}
-                style={{ width:'100%', padding:'10px', borderRadius:10, border:'1.5px solid rgba(255,91,91,.3)', background:'var(--red-light)', color:'#FF5B5B', fontWeight:700, fontSize:13, cursor:'pointer' }}>
+                style={{ width:'100%', padding:'10px', borderRadius:10, border:'1.5px solid rgba(236,72,153,.3)', background:'var(--red-light)', color:'#EC4899', fontWeight:700, fontSize:13, cursor:'pointer' }}>
                 Remove from family
               </button>
             )}

@@ -16,7 +16,7 @@
 .summaryCard {
   background: var(--surface);
   border-radius: 18px; padding: 18px 20px;
-  box-shadow: 0 4px 20px rgba(108,99,255,.08);
+  box-shadow: 0 4px 20px rgba(16,24,40,.06);
   border: 1px solid var(--border-light);
   display: flex; align-items: center; gap: 14px;
 }
@@ -31,7 +31,7 @@
 .tableCard {
   background: var(--surface);
   border-radius: 22px;
-  box-shadow: 0 4px 24px rgba(108,99,255,.08);
+  box-shadow: 0 4px 24px rgba(16,24,40,.06);
   border: 1px solid var(--border-light);
   overflow: hidden;
 }
@@ -107,8 +107,8 @@
     transition: all .15s; white-space: nowrap;
   }
   .chipActive {
-    background: #6C63FF; color: #fff; border-color: #6C63FF;
-    box-shadow: 0 4px 12px rgba(108,99,255,.35);
+    background: var(--accent); color: #fff; border-color: var(--accent);
+    box-shadow: 0 4px 12px var(--accent-glow);
   }
 
   /* ── Summary cards (compact row) ── */
@@ -149,7 +149,7 @@
     border-radius: 20px;
     margin: 0 12px;
     border: 1px solid var(--border-light);
-    box-shadow: 0 2px 12px rgba(108,99,255,.06);
+    box-shadow: 0 2px 12px rgba(16,24,40,.05);
     overflow: hidden;
   }
 
@@ -165,7 +165,7 @@
   .txCircle {
     width: 44px; height: 44px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
+    flex-shrink: 0; overflow: hidden;
   }
 
   .txInfo { flex: 1; min-width: 0; }
@@ -202,9 +202,9 @@
     display: flex; align-items: center; justify-content: center;
     position: fixed; bottom: 28px; right: 22px;
     width: 58px; height: 58px; border-radius: 50%;
-    background: linear-gradient(135deg, #6C63FF, #5B8CFF);
+    background: linear-gradient(135deg, #8B5CF6, #A78BFA);
     border: none; cursor: pointer; z-index: 50;
-    box-shadow: 0 6px 24px rgba(108,99,255,.5);
+    box-shadow: 0 6px 24px rgba(139,92,246,.5);
     transition: transform .2s, box-shadow .2s;
   }
   .fab:active { transform: scale(.94); }

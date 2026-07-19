@@ -13,7 +13,7 @@ const adminAPI = {
 };
 
 // ── Tiny stat card ─────────────────────────────────────────────────────────────
-function StatBox({ label, value, sub, color = '#6C63FF', bg = 'rgba(108,99,255,.1)', icon }) {
+function StatBox({ label, value, sub, color = '#8B5CF6', bg = 'rgba(139,92,246,.1)', icon }) {
   return (
     <div style={{
       background: 'var(--surface, #1a1a2e)', borderRadius: 18, padding: '18px 20px',
@@ -43,7 +43,7 @@ function MiniBarChart({ data }) {
           <div style={{
             width: '100%', borderRadius: '3px 3px 0 0',
             height: `${Math.max(4, (parseInt(d.count) / max) * 64)}px`,
-            background: 'linear-gradient(180deg,#6C63FF,#5B8CFF)',
+            background: 'linear-gradient(180deg,#8B5CF6,#3B82F6)',
             transition: 'height .3s ease',
           }}/>
         </div>
@@ -108,7 +108,7 @@ export default function Admin() {
   if (!isAuthenticated) { navigate('/login'); return null; }
   if (!authChecked) {
     return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f0f1a' }}>
-      <div style={{ color: '#6C63FF', fontSize: 15, fontWeight: 600 }}>Verifying access…</div>
+      <div style={{ color: '#8B5CF6', fontSize: 15, fontWeight: 600 }}>Verifying access…</div>
     </div>;
   }
   if (!user?.is_admin) {
@@ -117,7 +117,7 @@ export default function Admin() {
         <div style={{ fontSize: 48 }}>🚫</div>
         <div style={{ fontSize: 20, fontWeight: 800, color: '#fff' }}>Access Denied</div>
         <div style={{ fontSize: 14, color: '#888' }}>You need admin privileges to view this page.</div>
-        <button onClick={() => navigate('/')} style={{ marginTop: 8, padding: '10px 24px', borderRadius: 12, background: '#6C63FF', border: 'none', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
+        <button onClick={() => navigate('/')} style={{ marginTop: 8, padding: '10px 24px', borderRadius: 12, background: '#8B5CF6', border: 'none', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
           Go Home
         </button>
       </div>
@@ -128,8 +128,8 @@ export default function Admin() {
     <div style={{ minHeight: '100vh', background: '#0f0f1a', color: '#e0e0e0', fontFamily: "'Inter', sans-serif" }}>
 
       {/* ── Header ── */}
-      <div style={{ background: 'linear-gradient(135deg,#1a1033 0%,#0f0f1a 100%)', borderBottom: '1px solid rgba(108,99,255,.2)', padding: '16px 32px', display: 'flex', alignItems: 'center', gap: 16 }}>
-        <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg,#6C63FF,#a29bfe)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ background: 'linear-gradient(135deg,#1a1033 0%,#0f0f1a 100%)', borderBottom: '1px solid rgba(139,92,246,.2)', padding: '16px 32px', display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg,#8B5CF6,#a29bfe)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M4 4h7v7H4V4zm0 9h7v7H4v-7zm9-9h7v7h-7V4zm0 9h7v7h-7v-7z"/></svg>
         </div>
         <div>
@@ -138,7 +138,7 @@ export default function Admin() {
         </div>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 10 }}>
           <button onClick={() => qc.invalidateQueries()}
-            style={{ padding: '7px 16px', borderRadius: 10, background: 'rgba(108,99,255,.15)', border: '1px solid rgba(108,99,255,.3)', color: '#a29bfe', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+            style={{ padding: '7px 16px', borderRadius: 10, background: 'rgba(139,92,246,.15)', border: '1px solid rgba(139,92,246,.3)', color: '#a29bfe', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
             ↻ Refresh
           </button>
           <button onClick={() => navigate('/')}
@@ -153,11 +153,11 @@ export default function Admin() {
         {/* ── Top KPI cards ── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 28 }}>
           <StatBox label="Total Users"      value={s?.users.total    ?? '—'} icon="👥" color="#a29bfe" bg="rgba(162,155,254,.12)" sub="All registered" />
-          <StatBox label="Premium Users"    value={s?.users.premium  ?? '—'} icon="✨" color="#FFB84D" bg="rgba(255,184,77,.12)"  sub={`₹${(s?.revenue.monthly_estimate ?? 0).toLocaleString()}/mo est.`} />
-          <StatBox label="Active (7d)"      value={s?.users.active_week  ?? '—'} icon="🟢" color="#37D67A" bg="rgba(55,214,122,.12)" sub="Logged in last week" />
-          <StatBox label="Active (30d)"     value={s?.users.active_month ?? '—'} icon="📅" color="#5B8CFF" bg="rgba(91,140,255,.12)" sub="Logged in last month" />
+          <StatBox label="Premium Users"    value={s?.users.premium  ?? '—'} icon="✨" color="#F59E0B" bg="rgba(245,158,11,.12)"  sub={`₹${(s?.revenue.monthly_estimate ?? 0).toLocaleString()}/mo est.`} />
+          <StatBox label="Active (7d)"      value={s?.users.active_week  ?? '—'} icon="🟢" color="#22C55E" bg="rgba(34,197,94,.12)" sub="Logged in last week" />
+          <StatBox label="Active (30d)"     value={s?.users.active_month ?? '—'} icon="📅" color="#3B82F6" bg="rgba(59,130,246,.12)" sub="Logged in last month" />
           <StatBox label="New Today"        value={s?.users.new_today ?? '—'} icon="🆕" color="#FF79A8" bg="rgba(255,121,168,.12)" sub={`${s?.users.new_week ?? 0} this week`} />
-          <StatBox label="Transactions"     value={s?.content.transactions?.toLocaleString() ?? '—'} icon="💸" color="#6C63FF" bg="rgba(108,99,255,.12)" sub="All time" />
+          <StatBox label="Transactions"     value={s?.content.transactions?.toLocaleString() ?? '—'} icon="💸" color="#8B5CF6" bg="rgba(139,92,246,.12)" sub="All time" />
         </div>
 
         {/* ── Charts row ── */}
@@ -184,11 +184,11 @@ export default function Admin() {
               return (
                 <>
                   <div style={{ height: 10, borderRadius: 20, overflow: 'hidden', background: 'rgba(255,255,255,.06)', marginBottom: 16 }}>
-                    <div style={{ height: '100%', width: `${premPct}%`, background: 'linear-gradient(90deg,#FFB84D,#FF79A8)', transition: 'width .6s ease' }}/>
+                    <div style={{ height: '100%', width: `${premPct}%`, background: 'linear-gradient(90deg,#F59E0B,#FF79A8)', transition: 'width .6s ease' }}/>
                   </div>
                   {[
-                    { label: 'Premium', count: s.users.premium, pct: premPct, color: '#FFB84D' },
-                    { label: 'Free',    count: s.users.free,    pct: freePct, color: '#6C63FF' },
+                    { label: 'Premium', count: s.users.premium, pct: premPct, color: '#F59E0B' },
+                    { label: 'Free',    count: s.users.free,    pct: freePct, color: '#8B5CF6' },
                   ].map(({ label, count, pct, color }) => (
                     <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
                       <div style={{ width: 10, height: 10, borderRadius: '50%', background: color, flexShrink: 0 }}/>
@@ -197,9 +197,9 @@ export default function Admin() {
                       <span style={{ fontSize: 11, color: '#666' }}>{pct}%</span>
                     </div>
                   ))}
-                  <div style={{ marginTop: 16, padding: '12px 14px', borderRadius: 12, background: 'rgba(255,184,77,.08)', border: '1px solid rgba(255,184,77,.2)' }}>
+                  <div style={{ marginTop: 16, padding: '12px 14px', borderRadius: 12, background: 'rgba(245,158,11,.08)', border: '1px solid rgba(245,158,11,.2)' }}>
                     <div style={{ fontSize: 11, color: '#888' }}>Est. Monthly Revenue</div>
-                    <div style={{ fontSize: 22, fontWeight: 900, color: '#FFB84D', marginTop: 2 }}>
+                    <div style={{ fontSize: 22, fontWeight: 900, color: '#F59E0B', marginTop: 2 }}>
                       ₹{(s.revenue.monthly_estimate).toLocaleString('en-IN')}
                     </div>
                   </div>
@@ -236,7 +236,7 @@ export default function Admin() {
                     </td>
                     <td style={{ padding: '12px 18px', fontSize: 12.5, color: '#888' }}>{u.email}</td>
                     <td style={{ padding: '12px 18px' }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: u.is_premium ? 'rgba(255,184,77,.15)' : 'rgba(108,99,255,.12)', color: u.is_premium ? '#FFB84D' : '#a29bfe' }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: u.is_premium ? 'rgba(245,158,11,.15)' : 'rgba(139,92,246,.12)', color: u.is_premium ? '#F59E0B' : '#a29bfe' }}>
                         {u.is_premium ? '✨ Premium' : 'Free'}
                       </span>
                     </td>
@@ -281,7 +281,7 @@ export default function Admin() {
                     onMouseLeave={e => e.currentTarget.style.background = ''}>
                     <td style={{ padding: '12px 16px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                        <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg,#6C63FF,#a29bfe)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: '#fff', flexShrink: 0 }}>
+                        <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg,#8B5CF6,#a29bfe)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: '#fff', flexShrink: 0 }}>
                           {(u.first_name?.[0] || '') + (u.last_name?.[0] || '')}
                         </div>
                         <div>
@@ -293,7 +293,7 @@ export default function Admin() {
                     </td>
                     <td style={{ padding: '12px 16px', fontSize: 12, color: '#888', whiteSpace: 'nowrap' }}>{u.email}</td>
                     <td style={{ padding: '12px 16px' }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 20, background: u.is_premium ? 'rgba(255,184,77,.15)' : 'rgba(255,255,255,.06)', color: u.is_premium ? '#FFB84D' : '#666' }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 20, background: u.is_premium ? 'rgba(245,158,11,.15)' : 'rgba(255,255,255,.06)', color: u.is_premium ? '#F59E0B' : '#666' }}>
                         {u.is_premium ? '✨ Premium' : 'Free'}
                       </span>
                     </td>
@@ -311,9 +311,9 @@ export default function Admin() {
                         onClick={() => premiumMutation.mutate(u.id)}
                         style={{
                           fontSize: 11, fontWeight: 700, padding: '5px 12px', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap',
-                          background: u.is_premium ? 'rgba(255,91,91,.12)' : 'rgba(255,184,77,.12)',
-                          border: `1px solid ${u.is_premium ? 'rgba(255,91,91,.3)' : 'rgba(255,184,77,.3)'}`,
-                          color: u.is_premium ? '#FF5B5B' : '#FFB84D',
+                          background: u.is_premium ? 'rgba(236,72,153,.12)' : 'rgba(245,158,11,.12)',
+                          border: `1px solid ${u.is_premium ? 'rgba(236,72,153,.3)' : 'rgba(245,158,11,.3)'}`,
+                          color: u.is_premium ? '#EC4899' : '#F59E0B',
                           transition: 'all .15s',
                         }}>
                         {u.is_premium ? 'Revoke Premium' : 'Grant Premium'}
@@ -359,14 +359,14 @@ export default function Admin() {
               <div key={fam.id} style={{ marginTop: 16, padding: '16px 18px', borderRadius: 14, background: 'rgba(255,255,255,.02)', border: '1px solid rgba(255,255,255,.06)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, flexWrap:'wrap' }}>
                   <div style={{ fontSize: 15, fontWeight: 800, color: '#fff' }}>{fam.name}</div>
-                  <span style={{ fontSize: 11, fontWeight:700, color: '#a29bfe', background: 'rgba(108,99,255,.12)', borderRadius: 20, padding: '2px 9px', fontFamily:'monospace', letterSpacing:1 }}>{fam.family_code}</span>
+                  <span style={{ fontSize: 11, fontWeight:700, color: '#a29bfe', background: 'rgba(139,92,246,.12)', borderRadius: 20, padding: '2px 9px', fontFamily:'monospace', letterSpacing:1 }}>{fam.family_code}</span>
                   <span style={{ fontSize: 11, color: '#888', background: 'rgba(255,255,255,.05)', borderRadius: 20, padding: '2px 9px' }}>{fam.member_count} members</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {fam.members.map(m => (
                     <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 12px', borderRadius: 9, background: 'rgba(255,255,255,.03)' }}>
                       <span style={{ fontSize: 13, color: '#e0e0e0', fontWeight: 600 }}>{m.name}</span>
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: m.family_role === 'primary' ? 'rgba(255,184,77,.15)' : 'rgba(108,99,255,.15)', color: m.family_role === 'primary' ? '#FFB84D' : '#a29bfe' }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: m.family_role === 'primary' ? 'rgba(245,158,11,.15)' : 'rgba(139,92,246,.15)', color: m.family_role === 'primary' ? '#F59E0B' : '#a29bfe' }}>
                         {m.family_role === 'primary' ? '👑 Head' : 'Member'}
                       </span>
                       <span style={{ fontSize: 11.5, color: '#666', flex: 1 }}>{m.email}</span>

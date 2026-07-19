@@ -1,300 +1,390 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { budgetsAPI, categoriesAPI, transactionsAPI } from '../services/api';
-import { Topbar, PageLoader, ProgressBar, EmptyState } from '../components/ui';
-import { Plus, PieChart, AlertTriangle, CheckCircle } from 'lucide-react';
-import { useFmt, useT } from '../i18n';
+import { motion } from 'framer-motion';
+import {
+  BarChart, Bar, XAxis, YAxis, ResponsiveContainer, CartesianGrid, Tooltip,
+} from 'recharts';
+import {
+  Plus, Calendar, ChevronRight, ChevronDown, Lightbulb,
+  TrendingUp, CalendarClock, Target, MoreVertical,
+} from 'lucide-react';
+import { budgetsAPI, categoriesAPI, transactionsAPI, recurringAPI } from '../services/api';
+import { PageLoader } from '../components/ui';
+import { useFmt } from '../i18n';
 import useAuthStore from '../store/authStore';
 import usePremiumStore from '../store/premiumStore';
+import useThemeStore from '../store/themeStore';
+import styles from './Budget.module.css';
 
 const FREE_BUDGET_LIMIT = 3;
 
+/* ── Palette — derived from the shared dashboard theme ── */
+import { THEME } from '../theme';
+const DS = {
+  light: {
+    ...THEME.light,
+    card: THEME.light.cardBg, shadow: THEME.light.cardShadow,
+    overviewBg: THEME.light.flowBg, overviewBorder: THEME.light.flowBorder,
+  },
+  dark: {
+    ...THEME.dark,
+    card: THEME.dark.cardBg, shadow: THEME.dark.cardShadow,
+    overviewBg: THEME.dark.flowBg, overviewBorder: THEME.dark.flowBorder,
+  },
+  purple:'#8B5CF6', green:'#22C55E', pink:'#EC4899', orange:'#F59E0B', blue:'#3B82F6',
+};
+
+const spring = { type:'spring', stiffness:280, damping:28 };
+const containerVar = { hidden:{}, show:{ transition:{ staggerChildren:.07 } } };
+const cardVar = { hidden:{ opacity:0, y:22 }, show:{ opacity:1, y:0, transition:spring } };
+
+/* ── Gradient donut ring (74% Used) ── */
+function BudgetRing({ pct, t, glow }) {
+  const size = 150, stroke = 13, r = (size - stroke) / 2;
+  const circ = 2 * Math.PI * r;
+  const clamped = Math.min(100, Math.max(0, pct));
+  return (
+    <div style={{ position:'relative', width:size, height:size, flexShrink:0 }}>
+      <svg width={size} height={size} style={{ transform:'rotate(-90deg)' }}>
+        <defs>
+          <linearGradient id="budgetRing" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#8B5CF6"/>
+            <stop offset="100%" stopColor={t.green}/>
+          </linearGradient>
+          <filter id="ringGlow" x="-40%" y="-40%" width="180%" height="180%">
+            <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor={t.green} floodOpacity="0.45"/>
+          </filter>
+        </defs>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={t.track} strokeWidth={stroke}/>
+        <motion.circle cx={size/2} cy={size/2} r={r} fill="none"
+          filter={glow ? 'url(#ringGlow)' : undefined}
+          stroke="url(#budgetRing)" strokeWidth={stroke} strokeLinecap="round"
+          strokeDasharray={circ}
+          initial={{ strokeDashoffset: circ }}
+          animate={{ strokeDashoffset: circ - (clamped/100)*circ }}
+          transition={{ duration:1.1, ease:[.2,.8,.2,1], delay:.3 }}/>
+      </svg>
+      <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
+        <span style={{ fontSize:30, fontWeight:800, color:t.text, fontFamily:'Space Grotesk, Inter, sans-serif', letterSpacing:'-1px' }}>
+          {Math.round(clamped)}%
+        </span>
+        <span style={{ fontSize:13, color:t.text2 }}>Used</span>
+      </div>
+    </div>
+  );
+}
+
+/* ── Bar chart custom tick: emoji above label ── */
+function CatTick({ x, y, payload, data, color }) {
+  const item = data.find(d => d.name === payload.value);
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <text x={0} y={14} textAnchor="middle" fontSize={14}>{item?.emoji}</text>
+      <text x={0} y={32} textAnchor="middle" fontSize={10.5} fill={color}>{payload.value}</text>
+    </g>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════ */
 export default function Budget() {
   const qc = useQueryClient();
   const fmt = useFmt();
-  const t = useT();
   const { user } = useAuthStore();
   const { openPremium } = usePremiumStore();
+  const { theme } = useThemeStore();
+  const isDark = theme === 'dark';
+  const t = isDark ? DS.dark : DS.light;
+
   const [showModal, setShowModal] = useState(false);
   const [editBudget, setEditBudget] = useState(null);
 
-  const { data: budgets, isLoading } = useQuery({
+  const { data: apiBudgets, isLoading } = useQuery({
     queryKey: ['budgets'],
     queryFn: () => budgetsAPI.getAll().then(r => r.data.data),
   });
-
-  const atBudgetLimit = !user?.is_premium && (budgets||[]).length >= FREE_BUDGET_LIMIT;
-  const openAddBudget = () => atBudgetLimit ? openPremium() : (setEditBudget(null), setShowModal(true));
-
-  const deleteMutation = useMutation({
-    mutationFn: (id) => budgetsAPI.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['budgets'] }),
+  const { data: recurring } = useQuery({
+    queryKey: ['recurring'],
+    queryFn: () => recurringAPI.getAll().then(r => r.data.data),
+    staleTime: 5 * 60 * 1000,
   });
-
-  /* ── 6-month trend data for sparklines ── */
   const { data: trendTx } = useQuery({
     queryKey: ['budget-trend'],
     queryFn: () => transactionsAPI.getAll({ limit: 1000 }).then(r => r.data.data || []),
     staleTime: 5 * 60 * 1000,
   });
 
-  const { spendTrend, savingsTrend, budgetTrend, healthTrend } = useMemo(() => {
-    const now = new Date();
-    const spend = [], savings = [], budget = [], health = [];
-    for (let i = 5; i >= 0; i--) {
-      const yr = now.getFullYear(), mo = now.getMonth() - i;
-      const start = new Date(yr, mo, 1);
-      const end   = new Date(yr, mo + 1, 0, 23, 59, 59);
-      const slice = (trendTx || []).filter(tx => {
-        const d = new Date(tx.transaction_date);
-        return d >= start && d <= end;
-      });
-      const inc = slice.filter(tx => tx.type === 'income').reduce((s, tx) => s + parseFloat(tx.amount || 0), 0);
-      const exp = slice.filter(tx => tx.type === 'expense').reduce((s, tx) => s + parseFloat(tx.amount || 0), 0);
-      spend.push(exp);
-      savings.push(Math.max(0, inc - exp));
-      budget.push(inc);
-      // health: percentage of expense vs income (lower = healthier)
-      health.push(inc > 0 ? Math.min(100, Math.round((exp / inc) * 100)) : 0);
-    }
-    return { spendTrend: spend, savingsTrend: savings, budgetTrend: budget, healthTrend: health };
+  const budgets = apiBudgets || [];
+
+  const atBudgetLimit = !user?.is_premium && (apiBudgets||[]).length >= FREE_BUDGET_LIMIT;
+  const openAddBudget = () => atBudgetLimit ? openPremium() : (setEditBudget(null), setShowModal(true));
+
+  /* ── Totals ── */
+  const totalBudget = budgets.reduce((s,b) => s + parseFloat(b.amount||0), 0);
+  const totalSpent  = budgets.reduce((s,b) => s + parseFloat(b.spent||0),  0);
+  const totalPct    = totalBudget > 0 ? (totalSpent/totalBudget)*100 : 0;
+  const remaining   = Math.max(0, totalBudget - totalSpent);
+
+  const now = new Date();
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+  const daysLeft    = daysInMonth - now.getDate();
+  const daysElapsed = Math.max(1, now.getDate());
+  const dailyAvg    = Math.round(totalSpent / daysElapsed);
+  const dailyLeft   = daysLeft > 0 ? Math.round(remaining / daysLeft) : remaining;
+
+  const underCount  = budgets.filter(b => parseFloat(b.spent||0) < parseFloat(b.amount||0)).length;
+
+  /* ── Bar chart data ── */
+  const barData = budgets.slice(0,6).map(b => ({
+    name: b.name.length > 10 ? b.name.split(' ')[0] : b.name,
+    emoji: b.emoji || '💠',
+    Budget: parseFloat(b.amount||0),
+    Spent:  parseFloat(b.spent||0),
+  }));
+
+  /* ── Insights ── */
+  const { prevMonthSpent, thisMonthSpent } = useMemo(() => {
+    const cur = new Date(now.getFullYear(), now.getMonth(), 1);
+    const prev = new Date(now.getFullYear(), now.getMonth()-1, 1);
+    let a=0, b=0;
+    (trendTx||[]).forEach(tx => {
+      if (tx.type !== 'expense') return;
+      const d = new Date(tx.transaction_date);
+      if (d >= cur) a += parseFloat(tx.amount||0);
+      else if (d >= prev && d < cur) b += parseFloat(tx.amount||0);
+    });
+    return { thisMonthSpent:a, prevMonthSpent:b };
   }, [trendTx]);
 
-  const totalBudget  = (budgets||[]).reduce((s,b) => s + parseFloat(b.amount||0), 0);
-  const totalSpent   = (budgets||[]).reduce((s,b) => s + parseFloat(b.spent||0),  0);
-  const totalPct     = totalBudget > 0 ? (totalSpent/totalBudget)*100 : 0;
-  const remaining    = Math.max(0, totalBudget - totalSpent);
-  const atRisk       = (budgets||[]).filter(b => parseFloat(b.percentage) >= 85).length;
-  const onTrack      = (budgets||[]).filter(b => parseFloat(b.percentage) < 85).length;
-  const mostExpenses = [...(budgets||[])].sort((a,b) => b.spent - a.spent).slice(0,6);
+  const savedVsLast = Math.max(0, prevMonthSpent - thisMonthSpent);
+  const upcomingBills = (recurring||[]).filter(r => r.type === 'expense')
+    .reduce((s,r) => s + parseFloat(r.amount||0), 0);
+
+  const insightTiles = [
+    savedVsLast > 0
+      ? { Icon:TrendingUp,   color:t.green,  title:"You're saving more!", body:<>You've spent <b style={{ color:t.green }}>{fmt(savedVsLast,{noDecimals:true})}</b> less than last month.</> }
+      : { Icon:TrendingUp,   color:t.green,  title:'Spending pace',       body:<>Daily average is <b style={{ color:t.green }}>{fmt(dailyAvg,{noDecimals:true})}</b> this month.</> },
+    { Icon:CalendarClock, color:DS.purple, title:'Upcoming Bills', body: upcomingBills > 0
+        ? <><b style={{ color:DS.purple }}>{fmt(upcomingBills,{noDecimals:true})}</b> in recurring bills due this cycle.</>
+        : <>No recurring bills set up yet.</> },
+    { Icon:Target, color:DS.orange, title:'Budget Goal', body:<>You're on track to save <b style={{ color:DS.orange }}>{fmt(remaining,{noDecimals:true})}</b> this month.</> },
+  ];
 
   if (isLoading) return <PageLoader />;
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', height:'100%' }}>
+    <div className={styles.page} style={{ background:t.bg }}>
+      <motion.div className={styles.inner} variants={containerVar} initial="hidden" animate="show">
 
-      {/* Mobile header */}
-      <div className="mob-header">
-        <div>
-          <div className="mob-header-title">{t('budget_title')}</div>
-          <div className="mob-header-sub">{t('budget_sub')}</div>
-        </div>
-      </div>
-
-      {/* Desktop topbar */}
-      <div className="mob-hide">
-        <Topbar title={t('budget_title')} subtitle={t('budget_sub')}>
-          <button className="btn btn-primary btn-sm"
-            style={{ display:'flex', alignItems:'center', gap:6, background:'linear-gradient(135deg,#6C63FF,#5B8CFF)', border:'none', boxShadow:'0 4px 14px rgba(108,99,255,.35)' }}
-            onClick={openAddBudget}>
-            <Plus size={13}/> {t('budget_add')}
-          </button>
-        </Topbar>
-      </div>
-
-      <div className="mob-content" style={{ padding:'28px 32px 40px', flex:1, overflow:'auto' }}>
-
-        {/* Free-tier limit banner */}
-        {!user?.is_premium && (
-          <div style={{ display:'flex', alignItems:'center', gap:10, background: atBudgetLimit ? 'rgba(255,184,77,.12)' : 'rgba(108,99,255,.06)', borderRadius:12, padding:'10px 16px', marginBottom:18, border:`1px solid ${atBudgetLimit ? 'rgba(255,184,77,.3)' : 'rgba(108,99,255,.15)'}` }}>
-            <span style={{ fontSize:18 }}>{atBudgetLimit ? '⚠️' : '📊'}</span>
-            <span style={{ fontSize:12.5, color: atBudgetLimit ? '#b8860b' : 'var(--text3)', flex:1 }}>
-              {atBudgetLimit
-                ? <><strong style={{ color:'#FFB84D' }}>Budget limit reached</strong> — Free plan allows {FREE_BUDGET_LIMIT} budgets.</>
-                : <>{(budgets||[]).length} / {FREE_BUDGET_LIMIT} budgets used on free plan.</>}
-            </span>
-            {atBudgetLimit && (
-              <button onClick={openPremium} style={{ fontSize:12, fontWeight:700, padding:'5px 12px', borderRadius:8, border:'none', background:'#FFB84D', color:'#fff', cursor:'pointer' }}>
-                Upgrade ✨
-              </button>
-            )}
+        {/* ── Header ── */}
+        <motion.div className={styles.header} variants={cardVar}>
+          <div>
+            <h1 className={styles.h1} style={{ color:t.text }}>Budget</h1>
+            <div className={styles.sub} style={{ color:t.text2 }}>Plan smart. Spend wise. Achieve more.</div>
           </div>
-        )}
+          <div className={styles.headerBtns}>
+            <button className={styles.circleBtn} style={{ background:t.card, border:`1px solid ${t.border}` }}>
+              <Calendar size={19} color={t.text2}/>
+            </button>
+            <motion.button className={styles.circleBtn} whileTap={{ scale:.9 }}
+              style={{ background:'linear-gradient(180deg,#8B5CF6,#6D28D9)', border:'none', boxShadow:'0 8px 24px rgba(124,58,237,.35)' }}
+              onClick={openAddBudget}>
+              <Plus size={22} color="#fff"/>
+            </motion.button>
+          </div>
+        </motion.div>
 
-        {/* Summary row */}
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:14, marginBottom:24 }}>
-          {[
-            { label: t('budget_total'),     value: fmt(totalBudget,{noDecimals:true}), sub: t('dash_this_month'),           icon: <PieChart size={22} color="#6C63FF"/>,      bg:'rgba(108,99,255,.15)', color:'#6C63FF', border:'rgba(108,99,255,.2)' },
-            { label: t('budget_spent'),     value: fmt(totalSpent,{noDecimals:true}),  sub: `${totalPct.toFixed(0)}% used`, icon: <AlertTriangle size={22} color="#FF5B5B"/>, bg:'rgba(255,91,91,.15)',  color:'#FF5B5B', border:'rgba(255,91,91,.2)'  },
-            { label: t('budget_remaining'), value: fmt(remaining,{noDecimals:true}),   sub: 'Available to spend',           icon: <CheckCircle size={22} color="#00C896"/>,   bg:'rgba(0,200,150,.15)',  color:'#00C896', border:'rgba(0,200,150,.2)'  },
-            { label: t('budget_health'),    value: atRisk > 0 ? `${atRisk} At Risk` : `${onTrack} OK`, sub: atRisk > 0 ? 'Needs attention' : 'All on track',
-              icon: atRisk > 0 ? <AlertTriangle size={22} color="#FFB84D"/> : <CheckCircle size={22} color="#00C896"/>,
-              bg: atRisk > 0 ? 'rgba(255,184,77,.15)' : 'rgba(0,200,150,.15)',
-              color: atRisk > 0 ? '#FFB84D' : '#00C896',
-              border: atRisk > 0 ? 'rgba(255,184,77,.2)' : 'rgba(0,200,150,.2)',
-            },
-          ].map(({ label, value, sub, icon, bg, color, border }) => (
-            <div key={label} style={{
-              background:'var(--surface)', borderRadius:18, padding:'18px 20px',
-              boxShadow:'0 2px 16px rgba(108,99,255,.07)', border:`1px solid ${border}`,
-              display:'flex', flexDirection:'row', alignItems:'center', gap:16,
-            }}>
-              <div style={{ width:52, height:52, borderRadius:14, background:bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                {icon}
+        {/* ── Overview card ── */}
+        <motion.div className={styles.overview} variants={cardVar}
+          style={{ background:t.overviewBg, border:t.overviewBorder, boxShadow:t.glowShadow }}>
+          <div className={styles.overviewHead}>
+            <button className={styles.monthPill} style={{ color:t.text }}>
+              This Month <ChevronDown size={15} color={t.text3}/>
+            </button>
+            <ChevronRight size={17} color={t.text3}/>
+          </div>
+
+          <div className={styles.overviewBody}>
+            {/* left */}
+            <div className={styles.overviewLeft}>
+              <div style={{ fontSize:13.5, color:t.text2 }}>Total Budget</div>
+              <div className={styles.bigAmount} style={{ color:t.text }}>{fmt(totalBudget,{noDecimals:true})}</div>
+              <div style={{ fontSize:13.5, color:t.text2, marginTop:10 }}>Days Left</div>
+              <div style={{ fontSize:19, fontWeight:800, color:DS.purple, fontFamily:'Space Grotesk, Inter, sans-serif' }}>{daysLeft} Days</div>
+            </div>
+
+            {/* ring */}
+            <BudgetRing pct={totalPct} t={t} glow={isDark}/>
+
+            {/* right */}
+            <div className={styles.overviewRight}>
+              <div className={styles.statRow}>
+                <span className={styles.dot} style={{ background:DS.purple }}/>
+                <span style={{ flex:1, fontSize:13.5, color:t.text2 }}>Spent</span>
+                <span style={{ fontSize:14.5, fontWeight:800, color:t.text, fontFamily:'Space Grotesk, Inter, sans-serif' }}>{fmt(totalSpent,{noDecimals:true})}</span>
               </div>
-              <div style={{ display:'flex', flexDirection:'column', gap:2, minWidth:0, flex:1 }}>
-                <div style={{ fontSize:11, fontWeight:600, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.05em', whiteSpace:'nowrap' }}>{label}</div>
-                <div className="mono" style={{ fontSize:20, fontWeight:900, color, letterSpacing:-0.5, lineHeight:1.2, wordBreak:'break-all' }}>{value}</div>
-                <div style={{ fontSize:11.5, color:'var(--text3)', fontWeight:500 }}>{sub}</div>
+              <div className={styles.statRow}>
+                <span className={styles.dot} style={{ background:t.green }}/>
+                <span style={{ flex:1, fontSize:13.5, color:t.text2 }}>Remaining</span>
+                <span style={{ fontSize:14.5, fontWeight:800, color:t.text, fontFamily:'Space Grotesk, Inter, sans-serif' }}>{fmt(remaining,{noDecimals:true})}</span>
+              </div>
+              <div style={{ height:1, background:t.border, margin:'10px 0' }}/>
+              <div className={styles.statRow}>
+                <span style={{ flex:1, fontSize:13.5, color:t.text2 }}>Daily Average</span>
+                <span style={{ fontSize:14, fontWeight:700, color:t.text, fontFamily:'Space Grotesk, Inter, sans-serif' }}>{fmt(dailyAvg,{noDecimals:true})}</span>
+              </div>
+              <div className={styles.statRow}>
+                <span style={{ flex:1, fontSize:13.5, color:t.text2 }}>Daily Left</span>
+                <span style={{ fontSize:14, fontWeight:700, color:t.green, fontFamily:'Space Grotesk, Inter, sans-serif' }}>{fmt(dailyLeft,{noDecimals:true})}</span>
               </div>
             </div>
-          ))}
-        </div>
-
-        {/* Overall progress */}
-        <div style={{
-          background:'var(--surface)', borderRadius:20, padding:'20px 24px',
-          boxShadow:'0 4px 24px rgba(108,99,255,.08)', border:'1px solid var(--border-light)',
-          marginBottom:24,
-        }}>
-          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
-            <div style={{ fontSize:14, fontWeight:700, color:'var(--text)' }}>{t('budget_title')} Progress</div>
-            <span className="mono" style={{ fontSize:13, fontWeight:700, color:'var(--accent)' }}>{totalPct.toFixed(0)}% {t('budget_spent')}</span>
           </div>
-          <ProgressBar value={totalPct} color={totalPct >= 85 ? 'var(--red)' : totalPct >= 65 ? 'var(--amber)' : 'var(--accent)'} height={10}/>
-          <div style={{ display:'flex', justifyContent:'space-between', marginTop:8, fontSize:12, color:'var(--text3)', fontWeight:500 }}>
-            <span>{fmt(0,{noDecimals:true})}</span>
-            <span style={{ color:'var(--text2)' }}>{fmt(totalSpent,{noDecimals:true})} {t('budget_spent')} {t('common_of')} {fmt(totalBudget,{noDecimals:true})}</span>
-            <span>{fmt(totalBudget,{noDecimals:true})}</span>
-          </div>
-        </div>
+        </motion.div>
 
-        <div className="mob-grid-1col" style={{ display:'grid', gridTemplateColumns:'2fr 1fr', gap:16 }}>
-
-          {/* Budget cards grid */}
-          <div>
-            {!(budgets||[]).length ? (
-              <div style={{ background:'var(--surface)', borderRadius:20, boxShadow:'0 4px 24px rgba(108,99,255,.08)', border:'1px solid var(--border-light)' }}>
-                <EmptyState icon="📊" title={t('budget_empty')}
-                  description={t('budget_empty_desc')}
-                  action={<button className="btn btn-primary" onClick={() => setShowModal(true)}
-                    style={{ background:'linear-gradient(135deg,#6C63FF,#5B8CFF)', border:'none' }}>
-                    {t('budget_create')}
-                  </button>}/>
-              </div>
-            ) : (
-              <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:14 }}>
-                {(budgets||[]).map(b => {
-                  const pct = parseFloat(b.percentage||0);
-                  const isRisk = pct >= 85;
-                  const barColor = pct >= 85 ? 'var(--red)' : pct >= 65 ? 'var(--amber)' : (b.color || 'var(--accent)');
-                  return (
-                    <div key={b.id} style={{
-                      background:'var(--surface)', borderRadius:20, padding:'20px 22px',
-                      boxShadow:'0 4px 24px rgba(108,99,255,.08)', border:'1px solid var(--border-light)',
-                      position:'relative', overflow:'hidden', transition:'all .2s ease',
-                    }}
-                    onMouseEnter={e=>e.currentTarget.style.transform='translateY(-2px)'}
-                    onMouseLeave={e=>e.currentTarget.style.transform=''}>
-
-                      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16 }}>
-                        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                          <div style={{ width:38, height:38, borderRadius:12, background:(b.color||'#6C63FF')+'22', display:'flex', alignItems:'center', justifyContent:'center', fontSize:18 }}>
-                            {b.emoji}
-                          </div>
-                          <div>
-                            <div style={{ fontWeight:700, fontSize:14, color:'var(--text)' }}>{b.name}</div>
-                            <div style={{ fontSize:11, color:'var(--text3)', marginTop:1, textTransform:'capitalize' }}>{b.period}</div>
-                          </div>
-                        </div>
-                        <div style={{ display:'flex', gap:4 }}>
-                          <button onClick={() => { setEditBudget(b); setShowModal(true); }}
-                            style={{ background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:8, cursor:'pointer', padding:'5px 7px', fontSize:12 }}>✏️</button>
-                          <button onClick={() => { if(confirm(t('budget_delete_confirm'))) deleteMutation.mutate(b.id); }}
-                            style={{ background:'var(--red-light)', border:'1px solid rgba(255,91,91,.2)', borderRadius:8, cursor:'pointer', padding:'5px 7px', fontSize:12 }}>🗑️</button>
-                        </div>
-                      </div>
-
-                      <div style={{ display:'flex', alignItems:'center', gap:16, marginBottom:14 }}>
-                        {/* Progress ring */}
-                        <div style={{ position:'relative', flexShrink:0 }}>
-                          <svg width="64" height="64" viewBox="0 0 64 64">
-                            <circle cx="32" cy="32" r="26" fill="none" stroke="var(--surface3)" strokeWidth="7"/>
-                            <circle cx="32" cy="32" r="26" fill="none" stroke={barColor} strokeWidth="7"
-                              strokeDasharray={`${(pct/100)*163.4} 163.4`} strokeLinecap="round"
-                              transform="rotate(-90 32 32)" style={{ transition:'stroke-dasharray .6s ease' }}/>
-                          </svg>
-                          <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
-                            <span style={{ fontSize:12, fontWeight:800, color:'var(--text)' }}>{Math.round(pct)}%</span>
-                          </div>
-                        </div>
-                        <div>
-                          <div style={{ fontSize:11, color:'var(--text3)', marginBottom:2 }}>{t('budget_remaining')}</div>
-                          <div className="mono" style={{ fontSize:20, fontWeight:800, letterSpacing:-0.5, color:'var(--text)' }}>
-                            {fmt(b.remaining||0,{noDecimals:true})}
-                          </div>
-                          <div style={{ fontSize:11.5, color:'var(--text3)', fontFamily:'Space Grotesk, Inter, sans-serif', marginTop:2 }}>
-                            {t('common_of')} {fmt(b.amount||0,{noDecimals:true})}
-                          </div>
-                        </div>
-                      </div>
-
-                      <ProgressBar value={pct} color={barColor} height={6}/>
-                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:8 }}>
-                        <span style={{ fontSize:12, color:'var(--text3)' }}>
-                          {fmt(b.spent||0,{noDecimals:true})} {t('budget_spent')}
-                        </span>
-                        {isRisk ? (
-                          <span style={{ fontSize:11.5, color:'var(--amber)', fontWeight:700, display:'flex', alignItems:'center', gap:4 }}>
-                            <AlertTriangle size={11}/> {t('budget_over')}
-                          </span>
-                        ) : (
-                          <span style={{ fontSize:11.5, color:'var(--green)', fontWeight:700, display:'flex', alignItems:'center', gap:4 }}>
-                            <CheckCircle size={11}/> {t('budget_on_track')}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+        {/* ── Budget vs Actual ── */}
+        <motion.div className={styles.card} variants={cardVar}
+          style={{ background:t.card, border:`1px solid ${t.border}`, boxShadow:t.glowShadow }}>
+          <div className={styles.cardHead}>
+            <span className={styles.cardTitle} style={{ color:t.text }}>Budget vs Actual</span>
+            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+              <button className={styles.monthChip} style={{ background:t.surface, border:`1px solid ${t.border}`, color:t.text2 }}>
+                This Month <ChevronDown size={13}/>
+              </button>
+              <MoreVertical size={16} color={t.text3}/>
+            </div>
           </div>
 
-          {/* Right panel */}
-          <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
-
-            {/* Most expenses */}
-            <div style={{ background:'var(--surface)', borderRadius:20, padding:'20px 22px', boxShadow:'0 4px 24px rgba(108,99,255,.08)', border:'1px solid var(--border-light)' }}>
-              <div style={{ fontWeight:700, fontSize:14, color:'var(--text)', marginBottom:16, display:'flex', alignItems:'center', gap:8 }}>
-                <PieChart size={16} color="var(--accent)"/> {t('budget_spent')}
+          <div className={styles.legendTotals}>
+            <div>
+              <div style={{ display:'flex', alignItems:'center', gap:7 }}>
+                <span className={styles.dot} style={{ background:DS.purple }}/>
+                <span style={{ fontSize:12.5, color:t.text2 }}>Total Budget</span>
               </div>
-              {mostExpenses.map((b,i) => (
-                <div key={b.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'9px 0', borderBottom: i<mostExpenses.length-1 ? '1px solid var(--border-light)' : 'none' }}>
-                  <div style={{ width:30, height:30, borderRadius:9, background:(b.color||'#6C63FF')+'22', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0 }}>
-                    {b.emoji}
+              <div style={{ fontSize:19, fontWeight:800, color:t.text, fontFamily:'Space Grotesk, Inter, sans-serif', marginTop:2 }}>{fmt(totalBudget,{noDecimals:true})}</div>
+            </div>
+            <div>
+              <div style={{ display:'flex', alignItems:'center', gap:7 }}>
+                <span className={styles.dot} style={{ background:t.green }}/>
+                <span style={{ fontSize:12.5, color:t.text2 }}>Total Spent</span>
+              </div>
+              <div style={{ fontSize:19, fontWeight:800, color:t.text, fontFamily:'Space Grotesk, Inter, sans-serif', marginTop:2 }}>{fmt(totalSpent,{noDecimals:true})}</div>
+            </div>
+          </div>
+
+          <div style={{ height:220, marginTop:8 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={barData} margin={{ top:8, right:4, left:0, bottom:22 }} barGap={4}>
+                <CartesianGrid strokeDasharray="4 6" stroke={t.grid} vertical={false}/>
+                <XAxis dataKey="name" tickLine={false} axisLine={false} interval={0}
+                  tick={<CatTick data={barData} color={t.text3}/>} height={44}/>
+                <YAxis tickLine={false} axisLine={false} width={40}
+                  tick={{ fontSize:10.5, fill:t.text3 }}
+                  tickFormatter={v => v >= 1000 ? `₹${Math.round(v/1000)}K` : `₹${v}`}/>
+                <Tooltip cursor={{ fill:'rgba(139,92,246,.06)' }}
+                  contentStyle={{ background:t.card, border:`1px solid ${t.border}`, borderRadius:12, fontSize:12 }}
+                  labelStyle={{ color:t.text2 }} itemStyle={{ fontWeight:700 }}
+                  formatter={v => fmt(v,{noDecimals:true})}/>
+                <Bar dataKey="Budget" fill={DS.purple} radius={[5,5,0,0]} animationDuration={900}/>
+                <Bar dataKey="Spent"  fill={t.green}  radius={[5,5,0,0]} animationDuration={900} animationBegin={150}/>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+
+          {/* insight strip */}
+          <div className={styles.insightStrip} style={{ background:t.insightBg }}>
+            <div className={styles.bulb} style={{ background:DS.purple }}>
+              <Lightbulb size={17} color="#fff"/>
+            </div>
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ fontSize:14, fontWeight:700, color:t.text }}>Good going!</div>
+              <div style={{ fontSize:12.5, color:t.text2, marginTop:1 }}>
+                You're under budget in {underCount} of {budgets.length} categories.
+              </div>
+            </div>
+            <ChevronRight size={17} color={t.text3}/>
+          </div>
+        </motion.div>
+
+        {/* ── Budget by Category ── */}
+        <motion.div className={styles.card} variants={cardVar}
+          style={{ background:t.card, border:`1px solid ${t.border}`, boxShadow:t.shadow }}>
+          <div className={styles.cardHead}>
+            <span className={styles.cardTitle} style={{ color:t.text }}>Budget by Category</span>
+            <button className={styles.linkBtn} style={{ color:DS.purple }} onClick={openAddBudget}>Edit Budget</button>
+          </div>
+
+          <div className={styles.catList}>
+            {budgets.map((b,i) => {
+              const amt = parseFloat(b.amount||0), sp = parseFloat(b.spent||0);
+              const pct = amt > 0 ? Math.round((sp/amt)*100) : 0;
+              const over = sp > amt;
+              return (
+                <motion.div key={b.id} className={styles.catRow}
+                  initial={{ opacity:0, x:14 }} animate={{ opacity:1, x:0 }} transition={{ delay:.25+i*.06 }}
+                  onClick={()=>{ if (!b.demo) { setEditBudget(b); setShowModal(true); } }}>
+                  <div className={styles.catIcon} style={{ background:b.color||DS.purple }}>
+                    <span style={{ fontSize:17 }}>{b.emoji||'💠'}</span>
                   </div>
                   <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ fontSize:13, fontWeight:600, color:'var(--text)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{b.name}</div>
-                    <div style={{ width:'100%', height:3, background:'var(--surface3)', borderRadius:4, marginTop:5 }}>
-                      <div style={{ width:`${Math.min(100,parseFloat(b.percentage||0))}%`, height:'100%', background:b.color||'var(--accent)', borderRadius:4 }}/>
+                    <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:8 }}>
+                      <span style={{ fontSize:14.5, fontWeight:700, color:t.text, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{b.name}</span>
+                      <span style={{ fontSize:13.5, color:t.text2, whiteSpace:'nowrap', fontFamily:'Space Grotesk, Inter, sans-serif' }}>
+                        <b style={{ color:t.text }}>{fmt(sp,{noDecimals:true})}</b> / {fmt(amt,{noDecimals:true})}
+                      </span>
+                    </div>
+                    <div className={styles.catTrack} style={{ background:t.track }}>
+                      <motion.div style={{ height:'100%', borderRadius:99, background:b.color||DS.purple }}
+                        initial={{ width:0 }} animate={{ width:`${Math.min(100,pct)}%` }}
+                        transition={{ duration:.8, delay:.35+i*.06, ease:[.2,.8,.2,1] }}/>
                     </div>
                   </div>
-                  <span className="mono" style={{ fontSize:12.5, fontWeight:700, color:'var(--text)', flexShrink:0 }}>
-                    {fmt(b.spent||0,{noDecimals:true})}
-                  </span>
-                </div>
-              ))}
-              {!mostExpenses.length && (
-                <div style={{ fontSize:13, color:'var(--text3)', textAlign:'center', padding:'16px 0' }}>No spending data yet</div>
-              )}
-            </div>
-
-            {/* Tips card */}
-            <div style={{
-              background:'linear-gradient(135deg,#6C63FF 0%,#5B8CFF 100%)',
-              borderRadius:20, padding:'20px 22px', color:'#fff',
-              boxShadow:'0 8px 28px rgba(108,99,255,.3)',
-            }}>
-              <div style={{ fontSize:20, marginBottom:8 }}>💡</div>
-              <div style={{ fontSize:14, fontWeight:700, marginBottom:6 }}>Budget Tip</div>
-              <div style={{ fontSize:12.5, opacity:.85, lineHeight:1.6 }}>
-                Try the 50/30/20 rule: 50% needs, 30% wants, 20% savings. Small adjustments lead to big results!
-              </div>
-            </div>
+                  <span style={{ fontSize:13.5, fontWeight:800, color: over ? '#EF4444' : t.green, width:38, textAlign:'right', flexShrink:0 }}>{pct}%</span>
+                  <ChevronRight size={16} color={t.text3} style={{ flexShrink:0 }}/>
+                </motion.div>
+              );
+            })}
           </div>
-        </div>
-      </div>
+        </motion.div>
+
+        {/* ── Budget Insights ── */}
+        <motion.div className={styles.card} variants={cardVar}
+          style={{ background:t.card, border:`1px solid ${t.border}`, boxShadow:t.shadow }}>
+          <div className={styles.cardHead}>
+            <span className={styles.cardTitle} style={{ color:t.text }}>Budget Insights</span>
+            <button className={styles.linkBtn} style={{ color:DS.purple }}>View All</button>
+          </div>
+          <div className={styles.tiles}>
+            {insightTiles.map(({ Icon, color, title, body }, i) => (
+              <motion.div key={i} className={styles.tile}
+                style={{ background:t.surface, border:`1px solid ${t.border}` }}
+                initial={{ opacity:0, y:14 }} animate={{ opacity:1, y:0 }} transition={{ delay:.35+i*.09 }}
+                whileHover={{ y:-3 }}>
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                  <div className={styles.tileIcon} style={{ background:color }}>
+                    <Icon size={18} color="#fff"/>
+                  </div>
+                  <ChevronRight size={16} color={t.text3}/>
+                </div>
+                <div style={{ fontSize:14.5, fontWeight:700, color:t.text, marginTop:12 }}>{title}</div>
+                <div style={{ fontSize:12.5, color:t.text2, marginTop:4, lineHeight:1.5 }}>{body}</div>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
+        {budgets.length === 0 && (
+          <motion.div variants={cardVar}
+            style={{ textAlign:'center', padding:'40px 20px', background:t.card, border:`1px solid ${t.border}`, borderRadius:20, boxShadow:t.shadow }}>
+            <div style={{ fontSize:38, marginBottom:12 }}>🎯</div>
+            <div style={{ fontSize:16, fontWeight:700, color:t.text }}>No budgets yet</div>
+            <div style={{ fontSize:13, color:t.text2, marginTop:4, marginBottom:16 }}>Set monthly limits per category to stay on track</div>
+            <button onClick={openAddBudget}
+              style={{ padding:'12px 22px', borderRadius:14, border:'none', cursor:'pointer', fontSize:14, fontWeight:700,
+                background:'linear-gradient(180deg,#8B5CF6,#6D28D9)', color:'#fff', boxShadow:'0 8px 24px rgba(124,58,237,.35)' }}>
+              + Create Budget
+            </button>
+          </motion.div>
+        )}
+      </motion.div>
 
       {showModal && (
         <BudgetModal
@@ -303,21 +393,17 @@ export default function Budget() {
           onSaved={() => { qc.invalidateQueries({ queryKey:['budgets'] }); setShowModal(false); setEditBudget(null); }}
         />
       )}
-
-      {/* Mobile FAB */}
-      <button className="mob-fab" onClick={() => { setEditBudget(null); setShowModal(true); }}>
-        <Plus size={26} color="#fff"/>
-      </button>
     </div>
   );
 }
 
+/* ═══ Existing modal (unchanged) ═════════════════════════════════════════ */
 function BudgetModal({ budget, onClose, onSaved }) {
   const [form, setForm] = useState({
     name:       budget?.name       || '',
     amount:     budget?.amount     || '',
     emoji:      budget?.emoji      || '📌',
-    color:      budget?.color      || '#6C63FF',
+    color:      budget?.color      || '#8B5CF6',
     category_id:budget?.category_id|| '',
     period:     budget?.period     || 'monthly',
     start_date: budget?.start_date || new Date().toISOString().split('T')[0],
@@ -332,7 +418,7 @@ function BudgetModal({ budget, onClose, onSaved }) {
     onError: (e) => setError(e.response?.data?.message || 'Error saving budget'),
   });
 
-  const PRESET_COLORS = ['#6C63FF','#5B8CFF','#37D67A','#FFB84D','#FF5B5B','#FF79A8','#00C896','#A29BFE'];
+  const PRESET_COLORS = ['#8B5CF6','#3B82F6','#22C55E','#F59E0B','#EC4899','#FF79A8','#00C896','#A29BFE'];
 
   return (
     <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
@@ -346,7 +432,7 @@ function BudgetModal({ budget, onClose, onSaved }) {
         </div>
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
           <div className="form-group">
-            <label className="form-label">Amount ($)</label>
+            <label className="form-label">Amount (₹)</label>
             <input className="form-input" type="number" value={form.amount} onChange={e=>setForm(f=>({...f,amount:e.target.value}))} placeholder="500"/>
           </div>
           <div className="form-group">
@@ -390,7 +476,7 @@ function BudgetModal({ budget, onClose, onSaved }) {
         <div style={{ display:'flex', gap:10, marginTop:8, justifyContent:'flex-end' }}>
           <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
           <button className="btn btn-primary" disabled={mutation.isPending} onClick={()=>mutation.mutate(form)}
-            style={{ background:'linear-gradient(135deg,#6C63FF,#5B8CFF)', border:'none', boxShadow:'0 4px 14px rgba(108,99,255,.35)' }}>
+            style={{ background:'linear-gradient(135deg,#8B5CF6,#3B82F6)', border:'none', boxShadow:'0 4px 14px rgba(139,92,246,.35)' }}>
             {mutation.isPending ? 'Saving…' : budget ? 'Update Budget' : 'Create Budget'}
           </button>
         </div>

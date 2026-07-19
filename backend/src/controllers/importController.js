@@ -716,6 +716,9 @@ const confirmImport = async (req, res) => {
     const userId = req.user.userId;
     let imported = 0, skipped = 0;
 
+    // Track per-wallet balance delta so we can apply one UPDATE per wallet at the end
+    const walletDelta = {}; // { wallet_id: delta }
+
     for (const tx of transactions) {
       if (tx.skip || tx.status === 'matched') { skipped++; continue; }
 
@@ -727,13 +730,15 @@ const confirmImport = async (req, res) => {
         if (exists.rows.length) { skipped++; continue; }
       }
 
+      const wid = tx.wallet_id || wallet_id || null;
+
       await query(`
         INSERT INTO transactions
           (user_id, wallet_id, category_id, type, amount, description, payment_name, status, transaction_date)
         VALUES ($1,$2,$3,$4,$5,$6,$7,'completed',$8)
       `, [
         userId,
-        wallet_id || null,
+        wid,
         tx.category_id || null,
         tx.type,
         tx.amount,
@@ -741,10 +746,27 @@ const confirmImport = async (req, res) => {
         tx.ref_number || null,
         tx.date,
       ]);
+
+      // Accumulate balance change for the wallet
+      if (wid) {
+        const sign = tx.type === 'income' ? 1 : -1;
+        walletDelta[wid] = (walletDelta[wid] || 0) + sign * parseFloat(tx.amount);
+      }
+
       imported++;
     }
 
-    res.json({ success:true, data: { imported, skipped, total: transactions.length } });
+    // Apply wallet balance updates in one pass
+    for (const [wid, delta] of Object.entries(walletDelta)) {
+      if (delta !== 0) {
+        await query(
+          'UPDATE wallets SET balance = balance + $1 WHERE id=$2 AND user_id=$3',
+          [delta, wid, userId]
+        );
+      }
+    }
+
+    res.json({ success:true, data: { imported, skipped, total: transactions.length, wallet_updated: Object.keys(walletDelta).length } });
   } catch (err) {
     console.error('Import confirm error:', err);
     res.status(500).json({ success:false, message: err.message });

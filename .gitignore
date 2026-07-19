@@ -21,3 +21,13 @@ start.ps1
 
 backend/*.traineddata
 *.traineddata
+
+# Build artifacts & local dev scripts
+*.apk
+serve_apk.js
+frontend/android/
+backend/check_api.js
+backend/check_types.js
+backend/gen_token.js
+backend/seed_demo.js
+backend/verify_seed.js

@@ -1,0 +1,303 @@
+/* ═══════════════════════════════════════════════════════════
+   Accounts — reference design (light + dark), colors inline
+═══════════════════════════════════════════════════════════ */
+
+.page {
+  min-height: 100%;
+  overflow-y: auto;
+  transition: background .25s ease;
+}
+
+.inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 28px 32px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Header ── */
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.h1 {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.6px;
+  margin: 0;
+  line-height: 1.15;
+}
+
+.sub { font-size: 14px; margin-top: 4px; }
+
+.headerBtns {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.circleBtn {
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ── Overview card ── */
+.overview {
+  display: grid;
+  grid-template-columns: 1fr 1px 1.35fr;
+  gap: 20px;
+  padding: 20px;
+  border-radius: 20px;
+  align-items: center;
+}
+
+.overviewLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.bigAmount {
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  font-family: 'Space Grotesk', Inter, sans-serif;
+  line-height: 1.1;
+}
+
+.overviewDivider {
+  width: 1px;
+  align-self: stretch;
+}
+
+.overviewRight { min-width: 0; }
+
+.donutRow {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 16px;
+  align-items: center;
+}
+
+.donutBox {
+  width: 120px;
+  aspect-ratio: 1 / 1;
+  min-width: 0;
+}
+
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.legendRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.legendDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legendName {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.legendVal {
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'Space Grotesk', Inter, sans-serif;
+  white-space: nowrap;
+}
+
+.legendPct {
+  font-size: 12.5px;
+  font-weight: 600;
+  width: 34px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── Filter chips ── */
+.chips {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+.chips::-webkit-scrollbar { display: none; }
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  font-size: 13.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  font-family: inherit;
+  flex-shrink: 0;
+  transition: all .15s cubic-bezier(.2,.8,.2,1);
+}
+
+/* ── Group cards ── */
+.groupCard {
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.groupHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 16px 20px;
+  cursor: pointer;
+}
+
+.groupIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.groupTitle {
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.groupTotalLabel {
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.groupTotalAmt {
+  font-size: 15px;
+  font-weight: 800;
+  font-family: 'Space Grotesk', Inter, sans-serif;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.collapseBtn {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  cursor: pointer;
+  transition: background .15s;
+}
+
+.rowIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.rowName {
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.primaryBadge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(124,58,237,.14);
+  color: #8B5CF6;
+  flex-shrink: 0;
+}
+
+.groupFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  cursor: pointer;
+}
+
+/* ═══ Responsive ═══ */
+@media (max-width: 768px) {
+  .inner { padding: 14px 14px 104px; gap: 11px; }
+
+  .h1  { font-size: 20px; }
+  .sub { font-size: 12px; }
+
+  .overview {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 15px;
+  }
+  .overviewDivider { width: 100%; height: 1px; align-self: auto; }
+  .bigAmount { font-size: 23px; }
+
+  .donutRow { grid-template-columns: 104px 1fr; gap: 12px; }
+  .donutBox { width: 104px; }
+
+  .legendName { font-size: 12px; }
+  .legendVal  { font-size: 12px; }
+  .legendPct  { font-size: 11.5px; }
+
+  .chip { padding: 9px 13px; font-size: 12.5px; }
+
+  .groupHead { padding: 12px 15px; gap: 8px; }
+  .groupTitle { font-size: 14px; }
+  .groupTotalLabel { font-size: 11.5px; }
+  .groupTotalAmt { font-size: 13.5px; }
+  .row       { padding: 11px 15px; gap: 11px; }
+  .rowIcon   { width: 38px; height: 38px; }
+  .rowName   { font-size: 13.5px; }
+  .groupFoot { padding: 11px 15px; }
+}
