@@ -10,6 +10,7 @@ import useThemeStore from '../store/themeStore';
 import styles from './Transactions.module.css';
 import PaymentLogo from '../components/PaymentLogo';
 import { MerchantLogo, CategoryIcon } from '../components/icons';
+import { invalidateFinance, resetFinance } from '../lib/cache';
 
 /* ── Payment method definitions ──────────────────────────────────────── */
 // walletTypes: which wallet types are shown in the account dropdown
@@ -456,7 +457,7 @@ export default function Transactions() {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => transactionsAPI.delete(id),
-    onSuccess:  () => qc.invalidateQueries({ queryKey: ['transactions'] }),
+    onSuccess:  () => invalidateFinance(qc),
   });
 
   // Bulk select state
@@ -477,12 +478,14 @@ export default function Transactions() {
     }
     setSelectedIds(new Set());
     setBulkDeleting(false);
-    qc.invalidateQueries({ queryKey: ['transactions'] });
+    // Bulk destructive change → drop cached copies outright so nothing stale
+    // can be re-served from the persisted localStorage snapshot.
+    resetFinance(qc);
   };
 
   const patchCatMutation = useMutation({
     mutationFn: ({ txId, catId }) => transactionsAPI.update(txId, { category_id: catId || null }),
-    onSuccess:  () => qc.invalidateQueries({ queryKey: ['transactions'] }),
+    onSuccess:  () => invalidateFinance(qc),
   });
 
   const { data: categories } = useQuery({
@@ -1044,13 +1047,13 @@ export default function Transactions() {
           initialType={editTx ? undefined : addType}
           onClose={() => { setShowModal(false); setEditTx(null); setAddType(null); }}
           onSaved={() => {
-            qc.invalidateQueries({ queryKey:['transactions'] });
-            qc.invalidateQueries({ queryKey:['dashboard-summary'] });
+            invalidateFinance(qc);
+            invalidateFinance(qc);
             setShowModal(false);
           }}
           onDelete={(id) => {
             deleteMutation.mutate(id);
-            qc.invalidateQueries({ queryKey:['dashboard-summary'] });
+            invalidateFinance(qc);
             setShowModal(false);
             setEditTx(null);
           }}
@@ -1312,8 +1315,8 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
           });
         }
 
-        qc.invalidateQueries({ queryKey: ['transactions'] });
-        qc.invalidateQueries({ queryKey: ['wallets'] });
+        invalidateFinance(qc);
+        invalidateFinance(qc);
         // Show bill attachment step — don't call onSaved/onClose yet
         if (newTxId) {
           setSavedTxId({ id: newTxId, name: mainPayName || note || 'Transaction' });
@@ -1325,8 +1328,8 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
         return;
       }
 
-      qc.invalidateQueries({ queryKey: ['transactions'] });
-      qc.invalidateQueries({ queryKey: ['wallets'] });
+      invalidateFinance(qc);
+      invalidateFinance(qc);
       onSaved?.();
       onClose();
     } catch(e) {

@@ -20,6 +20,7 @@ const FREE_BUDGET_LIMIT = 3;
 
 /* ── Palette — derived from the shared dashboard theme ── */
 import { THEME } from '../theme';
+import { invalidateFinance } from '../lib/cache';
 const DS = {
   light: {
     ...THEME.light,
@@ -390,7 +391,7 @@ export default function Budget() {
         <BudgetModal
           budget={editBudget}
           onClose={() => { setShowModal(false); setEditBudget(null); }}
-          onSaved={() => { qc.invalidateQueries({ queryKey:['budgets'] }); setShowModal(false); setEditBudget(null); }}
+          onSaved={() => { invalidateFinance(qc); setShowModal(false); setEditBudget(null); }}
         />
       )}
     </div>

@@ -4,6 +4,7 @@ import { Plus, Edit2, Trash2, ToggleLeft, ToggleRight, RefreshCw, Calendar, Repe
 import { recurringAPI, walletsAPI, categoriesAPI } from '../services/api';
 import { Topbar } from '../components/ui';
 import { useFmt, useT } from '../i18n';
+import { invalidateFinance } from '../lib/cache';
 
 const FREQ_COLORS = {
   daily:   { bg: 'rgba(59,130,246,.12)',  color: '#3B82F6' },
@@ -181,15 +182,15 @@ export default function Recurring() {
 
   const createMut = useMutation({
     mutationFn: (data) => recurringAPI.create(data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['recurring'] }),
+    onSuccess: () => invalidateFinance(qc),
   });
   const updateMut = useMutation({
     mutationFn: ({ id, data }) => recurringAPI.update(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['recurring'] }),
+    onSuccess: () => invalidateFinance(qc),
   });
   const deleteMut = useMutation({
     mutationFn: (id) => recurringAPI.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['recurring'] }),
+    onSuccess: () => invalidateFinance(qc),
   });
 
   const handleSave = (form) => {
@@ -212,8 +213,8 @@ export default function Recurring() {
       const res = await recurringAPI.process();
       const cnt = res.data.processed;
       alert(`Processed ${cnt} recurring transaction${cnt !== 1 ? 's' : ''}`);
-      qc.invalidateQueries({ queryKey: ['recurring'] });
-      qc.invalidateQueries({ queryKey: ['transactions'] });
+      invalidateFinance(qc);
+      invalidateFinance(qc);
     } catch (e) {
       alert('Failed to process');
     } finally {

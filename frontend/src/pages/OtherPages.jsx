@@ -107,7 +107,7 @@ export function Wallet() {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => walletsAPI.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['wallets'] }),
+    onSuccess: () => invalidateFinance(qc),
   });
 
   if (isLoading) return <PageLoader />;
@@ -424,7 +424,7 @@ export function Wallet() {
       {showModal && (
         <AddWalletModal
           onClose={() => setShowModal(false)}
-          onSaved={() => { qc.invalidateQueries({ queryKey:['wallets'] }); setShowModal(false); }}
+          onSaved={() => { invalidateFinance(qc); setShowModal(false); }}
         />
       )}
 
@@ -1138,6 +1138,7 @@ import { useFmt as useFmtHook } from '../i18n';
 import { useT as useT2 } from '../i18n';
 import { User, Globe, Bell, Shield, ChevronRight as Chevron, Download, Trash2, Crown, Check, AlertTriangle, Eye, EyeOff, Key } from 'lucide-react';
 import usePremiumStore from '../store/premiumStore';
+import { invalidateFinance } from '../lib/cache';
 
 export function Settings() {
   const { user, updateUser } = useAuthStore2();
@@ -1528,7 +1529,13 @@ function ResetModal({ scope, onClose }) {
 
   const mutation = useMutation2({
     mutationFn: () => dataAPI.reset(scope),
-    onSuccess: () => { setDone(true); setTimeout(() => { onClose(); window.location.reload(); }, 1800); },
+    onSuccess: () => {
+      setDone(true);
+      // Drop the persisted query cache too — otherwise the reload below restores
+      // the deleted data straight back out of localStorage.
+      try { window.localStorage.removeItem('tracksy-cache'); } catch {}
+      setTimeout(() => { onClose(); window.location.reload(); }, 1800);
+    },
   });
 
   return (
@@ -1702,8 +1709,8 @@ function GmailSection({ user, openPremium }) {
     onSuccess: (r) => {
       setSyncResult(r.data.data);
       qc.invalidateQueries({ queryKey: ['gmail-status'] });
-      qc.invalidateQueries({ queryKey: ['transactions'] });
-      qc.invalidateQueries({ queryKey: ['dashboard-summary'] });
+      invalidateFinance(qc);
+      invalidateFinance(qc);
     },
   });
   const disconnectMut = useMutation2({

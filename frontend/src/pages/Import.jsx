@@ -5,6 +5,7 @@ import { Topbar } from '../components/ui';
 import { Upload, FileText, CheckCircle, AlertCircle, X, Check, GitMerge, ScanSearch, Camera } from 'lucide-react';
 import { useT, useFmt } from '../i18n';
 import PaymentLogo from '../components/PaymentLogo';
+import { invalidateFinance } from '../lib/cache';
 
 const SOURCE_OPTIONS = [
   { id:'hdfc',    label:'HDFC Bank',   logo:'bank',    color:'#003087', hint:'NetBanking → Statements → Download CSV / TXT' },
@@ -121,9 +122,9 @@ export default function Import() {
     onSuccess: (data) => {
       setResult(data.data);
       setStep(4);
-      qc.invalidateQueries({ queryKey: ['transactions'] });
-      qc.invalidateQueries({ queryKey: ['dashboard-summary'] });
-      qc.invalidateQueries({ queryKey: ['wallets'] });
+      invalidateFinance(qc);
+      invalidateFinance(qc);
+      invalidateFinance(qc);
     },
   });
 
@@ -690,9 +691,9 @@ export default function Import() {
           onClose={() => setScanned(null)}
           onSaved={() => {
             setScanned(null);
-            qc.invalidateQueries({ queryKey:['transactions'] });
-            qc.invalidateQueries({ queryKey:['dashboard-summary'] });
-            qc.invalidateQueries({ queryKey:['wallets'] });
+            invalidateFinance(qc);
+            invalidateFinance(qc);
+            invalidateFinance(qc);
           }}
         />
       )}

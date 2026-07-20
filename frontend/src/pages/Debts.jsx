@@ -17,6 +17,7 @@ import { useFmt as useFmtHook, useT } from '../i18n';
 import useThemeStore from '../store/themeStore';
 import { THEME } from '../theme';
 import styles from './Accounts.module.css';
+import { invalidateFinance } from '../lib/cache';
 
 const DEBT_TYPES = ['visa','mastercard','home_loan','vehicle_loan','personal_loan','gold_loan','education_loan','loan','bnpl','family_borrow','emi','lending'];
 
@@ -99,7 +100,7 @@ export default function Debts() {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => walletsAPI.delete(id),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['wallets'] }); setActiveDebt(null); },
+    onSuccess: () => { invalidateFinance(qc); setActiveDebt(null); },
   });
 
   const apiDebts = (allWallets || []).filter(w => DEBT_TYPES.includes(w.type));
@@ -362,7 +363,7 @@ export default function Debts() {
       {showModal && (
         <DebtModal debt={editDebt}
           onClose={() => { setShowModal(false); setEditDebt(null); }}
-          onSaved={() => { qc.invalidateQueries({ queryKey:['wallets'] }); setShowModal(false); setEditDebt(null); }}/>
+          onSaved={() => { invalidateFinance(qc); setShowModal(false); setEditDebt(null); }}/>
       )}
     </div>
   );

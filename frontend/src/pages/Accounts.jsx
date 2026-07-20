@@ -13,6 +13,7 @@ import { useFmt } from '../i18n';
 import { THEME } from '../theme';
 import ThemedSelect from '../components/ThemedSelect';
 import styles from './Accounts.module.css';
+import { invalidateFinance } from '../lib/cache';
 
 /* ── Palette — derived from the shared dashboard theme ─────────────────── */
 const DS = {
@@ -319,14 +320,14 @@ export default function Accounts() {
         <AccountModal
           mode={modal.mode} wallet={modal.wallet} t={t} isDark={isDark}
           onClose={()=>setModal(null)}
-          onSaved={()=>{ qc.invalidateQueries({ queryKey:['wallets'] }); setModal(null); }}
+          onSaved={()=>{ invalidateFinance(qc); setModal(null); }}
           onPay={(w)=>{ setModal(null); setPayWallet(w); }}
         />
       )}
       {payWallet && (
         <PaymentModal wallet={payWallet} t={t} isDark={isDark} accounts={wallets.filter(w=>!GROUPS[2].types.concat(GROUPS[3].types).includes(w.type))}
           onClose={()=>setPayWallet(null)}
-          onSaved={()=>{ qc.invalidateQueries({ queryKey:['wallets'] }); qc.invalidateQueries({ queryKey:['transactions'] }); setPayWallet(null); }}
+          onSaved={()=>{ invalidateFinance(qc); invalidateFinance(qc); setPayWallet(null); }}
         />
       )}
     </div>
@@ -471,9 +472,12 @@ function AccountModal({ mode, wallet, t, isDark, onClose, onSaved, onPay }) {
   return (
     <>
       <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.55)', zIndex:300, backdropFilter:'blur(4px)' }}/>
+      {/* Flex wrapper centres the modal — framer-motion animates transform, so we
+          must NOT rely on translate(-50%,-50%) for centring (it gets overwritten). */}
+      <div style={{ position:'fixed', inset:0, zIndex:301, display:'flex', alignItems:'center',
+        justifyContent:'center', padding:16, pointerEvents:'none' }}>
       <motion.div initial={{ opacity:0, y:40, scale:.97 }} animate={{ opacity:1, y:0, scale:1 }} transition={spring}
-        style={{ position:'fixed', left:'50%', top:'50%', transform:'translate(-50%,-50%)', zIndex:301,
-          width:'min(460px, calc(100vw - 32px))', background:t.card, borderRadius:24,
+        style={{ width:'min(460px, 100%)', background:t.card, borderRadius:24, pointerEvents:'auto',
           border:`1px solid ${t.border}`, boxShadow:'0 30px 80px rgba(0,0,0,.25)', padding:20,
           display:'flex', flexDirection:'column', gap:14, maxHeight:'88vh', overflowY:'auto' }}>
 
@@ -671,6 +675,7 @@ function AccountModal({ mode, wallet, t, isDark, onClose, onSaved, onPay }) {
           </button>
         )}
       </motion.div>
+      </div>
     </>
   );
 }
@@ -711,9 +716,10 @@ function PaymentModal({ wallet, t, isDark, accounts, onClose, onSaved }) {
   return (
     <>
       <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.55)', zIndex:400, backdropFilter:'blur(4px)' }}/>
+      <div style={{ position:'fixed', inset:0, zIndex:401, display:'flex', alignItems:'center',
+        justifyContent:'center', padding:16, pointerEvents:'none' }}>
       <motion.div initial={{ opacity:0, y:40, scale:.97 }} animate={{ opacity:1, y:0, scale:1 }} transition={spring}
-        style={{ position:'fixed', left:'50%', top:'50%', transform:'translate(-50%,-50%)', zIndex:401,
-          width:'min(440px, calc(100vw - 32px))', background:t.cardBg, borderRadius:24,
+        style={{ width:'min(440px, 100%)', background:t.cardBg, borderRadius:24, pointerEvents:'auto',
           border:`1px solid ${t.border}`, boxShadow:'0 30px 80px rgba(0,0,0,.3)', padding:20,
           display:'flex', flexDirection:'column', gap:16, maxHeight:'88vh', overflowY:'auto' }}>
 
@@ -776,6 +782,7 @@ function PaymentModal({ wallet, t, isDark, accounts, onClose, onSaved }) {
           {busy ? 'Recording…' : 'Record Payment'}
         </button>
       </motion.div>
+      </div>
     </>
   );
 }

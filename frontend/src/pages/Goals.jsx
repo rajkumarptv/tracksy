@@ -12,6 +12,7 @@ import usePremiumStore from '../store/premiumStore';
 import useThemeStore from '../store/themeStore';
 import { THEME } from '../theme';
 import styles from './Goals.module.css';
+import { invalidateFinance } from '../lib/cache';
 
 const FREE_GOAL_LIMIT = 3;
 
@@ -135,7 +136,7 @@ export default function Goals() {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => goalsAPI.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey:['goals'] }),
+    onSuccess: () => invalidateFinance(qc),
   });
 
   if (isLoading) return <PageLoader />;
@@ -364,8 +365,8 @@ export default function Goals() {
 
       </motion.div>
 
-      {showModal && <GoalModal goal={editGoal} onClose={()=>{setShowModal(false);setEditGoal(null);}} onSaved={()=>{qc.invalidateQueries({queryKey:['goals']});setShowModal(false);setEditGoal(null);}}/>}
-      {showFunds && <AddFundsModal goal={showFunds} onClose={()=>setShowFunds(null)} onSaved={()=>{qc.invalidateQueries({queryKey:['goals']});setShowFunds(null);}}/>}
+      {showModal && <GoalModal goal={editGoal} onClose={()=>{setShowModal(false);setEditGoal(null);}} onSaved={()=>{invalidateFinance(qc);setShowModal(false);setEditGoal(null);}}/>}
+      {showFunds && <AddFundsModal goal={showFunds} onClose={()=>setShowFunds(null)} onSaved={()=>{invalidateFinance(qc);setShowFunds(null);}}/>}
     </div>
   );
 }

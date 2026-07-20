@@ -337,8 +337,8 @@ export default function Dashboard() {
                 </div>
               </div>
               <div style={{ textAlign:'right', cursor:'pointer' }} onClick={()=>navigate('/accounts')}>
-                <div className={styles.numLg} style={{ color:c.text }}>
-                  <CountUp value={selectedAcc ? salaryBal : balance} fmt={fmt}/>
+                <div className={styles.numLg} style={{ color: (selectedAcc ? salaryBal : balance) < 0 ? c.red : c.text }}>
+                  {(selectedAcc ? salaryBal : balance) < 0 && '−'}<CountUp value={selectedAcc ? salaryBal : balance} fmt={fmt}/>
                 </div>
                 <div style={{ fontSize:12.5, color:c.text2, marginTop:2 }}>Available Balance</div>
               </div>
@@ -405,8 +405,8 @@ export default function Dashboard() {
                 <PeriodPill label="This Month" c={c} isDark={isDark}/>
               </div>
 
-              <div className={styles.balanceBig} style={{ color:c.text }}>
-                <CountUp value={balance} fmt={fmt}/>
+              <div className={styles.balanceBig} style={{ color: balance < 0 ? c.red : c.text }}>
+                {balance < 0 && '−'}<CountUp value={balance} fmt={fmt}/>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:6 }}>
                 <span style={{ color: balUp?c.green:c.red, fontWeight:700, fontSize:14, display:'flex', alignItems:'center', gap:4 }}>
