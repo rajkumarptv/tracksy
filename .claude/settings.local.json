@@ -190,7 +190,17 @@
       "Bash(curl -s -o /dev/null -m 8 -w \"%{http_code}\\\\n\" http://localhost:5000/)",
       "Bash(curl -s -o /dev/null -m 20 -w \"%{http_code}\\\\n\" https://pc.topfindstoday.in/)",
       "Bash(curl -s -o /dev/null -m 20 -X POST https://pc.topfindstoday.in/api/auth/login -H \"Content-Type: application/json\" -d '{\"email\":\"rajkumar.ptv@gmail.com\",\"password\":\"demo1234\"}' -w \"%{http_code}\\\\n\")",
-      "Bash(xargs grep -ln \"export function useFmt\\\\|export const useFmt\")"
+      "Bash(xargs grep -ln \"export function useFmt\\\\|export const useFmt\")",
+      "Bash(curl -s -o /dev/null -m 5 http://localhost:5000/)",
+      "Bash(curl -s -o /dev/null -m 25 -w \"%{http_code}\\\\n\" https://pc.topfindstoday.in/)",
+      "Bash(curl -s -o /dev/null -m 25 -X POST https://pc.topfindstoday.in/api/auth/login -H \"Content-Type: application/json\" -d '{\"email\":\"rajkumar.ptv@gmail.com\",\"password\":\"demo1234\"}' -w \"%{http_code}\\\\n\")",
+      "Bash(node -e \"const p=require\\('./backend/package.json'\\);console.log\\(Object.keys\\(p.dependencies\\).join\\(', '\\)\\)\")",
+      "Bash(curl -s -o /dev/null -m 10 -w \"%{http_code}\\\\n\" http://localhost:5000/)",
+      "Bash(curl -s -o /dev/null -m 15 -X POST http://localhost:5000/api/auth/login -H \"Content-Type: application/json\" -d '{\"email\":\"rajkumar.ptv@gmail.com\",\"password\":\"demo1234\"}' -w \"%{http_code}\\\\n\")",
+      "Bash(CRON_SECRET=localtest123 NODE_ENV=production node src/index.js)",
+      "Bash(curl -s -m 10 -X POST http://localhost:5000/api/cron/gmail-sync -w \" [%{http_code}]\\\\n\")",
+      "Bash(curl -s -m 30 -X POST http://localhost:5000/api/cron/gmail-sync -H \"x-cron-secret: localtest123\" -w \" [%{http_code}]\\\\n\")",
+      "Bash(curl -s -m 10 http://localhost:5000/api/cron/ping -w \" [%{http_code}]\\\\n\")"
     ]
   }
 }

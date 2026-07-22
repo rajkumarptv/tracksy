@@ -88,36 +88,36 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ success: false, message: 'Internal server error' });
 });
 
-app.listen(PORT, () => {
-  console.log(`\n🚀 Tracksy API running on http://localhost:${PORT}`);
-  console.log(`📦 Environment: ${process.env.NODE_ENV || 'development'}`);
-  if (isProd) {
-    console.log(`🌐 Serving React build from ../frontend/dist`);
-  }
-  console.log(`🗄️  DB: ${process.env.DATABASE_URL ? 'Cloud (DATABASE_URL)' : `${process.env.DB_NAME}@${process.env.DB_HOST}`}\n`);
-});
+/* ═══════════════════════════════════════════════════════════════════════
+   Serverless vs long-running
+   ───────────────────────────
+   On Vercel the platform imports this module and invokes `app` per request —
+   there is no port to listen on and no always-on process, so `app.listen()`
+   and `node-cron` must NOT run. We detect that via VERCEL and only start a
+   real server when this file is executed directly (local / VPS / Render).
 
-/* ── Nightly Gmail auto-import (02:00 every day) ───────────────────────── */
-const cron = require('node-cron');
-const { query } = require('./db');
-const { syncUserGmail } = require('./controllers/gmailController');
+   The Gmail sync still runs in serverless: it is exposed as a token-protected
+   endpoint (POST /api/cron/gmail-sync) that an external scheduler calls.
+═══════════════════════════════════════════════════════════════════════ */
+const isServerless = !!process.env.VERCEL;
 
-cron.schedule('0 2 * * *', async () => {
-  try {
-    const users = (await query(
-      `SELECT id FROM users WHERE gmail_connected=true AND gmail_sync_enabled=true
-         AND is_premium=true AND gmail_refresh_token IS NOT NULL`
-    )).rows;
-    console.log(`[gmail-cron] syncing ${users.length} user(s)…`);
-    for (const u of users) {
-      try {
-        const r = await syncUserGmail(u.id, { days: 2 });
-        if (r.imported) console.log(`[gmail-cron] user ${u.id}: +${r.imported} txns`);
-      } catch (e) {
-        console.error(`[gmail-cron] user ${u.id} failed:`, e.message);
-      }
+if (!isServerless) {
+  app.listen(PORT, () => {
+    console.log(`\n🚀 Tracksy API running on http://localhost:${PORT}`);
+    console.log(`📦 Environment: ${process.env.NODE_ENV || 'development'}`);
+    if (isProd) {
+      console.log(`🌐 Serving React build from ../frontend/dist`);
     }
-  } catch (e) {
-    console.error('[gmail-cron] error:', e.message);
-  }
-}, { timezone: 'Asia/Kolkata' });
+    console.log(`🗄️  DB: ${process.env.DATABASE_URL ? 'Cloud (DATABASE_URL)' : `${process.env.DB_NAME}@${process.env.DB_HOST}`}\n`);
+  });
+
+  /* ── Nightly Gmail auto-import (02:00 every day) — long-running only ──── */
+  const cron = require('node-cron');
+  const { runGmailSyncForAllUsers } = require('./jobs/gmailSync');
+
+  cron.schedule('0 2 * * *', () => {
+    runGmailSyncForAllUsers().catch(e => console.error('[gmail-cron] error:', e.message));
+  }, { timezone: 'Asia/Kolkata' });
+}
+
+module.exports = app;

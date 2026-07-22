@@ -4,10 +4,7 @@ const fs = require('fs');
 const { randomUUID } = require('crypto');
 const jwt = require('jsonwebtoken');
 
-const UPLOADS_DIR = path.join(__dirname, '../../uploads/bills');
-
-// ensure dir exists
-if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+const { putObject, getObject, deleteObject } = require('../lib/storage');
 
 /* ── POST /api/transactions/:id/bills ─────────────────────────── */
 const uploadBill = async (req, res) => {
@@ -28,9 +25,7 @@ const uploadBill = async (req, res) => {
     const ext      = path.extname(originalname).toLowerCase() || '.bin';
     const fileId   = randomUUID();
     const fileName = `${fileId}${ext}`;
-    const filePath = path.join(UPLOADS_DIR, fileName);
-
-    fs.writeFileSync(filePath, buffer);
+    await putObject(fileName, buffer, mimetype);
 
     const { rows } = await query(
       `INSERT INTO transaction_bills
@@ -87,13 +82,13 @@ const serveFile = async (req, res) => {
     );
     if (!rows.length) return res.status(404).json({ error: 'Not found' });
 
-    const bill     = rows[0];
-    const filePath = path.join(UPLOADS_DIR, bill.file_name);
-    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'File missing' });
+    const bill = rows[0];
+    const buf  = await getObject(bill.file_name);
+    if (!buf) return res.status(404).json({ error: 'File missing' });
 
     res.setHeader('Content-Type', bill.mime_type);
     res.setHeader('Content-Disposition', `inline; filename="${bill.original_name}"`);
-    res.sendFile(filePath);
+    res.send(buf);
   } catch (err) {
     console.error('serveFile:', err);
     res.status(500).json({ error: 'Failed to serve file' });
@@ -112,8 +107,7 @@ const deleteBill = async (req, res) => {
     );
     if (!rows.length) return res.status(404).json({ error: 'Not found' });
 
-    const filePath = path.join(UPLOADS_DIR, rows[0].file_name);
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    await deleteObject(rows[0].file_name);
 
     res.json({ success: true });
   } catch (err) {

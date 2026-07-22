@@ -165,4 +165,36 @@ router.get('/transactions/:id/bills',  auth, billCtrl.getBills);
 router.get('/bills/:billId/file',      billCtrl.serveFile); // token via ?t= query param or Bearer header
 router.delete('/bills/:billId',        auth, billCtrl.deleteBill);
 
+/* ── Scheduled jobs ─────────────────────────────────────────────────────
+   Serverless has no always-on process, so node-cron cannot run there.
+   An external scheduler (cron-job.org, UptimeRobot, Vercel Cron…) calls
+   this endpoint instead. Protected by a shared secret so it is not public.
+
+   Usage:  POST /api/cron/gmail-sync
+           Header:  x-cron-secret: <CRON_SECRET>
+       or  ?secret=<CRON_SECRET>
+───────────────────────────────────────────────────────────────────────── */
+const { runGmailSyncForAllUsers } = require('../jobs/gmailSync');
+
+router.post('/cron/gmail-sync', async (req, res) => {
+  const expected = process.env.CRON_SECRET;
+  if (!expected) {
+    return res.status(503).json({ success: false, message: 'CRON_SECRET not configured' });
+  }
+  const provided = req.get('x-cron-secret') || req.query.secret;
+  if (provided !== expected) {
+    return res.status(401).json({ success: false, message: 'Unauthorized' });
+  }
+  try {
+    const result = await runGmailSyncForAllUsers({ days: 2 });
+    res.json({ success: true, ...result });
+  } catch (e) {
+    console.error('[cron/gmail-sync]', e);
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+// Lightweight keep-alive / uptime probe
+router.get('/cron/ping', (_req, res) => res.json({ ok: true, ts: Date.now() }));
+
 module.exports = router;
