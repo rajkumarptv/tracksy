@@ -1,5 +1,8 @@
 const { query } = require('../db');
-const pdfParse  = require('pdf-parse');
+// Require the inner lib directly — pdf-parse's index.js runs debug code at
+// load time that reads a bundled test PDF (`./test/data/…`), which throws
+// ENOENT in serverless bundles. The lib entry skips that wrapper.
+const pdfParse  = require('pdf-parse/lib/pdf-parse.js');
 const XLSX      = require('xlsx');
 
 /* ══════════════════════════════════════════════════════════════════
