@@ -21,11 +21,21 @@ const SERVICE_KEY  = process.env.SUPABASE_SERVICE_KEY;
 const BUCKET       = process.env.SUPABASE_BILLS_BUCKET || 'bills';
 
 const useSupabase = !!(SUPABASE_URL && SERVICE_KEY);
+const isServerless = !!process.env.VERCEL;
 
 const LOCAL_DIR = path.join(__dirname, '../../uploads/bills');
-if (!useSupabase && !fs.existsSync(LOCAL_DIR)) {
-  fs.mkdirSync(LOCAL_DIR, { recursive: true });
+// Only create a local dir on a real (writable) filesystem. Never at module
+// load on serverless — its filesystem is read-only and mkdir throws ENOENT,
+// crashing the whole function. Guarded so a missing dir can't take the app down.
+function ensureLocalDir() {
+  if (useSupabase || isServerless) return;
+  try {
+    if (!fs.existsSync(LOCAL_DIR)) fs.mkdirSync(LOCAL_DIR, { recursive: true });
+  } catch (e) {
+    console.warn('[storage] could not create local dir:', e.message);
+  }
 }
+ensureLocalDir();
 
 const objectUrl = (key) =>
   `${SUPABASE_URL.replace(/\/$/, '')}/storage/v1/object/${BUCKET}/${encodeURIComponent(key)}`;
@@ -33,6 +43,8 @@ const objectUrl = (key) =>
 /** Store a file. Returns the storage key to persist in the DB. */
 async function putObject(key, buffer, contentType = 'application/octet-stream') {
   if (!useSupabase) {
+    if (isServerless) throw new Error('File storage not configured — set SUPABASE_SERVICE_KEY to enable bill uploads.');
+    ensureLocalDir();
     fs.writeFileSync(path.join(LOCAL_DIR, key), buffer);
     return key;
   }
