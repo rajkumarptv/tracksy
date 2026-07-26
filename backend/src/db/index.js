@@ -1,14 +1,18 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-// Support both DATABASE_URL (cloud/Neon) and individual env vars (local)
+// Support both DATABASE_URL (cloud/Supabase) and individual env vars (local)
+const isServerless = !!process.env.VERCEL;
 const pool = process.env.DATABASE_URL
   ? new Pool({
       connectionString: process.env.DATABASE_URL,
       ssl: { rejectUnauthorized: false },
-      max: 10,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 5000,
+      // Serverless: each function instance gets its own pool, and Supabase's
+      // transaction pooler already multiplexes — so cap at 1 to avoid
+      // exhausting connections across many concurrent lambdas.
+      max: isServerless ? 1 : 10,
+      idleTimeoutMillis: isServerless ? 10000 : 30000,
+      connectionTimeoutMillis: 10000,
     })
   : new Pool({
       host: process.env.DB_HOST || 'localhost',
