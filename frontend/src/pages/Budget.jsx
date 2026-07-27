@@ -98,6 +98,11 @@ export default function Budget() {
 
   const [showModal, setShowModal] = useState(false);
   const [editBudget, setEditBudget] = useState(null);
+  const [activeType, setActiveType] = useState('expense');
+  const isIncome = activeType === 'income';
+  const L = isIncome
+    ? { total:'Income Target', spent:'Received', totalSpent:'Total Received', ovTitle:'Budget vs Actual' }
+    : { total:'Total Budget',  spent:'Spent',    totalSpent:'Total Spent',    ovTitle:'Budget vs Actual' };
 
   const { data: apiBudgets, isLoading } = useQuery({
     queryKey: ['budgets'],
@@ -114,7 +119,7 @@ export default function Budget() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const budgets = apiBudgets || [];
+  const budgets = (apiBudgets || []).filter(b => (b.type || 'expense') === activeType);
 
   const atBudgetLimit = !user?.is_premium && (apiBudgets||[]).length >= FREE_BUDGET_LIMIT;
   const openAddBudget = () => atBudgetLimit ? openPremium() : (setEditBudget(null), setShowModal(true));
@@ -194,6 +199,25 @@ export default function Budget() {
           </div>
         </motion.div>
 
+        {/* ── Expense / Income tabs ── */}
+        <motion.div variants={cardVar}
+          style={{ display:'flex', gap:6, padding:5, borderRadius:14, background:t.surface, border:`1px solid ${t.border}` }}>
+          {[{ k:'expense', label:'Expenses' }, { k:'income', label:'Income' }].map(tab => {
+            const on = activeType === tab.k;
+            const accent = tab.k === 'income' ? t.green : DS.purple;
+            return (
+              <button key={tab.k} onClick={()=>setActiveType(tab.k)}
+                style={{ position:'relative', flex:1, padding:'10px 0', border:'none', cursor:'pointer',
+                  borderRadius:10, fontSize:14, fontWeight:700, background:'transparent',
+                  color: on ? '#fff' : t.text2 }}>
+                {on && <motion.span layoutId="budgetTab" transition={spring}
+                  style={{ position:'absolute', inset:0, borderRadius:10, background:accent, zIndex:0 }}/>}
+                <span style={{ position:'relative', zIndex:1 }}>{tab.label}</span>
+              </button>
+            );
+          })}
+        </motion.div>
+
         {/* ── Overview card ── */}
         <motion.div className={styles.overview} variants={cardVar}
           style={{ background:t.overviewBg, border:t.overviewBorder, boxShadow:t.glowShadow }}>
@@ -207,7 +231,7 @@ export default function Budget() {
           <div className={styles.overviewBody}>
             {/* left */}
             <div className={styles.overviewLeft}>
-              <div style={{ fontSize:13.5, color:t.text2 }}>Total Budget</div>
+              <div style={{ fontSize:13.5, color:t.text2 }}>{L.total}</div>
               <div className={styles.bigAmount} style={{ color:t.text }}>{fmt(totalBudget,{noDecimals:true})}</div>
               <div style={{ fontSize:13.5, color:t.text2, marginTop:10 }}>Days Left</div>
               <div style={{ fontSize:19, fontWeight:800, color:DS.purple, fontFamily:'Space Grotesk, Inter, sans-serif' }}>{daysLeft} Days</div>
@@ -220,7 +244,7 @@ export default function Budget() {
             <div className={styles.overviewRight}>
               <div className={styles.statRow}>
                 <span className={styles.dot} style={{ background:DS.purple }}/>
-                <span style={{ flex:1, fontSize:13.5, color:t.text2 }}>Spent</span>
+                <span style={{ flex:1, fontSize:13.5, color:t.text2 }}>{L.spent}</span>
                 <span style={{ fontSize:14.5, fontWeight:800, color:t.text, fontFamily:'Space Grotesk, Inter, sans-serif' }}>{fmt(totalSpent,{noDecimals:true})}</span>
               </div>
               <div className={styles.statRow}>
@@ -258,14 +282,14 @@ export default function Budget() {
             <div>
               <div style={{ display:'flex', alignItems:'center', gap:7 }}>
                 <span className={styles.dot} style={{ background:DS.purple }}/>
-                <span style={{ fontSize:12.5, color:t.text2 }}>Total Budget</span>
+                <span style={{ fontSize:12.5, color:t.text2 }}>{L.total}</span>
               </div>
               <div style={{ fontSize:19, fontWeight:800, color:t.text, fontFamily:'Space Grotesk, Inter, sans-serif', marginTop:2 }}>{fmt(totalBudget,{noDecimals:true})}</div>
             </div>
             <div>
               <div style={{ display:'flex', alignItems:'center', gap:7 }}>
                 <span className={styles.dot} style={{ background:t.green }}/>
-                <span style={{ fontSize:12.5, color:t.text2 }}>Total Spent</span>
+                <span style={{ fontSize:12.5, color:t.text2 }}>{L.totalSpent}</span>
               </div>
               <div style={{ fontSize:19, fontWeight:800, color:t.text, fontFamily:'Space Grotesk, Inter, sans-serif', marginTop:2 }}>{fmt(totalSpent,{noDecimals:true})}</div>
             </div>
@@ -309,8 +333,8 @@ export default function Budget() {
         <motion.div className={styles.card} variants={cardVar}
           style={{ background:t.card, border:`1px solid ${t.border}`, boxShadow:t.shadow }}>
           <div className={styles.cardHead}>
-            <span className={styles.cardTitle} style={{ color:t.text }}>Budget by Category</span>
-            <button className={styles.linkBtn} style={{ color:DS.purple }} onClick={openAddBudget}>Edit Budget</button>
+            <span className={styles.cardTitle} style={{ color:t.text }}>{isIncome ? 'Income by Source' : 'Budget by Category'}</span>
+            <button className={styles.linkBtn} style={{ color:DS.purple }} onClick={openAddBudget}>{isIncome ? 'Edit Income' : 'Edit Budget'}</button>
           </div>
 
           <div className={styles.catList}>
@@ -376,12 +400,14 @@ export default function Budget() {
           <motion.div variants={cardVar}
             style={{ textAlign:'center', padding:'40px 20px', background:t.card, border:`1px solid ${t.border}`, borderRadius:20, boxShadow:t.shadow }}>
             <div style={{ fontSize:38, marginBottom:12 }}>🎯</div>
-            <div style={{ fontSize:16, fontWeight:700, color:t.text }}>No budgets yet</div>
-            <div style={{ fontSize:13, color:t.text2, marginTop:4, marginBottom:16 }}>Set monthly limits per category to stay on track</div>
+            <div style={{ fontSize:16, fontWeight:700, color:t.text }}>{isIncome ? 'No income targets yet' : 'No budgets yet'}</div>
+            <div style={{ fontSize:13, color:t.text2, marginTop:4, marginBottom:16 }}>
+              {isIncome ? 'Set expected income per source to track your earnings' : 'Set monthly limits per category to stay on track'}
+            </div>
             <button onClick={openAddBudget}
               style={{ padding:'12px 22px', borderRadius:14, border:'none', cursor:'pointer', fontSize:14, fontWeight:700,
                 background:'linear-gradient(180deg,#8B5CF6,#6D28D9)', color:'#fff', boxShadow:'0 8px 24px rgba(124,58,237,.35)' }}>
-              + Create Budget
+              {isIncome ? '+ Add Income Target' : '+ Create Budget'}
             </button>
           </motion.div>
         )}
@@ -390,6 +416,7 @@ export default function Budget() {
       {showModal && (
         <BudgetModal
           budget={editBudget}
+          initialType={activeType}
           onClose={() => { setShowModal(false); setEditBudget(null); }}
           onSaved={() => { invalidateFinance(qc); setShowModal(false); setEditBudget(null); }}
         />
@@ -399,7 +426,7 @@ export default function Budget() {
 }
 
 /* ═══ Existing modal (unchanged) ═════════════════════════════════════════ */
-function BudgetModal({ budget, onClose, onSaved }) {
+function BudgetModal({ budget, initialType='expense', onClose, onSaved }) {
   const [form, setForm] = useState({
     name:       budget?.name       || '',
     amount:     budget?.amount     || '',
@@ -408,7 +435,9 @@ function BudgetModal({ budget, onClose, onSaved }) {
     category_id:budget?.category_id|| '',
     period:     budget?.period     || 'monthly',
     start_date: budget?.start_date || new Date().toISOString().split('T')[0],
+    type:       budget?.type       || initialType,
   });
+  const isIncome = form.type === 'income';
   const [error, setError] = useState('');
 
   const { data: categories } = useQuery({ queryKey:['categories'], queryFn:() => categoriesAPI.getAll().then(r=>r.data.data) });
@@ -424,11 +453,22 @@ function BudgetModal({ budget, onClose, onSaved }) {
   return (
     <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
       <div className="modal">
-        <div className="modal-title">{budget ? 'Edit' : 'New'} Budget</div>
+        <div className="modal-title">{budget ? 'Edit' : 'New'} {isIncome ? 'Income Target' : 'Budget'}</div>
         {error && <div style={{ background:'var(--red-light)', color:'var(--red)', padding:'8px 12px', borderRadius:10, marginBottom:14, fontSize:13 }}>{error}</div>}
 
+        {!budget && (
+          <div style={{ display:'flex', gap:6, padding:4, borderRadius:12, background:'var(--surface)', border:'1px solid var(--border)', marginBottom:14 }}>
+            {[{ k:'expense', label:'Expense' }, { k:'income', label:'Income' }].map(o => (
+              <button key={o.k} type="button" onClick={()=>setForm(f=>({...f, type:o.k, category_id:''}))}
+                style={{ flex:1, padding:'9px 0', border:'none', cursor:'pointer', borderRadius:9, fontSize:13.5, fontWeight:700,
+                  background: form.type===o.k ? (o.k==='income' ? '#22C55E' : '#8B5CF6') : 'transparent',
+                  color: form.type===o.k ? '#fff' : 'var(--text2)' }}>{o.label}</button>
+            ))}
+          </div>
+        )}
+
         <div className="form-group">
-          <label className="form-label">Budget Name</label>
+          <label className="form-label">{isIncome ? 'Income Source' : 'Budget Name'}</label>
           <input className="form-input" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} placeholder="e.g. Food & Groceries"/>
         </div>
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
@@ -467,7 +507,7 @@ function BudgetModal({ budget, onClose, onSaved }) {
             <label className="form-label">Category (optional)</label>
             <select className="form-input" value={form.category_id} onChange={e=>setForm(f=>({...f,category_id:e.target.value}))}>
               <option value="">No category link</option>
-              {(categories||[]).filter(c=>c.type==='expense'||c.type==='both').map(c=>(
+              {(categories||[]).filter(c=>c.type===form.type||c.type==='both').map(c=>(
                 <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>
               ))}
             </select>
@@ -478,7 +518,7 @@ function BudgetModal({ budget, onClose, onSaved }) {
           <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
           <button className="btn btn-primary" disabled={mutation.isPending} onClick={()=>mutation.mutate(form)}
             style={{ background:'linear-gradient(135deg,#8B5CF6,#3B82F6)', border:'none', boxShadow:'0 4px 14px rgba(139,92,246,.35)' }}>
-            {mutation.isPending ? 'Saving…' : budget ? 'Update Budget' : 'Create Budget'}
+            {mutation.isPending ? 'Saving…' : budget ? 'Update' : (isIncome ? 'Add Income Target' : 'Create Budget')}
           </button>
         </div>
       </div>

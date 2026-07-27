@@ -200,7 +200,18 @@
       "Bash(CRON_SECRET=localtest123 NODE_ENV=production node src/index.js)",
       "Bash(curl -s -m 10 -X POST http://localhost:5000/api/cron/gmail-sync -w \" [%{http_code}]\\\\n\")",
       "Bash(curl -s -m 30 -X POST http://localhost:5000/api/cron/gmail-sync -H \"x-cron-secret: localtest123\" -w \" [%{http_code}]\\\\n\")",
-      "Bash(curl -s -m 10 http://localhost:5000/api/cron/ping -w \" [%{http_code}]\\\\n\")"
+      "Bash(curl -s -m 10 http://localhost:5000/api/cron/ping -w \" [%{http_code}]\\\\n\")",
+      "Bash(sed -i \"s#'/d/tracksy/api/index.js'#require\\('path'\\).resolve\\('api/index.js'\\)#\" /tmp/repro.js)",
+      "Bash(node /tmp/repro.js)",
+      "Bash(curl -s -m 25 \"https://tracksy-wallet.vercel.app/api/cron/ping\")",
+      "Bash(python -m json.tool)",
+      "Bash(nslookup tracksywallet.com)",
+      "Bash(nslookup tracksywallet.com 8.8.8.8)",
+      "Bash(nslookup www.tracksywallet.com 8.8.8.8)",
+      "Bash(curl -s -o /dev/null -m 25 -w \"status: %{http_code}\\\\nredirects to: %{redirect_url}\\\\n\" \"https://tracksywallet.com/api/auth/google\")",
+      "Bash(sed -i 's|<PeriodPill label=\"This Month\" c={c} isDark={isDark}/>|<PeriodPill period={period} setPeriod={setPeriod} c={c} isDark={isDark}/>|g' Dashboard.jsx)",
+      "Bash(sed -i 's|<span style={{ fontSize:13, color:c.text2 }}>vs last month</span>|<span style={{ fontSize:13, color:c.text2 }}>{prevLabel}</span>|' Dashboard.jsx)",
+      "Bash(node -e \"require\\('dotenv'\\).config\\(\\); const {pool}=require\\('./src/db/index'\\); pool.query\\(\\\\\"ALTER TABLE budgets ADD COLUMN IF NOT EXISTS type VARCHAR\\(10\\) DEFAULT 'expense'\\\\\"\\).then\\(\\(\\)=>pool.query\\('SELECT column_name FROM information_schema.columns WHERE table_name=\\\\'budgets\\\\' AND column_name=\\\\'type\\\\''\\)\\).then\\(r=>{console.log\\('type column:',r.rows\\);process.exit\\(0\\)}\\).catch\\(e=>{console.error\\('ERR',e.message\\);process.exit\\(1\\)}\\)\")"
     ]
   }
 }

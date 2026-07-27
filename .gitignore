@@ -31,3 +31,6 @@ backend/check_types.js
 backend/gen_token.js
 backend/seed_demo.js
 backend/verify_seed.js
+
+.vercel
+.env*

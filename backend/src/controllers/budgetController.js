@@ -26,7 +26,7 @@ const getAll = async (req, res) => {
         COALESCE((
           SELECT SUM(t.amount) FROM transactions t
           WHERE t.user_id=b.user_id AND t.category_id=b.category_id
-            AND t.type='expense' AND t.status='completed'
+            AND t.type=COALESCE(b.type,'expense') AND t.status='completed'
             AND t.transaction_date >= $2 AND t.transaction_date < $3
         ), 0) AS spent
       FROM budgets b
@@ -62,11 +62,11 @@ const create = async (req, res) => {
         });
       }
     }
-    const { category_id, name, amount, period, start_date, emoji, color } = req.body;
+    const { category_id, name, amount, period, start_date, emoji, color, type } = req.body;
     const result = await query(`
-      INSERT INTO budgets (user_id, category_id, name, amount, period, start_date, emoji, color)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *
-    `, [req.user.userId, category_id, name, amount, period || 'monthly', start_date, emoji || '📌', color || '#6c5ce7']);
+      INSERT INTO budgets (user_id, category_id, name, amount, period, start_date, emoji, color, type)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *
+    `, [req.user.userId, category_id, name, amount, period || 'monthly', start_date, emoji || '📌', color || '#6c5ce7', type === 'income' ? 'income' : 'expense']);
     res.status(201).json({ success: true, data: result.rows[0] });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error' });

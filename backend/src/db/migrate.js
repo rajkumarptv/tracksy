@@ -136,6 +136,8 @@ const migrate = async () => {
     ))`);
 
     // Transfer support — pair ID + direction flag
+    await client.query(`ALTER TABLE budgets ADD COLUMN IF NOT EXISTS type VARCHAR(10) DEFAULT 'expense'`);
+
     await client.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS transfer_pair_id UUID`);
     await client.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS transfer_direction VARCHAR(3) CHECK (transfer_direction IN ('out','in'))`);
 

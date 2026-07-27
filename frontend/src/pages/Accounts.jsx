@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import {
   Search, Plus, Eye, ChevronRight, ChevronDown, ChevronUp,
-  Landmark, TrendingUp, CreditCard, HandCoins, LayoutGrid, X, Trash2,
+  Landmark, TrendingUp, TrendingDown, CreditCard, HandCoins, LayoutGrid, X, Trash2,
 } from 'lucide-react';
 import { walletsAPI } from '../services/api';
 import useThemeStore from '../store/themeStore';
@@ -50,7 +50,7 @@ const TYPE_META = {
   bnpl:{e:'🛍️',c:'#FF79A8'}, family_borrow:{e:'👨‍👩‍👧',c:'#F59E0B'}, emi:{e:'📅',c:'#8B5CF6'},
 };
 
-const BANK_TYPES   = ['bank','cash','gpay','phonepe','paytm','amazon_pay','mobikwik','jio_money','airtel_money','paypal','irctc'];
+const BANK_TYPES   = ['bank','cash','other','gpay','phonepe','paytm','amazon_pay','mobikwik','jio_money','airtel_money','paypal','irctc'];
 const INVEST_TYPES = ['fd','mutual_fund','stocks','gold','crypto','epf','real_estate','lending','asset'];
 const CARD_TYPES   = ['visa','mastercard'];
 const LOAN_TYPES   = ['home_loan','vehicle_loan','personal_loan','gold_loan','education_loan','loan','bnpl','family_borrow','emi'];
@@ -99,6 +99,7 @@ export default function Accounts() {
   }).filter(g => g.items.length > 0), [wallets]);
 
   const totalBalance = wallets.reduce((s,w)=>s+parseFloat(w.balance||0),0);
+  const totNeg = totalBalance < 0;
   const count = wallets.length;
 
   const donutData = grouped.map(g => ({
@@ -140,19 +141,24 @@ export default function Accounts() {
 
         {/* ── Overview card ── */}
         <motion.div className={styles.overview} variants={cardVar}
-          style={{ background:t.overviewBg, border: t.flowBorder || `1px solid ${t.border}`, boxShadow: t.glowShadow || t.shadow }}>
+          style={{ background: totNeg ? 'linear-gradient(135deg, rgba(239,68,68,.16), rgba(239,68,68,.06))' : t.overviewBg,
+            border: totNeg ? '1px solid rgba(239,68,68,.35)' : (t.flowBorder || `1px solid ${t.border}`),
+            boxShadow: totNeg ? '0 8px 30px rgba(239,68,68,.18)' : (t.glowShadow || t.shadow) }}>
           <div className={styles.overviewLeft}>
             <div style={{ display:'flex', alignItems:'center', gap:8 }}>
               <span style={{ fontSize:14, color:t.text2, fontWeight:500 }}>Total Balance</span>
               <Eye size={16} color={t.text3}/>
             </div>
-            <div className={styles.bigAmount} style={{ color:t.text }}>{fmt(totalBalance,{noDecimals:true})}</div>
-            <div style={{ fontSize:14, color:t.text2 }}>Across {count} accounts</div>
-            <div style={{ display:'flex', alignItems:'center', gap:5, marginTop:4 }}>
-              <TrendingUp size={14} color={DS.primary}/>
-              <span style={{ fontSize:13.5, fontWeight:700, color:DS.primary }}>8.2%</span>
-              <span style={{ fontSize:13, color:t.text2 }}>vs last month</span>
+            <div className={styles.bigAmount} style={{ color: totNeg ? DS.danger : t.text }}>
+              {totNeg && '−'}{fmt(Math.abs(totalBalance),{noDecimals:true})}
             </div>
+            <div style={{ fontSize:14, color:t.text2 }}>Across {count} account{count!==1?'s':''}</div>
+            {totNeg && (
+              <div style={{ display:'flex', alignItems:'center', gap:5, marginTop:4 }}>
+                <TrendingDown size={14} color={DS.danger}/>
+                <span style={{ fontSize:13, color:DS.danger, fontWeight:600 }}>Liabilities exceed assets</span>
+              </div>
+            )}
           </div>
 
           <div className={styles.overviewDivider} style={{ background:t.divider }}/>
@@ -168,7 +174,7 @@ export default function Accounts() {
                   <PieChart>
                     <Pie data={donutData} dataKey="value" innerRadius="68%" outerRadius="96%"
                       paddingAngle={2} strokeWidth={0} animationDuration={900}>
-                      {donutData.map((d,i)=><Cell key={i} fill={d.color}/>)}
+                      {donutData.map((d,i)=><Cell key={i} fill={totNeg ? ['#EF4444','#F87171','#FCA5A5','#DC2626','#B91C1C'][i%5] : d.color}/>)}
                     </Pie>
                   </PieChart>
                 </ResponsiveContainer>
@@ -215,7 +221,8 @@ export default function Accounts() {
           const showAll = expanded[g.key];
           const rows = showAll ? g.items : g.items.slice(0,3);
           const GIcon = g.icon;
-          const totColor = g.liability ? (g.key==='cards'?DS.warning:DS.pink) : DS.primary;
+          const gNeg = g.total < 0;
+          const totColor = gNeg ? DS.danger : (g.liability ? (g.key==='cards'?DS.warning:DS.pink) : DS.primary);
           return (
             <motion.div key={g.key} className={styles.groupCard} variants={cardVar}
               style={{ background:t.card, border:`1px solid ${t.border}`, boxShadow:t.shadow }}>
@@ -231,7 +238,7 @@ export default function Accounts() {
                 <div style={{ display:'flex', alignItems:'center', gap:8, minWidth:0, justifyContent:'flex-end' }}>
                   <span className={styles.groupTotalLabel} style={{ color:t.text2 }}>{g.totalLabel}</span>
                   <span className={styles.groupTotalAmt} style={{ color:totColor }}>
-                    {g.liability?'−':''}{fmt(Math.abs(g.total),{noDecimals:true})}
+                    {(g.liability || gNeg)?'−':''}{fmt(Math.abs(g.total),{noDecimals:true})}
                   </span>
                   <div className={styles.collapseBtn} style={{ background:t.surface }}>
                     {isCollapsed ? <ChevronDown size={15} color={t.text2}/> : <ChevronUp size={15} color={t.text2}/>}
@@ -271,10 +278,10 @@ export default function Accounts() {
                             </div>
                           </div>
                           <div style={{ textAlign:'right', flexShrink:0 }}>
-                            <div style={{ fontSize:15, fontWeight:800, color: neg ? totColor : t.text, fontFamily:'Space Grotesk, Inter, sans-serif' }}>
+                            <div style={{ fontSize:15, fontWeight:800, color: neg ? DS.danger : t.text, fontFamily:'Space Grotesk, Inter, sans-serif' }}>
                               {neg?'−':''}{fmt(Math.abs(bal),{noDecimals:true})}
                             </div>
-                            <div style={{ fontSize:12, marginTop:2, color: neg ? t.text2 : DS.primary, fontWeight: neg?500:700 }}>
+                            <div style={{ fontSize:12, marginTop:2, color: neg ? DS.danger : DS.primary, fontWeight: neg?600:700 }}>
                               {neg
                                 ? (g.key==='cards' ? 'Outstanding' : 'Outstanding balance')
                                 : <><TrendingUp size={11} style={{ verticalAlign:'-1px' }}/> {(Math.abs(bal)%13+3).toFixed(1)}%</>}
@@ -336,16 +343,10 @@ export default function Accounts() {
 
 /* ═══ Add / Edit modal ═══════════════════════════════════════════════════ */
 const TYPE_GROUPS = [
-  { group:'Bank & Cash', items:[
+  { group:'Bank Account', items:[
     { value:'bank', emoji:'🏦', label:'Bank Account' }, { value:'cash', emoji:'💵', label:'Cash' },
-    { value:'gpay', emoji:'🟣', label:'Google Pay' }, { value:'phonepe', emoji:'💜', label:'PhonePe' },
-    { value:'paytm', emoji:'🟦', label:'Paytm' },
   ]},
-  { group:'Investments', items:[
-    { value:'fd', emoji:'🏛️', label:'Fixed Deposit' }, { value:'mutual_fund', emoji:'📊', label:'Mutual Funds' },
-    { value:'stocks', emoji:'📈', label:'Stocks' }, { value:'gold', emoji:'🪙', label:'Gold' }, { value:'crypto', emoji:'₿', label:'Crypto' },
-  ]},
-  { group:'Credit Cards', items:[
+  { group:'Cards', items:[
     { value:'visa', emoji:'💳', label:'Visa Card' }, { value:'mastercard', emoji:'💳', label:'Mastercard' },
   ]},
   { group:'Loans', items:[
@@ -353,8 +354,8 @@ const TYPE_GROUPS = [
     { value:'personal_loan', emoji:'💼', label:'Personal Loan' }, { value:'gold_loan', emoji:'🪙', label:'Gold Loan' },
     { value:'education_loan', emoji:'🎓', label:'Education Loan' }, { value:'loan', emoji:'📋', label:'Other Loan' },
   ]},
-  { group:'BNPL & EMI', items:[
-    { value:'emi', emoji:'📅', label:'EMI' }, { value:'bnpl', emoji:'🛍️', label:'BNPL' }, { value:'family_borrow', emoji:'👪', label:'Family Borrowing' },
+  { group:'Others', items:[
+    { value:'other', emoji:'👛', label:'Other Account' },
   ]},
 ];
 
