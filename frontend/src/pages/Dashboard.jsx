@@ -9,7 +9,7 @@ import {
 import {
   Landmark, ChevronRight, ChevronDown, Bell, Search, Eye,
   ArrowDown, ArrowUp, Activity, ArrowLeftRight, Wallet,
-  ListChecks, Percent, Sparkles, PiggyBank, CalendarDays,
+  ListChecks, Percent, Sparkles, PiggyBank, CalendarDays, Check,
 } from 'lucide-react';
 import { dashboardAPI, walletsAPI } from '../services/api';
 import useAuthStore from '../store/authStore';
@@ -72,16 +72,65 @@ function BalTip({ active, payload, label, fmt, c }) {
   );
 }
 
-/* ── Dropdown pill ("This Month ⌄") ──────────────────────────────────── */
-function PeriodPill({ label, c, isDark }) {
+/* ── Period helpers ──────────────────────────────────────────────────── */
+const PERIOD_LABEL = { week:'This Week', month:'This Month', year:'This Year' };
+const iso = (d) => d.toISOString().split('T')[0];
+
+function periodRange(period, base = new Date()) {
+  const y = base.getFullYear(), m = base.getMonth(), d = base.getDate();
+  if (period === 'week') {
+    const dow = (base.getDay() + 6) % 7;               // Monday = 0
+    return { start: new Date(y, m, d - dow), end: new Date(y, m, d - dow + 6) };
+  }
+  if (period === 'year') return { start: new Date(y,0,1), end: new Date(y,11,31) };
+  return { start: new Date(y, m, 1), end: new Date(y, m+1, 0) };   // month
+}
+function prevPeriodBase(period, base = new Date()) {
+  const b = new Date(base);
+  if (period === 'week') b.setDate(b.getDate() - 7);
+  else if (period === 'year') b.setFullYear(b.getFullYear() - 1);
+  else b.setMonth(b.getMonth() - 1);
+  return b;
+}
+
+/* ── Period selector dropdown (Week / Month / Year) ──────────────────── */
+function PeriodPill({ period, setPeriod, c, isDark }) {
+  const [open, setOpen] = useState(false);
   return (
-    <button className={styles.periodPill} style={{
-      background: isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF',
-      border: `1.5px solid ${isDark ? 'rgba(255,255,255,0.1)' : '#E4E6F0'}`,
-      color: c.text2,
-    }}>
-      {label} <ChevronDown size={13}/>
-    </button>
+    <div style={{ position:'relative' }}>
+      <button className={styles.periodPill} onClick={()=>setOpen(o=>!o)} style={{
+        background: isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF',
+        border: `1.5px solid ${open ? c.purple : (isDark ? 'rgba(255,255,255,0.1)' : '#E4E6F0')}`,
+        color: c.text2,
+      }}>
+        {PERIOD_LABEL[period]} <ChevronDown size={13} style={{ transform: open?'rotate(180deg)':'none', transition:'transform .15s' }}/>
+      </button>
+      <AnimatePresence>
+        {open && (
+          <>
+            <div onClick={()=>setOpen(false)} style={{ position:'fixed', inset:0, zIndex:90 }}/>
+            <motion.div
+              initial={{ opacity:0, y:-6, scale:.97 }} animate={{ opacity:1, y:0, scale:1 }} exit={{ opacity:0, y:-6, scale:.97 }}
+              transition={{ duration:.14 }}
+              style={{ position:'absolute', top:'calc(100% + 6px)', right:0, zIndex:91, minWidth:140,
+                background:c.cardBg, border:`1px solid ${c.border||'rgba(255,255,255,.1)'}`, borderRadius:12,
+                boxShadow:'0 16px 44px rgba(0,0,0,.3)', overflow:'hidden', padding:5 }}>
+              {['week','month','year'].map(p => {
+                const sel = p === period;
+                return (
+                  <button key={p} onClick={()=>{ setPeriod(p); setOpen(false); }}
+                    style={{ display:'flex', alignItems:'center', justifyContent:'space-between', width:'100%', padding:'9px 11px', borderRadius:9, border:'none', cursor:'pointer', textAlign:'left',
+                      background: sel ? (isDark?'rgba(139,92,246,.16)':'#F5F3FF') : 'transparent',
+                      color: sel ? (isDark?'#C4B5FD':c.purple) : c.text, fontSize:13, fontWeight: sel?700:500, fontFamily:'inherit' }}>
+                    {PERIOD_LABEL[p]} {sel && <Check size={14}/>}
+                  </button>
+                );
+              })}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
@@ -99,34 +148,34 @@ export default function Dashboard() {
   const [includedIds, setIncludedIds] = useState([]); // [] = all accounts included
   const [searchTerm, setSearchTerm] = useState('');
   const [notifOpen, setNotifOpen] = useState(false);
+  const [period, setPeriod] = useState('month'); // 'week' | 'month' | 'year'
 
   const curY = now.getFullYear();
   const curM = now.getMonth() + 1;
-  const prevM = curM === 1 ? 12 : curM - 1;
-  const prevY = curM === 1 ? curY - 1 : curY;
 
-  /* ── Queries ── */
+  /* Date range for the whole dashboard, driven by the period selector */
+  const { start: rStart, end: rEnd } = periodRange(period);
+  const range = { start_date: iso(rStart), end_date: iso(rEnd) };
+  const { start: pStart, end: pEnd } = periodRange(period, prevPeriodBase(period));
+  const prevRange = { start_date: iso(pStart), end_date: iso(pEnd) };
+
+  /* ── Queries (all keyed by period so they refetch on change) ── */
   const { data: summary } = useQuery({
-    queryKey:['dash-summary-cur', curM, curY],
-    queryFn: () => dashboardAPI.summary({ month:curM, year:curY }).then(r=>r.data.data),
+    queryKey:['dash-summary-cur', period],
+    queryFn: () => dashboardAPI.summary(range).then(r=>r.data.data),
   });
   const { data: prevSummary } = useQuery({
-    queryKey:['dash-summary-prev', prevM, prevY],
-    queryFn: () => dashboardAPI.summary({ month:prevM, year:prevY }).then(r=>r.data.data),
+    queryKey:['dash-summary-prev', period],
+    queryFn: () => dashboardAPI.summary(prevRange).then(r=>r.data.data),
   });
-  const { data: catBreakdownCur } = useQuery({
-    queryKey:['cat-breakdown', curY, curM],
-    queryFn: () => dashboardAPI.categoryBreakdown({ year:curY, month:curM }).then(r=>r.data.data),
+  const { data: catBreakdown } = useQuery({
+    queryKey:['cat-breakdown', period],
+    queryFn: () => dashboardAPI.categoryBreakdown(range).then(r=>r.data.data),
   });
-  const { data: catBreakdownPrev } = useQuery({
-    queryKey:['cat-breakdown', prevY, prevM],
-    queryFn: () => dashboardAPI.categoryBreakdown({ year:prevY, month:prevM }).then(r=>r.data.data),
-  });
-  const catBreakdown = (catBreakdownCur||[]).filter(x=>x.value>0).length > 0 ? catBreakdownCur : catBreakdownPrev;
   const { data: wallets } = useQuery({ queryKey:['wallets'], queryFn:()=>walletsAPI.getAll().then(r=>r.data.data) });
   const { data: recentTx } = useQuery({
-    queryKey:['recent-tx-dash'],
-    queryFn: () => dashboardAPI.recentTransactions({ limit:60 }).then(r=>r.data.data),
+    queryKey:['recent-tx-dash', period],
+    queryFn: () => dashboardAPI.recentTransactions({ ...range, limit:1000 }).then(r=>r.data.data),
   });
 
   /* ── Account filter (multi-select, inline in the balance card) ── */
@@ -159,32 +208,32 @@ export default function Dashboard() {
     );
   }, [recentTx, isFiltered, includedIds]);
 
-  /* ── Derived numbers (real data only) ── */
+  /* ── Derived numbers (real data only, for the selected period) ── */
   const hasData = (recentTx || []).length > 0;
-  // If the current month has no activity yet (e.g. month just started), show last month
-  const curEmpty = parseFloat(summary?.income||0) === 0 && parseFloat(summary?.expense||0) === 0;
-  const activeSummary = (curEmpty && prevSummary) ? prevSummary : summary;
 
-  // When filtered, compute income/expense/balance from the included accounts
+  // Income/expense: from the period summary, or from the filtered accounts' tx
   const accIncome  = scopedTx.filter(t=>t.type==='income').reduce((s,t)=>s+parseFloat(t.amount||0),0);
   const accExpense = scopedTx.filter(t=>t.type==='expense').reduce((s,t)=>s+parseFloat(t.amount||0),0);
 
-  const income  = isFiltered ? accIncome  : parseFloat(activeSummary?.income  || 0);
-  const expense = isFiltered ? accExpense : parseFloat(activeSummary?.expense || 0);
+  const income  = isFiltered ? accIncome  : parseFloat(summary?.income  || 0);
+  const expense = isFiltered ? accExpense : parseFloat(summary?.expense || 0);
+  // Total balance is a point-in-time value (not period-scoped)
   const balance = isFiltered
     ? activeAccounts.reduce((s,a) => s + parseFloat(a.balance||0), 0)
     : parseFloat(summary?.total_balance || 0);
   const net     = income - expense;
 
-  const prevBal = balance - net;
-  const balChg  = prevBal > 0 ? ((balance - prevBal) / prevBal) * 100 : 0;
-  const balUp = balChg >= 0;
+  // Change vs the previous equivalent period (last week / month / year)
+  const prevNet = parseFloat(prevSummary?.income||0) - parseFloat(prevSummary?.expense||0);
+  const balChg  = prevNet !== 0 ? ((net - prevNet) / Math.abs(prevNet)) * 100 : 0;
+  const balUp = net >= prevNet;
+  const prevLabel = period === 'week' ? 'vs last week' : period === 'year' ? 'vs last year' : 'vs last month';
 
   const txCount = scopedTx.length;
-  // Relevant, actionable KPIs derived from the period's own data
+  // KPI: avg daily spend across the elapsed days of the period
+  const elapsedDays = Math.max(1, Math.round((Math.min(now, rEnd) - rStart) / 86400000) + 1);
   const savingsRate = income > 0 ? Math.round((net / income) * 100) : 0;
-  const daysElapsed = Math.max(1, now.getDate());
-  const dailyAvgSpend = Math.round(expense / daysElapsed);
+  const dailyAvgSpend = Math.round(expense / elapsedDays);
 
   /* ── Search → open Transactions with the query ── */
   const runSearch = () => {
@@ -192,27 +241,48 @@ export default function Dashboard() {
     navigate(q ? `/transactions?search=${encodeURIComponent(q)}` : '/transactions');
   };
 
-  /* ── Balance area chart: cumulative daily balance over current month ── */
+  /* ── Balance area chart — buckets adapt to the period ── */
   const balanceSeries = useMemo(() => {
-    const daysInM = new Date(curY, curM, 0).getDate();
-    const monthName = MONTHS[curM-1];
-    const daily = new Array(daysInM).fill(0);
+    const net = scopedTx.reduce((s,tx)=>{
+      const a = parseFloat(tx.amount||0);
+      return s + (tx.type==='income'?a : tx.type==='expense'?-a : 0);
+    }, 0);
+    const startBal = balance - net; // walk forward from period-start balance
+
+    if (period === 'year') {
+      const monthly = new Array(12).fill(0);
+      scopedTx.forEach(tx => {
+        const d = new Date(tx.transaction_date);
+        if (d.getFullYear() !== rStart.getFullYear()) return;
+        const a = parseFloat(tx.amount||0);
+        monthly[d.getMonth()] += tx.type==='income'?a : tx.type==='expense'?-a : 0;
+      });
+      let run = startBal;
+      return monthly.map((v,i)=>{ run += v; return { name: MONTHS[i], value: Math.max(0, run) }; });
+    }
+
+    // week / month → daily buckets across the range
+    const days = [];
+    for (let d = new Date(rStart); d <= rEnd; d.setDate(d.getDate()+1)) days.push(new Date(d));
+    const daily = days.map(()=>0);
     scopedTx.forEach(tx => {
-      const d = new Date(tx.transaction_date);
-      if (d.getMonth()+1 !== curM || d.getFullYear() !== curY) return;
-      const amt = parseFloat(tx.amount||0);
-      if (tx.type === 'income') daily[d.getDate()-1] += amt;
-      else if (tx.type === 'expense') daily[d.getDate()-1] -= amt;
+      const dt = new Date(tx.transaction_date);
+      const idx = days.findIndex(d => d.toDateString() === dt.toDateString());
+      if (idx < 0) return;
+      const a = parseFloat(tx.amount||0);
+      daily[idx] += tx.type==='income'?a : tx.type==='expense'?-a : 0;
     });
-    const monthNet = daily.reduce((s,v)=>s+v,0);
-    let run = balance - monthNet;
-    return daily.map((v,i)=>{ run += v; return { name:`${i+1} ${monthName}`, day:i+1, value: Math.max(0, run) }; });
-  }, [scopedTx, balance, hasData, curM, curY]);
+    let run = startBal;
+    return days.map((d,i)=>{ run += daily[i]; return { name:`${d.getDate()} ${MONTHS[d.getMonth()]}`, value: Math.max(0, run) }; });
+  }, [scopedTx, balance, period]);
 
   const xTicks = useMemo(() => {
-    const monthName = MONTHS[curM-1];
-    return [1,8,15,22,new Date(curY,curM,0).getDate()].map(d=>`${d} ${monthName}`);
-  }, [curM, curY]);
+    if (!balanceSeries.length) return [];
+    if (period === 'year') return ['Jan','Apr','Jul','Oct','Dec'];
+    if (period === 'week') return balanceSeries.map(p=>p.name); // all 7 days
+    const n = balanceSeries.length;
+    return [0, Math.floor(n*0.25), Math.floor(n*0.5), Math.floor(n*0.75), n-1].map(i=>balanceSeries[i]?.name);
+  }, [balanceSeries, period]);
 
   /* ── Spending categories (real data only) ── */
   const spendCats = useMemo(() => {
@@ -337,7 +407,7 @@ export default function Dashboard() {
                   <span className={styles.cardTitle} style={{ color:c.text }}>{isFiltered ? 'Filtered Balance' : 'Total Balance'}</span>
                   <Eye size={16} color={c.text3}/>
                 </div>
-                <PeriodPill label="This Month" c={c} isDark={isDark}/>
+                <PeriodPill period={period} setPeriod={setPeriod} c={c} isDark={isDark}/>
               </div>
 
               {/* Account filter chips — small icons, tap to include/exclude */}
@@ -376,7 +446,7 @@ export default function Dashboard() {
                   {balUp ? <ArrowUp size={14}/> : <ArrowDown size={14}/>}
                   {Math.abs(balChg).toFixed(1)}%
                 </span>
-                <span style={{ fontSize:13, color:c.text2 }}>vs last month</span>
+                <span style={{ fontSize:13, color:c.text2 }}>{prevLabel}</span>
               </div>
 
               <div className={styles.chartWrap}>
@@ -414,7 +484,7 @@ export default function Dashboard() {
               style={{ background:c.spendBg, border:c.spendBorder, boxShadow:c.cardShadow }}>
               <div className={styles.cardHeadRow}>
                 <span className={styles.cardTitle} style={{ color:c.text }}>Top Spending Category</span>
-                <PeriodPill label="This Month" c={c} isDark={isDark}/>
+                <PeriodPill period={period} setPeriod={setPeriod} c={c} isDark={isDark}/>
               </div>
 
               {spendCats.length === 0 ? (
@@ -530,7 +600,7 @@ export default function Dashboard() {
                         {net>=0?'+':'−'}{fmt(Math.abs(net),{noDecimals:true})}
                       </div>
                     </div>
-                    <PeriodPill label="This Month" c={c} isDark={isDark}/>
+                    <PeriodPill period={period} setPeriod={setPeriod} c={c} isDark={isDark}/>
                   </div>
                 </div>
 
