@@ -378,13 +378,18 @@ export default function Transactions() {
   const [billModalTx, setBillModalTx] = useState(null); // { id, description }
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Auto-open add modal when navigated from the FAB with ?add=income|expense|transfer
+  // Auto-open add modal when navigated from the FAB with ?add=income|expense|transfer,
+  // or pre-fill search when arriving from the dashboard search (?search=…)
   useEffect(() => {
     const type = searchParams.get('add');
+    const q = searchParams.get('search');
     if (type && ['income','expense','transfer'].includes(type)) {
       setEditTx(null);
       setAddType(type);
       setShowModal(true);
+      setSearchParams({}, { replace: true });
+    } else if (q) {
+      setFilters(f => ({ ...f, search: q }));
       setSearchParams({}, { replace: true });
     }
   }, [searchParams]);

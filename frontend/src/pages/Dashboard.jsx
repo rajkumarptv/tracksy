@@ -97,6 +97,8 @@ export default function Dashboard() {
   const c = isDark ? THEME.dark : THEME.light;
 
   const [includedIds, setIncludedIds] = useState([]); // [] = all accounts included
+  const [searchTerm, setSearchTerm] = useState('');
+  const [notifOpen, setNotifOpen] = useState(false);
 
   const curY = now.getFullYear();
   const curM = now.getMonth() + 1;
@@ -184,6 +186,12 @@ export default function Dashboard() {
   const daysElapsed = Math.max(1, now.getDate());
   const dailyAvgSpend = Math.round(expense / daysElapsed);
 
+  /* ── Search → open Transactions with the query ── */
+  const runSearch = () => {
+    const q = searchTerm.trim();
+    navigate(q ? `/transactions?search=${encodeURIComponent(q)}` : '/transactions');
+  };
+
   /* ── Balance area chart: cumulative daily balance over current month ── */
   const balanceSeries = useMemo(() => {
     const daysInM = new Date(curY, curM, 0).getDate();
@@ -216,6 +224,23 @@ export default function Dashboard() {
     return list.map((x,i)=>({ ...x, color:c.pie[i%c.pie.length] }));
   }, [catBreakdown, c]);
   const spendTotal = spendCats.reduce((s,x)=>s+x.value,0);
+
+  /* ── Notifications — real, data-derived (no fake counts) ── */
+  const notifications = useMemo(() => {
+    const list = [];
+    const totalDebt = (wallets||[])
+      .filter(w => parseFloat(w.balance||0) < 0)
+      .reduce((s,w) => s + Math.abs(parseFloat(w.balance||0)), 0);
+    if (net < 0)
+      list.push({ emoji:'⚠️', text:`You spent ${fmt(Math.abs(net),{noDecimals:true})} more than you earned this month.`, to:'/transactions' });
+    if (totalDebt > 0)
+      list.push({ emoji:'💳', text:`${fmt(totalDebt,{noDecimals:true})} outstanding across your debts.`, to:'/debts' });
+    if (savingsRate >= 20)
+      list.push({ emoji:'🎉', text:`Great job — you saved ${savingsRate}% of your income this month.`, to:'/goals' });
+    if (spendCats[0])
+      list.push({ emoji:'📊', text:`${spendCats[0].name} is your top spend at ${fmt(spendCats[0].value,{noDecimals:true})}.`, to:'/budget' });
+    return list;
+  }, [wallets, net, savingsRate, spendCats]);
 
   /* ── Recent transactions (real data only) ── */
   const recentList = useMemo(() => (recentTx||[]).slice(0,4), [recentTx]);
@@ -250,17 +275,54 @@ export default function Dashboard() {
           <div className={styles.headerRight}>
             <div className={styles.searchBox} style={{ background: isDark?'rgba(255,255,255,0.07)':'#FFFFFF', border:`1px solid ${isDark?'rgba(255,255,255,0.08)':'#E4E6F0'}` }}>
               <Search size={16} color={c.text3}/>
-              <input placeholder="Search anything..." style={{ color:c.text }}/>
+              <input placeholder="Search transactions…" style={{ color:c.text }}
+                value={searchTerm}
+                onChange={e=>setSearchTerm(e.target.value)}
+                onKeyDown={e=>{ if (e.key === 'Enter') runSearch(); }}/>
             </div>
             <button className={`${styles.iconBtn} ${styles.mobileSearchBtn}`}
               style={{ background: isDark?'rgba(255,255,255,0.07)':'#FFFFFF', border:`1px solid ${isDark?'rgba(255,255,255,0.08)':'#E4E6F0'}` }}
-              onClick={()=>navigate('/transactions')}>
+              onClick={runSearch} aria-label="Search">
               <Search size={18} color={c.text2}/>
             </button>
-            <button className={styles.iconBtn} style={{ background: isDark?'rgba(255,255,255,0.07)':'#FFFFFF', border:`1px solid ${isDark?'rgba(255,255,255,0.08)':'#E4E6F0'}` }}>
-              <Bell size={18} color={c.text2}/>
-              <span className={styles.bellBadge}>3</span>
-            </button>
+
+            {/* Notifications — real, data-derived */}
+            <div style={{ position:'relative' }}>
+              <button className={styles.iconBtn} onClick={()=>setNotifOpen(o=>!o)} aria-label="Notifications"
+                style={{ background: isDark?'rgba(255,255,255,0.07)':'#FFFFFF', border:`1px solid ${isDark?'rgba(255,255,255,0.08)':'#E4E6F0'}` }}>
+                <Bell size={18} color={c.text2}/>
+                {notifications.length > 0 && <span className={styles.bellBadge}>{notifications.length}</span>}
+              </button>
+              <AnimatePresence>
+                {notifOpen && (
+                  <>
+                    <div onClick={()=>setNotifOpen(false)} style={{ position:'fixed', inset:0, zIndex:80 }}/>
+                    <motion.div
+                      initial={{ opacity:0, y:-8, scale:.98 }} animate={{ opacity:1, y:0, scale:1 }} exit={{ opacity:0, y:-8, scale:.98 }}
+                      transition={{ duration:.16 }}
+                      style={{ position:'absolute', top:'calc(100% + 10px)', right:0, zIndex:81, width:'min(320px, calc(100vw - 32px))',
+                        background:c.cardBg, border:`1px solid ${c.border||'rgba(255,255,255,.1)'}`, borderRadius:16,
+                        boxShadow:'0 20px 60px rgba(0,0,0,.35)', overflow:'hidden' }}>
+                      <div style={{ padding:'14px 16px', borderBottom:`1px solid ${c.divider||'rgba(255,255,255,.06)'}`, fontSize:14, fontWeight:800, color:c.text }}>
+                        Notifications
+                      </div>
+                      {notifications.length === 0 ? (
+                        <div style={{ padding:'28px 16px', textAlign:'center' }}>
+                          <div style={{ fontSize:26, marginBottom:6 }}>✅</div>
+                          <div style={{ fontSize:13, color:c.text2 }}>You're all caught up</div>
+                        </div>
+                      ) : notifications.map((n,i)=>(
+                        <button key={i} onClick={()=>{ setNotifOpen(false); navigate(n.to); }}
+                          style={{ display:'flex', gap:11, alignItems:'flex-start', width:'100%', textAlign:'left', padding:'12px 16px', background:'transparent', border:'none', borderBottom: i<notifications.length-1?`1px solid ${c.divider||'rgba(255,255,255,.05)'}`:'none', cursor:'pointer' }}>
+                          <span style={{ fontSize:17, flexShrink:0, marginTop:1 }}>{n.emoji}</span>
+                          <span style={{ fontSize:13, color:c.text, lineHeight:1.45 }}>{n.text}</span>
+                        </button>
+                      ))}
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
         </motion.div>
 
