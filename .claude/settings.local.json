@@ -211,7 +211,9 @@
       "Bash(curl -s -o /dev/null -m 25 -w \"status: %{http_code}\\\\nredirects to: %{redirect_url}\\\\n\" \"https://tracksywallet.com/api/auth/google\")",
       "Bash(sed -i 's|<PeriodPill label=\"This Month\" c={c} isDark={isDark}/>|<PeriodPill period={period} setPeriod={setPeriod} c={c} isDark={isDark}/>|g' Dashboard.jsx)",
       "Bash(sed -i 's|<span style={{ fontSize:13, color:c.text2 }}>vs last month</span>|<span style={{ fontSize:13, color:c.text2 }}>{prevLabel}</span>|' Dashboard.jsx)",
-      "Bash(node -e \"require\\('dotenv'\\).config\\(\\); const {pool}=require\\('./src/db/index'\\); pool.query\\(\\\\\"ALTER TABLE budgets ADD COLUMN IF NOT EXISTS type VARCHAR\\(10\\) DEFAULT 'expense'\\\\\"\\).then\\(\\(\\)=>pool.query\\('SELECT column_name FROM information_schema.columns WHERE table_name=\\\\'budgets\\\\' AND column_name=\\\\'type\\\\''\\)\\).then\\(r=>{console.log\\('type column:',r.rows\\);process.exit\\(0\\)}\\).catch\\(e=>{console.error\\('ERR',e.message\\);process.exit\\(1\\)}\\)\")"
+      "Bash(node -e \"require\\('dotenv'\\).config\\(\\); const {pool}=require\\('./src/db/index'\\); pool.query\\(\\\\\"ALTER TABLE budgets ADD COLUMN IF NOT EXISTS type VARCHAR\\(10\\) DEFAULT 'expense'\\\\\"\\).then\\(\\(\\)=>pool.query\\('SELECT column_name FROM information_schema.columns WHERE table_name=\\\\'budgets\\\\' AND column_name=\\\\'type\\\\''\\)\\).then\\(r=>{console.log\\('type column:',r.rows\\);process.exit\\(0\\)}\\).catch\\(e=>{console.error\\('ERR',e.message\\);process.exit\\(1\\)}\\)\")",
+      "Bash(curl -s -o /dev/null -w \"home:%{http_code} \" https://tracksywallet.com)",
+      "Bash(curl -s -o /dev/null -w \"api-health:%{http_code}\\\\n\" https://tracksywallet.com/api/health)"
     ]
   }
 }

@@ -1369,8 +1369,13 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
     position:'fixed', bottom:0, left:0, right:0, zIndex:1100,
     background:'var(--surface)', borderRadius:'28px 28px 0 0',
     boxShadow:'0 -12px 60px rgba(0,0,0,.2)',
-    maxHeight:'94dvh', overflowY:'auto',
-    paddingBottom:'env(safe-area-inset-bottom,16px)',
+    maxHeight:'92dvh', height:'auto',
+    display:'flex', flexDirection:'column', overflow:'hidden',
+  };
+  const scrollSt = { flex:1, minHeight:0, overflowY:'auto', WebkitOverflowScrolling:'touch' };
+  const footerSt = {
+    flexShrink:0, borderTop:'1px solid var(--border-light)', background:'var(--surface)',
+    padding:'12px 20px', paddingBottom:'calc(12px + env(safe-area-inset-bottom,0px))',
   };
   const overlayStyle = {
     position:'fixed', inset:0, zIndex:1099,
@@ -1448,7 +1453,7 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
           </div>
         )}
 
-        <div style={{ padding:'16px 20px', display:'grid', gap:14 }}>
+        <div style={{ ...scrollSt, padding:'16px 20px', display:'grid', gap:14, alignContent:'start' }}>
 
           {/* ══ AMOUNT — big hero input ══ */}
           <div style={{ background:`linear-gradient(135deg,${tc.bg},${tc.bg.replace('.14','.07')})`, border:`1.5px solid ${tc.border}`, borderRadius:20, padding:'20px 20px 16px', textAlign:'center' }}>
@@ -1599,9 +1604,11 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
 
             </>)}
           </>)}
+        </div>
 
-          {/* ── Footer ── */}
-          <div style={{ display:'flex', flexDirection:'column', gap:8, paddingTop:4 }}>
+        {/* ── Sticky Footer ── */}
+        <div style={footerSt}>
+          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
 
             {/* Attach Bill — edit mode */}
             {isEdit && !confirmDelete && (
