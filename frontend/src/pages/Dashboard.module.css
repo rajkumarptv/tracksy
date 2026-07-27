@@ -135,7 +135,6 @@
   display: grid;
   grid-template-columns: 1.55fr 1fr;
   grid-template-areas:
-    "salary  insight"
     "balance flow"
     "spend   recent";
   gap: 24px;
@@ -143,17 +142,12 @@
 
 .grid > * { min-width: 0; }
 
-.salaryCard     { grid-area: salary; }
-.insightDesktop { grid-area: insight; min-width: 0; }
 .balanceCard    { grid-area: balance; }
 .flowCard       { grid-area: flow; }
 .spendCard      { grid-area: spend; }
 .recentCard     { grid-area: recent; }
 
 .chartWrap, .flowBody > *, .spendBody > * { min-width: 0; }
-
-/* insight card fills its row so it matches the salary card height */
-.insightDesktop > * { height: 100%; box-sizing: border-box; }
 
 /* ── Shared card bits ──────────────────────────────────── */
 .cardHeadRow {
@@ -550,20 +544,6 @@
   .grid {
     grid-template-columns: 1fr;
     grid-template-areas:
-      "insight"
-      "salary"
-      "balance"
-      "flow"
-      "spend"
-      "recent";
-  }
-}
-
-@media (max-width: 768px) {
-  /* insight renders above the grid on mobile; collapse its grid row */
-  .grid {
-    grid-template-areas:
-      "salary"
       "balance"
       "flow"
       "spend"

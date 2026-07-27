@@ -96,8 +96,7 @@ export default function Dashboard() {
   const isDark = theme === 'dark';
   const c = isDark ? THEME.dark : THEME.light;
 
-  const [selectedAccId, setSelectedAccId] = useState(null); // null = all accounts
-  const [accDropOpen, setAccDropOpen] = useState(false);
+  const [includedIds, setIncludedIds] = useState([]); // [] = all accounts included
 
   const curY = now.getFullYear();
   const curM = now.getMonth() + 1;
@@ -128,19 +127,35 @@ export default function Dashboard() {
     queryFn: () => dashboardAPI.recentTransactions({ limit:60 }).then(r=>r.data.data),
   });
 
-  /* ── Selectable accounts (assets only — exclude cards/loans) ── */
+  /* ── Account filter (multi-select, inline in the balance card) ── */
   const LIABILITY_TYPES = ['visa','mastercard','home_loan','vehicle_loan','personal_loan','gold_loan','education_loan','loan','bnpl','family_borrow','emi','lending'];
   const accounts = (wallets||[]).filter(w => !LIABILITY_TYPES.includes(w.type));
-  const selectedAcc = selectedAccId ? accounts.find(w => String(w.id) === String(selectedAccId)) : null;
 
-  /* Transactions scoped to the selected account (or all) */
+  // Effective included set: empty state means "all accounts included"
+  const effIncluded = includedIds.length
+    ? new Set(includedIds.map(String))
+    : new Set(accounts.map(a => String(a.id)));
+  const isFiltered = accounts.length > 0 && effIncluded.size < accounts.length;
+  const activeAccounts = accounts.filter(a => effIncluded.has(String(a.id)));
+
+  const toggleAcc = (id) => setIncludedIds(() => {
+    const eff = new Set(effIncluded);
+    const sid = String(id);
+    eff.has(sid) ? eff.delete(sid) : eff.add(sid);
+    const arr = [...eff];
+    // never allow "none" and collapse "all" back to the [] sentinel
+    if (arr.length === 0 || arr.length === accounts.length) return [];
+    return arr;
+  });
+  const selectAll = () => setIncludedIds([]);
+
+  /* Transactions scoped to the included accounts (or all) */
   const scopedTx = useMemo(() => {
-    if (!selectedAcc) return recentTx || [];
+    if (!isFiltered) return recentTx || [];
     return (recentTx || []).filter(tx =>
-      String(tx.wallet_id) === String(selectedAcc.id) ||
-      String(tx.to_wallet_id) === String(selectedAcc.id)
+      effIncluded.has(String(tx.wallet_id)) || effIncluded.has(String(tx.to_wallet_id))
     );
-  }, [recentTx, selectedAcc]);
+  }, [recentTx, isFiltered, includedIds]);
 
   /* ── Derived numbers (real data only) ── */
   const hasData = (recentTx || []).length > 0;
@@ -148,14 +163,14 @@ export default function Dashboard() {
   const curEmpty = parseFloat(summary?.income||0) === 0 && parseFloat(summary?.expense||0) === 0;
   const activeSummary = (curEmpty && prevSummary) ? prevSummary : summary;
 
-  // When an account is selected, compute income/expense/balance from its own transactions
+  // When filtered, compute income/expense/balance from the included accounts
   const accIncome  = scopedTx.filter(t=>t.type==='income').reduce((s,t)=>s+parseFloat(t.amount||0),0);
   const accExpense = scopedTx.filter(t=>t.type==='expense').reduce((s,t)=>s+parseFloat(t.amount||0),0);
 
-  const income  = selectedAcc ? accIncome  : parseFloat(activeSummary?.income  || 0);
-  const expense = selectedAcc ? accExpense : parseFloat(activeSummary?.expense || 0);
-  const balance = selectedAcc
-    ? parseFloat(selectedAcc.balance || 0)
+  const income  = isFiltered ? accIncome  : parseFloat(activeSummary?.income  || 0);
+  const expense = isFiltered ? accExpense : parseFloat(activeSummary?.expense || 0);
+  const balance = isFiltered
+    ? activeAccounts.reduce((s,a) => s + parseFloat(a.balance||0), 0)
     : parseFloat(summary?.total_balance || 0);
   const net     = income - expense;
 
@@ -163,15 +178,7 @@ export default function Dashboard() {
   const balChg  = prevBal > 0 ? ((balance - prevBal) / prevBal) * 100 : 0;
   const balUp = balChg >= 0;
 
-  /* Salary card — shows selected account, or primary bank as default */
-  const bankWallet = selectedAcc || (wallets||[]).find(w => w.type === 'bank') || (wallets||[])[0];
-  const salaryName = selectedAcc ? selectedAcc.name : (bankWallet?.name || 'No account');
-  const salaryBank = bankWallet
-    ? (bankWallet.last_four ? `•••• ${bankWallet.last_four}` : 'Bank Account')
-    : 'Add an account to get started';
-  const salaryBal  = bankWallet ? parseFloat(bankWallet.balance||0) : balance;
-
-  const txCount = (recentTx||[]).length;
+  const txCount = scopedTx.length;
   // Relevant, actionable KPIs derived from the period's own data
   const savingsRate = income > 0 ? Math.round((net / income) * 100) : 0;
   const daysElapsed = Math.max(1, now.getDate());
@@ -213,64 +220,8 @@ export default function Dashboard() {
   /* ── Recent transactions (real data only) ── */
   const recentList = useMemo(() => (recentTx||[]).slice(0,4), [recentTx]);
 
-  /* ── AI Insights (rule-based, cycling) ── */
-  const insights = useMemo(() => {
-    const list = [];
-    const savingsRate = income > 0 ? Math.round(((income - expense) / income) * 100) : 0;
-    if (savingsRate >= 20) list.push({ emoji:'🎉', text:`Great job! You saved ${savingsRate}% of your income this month.` });
-    else if (savingsRate > 0) list.push({ emoji:'💡', text:`You saved ${savingsRate}% this month — aim for 20% to build wealth faster.` });
-    if (expense > income) list.push({ emoji:'⚠️', text:`You spent ${fmt(expense - income,{noDecimals:true})} more than you earned this month.` });
-    if (spendCats[0]) list.push({ emoji:'📊', text:`${spendCats[0].name} is your top spend at ${fmt(spendCats[0].value,{noDecimals:true})} — ${spendTotal>0?Math.round((spendCats[0].value/spendTotal)*100):0}% of spending.` });
-    if (net > 0) list.push({ emoji:'📈', text:`Positive cash flow of ${fmt(net,{noDecimals:true})} — consider moving it to a goal.` });
-    if (list.length === 0) list.push({ emoji:'✨', text:'Add more transactions to unlock personalized insights.' });
-    return list;
-  }, [income, expense, net, spendCats, spendTotal]);
-
-  const [insightIdx, setInsightIdx] = useState(0);
-  useEffect(() => {
-    if (insights.length < 2) return;
-    const id = setInterval(() => setInsightIdx(i => (i + 1) % insights.length), 5000);
-    return () => clearInterval(id);
-  }, [insights.length]);
-
   const greetingHour = now.getHours();
   const greeting = greetingHour < 12 ? 'Good Morning' : greetingHour < 17 ? 'Good Afternoon' : 'Good Evening';
-
-  /* AI Insights card — rendered top-of-page on mobile, right column on desktop */
-  const insightCard = (
-    <motion.div variants={cardVar} whileHover={{ y:-3 }} className={styles.insightCard}
-      style={{
-        background: isDark
-          ? 'linear-gradient(135deg, #1E1145 0%, #0B1136 100%)'
-          : 'linear-gradient(135deg, #F5F0FF 0%, #EEF4FF 100%)',
-        border: `1px solid ${isDark ? 'rgba(139,92,246,0.35)' : '#E9D5FF'}`,
-        boxShadow: isDark ? `${c.cardShadow}, 0 0 34px rgba(139,92,246,0.12)` : c.cardShadow,
-        cursor:'pointer',
-      }}
-      onClick={()=>navigate('/insights')}>
-      <div className={styles.insightIcon}
-        style={{ background:'linear-gradient(135deg,#8B5CF6,#A78BFA)' }}>
-        <Sparkles size={22} color="#fff"/>
-      </div>
-      <div style={{ flex:1, minWidth:0 }}>
-        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-          <span style={{ fontSize:14, fontWeight:800, color:c.purple, letterSpacing:'.02em' }}>AI INSIGHTS</span>
-          <span className={styles.insightPulse} style={{ background:c.green }}/>
-        </div>
-        <div style={{ position:'relative', minHeight:36, marginTop:4 }}>
-          <AnimatePresence mode="wait">
-            <motion.div key={insightIdx}
-              initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:-8 }}
-              transition={{ duration:0.3 }}
-              style={{ fontSize:13, color:c.text, fontWeight:600, lineHeight:1.45 }}>
-              {insights[insightIdx % insights.length].emoji} {insights[insightIdx % insights.length].text}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      </div>
-      <ChevronRight size={18} color={c.text3} style={{ flexShrink:0 }}/>
-    </motion.div>
-  );
   const firstName = (user?.first_name || user?.name || 'there').split(' ')[0];
   const inPct  = income  > 0 ? Math.min(100, (income  / Math.max(income, expense)) * 100) : 0;
   const outPct = expense > 0 ? Math.min(100, (expense / Math.max(income, expense)) * 100) : 0;
@@ -313,101 +264,49 @@ export default function Dashboard() {
           </div>
         </motion.div>
 
-        {/* AI Insights — mobile: first card so users see it immediately */}
-        <div className={styles.insightMobile}>{insightCard}</div>
-
         {/* ── Grid (areas keep both columns row-aligned) ─────────── */}
         <div className={styles.grid}>
 
-            {/* Salary Account card — with account switcher dropdown */}
-            <motion.div variants={cardVar} whileHover={{ y:-3 }} className={styles.salaryCard}
-              style={{ background:c.salaryBg, border:c.salaryBorder, boxShadow:c.cardShadow, position:'relative', zIndex: accDropOpen ? 70 : 'auto' }}>
-              <div className={styles.salaryIcon} style={{ background: isDark?'rgba(43,255,136,0.15)':'#4ADE80' }}>
-                <Landmark size={26} color={isDark?c.green:'#fff'}/>
-              </div>
-              <div style={{ flex:1, minWidth:0 }}>
-                <button
-                  onClick={(e)=>{ e.stopPropagation(); if (accounts.length > 0) setAccDropOpen(o=>!o); }}
-                  style={{ display:'flex', alignItems:'center', gap:6, minWidth:0, background:'none', border:'none', padding:0, cursor: accounts.length>0?'pointer':'default', maxWidth:'100%' }}>
-                  <span style={{ fontSize:17, fontWeight:700, color:c.text, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
-                    {selectedAcc ? salaryName : 'All Accounts'}
-                  </span>
-                  <ChevronDown size={16} color={c.text3} style={{ flexShrink:0, transform: accDropOpen?'rotate(180deg)':'none', transition:'transform .2s' }}/>
-                </button>
-                <div style={{ fontSize:13, color:c.text2, marginTop:3, whiteSpace:'nowrap' }}>
-                  {selectedAcc ? salaryBank : `${accounts.length} account${accounts.length!==1?'s':''}`}
-                </div>
-              </div>
-              <div style={{ textAlign:'right', cursor:'pointer' }} onClick={()=>navigate('/accounts')}>
-                <div className={styles.numLg} style={{ color: (selectedAcc ? salaryBal : balance) < 0 ? c.red : c.text }}>
-                  {(selectedAcc ? salaryBal : balance) < 0 && '−'}<CountUp value={selectedAcc ? salaryBal : balance} fmt={fmt}/>
-                </div>
-                <div style={{ fontSize:12.5, color:c.text2, marginTop:2 }}>Available Balance</div>
-              </div>
-              <ChevronRight size={20} color={c.text3} style={{ flexShrink:0, cursor:'pointer' }} onClick={()=>navigate('/accounts')}/>
-
-              {/* Dropdown panel */}
-              <AnimatePresence>
-                {accDropOpen && (
-                  <>
-                    <div onClick={()=>setAccDropOpen(false)} style={{ position:'fixed', inset:0, zIndex:60 }}/>
-                    <motion.div
-                      initial={{ opacity:0, y:-8 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:-8 }}
-                      transition={{ duration:.16 }}
-                      style={{ position:'absolute', top:'calc(100% + 8px)', left:16, right:16, zIndex:61,
-                        background:c.cardBg, border:`1px solid ${c.border||'rgba(255,255,255,.1)'}`, borderRadius:16,
-                        boxShadow:'0 16px 48px rgba(0,0,0,.3)', overflow:'hidden', maxHeight:320, overflowY:'auto' }}>
-                      {/* All Accounts option */}
-                      <button onClick={()=>{ setSelectedAccId(null); setAccDropOpen(false); }}
-                        style={{ display:'flex', alignItems:'center', gap:12, width:'100%', padding:'13px 16px', background: !selectedAcc ? (isDark?'rgba(139,92,246,.14)':'#F5F3FF') : 'transparent', border:'none', cursor:'pointer', textAlign:'left', borderBottom:`1px solid ${c.divider||'rgba(255,255,255,.06)'}` }}>
-                        <div style={{ width:36, height:36, borderRadius:10, background:'rgba(139,92,246,.16)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                          <Wallet size={17} color={c.purple}/>
-                        </div>
-                        <div style={{ flex:1, minWidth:0 }}>
-                          <div style={{ fontSize:14, fontWeight:700, color:c.text }}>All Accounts</div>
-                          <div style={{ fontSize:11.5, color:c.text3 }}>Combined balance</div>
-                        </div>
-                        <span style={{ fontSize:14, fontWeight:800, color:c.text, fontFamily:'Space Grotesk, Inter, sans-serif' }}>
-                          {fmt(accounts.reduce((s,w)=>s+parseFloat(w.balance||0),0), {noDecimals:true})}
-                        </span>
-                      </button>
-                      {/* Each account */}
-                      {accounts.map(acc => {
-                        const sel = selectedAcc && String(acc.id)===String(selectedAcc.id);
-                        return (
-                          <button key={acc.id} onClick={()=>{ setSelectedAccId(acc.id); setAccDropOpen(false); }}
-                            style={{ display:'flex', alignItems:'center', gap:12, width:'100%', padding:'13px 16px', background: sel ? (isDark?'rgba(139,92,246,.14)':'#F5F3FF') : 'transparent', border:'none', cursor:'pointer', textAlign:'left' }}>
-                            <div style={{ width:36, height:36, borderRadius:10, background: isDark?'rgba(43,255,136,0.15)':'#DCFCE7', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                              <Landmark size={17} color={c.green}/>
-                            </div>
-                            <div style={{ flex:1, minWidth:0 }}>
-                              <div style={{ fontSize:14, fontWeight:700, color:c.text, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{acc.name}</div>
-                              <div style={{ fontSize:11.5, color:c.text3 }}>{acc.last_four ? `•••• ${acc.last_four}` : (acc.type||'account')}</div>
-                            </div>
-                            <span style={{ fontSize:14, fontWeight:800, color:c.text, fontFamily:'Space Grotesk, Inter, sans-serif' }}>
-                              {fmt(parseFloat(acc.balance||0), {noDecimals:true})}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
-            </motion.div>
-
-            {/* Account Balance card */}
+            {/* Account Balance card — with inline account filter */}
             <motion.div variants={cardVar} className={styles.balanceCard}
               style={{ background:c.balanceBg, border:c.balanceBorder, boxShadow:c.cardShadow }}>
               <div className={styles.cardHeadRow}>
                 <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                  <span className={styles.cardTitle} style={{ color:c.text }}>Account Balance</span>
+                  <span className={styles.cardTitle} style={{ color:c.text }}>{isFiltered ? 'Filtered Balance' : 'Total Balance'}</span>
                   <Eye size={16} color={c.text3}/>
                 </div>
                 <PeriodPill label="This Month" c={c} isDark={isDark}/>
               </div>
 
-              <div className={styles.balanceBig} style={{ color: balance < 0 ? c.red : c.text }}>
+              {/* Account filter chips — small icons, tap to include/exclude */}
+              {accounts.length > 1 && (
+                <div style={{ display:'flex', alignItems:'center', gap:8, marginTop:12, overflowX:'auto', paddingBottom:2, scrollbarWidth:'none' }}>
+                  {/* All */}
+                  <button onClick={selectAll} title="All accounts"
+                    style={{ flexShrink:0, display:'flex', alignItems:'center', gap:6, height:34, padding:'0 12px', borderRadius:999, cursor:'pointer',
+                      border:`1.5px solid ${!isFiltered ? c.green : c.border}`,
+                      background: !isFiltered ? (isDark?'rgba(43,255,136,.14)':'#F0FDF4') : 'transparent',
+                      color: !isFiltered ? c.green : c.text2, fontSize:12.5, fontWeight:700 }}>
+                    <Wallet size={14}/> All
+                  </button>
+                  {accounts.map(acc => {
+                    const on = effIncluded.has(String(acc.id));
+                    const initial = (acc.name||'?').trim().charAt(0).toUpperCase();
+                    return (
+                      <button key={acc.id} onClick={()=>toggleAcc(acc.id)} title={acc.name}
+                        style={{ flexShrink:0, display:'flex', alignItems:'center', gap:7, height:34, padding:'0 12px 0 6px', borderRadius:999, cursor:'pointer',
+                          border:`1.5px solid ${on ? c.green : c.border}`,
+                          background: on ? (isDark?'rgba(43,255,136,.14)':'#F0FDF4') : 'transparent',
+                          opacity: on ? 1 : 0.6, transition:'all .15s' }}>
+                        <span style={{ width:24, height:24, borderRadius:'50%', background: on ? c.green : c.text3, color: isDark?'#04220F':'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:800, flexShrink:0 }}>{initial}</span>
+                        <span style={{ fontSize:12.5, fontWeight:700, color: on ? c.text : c.text2, whiteSpace:'nowrap', maxWidth:90, overflow:'hidden', textOverflow:'ellipsis' }}>{acc.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className={styles.balanceBig} style={{ color: balance < 0 ? c.red : c.text, marginTop: accounts.length>1 ? 14 : 16 }}>
                 {balance < 0 && '−'}<CountUp value={balance} fmt={fmt}/>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:6 }}>
@@ -510,9 +409,6 @@ export default function Dashboard() {
                 <div className={styles.walletArt}>👛<span className={styles.walletSpark}>✦</span></div>
               </div>
             </motion.div>
-
-            {/* AI Insights — desktop position */}
-            <div className={styles.insightDesktop}>{insightCard}</div>
 
             {/* Money Flow card */}
             <motion.div variants={cardVar} className={styles.flowCard}
