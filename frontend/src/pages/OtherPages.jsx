@@ -1136,7 +1136,7 @@ import useCurrencyStore2, { CURRENCIES as ALL_CURRENCIES } from '../store/curren
 import useLangStore2 from '../store/langStore';
 import { useFmt as useFmtHook } from '../i18n';
 import { useT as useT2 } from '../i18n';
-import { User, Globe, Bell, Shield, ChevronRight as Chevron, Download, Trash2, Crown, Check, AlertTriangle, Eye, EyeOff, Key } from 'lucide-react';
+import { User, Globe, Bell, Shield, ChevronRight as Chevron, Download, Trash2, Crown, Check, AlertTriangle, Eye, EyeOff, Key, Tag } from 'lucide-react';
 import usePremiumStore from '../store/premiumStore';
 import { invalidateFinance } from '../lib/cache';
 
@@ -1255,6 +1255,24 @@ export function Settings() {
               </div>
             </div>
             <button className="btn btn-ghost" onClick={() => { setSaved(true); setTimeout(()=>setSaved(false),2500); }}>{t('settings_save_prefs')}</button>
+          </SectionCard>
+
+          {/* Categories — moved out of main menu */}
+          <SectionCard icon={<Tag size={18} color="#A78BFA"/>} title="Categories">
+            <div
+              onClick={() => navigate3('/categories')}
+              style={{ display:'flex', alignItems:'center', gap:14, padding:'14px 16px', borderRadius:14, border:'1px solid var(--border)', background:'var(--surface)', cursor:'pointer', transition:'border-color .15s' }}
+              onMouseEnter={e => e.currentTarget.style.borderColor='#A78BFA'}
+              onMouseLeave={e => e.currentTarget.style.borderColor='var(--border)'}>
+              <div style={{ width:40, height:40, borderRadius:12, background:'rgba(167,139,250,.14)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                <Tag size={18} color="#A78BFA"/>
+              </div>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontSize:14.5, fontWeight:700, color:'var(--text)' }}>Manage Categories</div>
+                <div style={{ fontSize:12.5, color:'var(--text3)', marginTop:2 }}>Add, edit or organise your income &amp; expense categories</div>
+              </div>
+              <Chevron size={18} color="var(--text3)" style={{ flexShrink:0 }}/>
+            </div>
           </SectionCard>
 
           {/* Notifications */}

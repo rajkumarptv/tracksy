@@ -19,7 +19,6 @@ const NAV_ITEMS = [
   { path: '/goals',        tKey: 'nav_goals',        Icon: Target,          color: '#F59E0B', bg: 'rgba(245,158,11,.12)'  },
   { path: '/budget',       tKey: 'nav_budget',       Icon: ChartPie,        color: '#8B5CF6', bg: 'rgba(139,92,246,.12)'  },
   { path: '/family',       label: 'Family',          Icon: Users,           color: '#EC4899', bg: 'rgba(236,72,153,.12)'  },
-  { path: '/categories',   tKey: 'nav_categories',   Icon: Tag,             color: '#A78BFA', bg: 'rgba(167,139,250,.12)' },
   { path: '/investments',   label: 'Investments',     Icon: ChartLineUp,     color: '#22C55E', bg: 'rgba(34,197,94,.12)'   },
   { path: '/debts',        tKey: 'nav_debts',        Icon: CreditCard,      color: '#EC4899', bg: 'rgba(236,72,153,.12)'  },
   { path: '/debt-reduction',label:'Debt Reduction',  Icon: Scales,          color: '#F59E0B', bg: 'rgba(245,158,11,.12)'  },
