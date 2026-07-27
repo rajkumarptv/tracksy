@@ -9,7 +9,7 @@ import {
 import {
   Landmark, ChevronRight, ChevronDown, Bell, Search, Eye,
   ArrowDown, ArrowUp, Activity, ArrowLeftRight, Wallet,
-  ListChecks, Percent, Sparkles,
+  ListChecks, Percent, Sparkles, PiggyBank, CalendarDays,
 } from 'lucide-react';
 import { dashboardAPI, walletsAPI } from '../services/api';
 import useAuthStore from '../store/authStore';
@@ -172,8 +172,10 @@ export default function Dashboard() {
   const salaryBal  = bankWallet ? parseFloat(bankWallet.balance||0) : balance;
 
   const txCount = (recentTx||[]).length;
-  const avgBalance = Math.round((balance + prevBal) / 2);
-  const interest = Math.round(balance * 0.01 / 12);
+  // Relevant, actionable KPIs derived from the period's own data
+  const savingsRate = income > 0 ? Math.round((net / income) * 100) : 0;
+  const daysElapsed = Math.max(1, now.getDate());
+  const dailyAvgSpend = Math.round(expense / daysElapsed);
 
   /* ── Balance area chart: cumulative daily balance over current month ── */
   const balanceSeries = useMemo(() => {
@@ -577,9 +579,9 @@ export default function Dashboard() {
                 {/* Right: stat tiles */}
                 <div className={styles.flowTiles}>
                   {[
-                    { icon:<Wallet size={18} color="#fff"/>,     bg:c.blue,   label:'Average Balance',      val:fmt(avgBalance,{noDecimals:true}) },
-                    { icon:<ListChecks size={18} color="#fff"/>, bg:c.purple, label:'Transactions',          val:String(txCount) },
-                    { icon:<Percent size={18} color={isDark?'#04220F':'#fff'}/>, bg:c.green, label:"This Month's Interest", val:fmt(interest,{noDecimals:true}) },
+                    { icon:<PiggyBank size={18} color={isDark?'#04220F':'#fff'}/>, bg:c.green, label:'Savings Rate', val:`${savingsRate}%` },
+                    { icon:<ListChecks size={18} color="#fff"/>, bg:c.purple, label:'Transactions', val:String(txCount) },
+                    { icon:<CalendarDays size={18} color="#fff"/>, bg:c.blue, label:'Avg Daily Spend', val:fmt(dailyAvgSpend,{noDecimals:true}) },
                   ].map((tItem,i)=>(
                     <motion.div key={i} className={styles.flowTile} style={{ background:c.tileBg }}
                       initial={{ opacity:0, x:20 }} animate={{ opacity:1, x:0 }} transition={{ delay:0.45+i*0.1 }}
