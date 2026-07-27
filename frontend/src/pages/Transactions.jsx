@@ -1212,18 +1212,15 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
   const { data: wallets }    = useQuery({ queryKey:['wallets'],    queryFn:() => walletsAPI.getAll().then(r=>r.data.data) });
   const { data: categories } = useQuery({ queryKey:['categories'], queryFn:() => categoriesAPI.getAll().then(r=>r.data.data) });
 
-  /* Which payment methods to show based on tx type */
-  const methodList = txType === 'income' ? INCOME_METHODS : PAYMENT_METHODS;
+  /* Show the accounts the user actually added in the Accounts tab.
+     Exclude pure loans/lending (you don't spend "from" those). Credit cards
+     stay in — you can pay with a card. */
+  const NON_PAYABLE = ['home_loan','vehicle_loan','personal_loan','gold_loan','education_loan','loan','bnpl','family_borrow','emi','lending'];
+  const allowedWallets = useMemo(() => (wallets || []).filter(w => !NON_PAYABLE.includes(w.type)), [wallets]);
 
-  /* Selected method config */
-  const methodCfg = methodList.find(m => m.id === payMethod) || null;
-
-  /* Filter wallets based on chosen payment method */
-  const allowedWallets = useMemo(() => {
-    if (!wallets) return [];
-    if (!methodCfg || !methodCfg.walletTypes) return wallets; // "other" = all
-    return wallets.filter(w => methodCfg.walletTypes.includes(w.type));
-  }, [wallets, methodCfg]);
+  /* Credit-card detection now comes from the SELECTED account, not a method grid */
+  const selectedWallet = (wallets || []).find(w => String(w.id) === String(walletId)) || null;
+  const isCreditSelected = selectedWallet && CREDIT_WALLET_TYPES.includes(selectedWallet.type);
 
   /* Auto-select wallet if only one matches */
   useMemo(() => {
@@ -1266,8 +1263,7 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
 
     setSaving(true);
     try {
-      const payMethodLabel = methodCfg?.label || '';
-      const fullPayName = payName || payMethodLabel;
+      const fullPayName = payName || (selectedWallet?.name || '');
 
       if (isTransfer) {
         await transactionsAPI.create({
@@ -1293,7 +1289,7 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
         const newTxId = newTx.data?.data?.id || newTx.data?.id;
 
         // Credit card interest transaction
-        if (methodCfg?.isCredit && hasInterest && interestAmount && parseFloat(interestAmount) > 0) {
+        if (isCreditSelected && hasInterest && interestAmount && parseFloat(interestAmount) > 0) {
           let intCatId = interestCatId;
           if (!intCatId) {
             try {
@@ -1349,8 +1345,8 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
     ? 'rgba(59,130,246,.12)'
     : txType === 'income' ? 'rgba(34,197,94,.12)' : 'rgba(236,72,153,.12)';
 
-  /* ── Show payment method grid for NEW non-transfer transactions ── */
-  const showMethodPicker = !isEdit && !isTransfer;
+  /* Payment-method grid removed — transactions use the user's real accounts directly. */
+  const showMethodPicker = false;
 
   /* ── Styles ───────────────────────────────────────────── */
   const labelSt = { fontSize:11.5, fontWeight:700, color:'var(--text3)', marginBottom:5, display:'block', textTransform:'uppercase', letterSpacing:'.05em' };
@@ -1496,27 +1492,7 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
 
             {/* ══ INCOME / EXPENSE FLOW ══ */}
 
-            {/* Payment method grid */}
-            {showMethodPicker && (
-              <div>
-                <label style={fieldLbl}>{txType==='income' ? 'Received via' : 'How did you pay?'}</label>
-                <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:8 }}>
-                  {methodList.map(m => {
-                    const sel = payMethod === m.id;
-                    const hasAccounts = !m.walletTypes || (wallets||[]).some(w=>m.walletTypes.includes(w.type));
-                    return (
-                      <button key={m.id} onClick={() => { setPayMethod(m.id); setWalletId(''); setError(''); setHasInterest(false); setInterestAmount(''); }}
-                        style={{ display:'flex', flexDirection:'column', alignItems:'center', padding:'10px 6px', borderRadius:14, border:`1.5px solid ${sel ? tc.border : 'var(--border-light)'}`, background: sel ? tc.bg : 'var(--surface2)', cursor: hasAccounts?'pointer':'not-allowed', opacity: hasAccounts?1:0.4, transition:'all .15s', gap:5 }}>
-                        <PaymentLogo method={m.id} size={32} style={{ borderRadius:10 }}/>
-                        <span style={{ fontSize:10.5, fontWeight:700, color: sel ? tc.color : 'var(--text3)', textAlign:'center', lineHeight:1.2 }}>{m.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {(payMethod !== null || isEdit) && (<>
+            {(<>
 
               {/* Merchant / source name */}
               <div>
@@ -1562,7 +1538,7 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
               {/* Account */}
               <div>
                 <label style={fieldLbl}>
-                  {methodCfg?.isCredit ? 'Credit Card Account' : txType==='income' ? 'Credited To' : 'Paid From'}
+                  {isCreditSelected ? 'Credit Card' : txType==='income' ? 'Credited To' : 'Paid From'}
                 </label>
                 {allowedWallets.length === 0 ? (
                   <div style={{ background:'rgba(245,158,11,.08)', border:'1.5px solid rgba(245,158,11,.25)', borderRadius:12, padding:'10px 14px', fontSize:13, color:'#D97706' }}>
@@ -1575,7 +1551,7 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
               </div>
 
               {/* Credit card interest toggle */}
-              {methodCfg?.isCredit && walletId && (
+              {isCreditSelected && walletId && (
                 <div style={{ background:'rgba(236,72,153,.06)', border:'1.5px solid rgba(236,72,153,.18)', borderRadius:16, padding:'14px 16px' }}>
                   <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                     <div style={{ display:'flex', gap:10, alignItems:'center' }}>
@@ -1647,13 +1623,13 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
             )}
 
             {!confirmDelete && (
-              <button disabled={saving || (showMethodPicker && !payMethod && !isTransfer)}
+              <button disabled={saving}
                 onClick={handleSubmit}
-                style={{ width:'100%', padding:'15px', borderRadius:16, border:'none', fontWeight:800, fontSize:15, cursor:'pointer', background: tc.gradient, color:'#fff', boxShadow:`0 6px 20px ${tc.color}44`, opacity: (saving||(showMethodPicker&&!payMethod&&!isTransfer))?.6:1, display:'flex', alignItems:'center', justifyContent:'center', gap:8, letterSpacing:'-0.2px' }}>
+                style={{ width:'100%', padding:'15px', borderRadius:16, border:'none', fontWeight:800, fontSize:15, cursor:'pointer', background: tc.gradient, color:'#fff', boxShadow:`0 6px 20px ${tc.color}44`, opacity: saving?.6:1, display:'flex', alignItems:'center', justifyContent:'center', gap:8, letterSpacing:'-0.2px' }}>
                 {saving ? <><span style={{ display:'inline-block', animation:'spin .8s linear infinite' }}>⟳</span> Saving…</>
                   : isTransfer ? '🔄 Save Transfer'
                   : isEdit ? '✓ Save Changes'
-                  : methodCfg?.isCredit && hasInterest && interestAmount ? '💳 Save + Interest'
+                  : isCreditSelected && hasInterest && interestAmount ? '💳 Save + Interest'
                   : `${tc.icon} Save ${tc.label}`}
               </button>
             )}
