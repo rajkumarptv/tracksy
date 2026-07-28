@@ -1369,7 +1369,7 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
     position:'fixed', bottom:0, left:0, right:0, zIndex:1100,
     background:'var(--surface)', borderRadius:'28px 28px 0 0',
     boxShadow:'0 -12px 60px rgba(0,0,0,.2)',
-    maxHeight:'92dvh', height:'auto',
+    maxHeight:'88svh', height:'auto',
     display:'flex', flexDirection:'column', overflow:'hidden',
   };
   const scrollSt = { flex:1, minHeight:0, overflowY:'auto', WebkitOverflowScrolling:'touch' };
