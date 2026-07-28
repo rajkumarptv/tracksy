@@ -22,6 +22,18 @@ export default function AppLayout() {
     api.get('/auth/me').then(r => {
       if (r.data?.user) updateUser(r.data.user);
     }).catch(() => {});
+
+    // Warm the page chunks the user is most likely to open next, during idle
+    // time, so the first tap on a tab doesn't wait ~2s for a network fetch.
+    const prefetch = () => {
+      import('../../pages/Accounts');
+      import('../../pages/Budget');
+      import('../../pages/Goals');
+      import('../../pages/Transactions');
+    };
+    const idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 1200));
+    const id = idle(prefetch);
+    return () => (window.cancelIdleCallback || clearTimeout)(id);
   }, []);
 
   return (
