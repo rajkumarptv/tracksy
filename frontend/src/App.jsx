@@ -9,26 +9,44 @@ import useAuthStore from './store/authStore';
 // Auth pages load eagerly (tiny, needed first)
 import { Login, Register, OAuthCallback, ForgotPassword, ResetPassword } from './pages/Auth';
 
+/* After a redeploy, an already-open session references old chunk file names
+   that no longer exist on the server, so navigating to a not-yet-loaded page
+   throws a dynamic-import error and the Suspense loader hangs forever. Catch
+   that once and force a single full reload to pick up the fresh index. */
+const lazyWithReload = (factory) => lazy(() =>
+  factory().catch((err) => {
+    const KEY = 'chunk-reload-at';
+    const last = parseInt(sessionStorage.getItem(KEY) || '0', 10);
+    // Only auto-reload once per 10s to avoid an infinite reload loop
+    if (Date.now() - last > 10000) {
+      sessionStorage.setItem(KEY, String(Date.now()));
+      window.location.reload();
+      return new Promise(() => {}); // keep suspended until the reload happens
+    }
+    throw err;
+  })
+);
+
 // Everything else is code-split → only downloaded when first visited
-const AppLayout    = lazy(() => import('./components/layout/AppLayout'));
-const Dashboard    = lazy(() => import('./pages/Dashboard'));
-const Transactions = lazy(() => import('./pages/Transactions'));
-const Budget       = lazy(() => import('./pages/Budget'));
-const Goals        = lazy(() => import('./pages/Goals'));
-const Categories   = lazy(() => import('./pages/Categories'));
-const Debts        = lazy(() => import('./pages/Debts'));
-const Import       = lazy(() => import('./pages/Import'));
-const Recurring    = lazy(() => import('./pages/Recurring'));
-const Family       = lazy(() => import('./pages/Family'));
-const Admin        = lazy(() => import('./pages/Admin'));
+const AppLayout    = lazyWithReload(() => import('./components/layout/AppLayout'));
+const Dashboard    = lazyWithReload(() => import('./pages/Dashboard'));
+const Transactions = lazyWithReload(() => import('./pages/Transactions'));
+const Budget       = lazyWithReload(() => import('./pages/Budget'));
+const Goals        = lazyWithReload(() => import('./pages/Goals'));
+const Categories   = lazyWithReload(() => import('./pages/Categories'));
+const Debts        = lazyWithReload(() => import('./pages/Debts'));
+const Import       = lazyWithReload(() => import('./pages/Import'));
+const Recurring    = lazyWithReload(() => import('./pages/Recurring'));
+const Family       = lazyWithReload(() => import('./pages/Family'));
+const Admin        = lazyWithReload(() => import('./pages/Admin'));
 // OtherPages exports several — wrap each in its own lazy chunk
-const Wallet       = lazy(() => import('./pages/Accounts'));
-const Analytics    = lazy(() => import('./pages/OtherPages').then(m => ({ default: m.Analytics })));
-const Settings     = lazy(() => import('./pages/OtherPages').then(m => ({ default: m.Settings })));
-const Investments   = lazy(() => import('./pages/Investments'));
-const DebtReduction = lazy(() => import('./pages/DebtReduction'));
-const Challenges    = lazy(() => import('./pages/Challenges'));
-const SmartInsights = lazy(() => import('./pages/SmartInsights'));
+const Wallet       = lazyWithReload(() => import('./pages/Accounts'));
+const Analytics    = lazyWithReload(() => import('./pages/OtherPages').then(m => ({ default: m.Analytics })));
+const Settings     = lazyWithReload(() => import('./pages/OtherPages').then(m => ({ default: m.Settings })));
+const Investments   = lazyWithReload(() => import('./pages/Investments'));
+const DebtReduction = lazyWithReload(() => import('./pages/DebtReduction'));
+const Challenges    = lazyWithReload(() => import('./pages/Challenges'));
+const SmartInsights = lazyWithReload(() => import('./pages/SmartInsights'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
