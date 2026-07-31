@@ -214,7 +214,8 @@
       "Bash(node -e \"require\\('dotenv'\\).config\\(\\); const {pool}=require\\('./src/db/index'\\); pool.query\\(\\\\\"ALTER TABLE budgets ADD COLUMN IF NOT EXISTS type VARCHAR\\(10\\) DEFAULT 'expense'\\\\\"\\).then\\(\\(\\)=>pool.query\\('SELECT column_name FROM information_schema.columns WHERE table_name=\\\\'budgets\\\\' AND column_name=\\\\'type\\\\''\\)\\).then\\(r=>{console.log\\('type column:',r.rows\\);process.exit\\(0\\)}\\).catch\\(e=>{console.error\\('ERR',e.message\\);process.exit\\(1\\)}\\)\")",
       "Bash(curl -s -o /dev/null -w \"home:%{http_code} \" https://tracksywallet.com)",
       "Bash(curl -s -o /dev/null -w \"api-health:%{http_code}\\\\n\" https://tracksywallet.com/api/health)",
-      "Bash(cd /d/tracksy/frontend && cat ../.claude/launch.json 2>/dev/null; grep -m1 '\"dev\"' package.json)"
+      "Bash(cd /d/tracksy/frontend && cat ../.claude/launch.json 2>/dev/null; grep -m1 '\"dev\"' package.json)",
+      "Bash(curl -s -o /dev/null -w \"home:%{http_code}\\\\n\" https://tracksywallet.com)"
     ]
   }
 }

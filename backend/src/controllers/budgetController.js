@@ -63,10 +63,23 @@ const create = async (req, res) => {
       }
     }
     const { category_id, name, amount, period, start_date, emoji, color, type } = req.body;
+    if (!amount || isNaN(parseFloat(amount))) {
+      return res.status(400).json({ success: false, message: 'Please enter a valid amount' });
+    }
     const result = await query(`
       INSERT INTO budgets (user_id, category_id, name, amount, period, start_date, emoji, color, type)
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *
-    `, [req.user.userId, category_id, name, amount, period || 'monthly', start_date, emoji || '📌', color || '#6c5ce7', type === 'income' ? 'income' : 'expense']);
+    `, [
+      req.user.userId,
+      category_id || null,
+      name || 'Budget',
+      parseFloat(amount),
+      period || 'monthly',
+      start_date || null,
+      emoji || '📌',
+      color || '#6c5ce7',
+      type === 'income' ? 'income' : 'expense',
+    ]);
     res.status(201).json({ success: true, data: result.rows[0] });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error' });
@@ -77,10 +90,13 @@ const create = async (req, res) => {
 const update = async (req, res) => {
   try {
     const { name, amount, emoji, color } = req.body;
+    if (!amount || isNaN(parseFloat(amount))) {
+      return res.status(400).json({ success: false, message: 'Please enter a valid amount' });
+    }
     const result = await query(`
       UPDATE budgets SET name=$1, amount=$2, emoji=$3, color=$4, updated_at=NOW()
       WHERE id=$5 AND user_id=$6 RETURNING *
-    `, [name, amount, emoji, color, req.params.id, req.user.userId]);
+    `, [name || 'Budget', parseFloat(amount), emoji || '📌', color || '#6c5ce7', req.params.id, req.user.userId]);
     if (!result.rows.length) return res.status(404).json({ success: false, message: 'Budget not found' });
     res.json({ success: true, data: result.rows[0] });
   } catch (err) {
