@@ -1,4 +1,4 @@
-const CACHE = 'tracksy-v6';
+const CACHE = 'tracksy-v7';
 const PRECACHE = ['/', '/index.html'];
 const SHARE_CACHE = 'tracksy-shared';
 
