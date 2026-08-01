@@ -222,7 +222,12 @@
       "Bash(sed -i 's/name={c.name} emoji={c.emoji} size={18}/name={c.name} emoji={c.emoji} icon={c.icon} size={18}/g' pages/Transactions.jsx)",
       "Bash(curl -s -o /dev/null -w \"backend-health:%{http_code}\\\\n\" http://localhost:5000/api/health)",
       "Bash(curl -s -o /dev/null -w \"health:%{http_code} \" http://localhost:5000/api/health)",
-      "Bash(curl -s -o /dev/null -w \"recurring:%{http_code}\\\\n\" http://localhost:5000/api/recurring)"
+      "Bash(curl -s -o /dev/null -w \"recurring:%{http_code}\\\\n\" http://localhost:5000/api/recurring)",
+      "Bash(curl -s -o /dev/null -w \"api:%{http_code}\\\\n\" https://tracksywallet.com/api/auth/me)",
+      "Bash(sed -E 's/=\\(.{0,6}\\).*/=\\\\1…[len shown]/')",
+      "Bash(cd /d/tracksy/backend && grep -rn \"migrate\\\\|ADD COLUMN\\\\|ensureSchema\\\\|runMigrations\" src/index.js ../api/index.js 2>/dev/null | head; echo \"=== build/postinstall ===\"; grep -E \"postinstall|build|migrate|vercel-build\" package.json ../package.json ../vercel.json 2>/dev/null)",
+      "Bash(node -e \"require\\('/d/tracksy/backend/src/db/ensureColumns'\\); console.log\\('module loads OK'\\)\")",
+      "Bash(node -e \"const f=require\\('./src/db/ensureColumns'\\); console.log\\('loads OK, type:', typeof f\\)\")"
     ]
   }
 }

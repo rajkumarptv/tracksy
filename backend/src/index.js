@@ -5,6 +5,7 @@ const path = require('path');
 const compression = require('compression');
 const routes = require('./routes');
 require('./middleware/oauth'); // initialise passport strategies
+require('./db/ensureColumns')().catch(() => {}); // idempotent schema guards
 
 const app = express();
 const PORT = process.env.PORT || 5000;
