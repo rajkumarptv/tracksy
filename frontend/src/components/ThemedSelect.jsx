@@ -18,7 +18,7 @@ import { THEME } from '../theme';
 ═══════════════════════════════════════════════════════════════════════ */
 export default function ThemedSelect({
   value, onChange, options, groups, placeholder = 'Select…',
-  searchable, disabled, accent = '#8B5CF6',
+  searchable, disabled, accent = '#8B5CF6', compact = false,
 }) {
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
@@ -85,9 +85,9 @@ export default function ThemedSelect({
         }}
         onMouseEnter={e => { if (!sel) e.currentTarget.style.background = isDark ? 'rgba(255,255,255,.05)' : '#F4F5F7'; }}
         onMouseLeave={e => { if (!sel) e.currentTarget.style.background = 'transparent'; }}>
-        {o.emoji !== undefined && (
+        {(o.icon || o.emoji !== undefined) && (
           <span style={{ width:30, height:30, borderRadius:9, background: isDark ? 'rgba(255,255,255,.06)' : '#F4F5F7', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>
-            {o.emoji}
+            {o.icon || o.emoji}
           </span>
         )}
         <div style={{ flex:1, minWidth:0 }}>
@@ -105,23 +105,24 @@ export default function ThemedSelect({
       <button ref={btnRef} type="button" disabled={disabled}
         onClick={() => !disabled && setOpen(o => !o)}
         style={{
-          width:'100%', height:52, borderRadius:14, padding:'0 14px', boxSizing:'border-box',
+          width:'100%', height: compact ? 38 : 52, borderRadius: compact ? 11 : 14,
+          padding: compact ? '0 10px' : '0 14px', boxSizing:'border-box',
           border:`1.5px solid ${open ? accent : t.border}`,
           background: t.surface, cursor: disabled ? 'not-allowed' : 'pointer',
-          display:'flex', alignItems:'center', gap:10, fontFamily:'inherit',
+          display:'flex', alignItems:'center', gap: compact ? 7 : 10, fontFamily:'inherit',
           boxShadow: open ? `0 0 0 3px ${accent}22` : 'none',
           transition:'border-color .15s, box-shadow .15s', opacity: disabled ? .6 : 1,
         }}>
-        {selected?.emoji !== undefined && selected && (
-          <span style={{ width:30, height:30, borderRadius:9, background: isDark ? 'rgba(255,255,255,.06)' : '#F4F5F7', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>
-            {selected.emoji}
+        {selected && (selected.icon || selected.emoji !== undefined) && (
+          <span style={{ width: compact ? 22 : 30, height: compact ? 22 : 30, borderRadius: compact ? 7 : 9, background: isDark ? 'rgba(255,255,255,.06)' : '#F4F5F7', display:'flex', alignItems:'center', justifyContent:'center', fontSize: compact ? 13 : 16, flexShrink:0 }}>
+            {selected.icon || selected.emoji}
           </span>
         )}
-        <span style={{ flex:1, textAlign:'left', fontSize:15, fontWeight: selected ? 600 : 400, color: selected ? t.text : t.text3, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+        <span style={{ flex:1, textAlign:'left', fontSize: compact ? 13 : 15, fontWeight: selected ? 600 : 400, color: selected ? t.text : t.text3, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
           {selected ? selected.label : placeholder}
         </span>
         <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration:.2 }} style={{ display:'flex', flexShrink:0 }}>
-          <ChevronDown size={17} color={t.text3}/>
+          <ChevronDown size={compact ? 14 : 17} color={t.text3}/>
         </motion.span>
       </button>
 

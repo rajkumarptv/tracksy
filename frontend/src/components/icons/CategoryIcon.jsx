@@ -52,13 +52,62 @@ const MAP = {
 
 const DEFAULT = { Icon: FaTag, bg: 'rgba(150,150,150,.2)', color: '#9896B2' };
 
-function resolve(name = '', emoji = '') {
+/* Pickable icon library — key → { Icon, color }. Used by the category icon
+   picker and to render a category's explicitly chosen `icon` key. */
+export const ICON_REGISTRY = {
+  utensils:   { Icon: FaUtensils,     color: '#22C55E' },
+  coffee:     { Icon: FaCoffee,       color: '#F59E0B' },
+  groceries:  { Icon: FaShoppingCart, color: '#00CEC9' },
+  shopping:   { Icon: FaShoppingBag,  color: '#3B82F6' },
+  transport:  { Icon: FaCar,          color: '#8B5CF6' },
+  travel:     { Icon: FaPlane,        color: '#3B82F6' },
+  bills:      { Icon: FaBolt,         color: '#F59E0B' },
+  entertainment:{ Icon: FaFilm,       color: '#EC4899' },
+  gaming:     { Icon: FaGamepad,      color: '#A29BFE' },
+  health:     { Icon: FaHeartbeat,    color: '#FF79A8' },
+  fitness:    { Icon: FaDumbbell,     color: '#FF79A8' },
+  education:  { Icon: FaGraduationCap,color: '#3B82F6' },
+  investment: { Icon: FaChartLine,    color: '#22C55E' },
+  salary:     { Icon: FaUniversity,   color: '#22C55E' },
+  income:     { Icon: FaMoneyBillAlt, color: '#22C55E' },
+  home:       { Icon: FaHome,         color: '#F59E0B' },
+  insurance:  { Icon: FaShieldAlt,    color: '#3B82F6' },
+  subscriptions:{ Icon: FaRedo,       color: '#A29BFE' },
+  personalcare:{ Icon: FaSpa,         color: '#FF79A8' },
+  savings:    { Icon: FaPiggyBank,    color: '#A29BFE' },
+  debt:       { Icon: FaCreditCard,   color: '#EC4899' },
+  wifi:       { Icon: FaWifi,         color: '#3B82F6' },
+  electronics:{ Icon: FaLaptop,       color: '#8B5CF6' },
+  gifts:      { Icon: FaGift,         color: '#FF79A8' },
+  business:   { Icon: FaBriefcase,    color: '#8B5CF6' },
+  tag:        { Icon: FaTag,          color: '#9896B2' },
+  others:     { Icon: FaEllipsisH,    color: '#EC4899' },
+};
+
+/* Returns the matched icon-pack entry, or null when the category name isn't
+   recognised (so callers can fall back to a custom emoji). */
+function match(name = '') {
   const key = name.toLowerCase().trim();
   if (MAP[key]) return MAP[key];
   for (const [k, v] of Object.entries(MAP)) {
     if (key.includes(k) || k.includes(key)) return v;
   }
-  return DEFAULT;
+  return null;
+}
+
+function resolve(name = '') {
+  return match(name) || DEFAULT;
+}
+
+/* Bare icon glyph (no container) for inline use — e.g. dropdown rows.
+   Recognised categories → icon pack; unknown categories with a custom emoji
+   keep the emoji; otherwise a neutral tag icon. */
+export function CategoryGlyph({ name = '', emoji, icon, size = 16, color }) {
+  if (icon && ICON_REGISTRY[icon]) { const { Icon, color: c } = ICON_REGISTRY[icon]; return <Icon size={size} color={color || c} />; }
+  const m = match(name);
+  if (m) { const { Icon, color: c } = m; return <Icon size={size} color={color || c} />; }
+  if (emoji && emoji !== '📌') return <span style={{ fontSize: size + 1 }}>{emoji}</span>;
+  return <FaTag size={size} color={color || DEFAULT.color} />;
 }
 
 /**
@@ -70,14 +119,29 @@ function resolve(name = '', emoji = '') {
  *   iconSize — icon px (default 16)
  *   style    — extra container styles
  */
-export default function CategoryIcon({ name = '', emoji, size = 36, iconSize = 16, style }) {
-  /* If the category has an emoji from DB, show it in a colored circle */
-  if (emoji && emoji !== '📌') {
-    const { bg } = resolve(name);
+export default function CategoryIcon({ name = '', emoji, icon, size = 36, iconSize = 16, style }) {
+  const explicit = icon && ICON_REGISTRY[icon] ? { ...ICON_REGISTRY[icon], bg: `${ICON_REGISTRY[icon].color}22` } : null;
+  const matched = explicit || match(name);
+
+  /* Recognised categories → budgeting icon pack (consistent app-wide) */
+  if (matched) {
+    const { Icon, bg, color } = matched;
     return (
       <div style={{
-        width: size, height: size, borderRadius: size * 0.35,
-        background: bg,
+        width: size, height: size, borderRadius: size * 0.35, background: bg,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        flexShrink: 0, ...style,
+      }}>
+        <Icon size={iconSize} color={color}/>
+      </div>
+    );
+  }
+
+  /* Unknown/custom category → keep its DB emoji if it has one */
+  if (emoji && emoji !== '📌') {
+    return (
+      <div style={{
+        width: size, height: size, borderRadius: size * 0.35, background: DEFAULT.bg,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontSize: iconSize + 2, flexShrink: 0, ...style,
       }}>
@@ -86,11 +150,10 @@ export default function CategoryIcon({ name = '', emoji, size = 36, iconSize = 1
     );
   }
 
-  const { Icon, bg, color } = resolve(name);
+  const { Icon, bg, color } = DEFAULT;
   return (
     <div style={{
-      width: size, height: size, borderRadius: size * 0.35,
-      background: bg,
+      width: size, height: size, borderRadius: size * 0.35, background: bg,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       flexShrink: 0, ...style,
     }}>

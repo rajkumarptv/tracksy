@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import {
   Plus, Calendar, ChevronRight, ChevronDown, Lightbulb,
-  TrendingUp, CalendarClock, Target, MoreVertical,
+  TrendingUp, CalendarClock, CalendarDays, CalendarRange, Ban, Target, MoreVertical,
 } from 'lucide-react';
 import { budgetsAPI, categoriesAPI, transactionsAPI, recurringAPI } from '../services/api';
 import { PageLoader } from '../components/ui';
@@ -21,6 +21,8 @@ const FREE_BUDGET_LIMIT = 3;
 /* ── Palette — derived from the shared dashboard theme ── */
 import { THEME } from '../theme';
 import { invalidateFinance } from '../lib/cache';
+import ThemedSelect from '../components/ThemedSelect';
+import { CategoryGlyph } from '../components/icons';
 const DS = {
   light: {
     ...THEME.light,
@@ -347,7 +349,7 @@ export default function Budget() {
                   initial={{ opacity:0, x:14 }} animate={{ opacity:1, x:0 }} transition={{ delay:.25+i*.06 }}
                   onClick={()=>{ if (!b.demo) { setEditBudget(b); setShowModal(true); } }}>
                   <div className={styles.catIcon} style={{ background:b.color||DS.purple }}>
-                    <span style={{ fontSize:17 }}>{b.emoji||'💠'}</span>
+                    <CategoryGlyph name={b.name} emoji={b.emoji} size={18} color="#fff"/>
                   </div>
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:8 }}>
@@ -478,11 +480,12 @@ function BudgetModal({ budget, initialType='expense', onClose, onSaved }) {
           </div>
           <div className="form-group">
             <label className="form-label">Period</label>
-            <select className="form-input" value={form.period} onChange={e=>setForm(f=>({...f,period:e.target.value}))}>
-              <option value="monthly">Monthly</option>
-              <option value="weekly">Weekly</option>
-              <option value="yearly">Yearly</option>
-            </select>
+            <ThemedSelect value={form.period} onChange={v=>setForm(f=>({...f,period:v}))}
+              options={[
+                { value:'monthly', label:'Monthly', icon:<CalendarDays size={16} color="#8B5CF6"/> },
+                { value:'weekly',  label:'Weekly',  icon:<CalendarRange size={16} color="#8B5CF6"/> },
+                { value:'yearly',  label:'Yearly',  icon:<Calendar size={16} color="#8B5CF6"/> },
+              ]}/>
           </div>
           <div className="form-group">
             <label className="form-label">Emoji</label>
@@ -505,12 +508,12 @@ function BudgetModal({ budget, initialType='expense', onClose, onSaved }) {
           </div>
           <div className="form-group" style={{ gridColumn:'1/-1' }}>
             <label className="form-label">Category (optional)</label>
-            <select className="form-input" value={form.category_id} onChange={e=>setForm(f=>({...f,category_id:e.target.value}))}>
-              <option value="">No category link</option>
-              {(categories||[]).filter(c=>c.type===form.type||c.type==='both').map(c=>(
-                <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>
-              ))}
-            </select>
+            <ThemedSelect value={form.category_id} onChange={v=>setForm(f=>({...f,category_id:v}))}
+              placeholder="No category link"
+              options={[
+                { value:'', label:'No category link', icon:<Ban size={16} color="#9896B2"/> },
+                ...(categories||[]).filter(c=>c.type===form.type||c.type==='both').map(c=>({ value:c.id, label:c.name, icon:<CategoryGlyph name={c.name} emoji={c.emoji} icon={c.icon} size={16}/> })),
+              ]}/>
           </div>
         </div>
 

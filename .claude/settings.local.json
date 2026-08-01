@@ -215,7 +215,14 @@
       "Bash(curl -s -o /dev/null -w \"home:%{http_code} \" https://tracksywallet.com)",
       "Bash(curl -s -o /dev/null -w \"api-health:%{http_code}\\\\n\" https://tracksywallet.com/api/health)",
       "Bash(cd /d/tracksy/frontend && cat ../.claude/launch.json 2>/dev/null; grep -m1 '\"dev\"' package.json)",
-      "Bash(curl -s -o /dev/null -w \"home:%{http_code}\\\\n\" https://tracksywallet.com)"
+      "Bash(curl -s -o /dev/null -w \"home:%{http_code}\\\\n\" https://tracksywallet.com)",
+      "Bash(curl -s -o /dev/null -w \"devserver:%{http_code}\\\\n\" http://localhost:3000/)",
+      "Bash(xargs grep -l \"CategoryIcon\")",
+      "Bash(sed -i 's/name={c.name} emoji={c.emoji} size={16}/name={c.name} emoji={c.emoji} icon={c.icon} size={16}/g' pages/Budget.jsx pages/Recurring.jsx pages/Import.jsx)",
+      "Bash(sed -i 's/name={c.name} emoji={c.emoji} size={18}/name={c.name} emoji={c.emoji} icon={c.icon} size={18}/g' pages/Transactions.jsx)",
+      "Bash(curl -s -o /dev/null -w \"backend-health:%{http_code}\\\\n\" http://localhost:5000/api/health)",
+      "Bash(curl -s -o /dev/null -w \"health:%{http_code} \" http://localhost:5000/api/health)",
+      "Bash(curl -s -o /dev/null -w \"recurring:%{http_code}\\\\n\" http://localhost:5000/api/recurring)"
     ]
   }
 }

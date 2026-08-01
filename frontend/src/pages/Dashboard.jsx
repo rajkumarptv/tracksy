@@ -11,11 +11,12 @@ import {
   ArrowDown, ArrowUp, Activity, ArrowLeftRight, Wallet,
   ListChecks, Percent, Sparkles, PiggyBank, CalendarDays, Check,
 } from 'lucide-react';
-import { dashboardAPI, walletsAPI } from '../services/api';
+import { dashboardAPI, walletsAPI, goalsAPI, recurringAPI } from '../services/api';
 import useAuthStore from '../store/authStore';
 import useThemeStore from '../store/themeStore';
 import { useFmt } from '../i18n';
 import { MerchantLogo, CategoryIcon } from '../components/icons';
+import AmountToggle from '../components/AmountToggle';
 import styles from './Dashboard.module.css';
 
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -160,23 +161,41 @@ export default function Dashboard() {
   const prevRange = { start_date: iso(pStart), end_date: iso(pEnd) };
 
   /* ── Queries (all keyed by period so they refetch on change) ── */
-  const { data: summary } = useQuery({
+  const { data: summaryRaw } = useQuery({
     queryKey:['dash-summary-cur', period],
     queryFn: () => dashboardAPI.summary(range).then(r=>r.data.data),
   });
-  const { data: prevSummary } = useQuery({
+  const { data: prevSummaryRaw } = useQuery({
     queryKey:['dash-summary-prev', period],
     queryFn: () => dashboardAPI.summary(prevRange).then(r=>r.data.data),
   });
-  const { data: catBreakdown } = useQuery({
+  const { data: catBreakdownRaw } = useQuery({
     queryKey:['cat-breakdown', period],
     queryFn: () => dashboardAPI.categoryBreakdown(range).then(r=>r.data.data),
   });
-  const { data: wallets } = useQuery({ queryKey:['wallets'], queryFn:()=>walletsAPI.getAll().then(r=>r.data.data) });
-  const { data: recentTx } = useQuery({
+  const { data: walletsRaw } = useQuery({ queryKey:['wallets'], queryFn:()=>walletsAPI.getAll().then(r=>r.data.data) });
+  const { data: recentTxRaw } = useQuery({
     queryKey:['recent-tx-dash', period],
     queryFn: () => dashboardAPI.recentTransactions({ ...range, limit:1000 }).then(r=>r.data.data),
   });
+  const { data: goalsRaw } = useQuery({
+    queryKey:['goals'],
+    queryFn: () => goalsAPI.getAll().then(r=>r.data.data),
+    staleTime: 5 * 60 * 1000,
+  });
+  const { data: recurringRaw } = useQuery({
+    queryKey:['recurring'],
+    queryFn: () => recurringAPI.getAll().then(r=>r.data.data),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const summary      = summaryRaw;
+  const prevSummary  = prevSummaryRaw;
+  const catBreakdown = catBreakdownRaw;
+  const wallets      = walletsRaw;
+  const recentTx     = recentTxRaw;
+  const goals        = goalsRaw;
+  const recurring    = recurringRaw;
 
   /* ── Account filter (multi-select, inline in the balance card) ── */
   const LIABILITY_TYPES = ['visa','mastercard','home_loan','vehicle_loan','personal_loan','gold_loan','education_loan','loan','bnpl','family_borrow','emi','lending'];
@@ -312,8 +331,48 @@ export default function Dashboard() {
     return list;
   }, [wallets, net, savingsRate, spendCats]);
 
+  /* Notification "seen" state — the badge clears once you open the panel and
+     only reappears when the set of alerts actually changes. */
+  const notifSig = useMemo(() => notifications.map(n => n.text).join('||'), [notifications]);
+  const [seenSig, setSeenSig] = useState(() => { try { return localStorage.getItem('tracksy-notif-seen') || ''; } catch { return ''; } });
+  const hasUnseen = notifications.length > 0 && notifSig !== seenSig;
+  const markNotifSeen = () => { setSeenSig(notifSig); try { localStorage.setItem('tracksy-notif-seen', notifSig); } catch {} };
+
   /* ── Recent transactions (real data only) ── */
   const recentList = useMemo(() => (recentTx||[]).slice(0,4), [recentTx]);
+
+  /* ── Upcoming payments (credit-card bills, loan EMIs, recurring bills) ── */
+  const upcomingPayments = useMemo(() => {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const horizon = new Date(today); horizon.setDate(horizon.getDate() + 31);
+    const dim = (y,m) => new Date(y, m+1, 0).getDate();
+    const nextByDay = (day) => {
+      if (!day) return null;
+      const y = today.getFullYear(), m = today.getMonth();
+      let d = new Date(y, m, Math.min(day, dim(y,m)));
+      if (d < today) { const nm = m+1; d = new Date(y, nm, Math.min(day, dim(y,nm))); }
+      return d;
+    };
+    const events = [];
+    (wallets||[]).forEach(w => {
+      const bal = Math.abs(parseFloat(w.balance||0));
+      if (['visa','mastercard'].includes(w.type) && w.payment_day && bal > 0) {
+        const d = nextByDay(w.payment_day);
+        if (d) events.push({ id:'cc'+w.id, name:`${w.name} bill`, amount:bal, date:d, kind:'card' });
+      }
+      if (w.emi_day && w.emi_amount) {
+        const d = nextByDay(w.emi_day);
+        if (d) events.push({ id:'emi'+w.id, name:`${w.name} EMI`, amount:parseFloat(w.emi_amount), date:d, kind:'loan' });
+      }
+    });
+    (recurring||[]).forEach(r => {
+      if (r.is_active === false || r.type !== 'expense') return;
+      const day = new Date(r.start_date).getDate();
+      const d = nextByDay(day);
+      if (d) events.push({ id:'rc'+r.id, name:r.payment_name || 'Recurring', amount:parseFloat(r.amount||0), date:d, kind:'recurring' });
+    });
+    return events.filter(e => e.date >= today && e.date <= horizon).sort((a,b) => a.date - b.date);
+  }, [wallets, recurring]);
 
   const greetingHour = now.getHours();
   const greeting = greetingHour < 12 ? 'Good Morning' : greetingHour < 17 ? 'Good Afternoon' : 'Good Evening';
@@ -358,10 +417,10 @@ export default function Dashboard() {
 
             {/* Notifications — real, data-derived */}
             <div style={{ position:'relative' }}>
-              <button className={styles.iconBtn} onClick={()=>setNotifOpen(o=>!o)} aria-label="Notifications"
+              <button className={styles.iconBtn} onClick={()=>setNotifOpen(o=>{ const next=!o; if(next) markNotifSeen(); return next; })} aria-label="Notifications"
                 style={{ background: isDark?'rgba(255,255,255,0.07)':'#FFFFFF', border:`1px solid ${isDark?'rgba(255,255,255,0.08)':'#E4E6F0'}` }}>
                 <Bell size={18} color={c.text2}/>
-                {notifications.length > 0 && <span className={styles.bellBadge}>{notifications.length}</span>}
+                {hasUnseen && <span className={styles.bellBadge}>{notifications.length}</span>}
               </button>
               <AnimatePresence>
                 {notifOpen && (
@@ -405,7 +464,7 @@ export default function Dashboard() {
               <div className={styles.cardHeadRow}>
                 <div style={{ display:'flex', alignItems:'center', gap:8 }}>
                   <span className={styles.cardTitle} style={{ color:c.text }}>{isFiltered ? 'Filtered Balance' : 'Total Balance'}</span>
-                  <Eye size={16} color={c.text3}/>
+                  <AmountToggle size={16} color={c.text3}/>
                 </div>
                 <PeriodPill period={period} setPeriod={setPeriod} c={c} isDark={isDark}/>
               </div>
@@ -471,12 +530,6 @@ export default function Dashboard() {
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
-
-              <button className={styles.viewDetailsBtn}
-                style={{ background:c.viewDetailsBg, border:c.viewDetailsBorder, color: isDark?c.green:'#16A34A' }}
-                onClick={()=>navigate('/accounts')}>
-                View Details <ChevronRight size={15}/>
-              </button>
             </motion.div>
 
             {/* Top Spending Category card */}
@@ -672,6 +725,125 @@ export default function Dashboard() {
                   );
                 })}
               </div>
+            </motion.div>
+
+            {/* ── Accounts widget (NEW) ── */}
+            <motion.div variants={cardVar} className={styles.accountsCard}
+              style={{ background:c.cardBg, border: isDark?'1px solid rgba(255,255,255,0.08)':'1px solid transparent', boxShadow:c.cardShadow }}>
+              <div className={styles.cardHeadRow}>
+                <span className={styles.cardTitle} style={{ color:c.text }}>Accounts</span>
+                <button className={styles.linkBtn} style={{ color:c.purple, fontSize:13 }} onClick={()=>navigate('/wallet')}>View All</button>
+              </div>
+              <div style={{ display:'flex', flexDirection:'column' }}>
+                {(wallets||[]).length === 0 && (
+                  <div style={{ textAlign:'center', padding:'26px 12px' }}>
+                    <div style={{ fontSize:28, marginBottom:8 }}>🏦</div>
+                    <div style={{ fontSize:14, fontWeight:700, color:c.text }}>No accounts yet</div>
+                    <div style={{ fontSize:12.5, color:c.text2, marginTop:3 }}>Add one in the Accounts tab</div>
+                  </div>
+                )}
+                {(wallets||[]).slice(0,6).map((w,i,arr)=>{
+                  const bal = parseFloat(w.balance||0);
+                  const neg = bal < 0;
+                  return (
+                    <motion.div key={w.id} initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.45+i*0.07 }}
+                      style={{ display:'flex', alignItems:'center', gap:12, padding:'11px 0',
+                        borderBottom: i<arr.length-1 ? `1px solid ${isDark?'rgba(255,255,255,0.05)':'#F2F4F7'}` : 'none' }}>
+                      <div style={{ width:38, height:38, borderRadius:11, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center',
+                        background: isDark?'rgba(139,92,246,.14)':'#F5F3FF' }}>
+                        <Wallet size={18} color={c.purple}/>
+                      </div>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ fontSize:14, fontWeight:700, color:c.text, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{w.name}</div>
+                        <div style={{ fontSize:12, color:c.text2, marginTop:2, textTransform:'capitalize' }}>{w.last_four ? `•••• ${w.last_four}` : (w.type||'account').replace(/_/g,' ')}</div>
+                      </div>
+                      <div className={styles.numXs} style={{ color: neg ? c.red : c.text }}>
+                        {neg && '−'}{fmt(Math.abs(bal),{noDecimals:true})}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </motion.div>
+
+            {/* ── Savings Goals widget (NEW) ── */}
+            <motion.div variants={cardVar} className={styles.goalsCard}
+              style={{ background:c.cardBg, border: isDark?'1px solid rgba(255,255,255,0.08)':'1px solid transparent', boxShadow:c.cardShadow }}>
+              <div className={styles.cardHeadRow}>
+                <span className={styles.cardTitle} style={{ color:c.text }}>Savings Goals</span>
+                <button className={styles.linkBtn} style={{ color:c.purple, fontSize:13 }} onClick={()=>navigate('/goals')}>View All</button>
+              </div>
+              {(goals||[]).length === 0 ? (
+                <div style={{ textAlign:'center', padding:'26px 12px' }}>
+                  <div style={{ fontSize:28, marginBottom:8 }}>🎯</div>
+                  <div style={{ fontSize:14, fontWeight:700, color:c.text }}>No goals yet</div>
+                  <div style={{ fontSize:12.5, color:c.text2, marginTop:3 }}>Set a savings goal to track progress</div>
+                </div>
+              ) : (
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(230px,1fr))', gap:18, marginTop:12 }}>
+                  {(goals||[]).slice(0,4).map((g,i)=>{
+                    const saved = parseFloat(g.current_amount||0);
+                    const target = parseFloat(g.target_amount||0);
+                    const pct = target>0 ? Math.min(100, Math.round((saved/target)*100)) : 0;
+                    return (
+                      <div key={g.id}>
+                        <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:9 }}>
+                          <span style={{ fontSize:18 }}>{g.emoji || '🎯'}</span>
+                          <span style={{ fontSize:13.5, fontWeight:700, color:c.text, flex:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{g.name}</span>
+                          <span style={{ fontSize:13, fontWeight:800, color:c.green }}>{pct}%</span>
+                        </div>
+                        <div style={{ height:8, borderRadius:99, background:c.track, overflow:'hidden' }}>
+                          <motion.div initial={{ width:0 }} animate={{ width:`${pct}%` }} transition={{ duration:.8, delay:.3+i*.08, ease:[.2,.8,.2,1] }}
+                            style={{ height:'100%', borderRadius:99, background: g.color ? `linear-gradient(90deg,${g.color},${c.green})` : 'linear-gradient(90deg,#8B5CF6,#22C55E)' }}/>
+                        </div>
+                        <div style={{ fontSize:12, color:c.text2, marginTop:7 }}>
+                          {fmt(saved,{noDecimals:true})} <span style={{ color:c.text3 }}>of {fmt(target,{noDecimals:true})}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </motion.div>
+
+            {/* ── Upcoming Payments widget (NEW) ── */}
+            <motion.div variants={cardVar} className={styles.upcomingCard}
+              style={{ background:c.cardBg, border: isDark?'1px solid rgba(255,255,255,0.08)':'1px solid transparent', boxShadow:c.cardShadow }}>
+              <div className={styles.cardHeadRow}>
+                <span className={styles.cardTitle} style={{ color:c.text }}>Upcoming Payments</span>
+                <button className={styles.linkBtn} style={{ color:c.purple, fontSize:13 }} onClick={()=>navigate('/recurring')}>View All</button>
+              </div>
+              {upcomingPayments.length === 0 ? (
+                <div style={{ textAlign:'center', padding:'26px 12px' }}>
+                  <div style={{ fontSize:28, marginBottom:8 }}>📅</div>
+                  <div style={{ fontSize:14, fontWeight:700, color:c.text }}>Nothing due soon</div>
+                  <div style={{ fontSize:12.5, color:c.text2, marginTop:3 }}>Credit-card bills, EMIs & recurring bills show up here</div>
+                </div>
+              ) : (
+                <div style={{ display:'flex', flexDirection:'column' }}>
+                  {upcomingPayments.slice(0,6).map((e,i,arr)=>{
+                    const days = Math.round((e.date - new Date().setHours(0,0,0,0))/86400000);
+                    const soon = days <= 7;
+                    const kindColor = e.kind==='card' ? c.red : e.kind==='loan' ? c.orange : c.purple;
+                    const when = days<=0 ? 'Today' : days===1 ? 'Tomorrow' : days<=7 ? `in ${days} days`
+                      : e.date.toLocaleDateString('en-IN',{ day:'numeric', month:'short' });
+                    return (
+                      <motion.div key={e.id} initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.45+i*0.07 }}
+                        style={{ display:'flex', alignItems:'center', gap:12, padding:'11px 0',
+                          borderBottom: i<arr.length-1 ? `1px solid ${isDark?'rgba(255,255,255,0.05)':'#F2F4F7'}` : 'none' }}>
+                        <div style={{ width:38, height:38, borderRadius:11, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', background:`${kindColor}1f` }}>
+                          <CalendarDays size={18} color={kindColor}/>
+                        </div>
+                        <div style={{ flex:1, minWidth:0 }}>
+                          <div style={{ fontSize:14, fontWeight:700, color:c.text, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{e.name}</div>
+                          <div style={{ fontSize:12, marginTop:2, fontWeight:600, color: soon ? c.red : c.text2 }}>{when}</div>
+                        </div>
+                        <div className={styles.numXs} style={{ color:c.text }}>{fmt(e.amount,{noDecimals:true})}</div>
+                      </motion.div>
+                    );
+                  })}
+                </div>
+              )}
             </motion.div>
         </div>
       </motion.div>

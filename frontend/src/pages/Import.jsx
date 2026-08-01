@@ -2,9 +2,11 @@ import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { importAPI, walletsAPI, categoriesAPI, receiptAPI, transactionsAPI } from '../services/api';
 import { Topbar } from '../components/ui';
-import { Upload, FileText, CheckCircle, AlertCircle, X, Check, GitMerge, ScanSearch, Camera } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertCircle, X, Check, GitMerge, ScanSearch, Camera, Wallet, Ban } from 'lucide-react';
 import { useT, useFmt } from '../i18n';
 import PaymentLogo from '../components/PaymentLogo';
+import ThemedSelect from '../components/ThemedSelect';
+import { CategoryGlyph } from '../components/icons';
 import { invalidateFinance } from '../lib/cache';
 
 const SOURCE_OPTIONS = [
@@ -582,13 +584,15 @@ export default function Import() {
                         </td>
                         {/* Category */}
                         <td style={{ padding:'7px 13px', minWidth:130 }}>
-                          <select value={tx.category_id||''} onChange={e => {
-                            const cat = categories.find(c=>c.id===e.target.value);
-                            updateCategory(tx._id, e.target.value||null, cat?.name||tx.category_name);
-                          }} style={{ padding:'4px 8px', borderRadius:8, border:'1px solid var(--border)', background:'var(--surface2)', color:'var(--text)', fontSize:12, cursor:'pointer', maxWidth:145 }}>
-                            <option value="">— {tx.category_name} —</option>
-                            {categories.map(c => <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>)}
-                          </select>
+                          <div style={{ width:150 }}>
+                            <ThemedSelect compact value={tx.category_id||''}
+                              placeholder={`— ${tx.category_name} —`}
+                              onChange={v => {
+                                const cat = categories.find(c=>c.id===v);
+                                updateCategory(tx._id, v||null, cat?.name||tx.category_name);
+                              }}
+                              options={[{ value:'', label:`— ${tx.category_name} —` }, ...categories.map(c => ({ value:c.id, label:c.name, emoji:c.emoji }))]}/>
+                          </div>
                         </td>
                         {/* Status badge */}
                         <td style={{ padding:'7px 13px', whiteSpace:'nowrap' }}>
@@ -774,10 +778,8 @@ function ReceiptReviewModal({ data, wallets, categories, fmt, onClose, onSaved }
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
             <div>
               <label style={labelSt}>Category</label>
-              <select style={inputSt} value={catId} onChange={e=>setCatId(e.target.value)}>
-                <option value="">No category</option>
-                {catOpts.map(c => <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>)}
-              </select>
+              <ThemedSelect value={catId} onChange={setCatId} placeholder="No category"
+                options={[{ value:'', label:'No category', icon:<Ban size={16} color="#9896B2"/> }, ...catOpts.map(c => ({ value:c.id, label:c.name, icon:<CategoryGlyph name={c.name} emoji={c.emoji} icon={c.icon} size={16}/> }))]}/>
             </div>
             <div>
               <label style={labelSt}>Date</label>
@@ -786,10 +788,8 @@ function ReceiptReviewModal({ data, wallets, categories, fmt, onClose, onSaved }
           </div>
           <div>
             <label style={labelSt}>Account</label>
-            <select style={inputSt} value={walletId} onChange={e=>setWalletId(e.target.value)}>
-              <option value="">No account</option>
-              {(wallets||[]).map(w => <option key={w.id} value={w.id}>{w.name}{w.last_four?` *${w.last_four}`:''}</option>)}
-            </select>
+            <ThemedSelect value={walletId} onChange={setWalletId} placeholder="No account"
+              options={[{ value:'', label:'No account', icon:<Ban size={16} color="#9896B2"/> }, ...(wallets||[]).map(w => ({ value:w.id, label:`${w.name}${w.last_four?` *${w.last_four}`:''}`, icon:<Wallet size={16} color="#3B82F6"/> }))]}/>
           </div>
         </div>
 

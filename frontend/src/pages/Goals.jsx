@@ -6,6 +6,7 @@ import { PageLoader } from '../components/ui';
 import {
   Plus, ChevronRight, ChevronDown, SlidersHorizontal, BarChart2,
   Rocket, Target as TargetIcon, Wallet, Pencil, Trash2,
+  ChevronsUp, Minus, ChevronsDown,
 } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import usePremiumStore from '../store/premiumStore';
@@ -13,6 +14,7 @@ import useThemeStore from '../store/themeStore';
 import { THEME } from '../theme';
 import styles from './Goals.module.css';
 import { invalidateFinance } from '../lib/cache';
+import ThemedSelect from '../components/ThemedSelect';
 
 const FREE_GOAL_LIMIT = 3;
 
@@ -422,9 +424,12 @@ function GoalModal({ goal, onClose, onSaved }) {
           </div>
           <div className="form-group">
             <label className="form-label">Priority</label>
-            <select className="form-input" value={form.priority} onChange={e=>setForm(f=>({...f,priority:e.target.value}))}>
-              <option>High</option><option>Medium</option><option>Low</option>
-            </select>
+            <ThemedSelect value={form.priority} onChange={v=>setForm(f=>({...f,priority:v}))}
+              options={[
+                { value:'High',   label:'High',   icon:<ChevronsUp size={16} color="#EF4444"/> },
+                { value:'Medium', label:'Medium', icon:<Minus size={16} color="#F59E0B"/> },
+                { value:'Low',    label:'Low',    icon:<ChevronsDown size={16} color="#22C55E"/> },
+              ]}/>
           </div>
           <div className="form-group">
             <label className="form-label">Icon (emoji)</label>

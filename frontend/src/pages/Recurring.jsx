@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit2, Trash2, ToggleLeft, ToggleRight, RefreshCw, Calendar, Repeat } from 'lucide-react';
+import { Plus, Edit2, Trash2, ToggleLeft, ToggleRight, RefreshCw, Calendar, CalendarDays, CalendarRange, Sun, Repeat, Wallet, Ban } from 'lucide-react';
 import { recurringAPI, walletsAPI, categoriesAPI } from '../services/api';
 import { Topbar } from '../components/ui';
+import ThemedSelect from '../components/ThemedSelect';
+import { CategoryGlyph } from '../components/icons';
 import { useFmt, useT } from '../i18n';
 import { invalidateFinance } from '../lib/cache';
 
@@ -103,12 +105,13 @@ function RecurringModal({ item, wallets, categories, onClose, onSave }) {
             </div>
             <div>
               <label style={labelStyle}>Frequency *</label>
-              <select style={inputStyle} value={form.frequency} onChange={e => set('frequency', e.target.value)}>
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-                <option value="yearly">Yearly</option>
-              </select>
+              <ThemedSelect value={form.frequency} onChange={v => set('frequency', v)}
+                options={[
+                  { value:'daily',   label:'Daily',   icon:<Sun size={16} color="#8B5CF6"/> },
+                  { value:'weekly',  label:'Weekly',  icon:<CalendarRange size={16} color="#8B5CF6"/> },
+                  { value:'monthly', label:'Monthly', icon:<CalendarDays size={16} color="#8B5CF6"/> },
+                  { value:'yearly',  label:'Yearly',  icon:<Calendar size={16} color="#8B5CF6"/> },
+                ]}/>
             </div>
           </div>
 
@@ -125,20 +128,22 @@ function RecurringModal({ item, wallets, categories, onClose, onSave }) {
 
           <div>
             <label style={labelStyle}>Account (optional)</label>
-            <select style={inputStyle} value={form.wallet_id || ''} onChange={e => set('wallet_id', e.target.value)}>
-              <option value="">No account</option>
-              {(wallets || []).map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-            </select>
+            <ThemedSelect value={form.wallet_id || ''} onChange={v => set('wallet_id', v)}
+              placeholder="No account"
+              options={[
+                { value:'', label:'No account', icon:<Ban size={16} color="#9896B2"/> },
+                ...(wallets || []).map(w => ({ value:w.id, label:w.name, icon:<Wallet size={16} color="#3B82F6"/> })),
+              ]}/>
           </div>
 
           <div>
             <label style={labelStyle}>Category (optional)</label>
-            <select style={inputStyle} value={form.category_id || ''} onChange={e => set('category_id', e.target.value)}>
-              <option value="">No category</option>
-              {(categories || []).filter(c => c.type === form.type || c.type === 'both').map(c => (
-                <option key={c.id} value={c.id}>{c.emoji} {c.name}</option>
-              ))}
-            </select>
+            <ThemedSelect value={form.category_id || ''} onChange={v => set('category_id', v)}
+              placeholder="No category"
+              options={[
+                { value:'', label:'No category', icon:<Ban size={16} color="#9896B2"/> },
+                ...(categories || []).filter(c => c.type === form.type || c.type === 'both').map(c => ({ value:c.id, label:c.name, icon:<CategoryGlyph name={c.name} emoji={c.emoji} icon={c.icon} size={16}/> })),
+              ]}/>
           </div>
 
           <div>

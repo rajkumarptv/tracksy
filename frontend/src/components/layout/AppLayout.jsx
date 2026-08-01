@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { useEffect, useState, Suspense } from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { List } from '@phosphor-icons/react';
 import Sidebar from './Sidebar';
 import BottomNav from './BottomNav';
+import { PageLoader } from '../ui';
 import useThemeStore from '../../store/themeStore';
 import usePremiumStore from '../../store/premiumStore';
 import useAuthStore from '../../store/authStore';
@@ -16,6 +17,11 @@ export default function AppLayout() {
   const { open: premiumOpen, closePremium } = usePremiumStore();
   const { updateUser } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation();
+
+  // Always close the mobile sidebar drawer (and its blurred overlay) on any
+  // route change — otherwise navigating via the bottom nav leaves it stuck.
+  useEffect(() => { setSidebarOpen(false); }, [location.pathname]);
 
   useEffect(() => {
     initTheme();
@@ -70,7 +76,9 @@ export default function AppLayout() {
           <div style={{ width: 34 }} />
         </div>
 
-        <Outlet />
+        <Suspense fallback={<PageLoader />}>
+          <Outlet />
+        </Suspense>
       </main>
 
       {/* Mobile bottom nav */}

@@ -5,6 +5,8 @@ import { Topbar, EmptyState, PageLoader } from '../components/ui';
 import { Plus, Tag } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import usePremiumStore from '../store/premiumStore';
+import { CategoryIcon } from '../components/icons';
+import CategoryIconPicker from '../components/CategoryIconPicker';
 
 const FREE_CATEGORY_LIMIT = 5;
 
@@ -219,14 +221,8 @@ function CategoryCard({ cat, onEdit, onDelete, readOnly }) {
     onMouseEnter={e => !readOnly && (e.currentTarget.style.transform='translateY(-2px)')}
     onMouseLeave={e => (e.currentTarget.style.transform='')}>
 
-      <div style={{
-        width:42, height:42, borderRadius:13,
-        background:(cat.color||'#8B5CF6')+'20',
-        display:'flex', alignItems:'center', justifyContent:'center',
-        fontSize:20, flexShrink:0,
-      }}>
-        {cat.emoji}
-      </div>
+      <CategoryIcon name={cat.name} emoji={cat.emoji} icon={cat.icon} size={42} iconSize={19}
+        style={{ background:(cat.color||'#8B5CF6')+'20' }}/>
 
       <div style={{ flex:1, minWidth:0 }}>
         <div style={{ fontWeight:700, fontSize:13.5, color:'var(--text)', marginBottom:4, lineHeight:1.3, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
@@ -259,6 +255,7 @@ function CategoryModal({ cat, onClose, onSaved }) {
     type:  cat?.type  || 'expense',
     emoji: cat?.emoji || '📌',
     color: cat?.color || '#8B5CF6',
+    icon:  cat?.icon  || '',
   });
   const [error, setError] = useState('');
 
@@ -322,11 +319,21 @@ function CategoryModal({ cat, onClose, onSaved }) {
           </div>
         </div>
 
+        {/* Icon picker */}
+        <div className="form-group">
+          <label className="form-label">Choose an icon (optional)</label>
+          <div style={{ maxHeight:150, overflowY:'auto', padding:2 }}>
+            <CategoryIconPicker value={form.icon} onChange={key=>setForm(f=>({...f,icon:key}))} color={form.color}/>
+          </div>
+          <div style={{ fontSize:11.5, color:'var(--text3)', marginTop:6 }}>
+            Pick an icon, or leave blank to use the emoji / auto-match by name.
+          </div>
+        </div>
+
         {/* Live preview */}
         <div style={{ background:'var(--surface2)', borderRadius:14, padding:'14px 16px', marginBottom:16, display:'flex', alignItems:'center', gap:12 }}>
-          <div style={{ width:42, height:42, borderRadius:13, background:form.color+'20', display:'flex', alignItems:'center', justifyContent:'center', fontSize:20 }}>
-            {form.emoji}
-          </div>
+          <CategoryIcon name={form.name} emoji={form.emoji} icon={form.icon} size={42} iconSize={20}
+            style={{ background: form.color+'20' }}/>
           <div>
             <div style={{ fontWeight:700, fontSize:14, color:'var(--text)' }}>{form.name || 'Category Preview'}</div>
             <span style={{ fontSize:11, padding:'2px 8px', borderRadius:20, background: TYPE_OPTS.find(t=>t.value===form.type)?.bg, color: TYPE_OPTS.find(t=>t.value===form.type)?.color, fontWeight:700 }}>

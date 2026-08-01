@@ -231,24 +231,15 @@ export function Wallet() {
         <Calendar size={14} color="var(--text3)" style={{ flexShrink:0 }}/>
 
         {/* Year */}
-        <div style={{ position:'relative', display:'flex', alignItems:'center' }}>
-          <select value={selYear} onChange={e => setSelYear(Number(e.target.value))}
-            style={{ appearance:'none', padding:'5px 28px 5px 10px', borderRadius:10, border:'1.5px solid var(--border)',
-              background:'var(--surface)', color:'var(--text)', fontSize:12.5, fontWeight:600, cursor:'pointer', outline:'none' }}>
-            {WALLET_YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-          </select>
-          <ChevronDown size={12} color="var(--text3)" style={{ position:'absolute', right:8, pointerEvents:'none' }}/>
+        <div style={{ width:96 }}>
+          <ThemedSelect compact value={selYear} onChange={v => setSelYear(Number(v))}
+            options={WALLET_YEARS.map(y => ({ value:y, label:String(y) }))}/>
         </div>
 
         {/* Month */}
-        <div style={{ position:'relative', display:'flex', alignItems:'center' }}>
-          <select value={selMonth} onChange={e => setSelMonth(Number(e.target.value))}
-            style={{ appearance:'none', padding:'5px 28px 5px 10px', borderRadius:10, border:'1.5px solid var(--border)',
-              background:'var(--surface)', color:'var(--text)', fontSize:12.5, fontWeight:600, cursor:'pointer', outline:'none' }}>
-            <option value={0}>{t('tx_all_months')}</option>
-            {WALLET_MONTHS.map((m, i) => <option key={i+1} value={i+1}>{m}</option>)}
-          </select>
-          <ChevronDown size={12} color="var(--text3)" style={{ position:'absolute', right:8, pointerEvents:'none' }}/>
+        <div style={{ width:140 }}>
+          <ThemedSelect compact value={selMonth} onChange={v => setSelMonth(Number(v))}
+            options={[{ value:0, label:t('tx_all_months') }, ...WALLET_MONTHS.map((m, i) => ({ value:i+1, label:m }))]}/>
         </div>
 
         {/* Period label */}
@@ -1137,6 +1128,84 @@ import useLangStore2 from '../store/langStore';
 import { useFmt as useFmtHook } from '../i18n';
 import { useT as useT2 } from '../i18n';
 import { User, Globe, Bell, Shield, ChevronRight as Chevron, Download, Trash2, Crown, Check, AlertTriangle, Eye, EyeOff, Key, Tag } from 'lucide-react';
+import usePrivacyStore from '../store/privacyStore';
+import ThemedSelect from '../components/ThemedSelect';
+
+function PrivacySection() {
+  const { hidden, passwordHash, setHidden, setPassword, verify } = usePrivacyStore();
+  const [pw, setPw]   = useState2('');
+  const [pw2, setPw2] = useState2('');
+  const [cur, setCur] = useState2('');
+  const [msg, setMsg] = useState2('');
+  const hasPw = !!passwordHash;
+  const ok = (m) => { setMsg(m); setTimeout(() => setMsg(''), 2500); };
+
+  const save = () => {
+    if (hasPw && !verify(cur)) return setMsg('Current password is incorrect');
+    if (!pw) return setMsg('Enter a new password');
+    if (pw !== pw2) return setMsg('Passwords do not match');
+    setPassword(pw); setPw(''); setPw2(''); setCur(''); ok('Password saved ✓');
+  };
+  const remove = () => {
+    if (hasPw && !verify(cur)) return setMsg('Current password is incorrect');
+    setPassword(null); setHidden(false); setCur(''); ok('Password removed ✓');
+  };
+  const toggle = () => {
+    if (hidden && passwordHash) {
+      const p = window.prompt('Enter password to reveal amounts');
+      if (p == null) return;
+      if (!verify(p)) return window.alert('Incorrect password');
+    }
+    setHidden(!hidden);
+  };
+
+  return (
+    <SectionCard icon={<Shield size={18} color="#22C55E"/>} title="Privacy — Hide Amounts">
+      <div style={{ fontSize:13, color:'var(--text2)', marginBottom:14, lineHeight:1.6 }}>
+        Hide every amount in the app behind <b>••••</b>. Tap the eye icon on the balance card any time — set a password below so only you can reveal them again.
+      </div>
+
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 14px', borderRadius:12, background:'var(--surface2)', marginBottom:14 }}>
+        <span style={{ fontSize:14, fontWeight:600, color:'var(--text)' }}>
+          {hidden ? '🙈 Amounts are hidden' : '👁️ Amounts are visible'}
+        </span>
+        <button className="btn btn-ghost" onClick={toggle} style={{ padding:'7px 16px' }}>
+          {hidden ? 'Show' : 'Hide'}
+        </button>
+      </div>
+
+      {msg && (
+        <div style={{ fontSize:13, fontWeight:600, marginBottom:12, color: msg.includes('✓') ? '#22C55E' : '#EC4899' }}>{msg}</div>
+      )}
+
+      <div style={{ display:'grid', gap:12 }}>
+        {hasPw && (
+          <div className="form-group">
+            <label className="form-label">Current password</label>
+            <input type="password" className="form-input" value={cur} onChange={e=>setCur(e.target.value)} placeholder="••••••"/>
+          </div>
+        )}
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+          <div className="form-group">
+            <label className="form-label">{hasPw ? 'New password' : 'Password'}</label>
+            <input type="password" className="form-input" value={pw} onChange={e=>setPw(e.target.value)} placeholder="••••••"/>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Confirm</label>
+            <input type="password" className="form-input" value={pw2} onChange={e=>setPw2(e.target.value)} placeholder="••••••"/>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display:'flex', gap:10, marginTop:4 }}>
+        <button className="btn btn-primary" onClick={save} style={{ background:'linear-gradient(135deg,#8B5CF6,#3B82F6)', border:'none', boxShadow:'0 4px 14px rgba(139,92,246,.35)' }}>
+          {hasPw ? 'Update password' : 'Set password'}
+        </button>
+        {hasPw && <button className="btn btn-ghost" onClick={remove}>Remove password</button>}
+      </div>
+    </SectionCard>
+  );
+}
 import usePremiumStore from '../store/premiumStore';
 import { invalidateFinance } from '../lib/cache';
 
@@ -1240,22 +1309,23 @@ export function Settings() {
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
               <div className="form-group">
                 <label className="form-label">{t('settings_currency')}</label>
-                <select className="form-input" value={currency} onChange={e => setCurrency(e.target.value)}>
-                  {ALL_CURRENCIES.map(c => (
-                    <option key={c.code} value={c.code}>{c.flag} {c.code} — {c.name}</option>
-                  ))}
-                </select>
+                <ThemedSelect value={currency} onChange={setCurrency}
+                  options={ALL_CURRENCIES.map(c => ({ value:c.code, label:`${c.code} — ${c.name}`, emoji:c.flag }))}/>
               </div>
               <div className="form-group">
                 <label className="form-label">{t('settings_language')}</label>
-                <select className="form-input" value={lang} onChange={e => setLang(e.target.value)}>
-                  <option value="en">🇬🇧 English</option>
-                  <option value="ta">🇮🇳 தமிழ் (Tamil)</option>
-                </select>
+                <ThemedSelect value={lang} onChange={setLang}
+                  options={[
+                    { value:'en', label:'English', emoji:'🇬🇧' },
+                    { value:'ta', label:'தமிழ் (Tamil)', emoji:'🇮🇳' },
+                  ]}/>
               </div>
             </div>
             <button className="btn btn-ghost" onClick={() => { setSaved(true); setTimeout(()=>setSaved(false),2500); }}>{t('settings_save_prefs')}</button>
           </SectionCard>
+
+          {/* Privacy — hide amounts behind a password */}
+          <PrivacySection />
 
           {/* Categories — moved out of main menu */}
           <SectionCard icon={<Tag size={18} color="#A78BFA"/>} title="Categories">

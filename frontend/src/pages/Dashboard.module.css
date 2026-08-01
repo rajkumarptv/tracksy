@@ -10,9 +10,9 @@
 }
 
 .inner {
-  max-width: 1280px;
+  max-width: 1680px;
   margin: 0 auto;
-  padding: 28px 32px 48px;
+  padding: 28px 40px 48px;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -133,11 +133,12 @@
 /* ── Grid: named areas keep left/right rows aligned ────── */
 .grid {
   display: grid;
-  grid-template-columns: 1.55fr 1fr;
+  grid-template-columns: 1.4fr 1fr 1fr;
   grid-template-areas:
-    "balance flow"
-    "spend   recent";
-  gap: 24px;
+    "balance balance  flow"
+    "spend   recent   accounts"
+    "goals   upcoming accounts";
+  gap: 16px;
 }
 
 .grid > * { min-width: 0; }
@@ -146,6 +147,37 @@
 .flowCard       { grid-area: flow; }
 .spendCard      { grid-area: spend; }
 .recentCard     { grid-area: recent; }
+.accountsCard {
+  grid-area: accounts;
+  padding: 24px 26px;
+  border-radius: 32px;
+  display: flex;
+  flex-direction: column;
+}
+.goalsCard {
+  grid-area: goals;
+  padding: 24px 26px;
+  border-radius: 32px;
+}
+.upcomingCard {
+  grid-area: upcoming;
+  padding: 24px 26px;
+  border-radius: 32px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Two-column tier for laptops / medium widths */
+@media (max-width: 1300px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "balance balance"
+      "flow    accounts"
+      "spend   recent"
+      "goals   upcoming";
+  }
+}
 
 .chartWrap, .flowBody > *, .spendBody > * { min-width: 0; }
 
@@ -547,7 +579,10 @@
       "balance"
       "flow"
       "spend"
-      "recent";
+      "recent"
+      "accounts"
+      "goals"
+      "upcoming";
   }
 }
 
@@ -574,6 +609,9 @@
   .flowCard    { padding: 16px 15px; border-radius: 22px; }
   .spendCard   { padding: 16px 15px; border-radius: 22px; }
   .recentCard  { padding: 15px 15px; border-radius: 22px; }
+  .accountsCard{ padding: 15px 15px; border-radius: 22px; }
+  .goalsCard   { padding: 16px 15px; border-radius: 22px; }
+  .upcomingCard{ padding: 15px 15px; border-radius: 22px; }
 
   .recentRow  { padding: 10px 0; }
   .chartWrap  { margin-top: 2px; }

@@ -14,6 +14,7 @@ import { THEME } from '../theme';
 import ThemedSelect from '../components/ThemedSelect';
 import styles from './Accounts.module.css';
 import { invalidateFinance } from '../lib/cache';
+import AmountToggle from '../components/AmountToggle';
 
 /* ── Palette — derived from the shared dashboard theme ─────────────────── */
 const DS = {
@@ -147,7 +148,7 @@ export default function Accounts() {
           <div className={styles.overviewLeft}>
             <div style={{ display:'flex', alignItems:'center', gap:8 }}>
               <span style={{ fontSize:14, color:t.text2, fontWeight:500 }}>Total Balance</span>
-              <Eye size={16} color={t.text3}/>
+              <AmountToggle size={16} color={t.text3}/>
             </div>
             <div className={styles.bigAmount} style={{ color: totNeg ? DS.danger : t.text }}>
               {totNeg && '−'}{fmt(Math.abs(totalBalance),{noDecimals:true})}
@@ -389,6 +390,8 @@ function AccountModal({ mode, wallet, t, isDark, onClose, onSaved, onPay }) {
   const [balance, setBalance]   = useState(wallet ? Math.abs(parseFloat(wallet.balance??0)) || '' : '');
   // liability-specific
   const [creditLimit, setCreditLimit] = useState(wallet?.credit_limit || '');
+  const [statementDay, setStatementDay] = useState(wallet?.statement_day || '');
+  const [paymentDay, setPaymentDay]     = useState(wallet?.payment_day || '');
   const [loanAmount, setLoanAmount]   = useState(wallet?.total_loan_amount || '');
   const [rate, setRate]               = useState(wallet?.interest_rate || '');
   const [tenure, setTenure]           = useState(wallet?.tenure_months || '');
@@ -432,6 +435,8 @@ function AccountModal({ mode, wallet, t, isDark, onClose, onSaved, onPay }) {
       if (card) {
         payload.credit_limit = parseFloat(creditLimit||0) || null;
         payload.interest_rate = parseFloat(rate||0) || null;
+        payload.statement_day = parseInt(statementDay||0) || null;
+        payload.payment_day = parseInt(paymentDay||0) || null;
       }
       if (emiLoan) {
         payload.total_loan_amount = parseFloat(loanAmount||0) || null;
@@ -534,6 +539,17 @@ function AccountModal({ mode, wallet, t, isDark, onClose, onSaved, onPay }) {
               <ModalField lblSt={lblSt} label="Outstanding (₹)">
                 <input style={inputSt} type="number" value={balance} onChange={e=>setBalance(e.target.value)} placeholder="85000"/>
               </ModalField>
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+              <ModalField lblSt={lblSt} label="Bill Generation Day">
+                <input style={inputSt} type="number" min="1" max="31" value={statementDay} onChange={e=>setStatementDay(e.target.value)} placeholder="e.g. 5"/>
+              </ModalField>
+              <ModalField lblSt={lblSt} label="Payment Due Day">
+                <input style={inputSt} type="number" min="1" max="31" value={paymentDay} onChange={e=>setPaymentDay(e.target.value)} placeholder="e.g. 25"/>
+              </ModalField>
+            </div>
+            <div style={{ fontSize:11.5, color:t.text3, marginTop:-4 }}>
+              Day of the month the statement is generated and when payment is due — used for upcoming-payment reminders.
             </div>
             {parseFloat(creditLimit||0) > 0 && (
               <div style={{ background:t.surface, borderRadius:12, padding:'12px 14px', display:'flex', justifyContent:'space-between', alignItems:'center' }}>

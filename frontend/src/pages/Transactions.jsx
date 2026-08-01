@@ -9,7 +9,8 @@ import { useFmt, useT } from '../i18n';
 import useThemeStore from '../store/themeStore';
 import styles from './Transactions.module.css';
 import PaymentLogo from '../components/PaymentLogo';
-import { MerchantLogo, CategoryIcon } from '../components/icons';
+import { MerchantLogo, CategoryIcon, CategoryGlyph } from '../components/icons';
+import ThemedSelect from '../components/ThemedSelect';
 import { invalidateFinance, resetFinance } from '../lib/cache';
 
 /* ── Payment method definitions ──────────────────────────────────────── */
@@ -595,20 +596,13 @@ export default function Transactions() {
         {/* Monthly controls */}
         {dateMode === 'monthly' && (
           <>
-            <div style={{ position:'relative', display:'flex', alignItems:'center' }}>
-              <select value={selYear} onChange={e => { setSelYear(Number(e.target.value)); setPage(1); }}
-                style={{ appearance:'none', padding:'5px 28px 5px 10px', borderRadius:10, border:'1.5px solid var(--border)', background:'var(--surface)', color:'var(--text)', fontSize:12.5, fontWeight:600, cursor:'pointer', outline:'none' }}>
-                {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-              </select>
-              <ChevronDown size={12} color="var(--text3)" style={{ position:'absolute', right:8, pointerEvents:'none' }}/>
+            <div style={{ width:96 }}>
+              <ThemedSelect compact value={selYear} onChange={v => { setSelYear(Number(v)); setPage(1); }}
+                options={YEARS.map(y => ({ value:y, label:String(y) }))}/>
             </div>
-            <div style={{ position:'relative', display:'flex', alignItems:'center' }}>
-              <select value={selMonth} onChange={e => { setSelMonth(Number(e.target.value)); setPage(1); }}
-                style={{ appearance:'none', padding:'5px 28px 5px 10px', borderRadius:10, border:'1.5px solid var(--border)', background:'var(--surface)', color:'var(--text)', fontSize:12.5, fontWeight:600, cursor:'pointer', outline:'none' }}>
-                <option value={0}>{t('tx_all_months')}</option>
-                {MONTHS_FULL.map((m, i) => <option key={i+1} value={i+1}>{m}</option>)}
-              </select>
-              <ChevronDown size={12} color="var(--text3)" style={{ position:'absolute', right:8, pointerEvents:'none' }}/>
+            <div style={{ width:140 }}>
+              <ThemedSelect compact value={selMonth} onChange={v => { setSelMonth(Number(v)); setPage(1); }}
+                options={[{ value:0, label:t('tx_all_months') }, ...MONTHS_FULL.map((m, i) => ({ value:i+1, label:m }))]}/>
             </div>
           </>
         )}
@@ -1531,7 +1525,7 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
                         <button key={c.id} onClick={() => setCatId(sel ? '' : c.id)}
                           style={{ display:'flex', flexDirection:'column', alignItems:'center', padding:'10px 6px', borderRadius:14, border:`1.5px solid ${sel ? col+'60' : 'var(--border-light)'}`, background: sel ? col+'18' : 'var(--surface2)', cursor:'pointer', transition:'all .15s', gap:5 }}>
                           <div style={{ width:36, height:36, borderRadius:11, background: sel ? col+'25' : 'var(--surface3)', border:`1.5px solid ${sel ? col+'50' : 'transparent'}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:17 }}>
-                            {c.emoji || '📌'}
+                            <CategoryGlyph name={c.name} emoji={c.emoji} icon={c.icon} size={18}/>
                           </div>
                           <span style={{ fontSize:10, fontWeight:700, color: sel ? col : 'var(--text3)', textAlign:'center', lineHeight:1.2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', width:'100%' }}>{c.name}</span>
                         </button>
@@ -1594,11 +1588,8 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
               <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
                 <div><label style={fieldLbl}>Date</label><input style={fieldIn} type="date" value={date} onChange={e=>setDate(e.target.value)}/></div>
                 <div><label style={fieldLbl}>Status</label>
-                  <select style={fieldIn} value={status} onChange={e=>setStatus(e.target.value)}>
-                    <option value="completed">✅ Completed</option>
-                    <option value="pending">⏳ Pending</option>
-                    <option value="failed">❌ Failed</option>
-                  </select></div>
+                  <CustomSelect value={status} onChange={setStatus} placeholder="Status"
+                    options={[{value:'completed',label:'Completed',emoji:'✅'},{value:'pending',label:'Pending',emoji:'⏳'},{value:'failed',label:'Failed',emoji:'❌'}]}/></div>
               </div>
               <div><label style={fieldLbl}>Note (optional)</label><input style={fieldIn} placeholder="Add a note…" value={note} onChange={e=>setNote(e.target.value)}/></div>
 

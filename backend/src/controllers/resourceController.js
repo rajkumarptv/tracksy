@@ -110,27 +110,29 @@ const createWallet = async (req, res) => {
         });
       }
     }
-    const { name, type, last_four, balance, color, credit_limit, interest_rate, total_loan_amount, emi_amount, emi_day, due_date, start_date } = req.body;
+    const { name, type, last_four, balance, color, credit_limit, interest_rate, total_loan_amount, emi_amount, emi_day, due_date, start_date, statement_day, payment_day } = req.body;
     const result = await query(`
-      INSERT INTO wallets (user_id, name, type, last_four, balance, color, credit_limit, interest_rate, total_loan_amount, emi_amount, emi_day, due_date, start_date)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *
+      INSERT INTO wallets (user_id, name, type, last_four, balance, color, credit_limit, interest_rate, total_loan_amount, emi_amount, emi_day, due_date, start_date, statement_day, payment_day)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *
     `, [req.user.userId, encrypt(name), type, last_four, balance || 0, color || '#6c5ce7',
         credit_limit || null, interest_rate || null, total_loan_amount || null,
-        emi_amount || null, emi_day || null, due_date || null, start_date || null]);
+        emi_amount || null, emi_day || null, due_date || null, start_date || null,
+        statement_day || null, payment_day || null]);
     res.status(201).json({ success: true, data: decryptWallet(result.rows[0]) });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 };
 
 const updateWallet = async (req, res) => {
   try {
-    const { name, type, last_four, balance, color, credit_limit, interest_rate, total_loan_amount, emi_amount, emi_day, due_date, start_date } = req.body;
+    const { name, type, last_four, balance, color, credit_limit, interest_rate, total_loan_amount, emi_amount, emi_day, due_date, start_date, statement_day, payment_day } = req.body;
     const result = await query(`
       UPDATE wallets SET name=$1, type=$2, last_four=$3, balance=$4, color=$5,
-        credit_limit=$6, interest_rate=$7, total_loan_amount=$8, emi_amount=$9, emi_day=$10, due_date=$11, start_date=$12, updated_at=NOW()
-      WHERE id=$13 AND user_id=$14 RETURNING *
+        credit_limit=$6, interest_rate=$7, total_loan_amount=$8, emi_amount=$9, emi_day=$10, due_date=$11, start_date=$12, statement_day=$13, payment_day=$14, updated_at=NOW()
+      WHERE id=$15 AND user_id=$16 RETURNING *
     `, [encrypt(name), type, last_four, balance || 0, color || '#6c5ce7',
         credit_limit || null, interest_rate || null, total_loan_amount || null,
         emi_amount || null, emi_day || null, due_date || null, start_date || null,
+        statement_day || null, payment_day || null,
         req.params.id, req.user.userId]);
     if (!result.rows.length) return res.status(404).json({ success: false, message: 'Wallet not found' });
     res.json({ success: true, data: decryptWallet(result.rows[0]) });
@@ -158,7 +160,7 @@ const getAllCategories = async (req, res) => {
 
 const createCategory = async (req, res) => {
   try {
-    const { name, type, emoji, color } = req.body;
+    const { name, type, emoji, color, icon } = req.body;
     if (!name || !type) return res.status(400).json({ success: false, message: 'Name and type are required' });
     const premium = await isPremium(req.user.userId);
     if (!premium) {
@@ -172,20 +174,20 @@ const createCategory = async (req, res) => {
       }
     }
     const result = await query(`
-      INSERT INTO categories (user_id, name, type, emoji, color, is_default)
-      VALUES ($1,$2,$3,$4,$5,false) RETURNING *
-    `, [req.user.userId, name.trim(), type, emoji || '📌', color || '#6c5ce7']);
+      INSERT INTO categories (user_id, name, type, emoji, color, icon, is_default)
+      VALUES ($1,$2,$3,$4,$5,$6,false) RETURNING *
+    `, [req.user.userId, name.trim(), type, emoji || '📌', color || '#6c5ce7', icon || null]);
     res.status(201).json({ success: true, data: result.rows[0] });
   } catch (err) { res.status(500).json({ success: false, message: 'Server error' }); }
 };
 
 const updateCategory = async (req, res) => {
   try {
-    const { name, type, emoji, color } = req.body;
+    const { name, type, emoji, color, icon } = req.body;
     const result = await query(`
-      UPDATE categories SET name=$1, type=$2, emoji=$3, color=$4
-      WHERE id=$5 AND user_id=$6 AND is_default=false RETURNING *
-    `, [name, type, emoji, color, req.params.id, req.user.userId]);
+      UPDATE categories SET name=$1, type=$2, emoji=$3, color=$4, icon=$5
+      WHERE id=$6 AND user_id=$7 AND is_default=false RETURNING *
+    `, [name, type, emoji, color, icon || null, req.params.id, req.user.userId]);
     if (!result.rows.length) return res.status(404).json({ success: false, message: 'Category not found or cannot edit default categories' });
     res.json({ success: true, data: result.rows[0] });
   } catch (err) { res.status(500).json({ success: false, message: 'Server error' }); }
