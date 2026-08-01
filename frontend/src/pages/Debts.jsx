@@ -640,6 +640,7 @@ const DEBT_TYPE_OPTS = [
 ];
 
 function DebtModal({ debt, onClose, onSaved }) {
+  const fmt = useFmtHook();
   const isCard = debt ? ['visa','mastercard'].includes(debt.type) : false;
   const [form, setForm] = useState({
     name:              debt?.name              || '',
@@ -653,6 +654,7 @@ function DebtModal({ debt, onClose, onSaved }) {
     total_loan_amount: debt?.total_loan_amount ? parseFloat(debt.total_loan_amount).toString() : '',
     emi_amount:        debt?.emi_amount        ? parseFloat(debt.emi_amount).toString() : '',
     emi_day:           debt?.emi_day           ? debt.emi_day.toString() : '',
+    start_date:        debt?.start_date        ? String(debt.start_date).split('T')[0] : '',
   });
   const [error, setError] = useState('');
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
@@ -687,10 +689,27 @@ function DebtModal({ debt, onClose, onSaved }) {
       total_loan_amount: form.total_loan_amount  ? parseFloat(form.total_loan_amount) : null,
       emi_amount:        form.emi_amount         ? parseFloat(form.emi_amount)        : null,
       emi_day:           form.emi_day            ? parseInt(form.emi_day)             : null,
+      start_date:        form.start_date          || null,
     });
   };
 
   const selectedOpt = DEBT_TYPE_OPTS.find(o => o.value === form.type) || DEBT_TYPE_OPTS[2];
+
+  /* Interest accrual — if a loan's interest isn't being paid, it compounds
+     monthly from the start date onto the outstanding. */
+  const accrual = (() => {
+    const principal = parseFloat(form.balance || 0);
+    const annual = parseFloat(form.interest_rate || 0);
+    if (!isLoan || !form.start_date || !principal || !annual) return null;
+    const start = new Date(form.start_date);
+    const now = new Date();
+    let months = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
+    if (now.getDate() < start.getDate()) months -= 1;
+    months = Math.max(0, months);
+    const mr = annual / 12 / 100;
+    const finalOS = principal * Math.pow(1 + mr, months);
+    return { months, accrued: finalOS - principal, finalOS };
+  })();
 
   return (
     <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
@@ -762,10 +781,32 @@ function DebtModal({ debt, onClose, onSaved }) {
                 <label className="form-label">Monthly EMI ($)</label>
                 <input className="form-input" type="number" min="0" step="0.01" value={form.emi_amount} onChange={e => set('emi_amount',e.target.value)} placeholder="e.g. 1500"/>
               </div>
-              <div className="form-group" style={{ gridColumn:'1/-1' }}>
+              <div className="form-group">
                 <label className="form-label">EMI Due Date (day of month)</label>
-                <input className="form-input" type="number" min="1" max="31" value={form.emi_day} onChange={e => set('emi_day',e.target.value)} placeholder="e.g. 5 (5th of every month)"/>
+                <input className="form-input" type="number" min="1" max="31" value={form.emi_day} onChange={e => set('emi_day',e.target.value)} placeholder="e.g. 5"/>
               </div>
+              <div className="form-group">
+                <label className="form-label">Loan Start Date</label>
+                <input className="form-input" type="date" value={form.start_date} onChange={e => set('start_date',e.target.value)}/>
+              </div>
+
+              {/* Interest accrual projection */}
+              {accrual && accrual.months > 0 && (
+                <div className="form-group" style={{ gridColumn:'1/-1', background:'rgba(236,72,153,.06)', border:'1.5px solid rgba(236,72,153,.22)', borderRadius:12, padding:'12px 14px' }}>
+                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
+                    <span style={{ fontSize:13, fontWeight:700, color:'var(--text)' }}>📈 Interest accrued ({accrual.months} mo unpaid)</span>
+                    <span style={{ fontSize:14, fontWeight:800, color:'#EC4899' }} className="mono">+{fmt(accrual.accrued)}</span>
+                  </div>
+                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                    <span style={{ fontSize:12.5, color:'var(--text3)' }}>Outstanding incl. interest</span>
+                    <span style={{ fontSize:14, fontWeight:800, color:'var(--text)' }} className="mono">{fmt(accrual.finalOS)}</span>
+                  </div>
+                  <button type="button" onClick={() => set('balance', accrual.finalOS.toFixed(2))}
+                    style={{ marginTop:10, width:'100%', padding:'8px', borderRadius:9, border:'1.5px solid rgba(236,72,153,.3)', background:'rgba(236,72,153,.1)', color:'#EC4899', fontSize:12.5, fontWeight:700, cursor:'pointer' }}>
+                    Add accrued interest to outstanding
+                  </button>
+                </div>
+              )}
             </>
           )}
 
