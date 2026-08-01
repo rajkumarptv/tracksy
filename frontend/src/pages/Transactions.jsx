@@ -1363,7 +1363,7 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
     position:'fixed', bottom:0, left:0, right:0, zIndex:1100,
     background:'var(--surface)', borderRadius:'28px 28px 0 0',
     boxShadow:'0 -12px 60px rgba(0,0,0,.2)',
-    maxHeight:'88svh', height:'auto',
+    height:'auto',
     display:'flex', flexDirection:'column', overflow:'hidden',
   };
   const scrollSt = { flex:1, minHeight:0, overflowY:'auto', WebkitOverflowScrolling:'touch' };
@@ -1400,7 +1400,7 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
         />
       )}
       <div style={overlayStyle} onClick={onClose}/>
-      <div style={sheetSt}>
+      <div className="txSheet" style={sheetSt}>
 
         {/* Handle */}
         <div style={{ width:40, height:4, borderRadius:2, background:'var(--border)', margin:'12px auto 0' }}/>
@@ -1639,7 +1639,11 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
           </div>
 
         </div>
-        <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
+        <style>{`
+          @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+          .txSheet{ max-height:88vh; max-height:88dvh; max-height:88svh; }
+          @media (max-width:768px){ .txSheet{ max-height:92vh; max-height:92dvh; max-height:92svh; } }
+        `}</style>
       </div>
     </>
   );
