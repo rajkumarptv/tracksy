@@ -154,11 +154,14 @@ export default function Dashboard() {
   const curY = now.getFullYear();
   const curM = now.getMonth() + 1;
 
-  /* Date range for the whole dashboard, driven by the period selector */
+  /* Date range for the whole dashboard, driven by the period selector.
+     The backend filters `transaction_date < end_date`, so end_date must be the
+     day AFTER the period's last day to keep the last day inclusive. */
+  const nextDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
   const { start: rStart, end: rEnd } = periodRange(period);
-  const range = { start_date: iso(rStart), end_date: iso(rEnd) };
+  const range = { start_date: iso(rStart), end_date: iso(nextDay(rEnd)) };
   const { start: pStart, end: pEnd } = periodRange(period, prevPeriodBase(period));
-  const prevRange = { start_date: iso(pStart), end_date: iso(pEnd) };
+  const prevRange = { start_date: iso(pStart), end_date: iso(nextDay(pEnd)) };
 
   /* ── Queries (all keyed by period so they refetch on change) ── */
   const { data: summaryRaw } = useQuery({
@@ -514,11 +517,6 @@ export default function Dashboard() {
                   </span>
                 )}
                 <span style={{ fontSize:13, color:c.text2 }}>{prevLabel}</span>
-              </div>
-
-              {/* TEMP diagnostic — remove after debugging the flat graph */}
-              <div style={{ fontSize:11, color:c.text3, marginTop:4, fontFamily:'monospace' }}>
-                dbg · tx:{(recentTx||[]).length} · inc:{Math.round(income)} · exp:{Math.round(expense)} · bal:{Math.round(balance)} · pts:{balanceSeries.length} · range:{range.start_date}→{range.end_date}
               </div>
 
               <div className={styles.chartWrap}>
