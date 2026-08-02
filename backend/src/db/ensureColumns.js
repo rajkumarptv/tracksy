@@ -9,10 +9,14 @@ async function ensureColumns() {
   if (done) return;
   done = true;
   const stmts = [
-    `ALTER TABLE budgets    ADD COLUMN IF NOT EXISTS type VARCHAR(10) DEFAULT 'expense'`,
-    `ALTER TABLE categories ADD COLUMN IF NOT EXISTS icon VARCHAR(40)`,
-    `ALTER TABLE wallets    ADD COLUMN IF NOT EXISTS statement_day INTEGER`,
-    `ALTER TABLE wallets    ADD COLUMN IF NOT EXISTS payment_day INTEGER`,
+    `ALTER TABLE budgets      ADD COLUMN IF NOT EXISTS type VARCHAR(10) DEFAULT 'expense'`,
+    `ALTER TABLE categories   ADD COLUMN IF NOT EXISTS icon VARCHAR(40)`,
+    `ALTER TABLE wallets      ADD COLUMN IF NOT EXISTS statement_day INTEGER`,
+    `ALTER TABLE wallets      ADD COLUMN IF NOT EXISTS payment_day INTEGER`,
+    `ALTER TABLE wallets      ADD COLUMN IF NOT EXISTS start_date DATE`,
+    // Transfers rely on these — missing columns make transfers 500
+    `ALTER TABLE transactions ADD COLUMN IF NOT EXISTS transfer_pair_id UUID`,
+    `ALTER TABLE transactions ADD COLUMN IF NOT EXISTS transfer_direction VARCHAR(3)`,
   ];
   for (const sql of stmts) {
     try { await pool.query(sql); }
