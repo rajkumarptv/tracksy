@@ -197,33 +197,4 @@ router.post('/cron/gmail-sync', async (req, res) => {
 // Lightweight keep-alive / uptime probe
 router.get('/cron/ping', (_req, res) => res.json({ ok: true, ts: Date.now() }));
 
-// TEMP: synchronously run schema guards + report transactions column sizes.
-router.get('/_schema-fix', async (_req, res) => {
-  try {
-    const { pool } = require('../db');
-    const stmts = [
-      `ALTER TABLE transactions ADD COLUMN IF NOT EXISTS transfer_pair_id UUID`,
-      `ALTER TABLE transactions ADD COLUMN IF NOT EXISTS transfer_direction VARCHAR(10)`,
-      `ALTER TABLE transactions ALTER COLUMN transfer_direction TYPE VARCHAR(10)`,
-      `ALTER TABLE transactions ALTER COLUMN type TYPE VARCHAR(20)`,
-      `ALTER TABLE transactions ALTER COLUMN status TYPE VARCHAR(20)`,
-      `ALTER TABLE transactions ALTER COLUMN description TYPE TEXT`,
-      `ALTER TABLE transactions ALTER COLUMN payment_name TYPE TEXT`,
-      `ALTER TABLE transactions DROP CONSTRAINT IF EXISTS transactions_transfer_direction_check`,
-    ];
-    const applied = [];
-    for (const sql of stmts) {
-      try { await pool.query(sql); applied.push({ sql, ok: true }); }
-      catch (e) { applied.push({ sql, ok: false, err: e.message }); }
-    }
-    const cols = await pool.query(
-      `SELECT column_name, data_type, character_maximum_length
-       FROM information_schema.columns WHERE table_name='transactions' ORDER BY ordinal_position`
-    );
-    res.json({ ok: true, applied, columns: cols.rows });
-  } catch (e) {
-    res.status(500).json({ ok: false, error: e.message });
-  }
-});
-
 module.exports = router;

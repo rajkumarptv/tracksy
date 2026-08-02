@@ -21,6 +21,9 @@ async function ensureColumns() {
     `ALTER TABLE transactions ALTER COLUMN transfer_direction TYPE VARCHAR(10)`,
     // Drop any legacy length CHECK that could reject values
     `ALTER TABLE transactions DROP CONSTRAINT IF EXISTS transactions_transfer_direction_check`,
+    // Encrypted values can exceed VARCHAR(255) — store as TEXT
+    `ALTER TABLE transactions ALTER COLUMN description TYPE TEXT`,
+    `ALTER TABLE transactions ALTER COLUMN payment_name TYPE TEXT`,
   ];
   for (const sql of stmts) {
     try { await pool.query(sql); }
