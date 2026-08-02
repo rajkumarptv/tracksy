@@ -228,7 +228,9 @@
       "Bash(cd /d/tracksy/backend && grep -rn \"migrate\\\\|ADD COLUMN\\\\|ensureSchema\\\\|runMigrations\" src/index.js ../api/index.js 2>/dev/null | head; echo \"=== build/postinstall ===\"; grep -E \"postinstall|build|migrate|vercel-build\" package.json ../package.json ../vercel.json 2>/dev/null)",
       "Bash(node -e \"require\\('/d/tracksy/backend/src/db/ensureColumns'\\); console.log\\('module loads OK'\\)\")",
       "Bash(node -e \"const f=require\\('./src/db/ensureColumns'\\); console.log\\('loads OK, type:', typeof f\\)\")",
-      "Bash(git commit -q -m 'fix: transfer 500 — ensure transfer_pair_id/transfer_direction \\(+ wallets.start_date\\) columns exist *)"
+      "Bash(git commit -q -m 'fix: transfer 500 — ensure transfer_pair_id/transfer_direction \\(+ wallets.start_date\\) columns exist *)",
+      "Bash(curl -s -o /dev/null -w \"home:%{http_code} api:\" https://tracksywallet.com)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" https://tracksywallet.com/api/auth/me)"
     ]
   }
 }

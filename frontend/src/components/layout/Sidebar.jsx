@@ -10,6 +10,7 @@ import useAuthStore from '../../store/authStore';
 import useThemeStore from '../../store/themeStore';
 import usePremiumStore from '../../store/premiumStore';
 import { useT } from '../../i18n';
+import InstallPWA from '../InstallPWA';
 import styles from './Sidebar.module.css';
 
 const NAV_ITEMS = [
@@ -186,6 +187,7 @@ export default function Sidebar({ isOpen, onClose }) {
 
         {/* ── Bottom ── */}
         <div className={styles.navBottom}>
+          <InstallPWA onClick={onClose} />
           <motion.button
             className={`${styles.navItem} ${styles.logoutBtn}`}
             onClick={handleLogout}

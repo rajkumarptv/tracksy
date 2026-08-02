@@ -24,14 +24,18 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
 .headerLeft {
   display: flex;
   align-items: center;
   gap: 16px;
+  flex: 1;
+  min-width: 0;
 }
+
+.greetText { min-width: 0; flex: 1; }
 
 .avatarWrap { position: relative; flex-shrink: 0; }
 
@@ -63,14 +67,24 @@
   font-weight: 800;
   letter-spacing: -0.5px;
   line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.greetSub { font-size: 14px; margin-top: 3px; }
+.greetSub {
+  font-size: 14px;
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 .headerRight {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .searchBox {

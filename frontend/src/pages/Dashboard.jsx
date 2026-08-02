@@ -396,7 +396,7 @@ export default function Dashboard() {
               </div>
               <span className={styles.onlineDot} style={{ background:c.green, borderColor: isDark?'#020617':'#FEFEFE' }}/>
             </div>
-            <div>
+            <div className={styles.greetText}>
               <div className={styles.greetTitle} style={{ color:c.text }}>{greeting}, {firstName} 👋</div>
               <div className={styles.greetSub} style={{ color:c.text2 }}>Let's make today financially amazing!</div>
             </div>
