@@ -1517,8 +1517,13 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
                   <NewCategoryInline txType={txType} onCancel={() => setShowNewCat(false)}
                     onCreated={cat => { setCatId(cat.id); setShowNewCat(false); qc.invalidateQueries({ queryKey:['categories'] }); }}/>
                 ) : (
-                  <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:8 }}>
-                    {filteredCats.slice(0,8).map(c => {
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8, maxHeight:224, overflowY:'auto', paddingRight:2, scrollbarWidth:'thin' }}>
+                    {filteredCats.length === 0 && (
+                      <div style={{ gridColumn:'1/-1', textAlign:'center', padding:'18px 8px', fontSize:12.5, color:'var(--text3)' }}>
+                        No categories yet — tap “+ New” to add one.
+                      </div>
+                    )}
+                    {filteredCats.map(c => {
                       const sel = catId === c.id;
                       const col = c.color || '#8B5CF6';
                       return (
@@ -1531,10 +1536,6 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
                         </button>
                       );
                     })}
-                    {filteredCats.length > 8 && (
-                      <CustomSelect value={catId} onChange={setCatId} placeholder="More…"
-                        options={filteredCats.slice(8).map(c => ({ value:c.id, label:c.name, emoji:c.emoji, color:c.color }))}/>
-                    )}
                   </div>
                 )}
               </div>
