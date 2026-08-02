@@ -1,6 +1,6 @@
 const { query } = require('../db');
 const { randomUUID } = require('crypto');
-const { encrypt, decryptRow } = require('../utils/crypto');
+const { encrypt, decrypt, decryptRow } = require('../utils/crypto');
 
 // Fields to decrypt on every transaction row returned to client
 // payment_name is intentionally NOT encrypted — it's needed for ILIKE search
@@ -102,8 +102,8 @@ const create = async (req, res) => {
         return res.status(404).json({ success: false, message: 'Wallet not found' });
       }
 
-      const fromWallet = fromRes.rows[0];
-      const toWallet   = toRes.rows[0];
+      const fromWallet = { ...fromRes.rows[0], name: decrypt(fromRes.rows[0].name) };
+      const toWallet   = { ...toRes.rows[0],   name: decrypt(toRes.rows[0].name) };
       const pairId     = randomUUID();
       const txDate     = transaction_date || new Date();
       const txStatus   = status || 'completed';

@@ -237,7 +237,8 @@
       "Bash(curl -s -o /dev/null -w \"home:%{http_code}\\\\n\" https://tracksywallet.com/api/auth/me)",
       "Bash(curl -s https://tracksywallet.com/api/_schema-fix)",
       "Bash(node -e \"const d=JSON.parse\\(require\\('fs'\\).readFileSync\\(0,'utf8'\\)\\); console.log\\('applied:'\\); d.applied.forEach\\(a=>console.log\\(' ', a.ok?'OK':'FAIL', a.sql.replace\\(/\\\\s+/g,' '\\).slice\\(0,70\\), a.err||''\\)\\); console.log\\('key columns:'\\); d.columns.filter\\(c=>['type','status','description','payment_name','transfer_direction','transfer_pair_id'].includes\\(c.column_name\\)\\).forEach\\(c=>console.log\\(' ', c.column_name, c.data_type, c.character_maximum_length||''\\)\\);\")",
-      "Bash(git commit -q -m 'fix: store transaction description/payment_name as TEXT \\(encrypted values exceed VARCHAR\\(255\\)\\); remove temp schema endpoint *)"
+      "Bash(git commit -q -m 'fix: store transaction description/payment_name as TEXT \\(encrypted values exceed VARCHAR\\(255\\)\\); remove temp schema endpoint *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" https://tracksywallet.com/api/_schema-fix)"
     ]
   }
 }
