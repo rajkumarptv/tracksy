@@ -516,6 +516,11 @@ export default function Dashboard() {
                 <span style={{ fontSize:13, color:c.text2 }}>{prevLabel}</span>
               </div>
 
+              {/* TEMP diagnostic — remove after debugging the flat graph */}
+              <div style={{ fontSize:11, color:c.text3, marginTop:4, fontFamily:'monospace' }}>
+                dbg · tx:{(recentTx||[]).length} · inc:{Math.round(income)} · exp:{Math.round(expense)} · bal:{Math.round(balance)} · pts:{balanceSeries.length} · range:{range.start_date}→{range.end_date}
+              </div>
+
               <div className={styles.chartWrap}>
                 <ResponsiveContainer width="100%" height={210}>
                   <AreaChart data={balanceSeries} margin={{ top:10, right:8, left:0, bottom:0 }}>
