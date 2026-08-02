@@ -16,7 +16,11 @@ async function ensureColumns() {
     `ALTER TABLE wallets      ADD COLUMN IF NOT EXISTS start_date DATE`,
     // Transfers rely on these — missing columns make transfers 500
     `ALTER TABLE transactions ADD COLUMN IF NOT EXISTS transfer_pair_id UUID`,
-    `ALTER TABLE transactions ADD COLUMN IF NOT EXISTS transfer_direction VARCHAR(3)`,
+    `ALTER TABLE transactions ADD COLUMN IF NOT EXISTS transfer_direction VARCHAR(10)`,
+    // Widen in case an older deploy created it too small ('out' is 3 chars)
+    `ALTER TABLE transactions ALTER COLUMN transfer_direction TYPE VARCHAR(10)`,
+    // Drop any legacy length CHECK that could reject values
+    `ALTER TABLE transactions DROP CONSTRAINT IF EXISTS transactions_transfer_direction_check`,
   ];
   for (const sql of stmts) {
     try { await pool.query(sql); }

@@ -156,7 +156,7 @@ const create = async (req, res) => {
     const full = await query(`${BASE_SELECT} WHERE t.id=$1`, [result.rows[0].id]);
     res.status(201).json({ success: true, data: decryptTx(full.rows[0]) });
   } catch (err) {
-    console.error(err);
+    console.error('createTransaction error:', err.message, '| column:', err.column, '| detail:', err.detail, '| constraint:', err.constraint);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 };
