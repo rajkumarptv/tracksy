@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  AreaChart, Area, XAxis, YAxis, Tooltip,
+  AreaChart, Area, XAxis, YAxis, Tooltip, ReferenceLine,
   ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell,
 } from 'recharts';
 import {
@@ -243,9 +243,13 @@ export default function Dashboard() {
   const net     = income - expense;
 
   // Change vs the previous equivalent period (last week / month / year)
-  const prevNet = parseFloat(prevSummary?.income||0) - parseFloat(prevSummary?.expense||0);
-  const balChg  = prevNet !== 0 ? ((net - prevNet) / Math.abs(prevNet)) * 100 : 0;
-  const balUp = net >= prevNet;
+  const prevIncome  = parseFloat(prevSummary?.income  || 0);
+  const prevExpense = parseFloat(prevSummary?.expense || 0);
+  const prevNet     = prevIncome - prevExpense;
+  const hasPrev     = !!prevSummary && (prevIncome !== 0 || prevExpense !== 0);
+  // % change vs the previous period; "New" when there's no comparable history
+  const balChg  = hasPrev && prevNet !== 0 ? ((net - prevNet) / Math.abs(prevNet)) * 100 : null;
+  const balUp   = balChg == null ? true : balChg >= 0;
   const prevLabel = period === 'week' ? 'vs last week' : period === 'year' ? 'vs last year' : 'vs last month';
 
   const txCount = scopedTx.length;
@@ -277,7 +281,7 @@ export default function Dashboard() {
         monthly[d.getMonth()] += tx.type==='income'?a : tx.type==='expense'?-a : 0;
       });
       let run = startBal;
-      return monthly.map((v,i)=>{ run += v; return { name: MONTHS[i], value: Math.max(0, run) }; });
+      return monthly.map((v,i)=>{ run += v; return { name: MONTHS[i], value: run }; });
     }
 
     // week / month → daily buckets across the range
@@ -292,7 +296,7 @@ export default function Dashboard() {
       daily[idx] += tx.type==='income'?a : tx.type==='expense'?-a : 0;
     });
     let run = startBal;
-    return days.map((d,i)=>{ run += daily[i]; return { name:`${d.getDate()} ${MONTHS[d.getMonth()]}`, value: Math.max(0, run) }; });
+    return days.map((d,i)=>{ run += daily[i]; return { name:`${d.getDate()} ${MONTHS[d.getMonth()]}`, value: run }; });
   }, [scopedTx, balance, period]);
 
   const xTicks = useMemo(() => {
@@ -501,10 +505,14 @@ export default function Dashboard() {
                 {balance < 0 && '−'}<CountUp value={balance} fmt={fmt}/>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:6 }}>
-                <span style={{ color: balUp?c.green:c.red, fontWeight:700, fontSize:14, display:'flex', alignItems:'center', gap:4 }}>
-                  {balUp ? <ArrowUp size={14}/> : <ArrowDown size={14}/>}
-                  {Math.abs(balChg).toFixed(1)}%
-                </span>
+                {balChg == null ? (
+                  <span style={{ color:c.text2, fontWeight:700, fontSize:13.5 }}>New</span>
+                ) : (
+                  <span style={{ color: balUp?c.green:c.red, fontWeight:700, fontSize:14, display:'flex', alignItems:'center', gap:4 }}>
+                    {balUp ? <ArrowUp size={14}/> : <ArrowDown size={14}/>}
+                    {Math.min(Math.abs(balChg), 999).toFixed(1)}%
+                  </span>
+                )}
                 <span style={{ fontSize:13, color:c.text2 }}>{prevLabel}</span>
               </div>
 
@@ -521,7 +529,8 @@ export default function Dashboard() {
                     <XAxis dataKey="name" ticks={xTicks} tickLine={false} axisLine={false}
                       tick={{ fontSize:11, fill:c.axis }} interval="preserveStartEnd"/>
                     <YAxis orientation="right" tickLine={false} axisLine={false} width={52}
-                      tick={{ fontSize:11, fill:c.axis }} tickFormatter={lakh} domain={['dataMin - 10000','dataMax + 10000']}/>
+                      tick={{ fontSize:11, fill:c.axis }} tickFormatter={lakh} domain={['auto','auto']}/>
+                    <ReferenceLine y={0} stroke={c.axis} strokeDasharray="3 3" strokeOpacity={0.5}/>
                     <Tooltip content={<BalTip fmt={fmt} c={c}/>}/>
                     <Area type="monotone" dataKey="value" stroke={c.stroke} strokeWidth={c.strokeW}
                       fill="url(#balGrad)" dot={{ r:3, fill:c.stroke, strokeWidth:0 }}
