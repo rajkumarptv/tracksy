@@ -75,7 +75,7 @@ function BalTip({ active, payload, label, fmt, c }) {
 
 /* ── Period helpers ──────────────────────────────────────────────────── */
 const PERIOD_LABEL = { week:'This Week', month:'This Month', year:'This Year' };
-const iso = (d) => d.toISOString().split('T')[0];
+const iso = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 
 function periodRange(period, base = new Date()) {
   const y = base.getFullYear(), m = base.getMonth(), d = base.getDate();
