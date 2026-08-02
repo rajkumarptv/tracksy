@@ -239,10 +239,12 @@ export default function Dashboard() {
 
   const income  = isFiltered ? accIncome  : parseFloat(summary?.income  || 0);
   const expense = isFiltered ? accExpense : parseFloat(summary?.expense || 0);
-  // Total balance is a point-in-time value (not period-scoped)
-  const balance = isFiltered
-    ? activeAccounts.reduce((s,a) => s + parseFloat(a.balance||0), 0)
-    : parseFloat(summary?.total_balance || 0);
+  // Available balance = spendable money only (bank + cash), so loans/cards
+  // don't drag the headline into confusing negatives.
+  const SPENDABLE_TYPES = ['bank','cash'];
+  const balance = (isFiltered ? activeAccounts : (wallets || []))
+    .filter(w => SPENDABLE_TYPES.includes(w.type))
+    .reduce((s, w) => s + parseFloat(w.balance || 0), 0);
   const net     = income - expense;
 
   // Change vs the previous equivalent period (last week / month / year)
@@ -470,7 +472,7 @@ export default function Dashboard() {
               style={{ background:c.balanceBg, border:c.balanceBorder, boxShadow:c.cardShadow }}>
               <div className={styles.cardHeadRow}>
                 <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                  <span className={styles.cardTitle} style={{ color:c.text }}>{isFiltered ? 'Filtered Balance' : 'Total Balance'}</span>
+                  <span className={styles.cardTitle} style={{ color:c.text }}>{isFiltered ? 'Filtered Balance' : 'Available Balance'}</span>
                   <AmountToggle size={16} color={c.text3}/>
                 </div>
                 <PeriodPill period={period} setPeriod={setPeriod} c={c} isDark={isDark}/>
