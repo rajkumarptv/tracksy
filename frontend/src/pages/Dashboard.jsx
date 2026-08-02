@@ -269,21 +269,31 @@ export default function Dashboard() {
     navigate(q ? `/transactions?search=${encodeURIComponent(q)}` : '/transactions');
   };
 
-  /* ── Balance area chart — buckets adapt to the period ── */
+  /* ── Balance area chart — daily END balance of spendable (bank+cash) accounts.
+     Each tx moves the spendable balance: income/transfer-in +, expense/transfer-out −,
+     but only when it touches a spendable account. Transfers between two spendable
+     accounts net to zero (an out on one, an in on the other). ── */
   const balanceSeries = useMemo(() => {
-    const net = scopedTx.reduce((s,tx)=>{
-      const a = parseFloat(tx.amount||0);
-      return s + (tx.type==='income'?a : tx.type==='expense'?-a : 0);
-    }, 0);
-    const startBal = balance - net; // walk forward from period-start balance
+    const spendableIds = new Set(
+      (wallets || []).filter(w => ['bank','cash'].includes(w.type)).map(w => String(w.id))
+    );
+    const delta = (tx) => {
+      if (!spendableIds.has(String(tx.wallet_id))) return 0;
+      const a = parseFloat(tx.amount || 0);
+      if (tx.type === 'income')  return a;
+      if (tx.type === 'expense') return -a;
+      if (tx.type === 'transfer') return tx.transfer_direction === 'in' ? a : -a;
+      return 0;
+    };
+    const net = scopedTx.reduce((s, tx) => s + delta(tx), 0);
+    const startBal = balance - net; // balance = current spendable → walk back to period start
 
     if (period === 'year') {
       const monthly = new Array(12).fill(0);
       scopedTx.forEach(tx => {
         const d = new Date(tx.transaction_date);
         if (d.getFullYear() !== rStart.getFullYear()) return;
-        const a = parseFloat(tx.amount||0);
-        monthly[d.getMonth()] += tx.type==='income'?a : tx.type==='expense'?-a : 0;
+        monthly[d.getMonth()] += delta(tx);
       });
       let run = startBal;
       return monthly.map((v,i)=>{ run += v; return { name: MONTHS[i], value: run }; });
@@ -297,12 +307,11 @@ export default function Dashboard() {
       const dt = new Date(tx.transaction_date);
       const idx = days.findIndex(d => d.toDateString() === dt.toDateString());
       if (idx < 0) return;
-      const a = parseFloat(tx.amount||0);
-      daily[idx] += tx.type==='income'?a : tx.type==='expense'?-a : 0;
+      daily[idx] += delta(tx);
     });
     let run = startBal;
     return days.map((d,i)=>{ run += daily[i]; return { name:`${d.getDate()} ${MONTHS[d.getMonth()]}`, value: run }; });
-  }, [scopedTx, balance, period]);
+  }, [scopedTx, balance, period, wallets]);
 
   const xTicks = useMemo(() => {
     if (!balanceSeries.length) return [];
