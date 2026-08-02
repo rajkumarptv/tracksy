@@ -233,7 +233,8 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" https://tracksywallet.com/api/auth/me)",
       "Bash(curl -s -o /dev/null -w \"manifest:%{http_code}\\\\n\" https://tracksywallet.com/manifest.json)",
       "Bash(timeout 30 npx vercel logs https://tracksywallet.com)",
-      "Bash(export COLUMNS=500)"
+      "Bash(export COLUMNS=500)",
+      "Bash(curl -s -o /dev/null -w \"home:%{http_code}\\\\n\" https://tracksywallet.com/api/auth/me)"
     ]
   }
 }
