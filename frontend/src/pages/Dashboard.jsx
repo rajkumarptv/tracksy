@@ -510,15 +510,15 @@ export default function Dashboard() {
                 {balance < 0 && '−'}<CountUp value={balance} fmt={fmt}/>
               </div>
               <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:6 }}>
-                {balChg == null ? (
-                  <span style={{ color:c.text2, fontWeight:700, fontSize:13.5 }}>New</span>
+                {net === 0 ? (
+                  <span style={{ color:c.text2, fontWeight:700, fontSize:13.5 }}>No change</span>
                 ) : (
-                  <span style={{ color: balUp?c.green:c.red, fontWeight:700, fontSize:14, display:'flex', alignItems:'center', gap:4 }}>
-                    {balUp ? <ArrowUp size={14}/> : <ArrowDown size={14}/>}
-                    {Math.min(Math.abs(balChg), 999).toFixed(1)}%
+                  <span style={{ color: net>0?c.green:c.red, fontWeight:700, fontSize:14, display:'flex', alignItems:'center', gap:4 }}>
+                    {net>0 ? <ArrowUp size={14}/> : <ArrowDown size={14}/>}
+                    {net>0?'+':'−'}{fmt(Math.abs(net),{noDecimals:true})}
                   </span>
                 )}
-                <span style={{ fontSize:13, color:c.text2 }}>{prevLabel}</span>
+                <span style={{ fontSize:13, color:c.text2 }}>net {period === 'week' ? 'this week' : period === 'year' ? 'this year' : 'this month'}</span>
               </div>
 
               <div className={styles.chartWrap}>
