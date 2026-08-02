@@ -4,6 +4,7 @@ import { QueryClient } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
 import { PageLoader } from './components/ui';
+import ErrorBoundary from './components/ErrorBoundary';
 import useAuthStore from './store/authStore';
 
 // Auth pages load eagerly (tiny, needed first)
@@ -91,6 +92,7 @@ export default function App() {
       persistOptions={{ persister, maxAge: 24 * 60 * 60_000 }}
     >
       <BrowserRouter>
+        <ErrorBoundary>
         <Suspense fallback={<PageLoader />}>
           <Routes>
             {/* Public */}
@@ -124,6 +126,7 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
+        </ErrorBoundary>
       </BrowserRouter>
     </PersistQueryClientProvider>
   );
