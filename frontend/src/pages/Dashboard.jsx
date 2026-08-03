@@ -622,8 +622,8 @@ export default function Dashboard() {
                     <ReferenceLine y={0} stroke={c.axis} strokeDasharray="3 3" strokeOpacity={0.5}/>
                     <Tooltip content={<BalTip fmt={fmt} c={c}/>}/>
                     <Area type="monotone" dataKey="value" stroke={c.stroke} strokeWidth={c.strokeW}
-                      fill="url(#balGrad)" dot={{ r:3, fill:c.stroke, strokeWidth:0 }}
-                      activeDot={{ r:6, fill: isDark?'#061B38':'#fff', stroke:c.stroke, strokeWidth:3 }}
+                      fill="url(#balGrad)" dot={{ r:3, fill: isDark?'#061B38':'#FFFFFF', stroke:c.stroke, strokeWidth:2 }}
+                      activeDot={{ r:6, fill:'#8B5CF6', stroke: isDark?'#061B38':'#fff', strokeWidth:3 }}
                       animationDuration={1200}/>
                   </AreaChart>
                 </ResponsiveContainer>
