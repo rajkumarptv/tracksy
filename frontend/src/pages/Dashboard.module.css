@@ -446,13 +446,13 @@
 
 .spendBody {
   display: grid;
-  grid-template-columns: 240px 1fr;
-  gap: 24px;
+  grid-template-columns: 168px 1fr;
+  gap: 18px;
   align-items: center;
   margin-top: 10px;
 }
 
-.donutWrap { position: relative; width: 240px; max-width: 100%; aspect-ratio: 1 / 1; }
+.donutWrap { position: relative; width: 168px; max-width: 100%; aspect-ratio: 1 / 1; }
 
 .mobileSearchBtn { display: none; }
 
