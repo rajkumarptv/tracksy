@@ -74,24 +74,34 @@ function BalTip({ active, payload, label, fmt, c }) {
 }
 
 /* ── Period helpers ──────────────────────────────────────────────────── */
-const PERIOD_LABEL = { week:'This Week', month:'This Month', year:'This Year' };
+const PERIOD_LABEL = {
+  week:'This Week',   lastweek:'Last Week',
+  month:'This Month', lastmonth:'Last Month',
+  year:'This Year',   lastyear:'Last Year',
+};
+const PERIOD_KEYS = ['week','lastweek','month','lastmonth','year','lastyear'];
+const periodUnit   = (p) => p.includes('year') ? 'year' : p.includes('week') ? 'week' : 'month';
+const periodOffset = (p) => p.startsWith('last') ? -1 : 0;
 const iso = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 
-function periodRange(period, base = new Date()) {
-  const y = base.getFullYear(), m = base.getMonth(), d = base.getDate();
-  if (period === 'week') {
-    const dow = (base.getDay() + 6) % 7;               // Monday = 0
+/* Range for a period key. `extra` shifts by additional whole units
+   (e.g. -1 for the immediately previous comparable period). */
+function periodRange(period, extra = 0) {
+  const unit = periodUnit(period);
+  const off  = periodOffset(period) + extra;
+  const b = new Date();
+  if (off) {
+    if (unit === 'week') b.setDate(b.getDate() + off * 7);
+    else if (unit === 'year') b.setFullYear(b.getFullYear() + off);
+    else b.setMonth(b.getMonth() + off);
+  }
+  const y = b.getFullYear(), m = b.getMonth(), d = b.getDate();
+  if (unit === 'week') {
+    const dow = (b.getDay() + 6) % 7;                  // Monday = 0
     return { start: new Date(y, m, d - dow), end: new Date(y, m, d - dow + 6) };
   }
-  if (period === 'year') return { start: new Date(y,0,1), end: new Date(y,11,31) };
+  if (unit === 'year') return { start: new Date(y,0,1), end: new Date(y,11,31) };
   return { start: new Date(y, m, 1), end: new Date(y, m+1, 0) };   // month
-}
-function prevPeriodBase(period, base = new Date()) {
-  const b = new Date(base);
-  if (period === 'week') b.setDate(b.getDate() - 7);
-  else if (period === 'year') b.setFullYear(b.getFullYear() - 1);
-  else b.setMonth(b.getMonth() - 1);
-  return b;
 }
 
 /* ── Period selector dropdown (Week / Month / Year) ──────────────────── */
@@ -116,11 +126,14 @@ function PeriodPill({ period, setPeriod, c, isDark }) {
               style={{ position:'absolute', top:'calc(100% + 6px)', right:0, zIndex:91, minWidth:140,
                 background:c.cardBg, border:`1px solid ${c.border||'rgba(255,255,255,.1)'}`, borderRadius:12,
                 boxShadow:'0 16px 44px rgba(0,0,0,.3)', overflow:'hidden', padding:5 }}>
-              {['week','month','year'].map(p => {
+              {PERIOD_KEYS.map((p, i) => {
                 const sel = p === period;
                 return (
                   <button key={p} onClick={()=>{ setPeriod(p); setOpen(false); }}
                     style={{ display:'flex', alignItems:'center', justifyContent:'space-between', width:'100%', padding:'9px 11px', borderRadius:9, border:'none', cursor:'pointer', textAlign:'left',
+                      marginTop: i%2===0 && i>0 ? 4 : 0,
+                      borderTop: i%2===0 && i>0 ? `1px solid ${c.divider||'rgba(255,255,255,.06)'}` : 'none',
+                      paddingTop: i%2===0 && i>0 ? 11 : 9,
                       background: sel ? (isDark?'rgba(139,92,246,.16)':'#F5F3FF') : 'transparent',
                       color: sel ? (isDark?'#C4B5FD':c.purple) : c.text, fontSize:13, fontWeight: sel?700:500, fontFamily:'inherit' }}>
                     {PERIOD_LABEL[p]} {sel && <Check size={14}/>}
@@ -133,6 +146,61 @@ function PeriodPill({ period, setPeriod, c, isDark }) {
       </AnimatePresence>
     </div>
   );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   DEV-ONLY demo data — realistic day-by-day transactions so the balance graph
+   visibly rises and falls. Enabled only in dev with ?demo=1 (never in prod).
+═══════════════════════════════════════════════════════════════════════ */
+function buildDemo() {
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth();
+  const dim = new Date(y, m + 1, 0).getDate();
+  const isoAt = (day) => new Date(y, m, day, 10, 0, 0).toISOString();
+  const tx = [];
+  let id = 1;
+  const add = (day, type, amount, name, cat) => tx.push({
+    id: 'demo' + id++, type, amount, description: name, payment_name: name,
+    category_name: cat, transaction_date: isoAt(day), wallet_id: 'w1',
+  });
+
+  // Salary in early, mid-month freelance, plus daily-ish spending of varying size
+  add(1, 'income', 85000, 'Monthly Salary', 'Salary');
+  add(2, 'expense', 38000, 'Apartment Rent', 'Rent & Bills');
+  const spends = [
+    [3,4200,'Groceries','Groceries'],[4,1250,'Swiggy','Food & Dining'],[5,899,'Fuel','Transport'],
+    [6,15600,'Electronics','Shopping'],[8,2100,'Dining Out','Food & Dining'],[9,640,'Cab','Transport'],
+    [10,3499,'Pharmacy','Health'],[11,1199,'Movie & Snacks','Entertainment'],[13,5400,'Clothes','Shopping'],
+    [15,760,'Coffee','Food & Dining'],[16,2890,'Groceries','Groceries'],[18,1450,'Fuel','Transport'],
+    [20,999,'Subscriptions','Entertainment'],[22,4300,'Weekend Trip','Travel'],[24,1780,'Groceries','Groceries'],
+    [26,650,'Snacks','Food & Dining'],[28,2200,'Gift','Gifts'],
+  ];
+  spends.forEach(([d, a, n, c]) => add(d, 'expense', a, n, c));
+  add(14, 'income', 18000, 'Freelance Project', 'Freelance');
+  add(21, 'income', 6500, 'Cashback & Interest', 'Income');
+  // A couple of transfers to/from bank
+  tx.push({ id:'demoT1', type:'transfer', amount:10000, transfer_direction:'out', description:'Transfer → Savings', payment_name:'Transfer', transaction_date:isoAt(12), wallet_id:'w1' });
+  tx.push({ id:'demoT2', type:'transfer', amount:5000,  transfer_direction:'in',  description:'Transfer ← ICICI',   payment_name:'Transfer', transaction_date:isoAt(23), wallet_id:'w1' });
+
+  const income  = tx.filter(t => t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const expense = tx.filter(t => t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const spendableEnd = 47850; // resulting current bank+cash balance
+  return {
+    summary:      { income, expense, total_balance: spendableEnd - 121000 },
+    prevSummary:  { income: 79000, expense: 71000 },
+    catBreakdown: [
+      { name:'Rent & Bills', value:38000 }, { name:'Shopping', value:21000 },
+      { name:'Food & Dining', value:5650 }, { name:'Travel', value:4300 },
+      { name:'Health', value:3499 }, { name:'Transport', value:2989 },
+    ],
+    wallets: [
+      { id:'w1', name:'HDFC Savings', type:'bank', balance:39850, last_four:'4021' },
+      { id:'w2', name:'Cash Wallet',  type:'cash', balance:8000 },
+      { id:'w3', name:'Gold Loan',    type:'gold_loan', balance:-121000 },
+    ],
+    recentTx: tx.reverse(),
+    recurring: [], goals: [],
+  };
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -157,10 +225,11 @@ export default function Dashboard() {
   /* Date range for the whole dashboard, driven by the period selector.
      The backend filters `transaction_date < end_date`, so end_date must be the
      day AFTER the period's last day to keep the last day inclusive. */
+  const unit = periodUnit(period);
   const nextDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1);
   const { start: rStart, end: rEnd } = periodRange(period);
   const range = { start_date: iso(rStart), end_date: iso(nextDay(rEnd)) };
-  const { start: pStart, end: pEnd } = periodRange(period, prevPeriodBase(period));
+  const { start: pStart, end: pEnd } = periodRange(period, -1);
   const prevRange = { start_date: iso(pStart), end_date: iso(nextDay(pEnd)) };
 
   /* ── Queries (all keyed by period so they refetch on change) ── */
@@ -192,13 +261,18 @@ export default function Dashboard() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const summary      = summaryRaw;
-  const prevSummary  = prevSummaryRaw;
-  const catBreakdown = catBreakdownRaw;
-  const wallets      = walletsRaw;
-  const recentTx     = recentTxRaw;
-  const goals        = goalsRaw;
-  const recurring    = recurringRaw;
+  // DEV-only demo (never in production): visit /?demo=1 on the dev server
+  const DEMO = useMemo(() => (
+    import.meta.env.DEV && typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('demo')
+      ? buildDemo() : null
+  ), []);
+  const summary      = DEMO ? DEMO.summary      : summaryRaw;
+  const prevSummary  = DEMO ? DEMO.prevSummary  : prevSummaryRaw;
+  const catBreakdown = DEMO ? DEMO.catBreakdown : catBreakdownRaw;
+  const wallets      = DEMO ? DEMO.wallets      : walletsRaw;
+  const recentTx     = DEMO ? DEMO.recentTx     : recentTxRaw;
+  const goals        = DEMO ? DEMO.goals        : goalsRaw;
+  const recurring    = DEMO ? DEMO.recurring    : recurringRaw;
 
   /* ── Account filter (multi-select, inline in the balance card) ── */
   const LIABILITY_TYPES = ['visa','mastercard','home_loan','vehicle_loan','personal_loan','gold_loan','education_loan','loan','bnpl','family_borrow','emi','lending'];
@@ -255,7 +329,7 @@ export default function Dashboard() {
   // % change vs the previous period; "New" when there's no comparable history
   const balChg  = hasPrev && prevNet !== 0 ? ((net - prevNet) / Math.abs(prevNet)) * 100 : null;
   const balUp   = balChg == null ? true : balChg >= 0;
-  const prevLabel = period === 'week' ? 'vs last week' : period === 'year' ? 'vs last year' : 'vs last month';
+  const prevLabel = unit === 'week' ? 'vs last week' : unit === 'year' ? 'vs last year' : 'vs last month';
 
   const txCount = scopedTx.length;
   // KPI: avg daily spend across the elapsed days of the period
@@ -288,7 +362,7 @@ export default function Dashboard() {
     const net = scopedTx.reduce((s, tx) => s + delta(tx), 0);
     const startBal = balance - net; // balance = current spendable → walk back to period start
 
-    if (period === 'year') {
+    if (unit === 'year') {
       const monthly = new Array(12).fill(0);
       scopedTx.forEach(tx => {
         const d = new Date(tx.transaction_date);
@@ -315,8 +389,8 @@ export default function Dashboard() {
 
   const xTicks = useMemo(() => {
     if (!balanceSeries.length) return [];
-    if (period === 'year') return ['Jan','Apr','Jul','Oct','Dec'];
-    if (period === 'week') return balanceSeries.map(p=>p.name); // all 7 days
+    if (unit === 'year') return ['Jan','Apr','Jul','Oct','Dec'];
+    if (unit === 'week') return balanceSeries.map(p=>p.name); // all 7 days
     const n = balanceSeries.length;
     return [0, Math.floor(n*0.25), Math.floor(n*0.5), Math.floor(n*0.75), n-1].map(i=>balanceSeries[i]?.name);
   }, [balanceSeries, period]);
@@ -328,7 +402,8 @@ export default function Dashboard() {
     const top = raw.slice(0,4);
     const restVal = raw.slice(4).reduce((s,x)=>s+x.value,0);
     const list = restVal > 0 ? [...top, { name:'Others', value:restVal, emoji:'🎯' }] : top;
-    return list.map((x,i)=>({ ...x, color:c.pie[i%c.pie.length] }));
+    const PALETTE = ['#2A78D6','#EB6834','#1BAF7A','#EDA100','#E87BA4','#8B5CF6','#008300','#00CEC9'];
+    return list.map((x,i)=>({ ...x, color: PALETTE[i % PALETTE.length] }));
   }, [catBreakdown, c]);
   const spendTotal = spendCats.reduce((s,x)=>s+x.value,0);
 
@@ -527,7 +602,7 @@ export default function Dashboard() {
                     {net>0?'+':'−'}{fmt(Math.abs(net),{noDecimals:true})}
                   </span>
                 )}
-                <span style={{ fontSize:13, color:c.text2 }}>net {period === 'week' ? 'this week' : period === 'year' ? 'this year' : 'this month'}</span>
+                <span style={{ fontSize:13, color:c.text2 }}>net {unit === 'week' ? 'this week' : unit === 'year' ? 'this year' : 'this month'}</span>
               </div>
 
               <div className={styles.chartWrap}>
