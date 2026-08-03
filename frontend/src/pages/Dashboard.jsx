@@ -260,6 +260,15 @@ export default function Dashboard() {
     queryFn: () => recurringAPI.getAll().then(r=>r.data.data),
     staleTime: 5 * 60 * 1000,
   });
+  // Authoritative daily balance history (from the transactions ledger)
+  const histWalletId = includedIds.length === 1 ? includedIds[0] : undefined;
+  const { data: balanceHist } = useQuery({
+    queryKey:['balance-history', period, histWalletId],
+    queryFn: () => dashboardAPI.balanceHistory({
+      start_date: range.start_date, end_date: iso(rEnd), scope:'spendable',
+      ...(histWalletId ? { wallet_id: histWalletId } : {}),
+    }).then(r => r.data.data),
+  });
 
   // DEV-only demo (never in production): visit /?demo=1 on the dev server
   const DEMO = useMemo(() => (
@@ -387,13 +396,30 @@ export default function Dashboard() {
     return days.map((d,i)=>{ run += daily[i]; return { name:`${d.getDate()} ${MONTHS[d.getMonth()]}`, value: run }; });
   }, [scopedTx, balance, period, wallets]);
 
+  /* Prefer the authoritative backend balance history; fall back to the
+     client-side reconstruction (and always use it in ?demo mode). */
+  const chartData = useMemo(() => {
+    if (DEMO || !Array.isArray(balanceHist) || balanceHist.length === 0) return balanceSeries;
+    if (unit === 'year') {
+      // one point per month → last balance of each month
+      const byMonth = {};
+      balanceHist.forEach(p => { byMonth[new Date(p.date).getMonth()] = p.balance; });
+      let last = balanceHist[0].balance;
+      return MONTHS.map((name, i) => { if (byMonth[i] != null) last = byMonth[i]; return { name, value: last }; });
+    }
+    return balanceHist.map(p => {
+      const d = new Date(p.date);
+      return { name: `${d.getDate()} ${MONTHS[d.getMonth()]}`, value: p.balance };
+    });
+  }, [balanceHist, balanceSeries, unit, DEMO]);
+
   const xTicks = useMemo(() => {
-    if (!balanceSeries.length) return [];
+    if (!chartData.length) return [];
     if (unit === 'year') return ['Jan','Apr','Jul','Oct','Dec'];
-    if (unit === 'week') return balanceSeries.map(p=>p.name); // all 7 days
-    const n = balanceSeries.length;
-    return [0, Math.floor(n*0.25), Math.floor(n*0.5), Math.floor(n*0.75), n-1].map(i=>balanceSeries[i]?.name);
-  }, [balanceSeries, period]);
+    if (unit === 'week') return chartData.map(p=>p.name); // all 7 days
+    const n = chartData.length;
+    return [0, Math.floor(n*0.25), Math.floor(n*0.5), Math.floor(n*0.75), n-1].map(i=>chartData[i]?.name);
+  }, [chartData, period]);
 
   /* ── Spending categories (real data only) ── */
   const spendCats = useMemo(() => {
@@ -607,7 +633,7 @@ export default function Dashboard() {
 
               <div className={styles.chartWrap}>
                 <ResponsiveContainer width="100%" height={210}>
-                  <AreaChart data={balanceSeries} margin={{ top:10, right:8, left:0, bottom:0 }}>
+                  <AreaChart data={chartData} margin={{ top:10, right:8, left:0, bottom:0 }}>
                     <defs>
                       <linearGradient id="balGrad" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor={c.stroke} stopOpacity={isDark?0.4:0.22}/>

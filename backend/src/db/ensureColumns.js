@@ -24,6 +24,16 @@ async function ensureColumns() {
     // Encrypted values can exceed VARCHAR(255) — store as TEXT
     `ALTER TABLE transactions ALTER COLUMN description TYPE TEXT`,
     `ALTER TABLE transactions ALTER COLUMN payment_name TYPE TEXT`,
+    // Daily balance snapshots for historical graph/analytics
+    `CREATE TABLE IF NOT EXISTS balance_snapshots (
+       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+       user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+       snapshot_date DATE NOT NULL,
+       spendable_balance NUMERIC(15,2) NOT NULL DEFAULT 0,
+       total_balance NUMERIC(15,2) NOT NULL DEFAULT 0,
+       created_at TIMESTAMPTZ DEFAULT NOW(),
+       UNIQUE(user_id, snapshot_date)
+     )`,
   ];
   for (const sql of stmts) {
     try { await pool.query(sql); }

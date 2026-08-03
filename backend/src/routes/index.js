@@ -58,6 +58,7 @@ router.get('/dashboard/money-flow', auth, dashCtrl.getMoneyFlow);
 router.get('/dashboard/recent-transactions', auth, dashCtrl.getRecentTransactions);
 router.get('/dashboard/category-breakdown', auth, dashCtrl.getCategoryBreakdown);
 router.get('/dashboard/analytics-stats', auth, dashCtrl.getAnalyticsStats);
+router.get('/dashboard/balance-history', auth, dashCtrl.getBalanceHistory);
 
 // Transactions
 router.get('/transactions', auth, txCtrl.getAll);

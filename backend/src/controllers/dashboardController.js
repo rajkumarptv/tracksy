@@ -269,4 +269,76 @@ const getAnalyticsStats = async (req, res) => {
   }
 };
 
-module.exports = { getSummary, getMoneyFlow, getRecentTransactions, getCategoryBreakdown, getAnalyticsStats };
+// GET /api/dashboard/balance-history?start_date&end_date&scope=spendable|total&wallet_id
+// Authoritative daily END balance, computed from the transactions ledger.
+const getBalanceHistory = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { start_date, end_date, scope = 'spendable', wallet_id } = req.query;
+    if (!start_date || !end_date) {
+      return res.status(400).json({ success: false, message: 'start_date and end_date are required' });
+    }
+
+    // Which wallets count toward the balance line
+    const typeCond = scope === 'total' ? '' : `AND type IN ('bank','cash')`;
+    const wRes = wallet_id
+      ? await query(`SELECT id, COALESCE(balance,0) AS balance FROM wallets WHERE id=$1 AND user_id=$2`, [wallet_id, userId])
+      : await query(`SELECT id, COALESCE(balance,0) AS balance FROM wallets WHERE user_id=$1 ${typeCond}`, [userId]);
+    const walletIds = wRes.rows.map(r => r.id);
+    const currentBal = wRes.rows.reduce((s, r) => s + parseFloat(r.balance || 0), 0);
+    if (!walletIds.length) return res.json({ success: true, data: [] });
+
+    // Every completed transaction touching those wallets from start_date onward
+    const txRes = await query(`
+      SELECT transaction_date, type, amount, transfer_direction
+      FROM transactions
+      WHERE user_id=$1 AND wallet_id = ANY($2) AND status='completed' AND transaction_date >= $3
+      ORDER BY transaction_date
+    `, [userId, walletIds, start_date]);
+
+    const delta = (t) => {
+      const a = parseFloat(t.amount || 0);
+      if (t.type === 'income') return a;
+      if (t.type === 'expense') return -a;
+      if (t.type === 'transfer') return t.transfer_direction === 'in' ? a : -a;
+      return 0;
+    };
+    const dayKey = (d) => new Date(d).toISOString().split('T')[0];
+    const dayDelta = {};
+    let totalDelta = 0;
+    txRes.rows.forEach(t => { const d = delta(t); totalDelta += d; dayDelta[dayKey(t.transaction_date)] = (dayDelta[dayKey(t.transaction_date)] || 0) + d; });
+
+    // Balance just before start_date, then walk forward day by day
+    let run = currentBal - totalDelta;
+    const out = [];
+    const end = new Date(end_date);
+    for (let d = new Date(start_date); d <= end; d.setDate(d.getDate() + 1)) {
+      const key = d.toISOString().split('T')[0];
+      run += (dayDelta[key] || 0);
+      out.push({ date: key, balance: Math.round(run * 100) / 100 });
+    }
+
+    res.json({ success: true, data: out });
+  } catch (err) {
+    console.error('getBalanceHistory:', err.message);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+/* Upsert today's balance snapshot (spendable + total). Safe to call after any
+   transaction/wallet change; failures never block the request. */
+async function recordBalanceSnapshot(userId) {
+  try {
+    await query(`
+      INSERT INTO balance_snapshots (user_id, snapshot_date, spendable_balance, total_balance)
+      SELECT $1, CURRENT_DATE,
+        COALESCE(SUM(CASE WHEN type IN ('bank','cash') THEN balance ELSE 0 END),0),
+        COALESCE(SUM(balance),0)
+      FROM wallets WHERE user_id=$1
+      ON CONFLICT (user_id, snapshot_date)
+      DO UPDATE SET spendable_balance=EXCLUDED.spendable_balance, total_balance=EXCLUDED.total_balance
+    `, [userId]);
+  } catch (e) { /* snapshot table may not exist yet on first deploy */ }
+}
+
+module.exports = { getSummary, getMoneyFlow, getRecentTransactions, getCategoryBreakdown, getAnalyticsStats, getBalanceHistory, recordBalanceSnapshot };

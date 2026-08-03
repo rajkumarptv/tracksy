@@ -241,7 +241,8 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" https://tracksywallet.com/api/_schema-fix)",
       "mcp__visualize__read_me",
       "Bash(curl -s -o /dev/null -w \"backend:%{http_code}\\\\n\" http://localhost:5000/api/cron/ping)",
-      "Bash(curl -s -o /dev/null -w \"frontend:%{http_code}\\\\n\" http://localhost:3000/)"
+      "Bash(curl -s -o /dev/null -w \"frontend:%{http_code}\\\\n\" http://localhost:3000/)",
+      "Bash(node -e \"const d=require\\('./src/controllers/dashboardController'\\); const t=require\\('./src/controllers/transactionController'\\); console.log\\('dash exports:', Object.keys\\(d\\).join\\(','\\)\\); console.log\\('tx has create:', typeof t.create\\);\")"
     ]
   }
 }

@@ -1,6 +1,7 @@
 const { query } = require('../db');
 const { randomUUID } = require('crypto');
 const { encrypt, decrypt, decryptRow } = require('../utils/crypto');
+const { recordBalanceSnapshot } = require('./dashboardController');
 
 // Fields to decrypt on every transaction row returned to client
 // payment_name is intentionally NOT encrypted — it's needed for ILIKE search
@@ -138,6 +139,7 @@ const create = async (req, res) => {
       await query('UPDATE wallets SET balance = balance + $1 WHERE id=$2 AND user_id=$3', [amount, to_wallet_id,   userId]);
 
       const full = await query(`${BASE_SELECT} WHERE t.id=$1`, [outRes.rows[0].id]);
+      recordBalanceSnapshot(userId);
       return res.status(201).json({ success: true, data: decryptTx(full.rows[0]), is_transfer: true, is_credit_card_payment: isCreditCard });
     }
 
@@ -154,6 +156,7 @@ const create = async (req, res) => {
     }
 
     const full = await query(`${BASE_SELECT} WHERE t.id=$1`, [result.rows[0].id]);
+    recordBalanceSnapshot(userId);
     res.status(201).json({ success: true, data: decryptTx(full.rows[0]) });
   } catch (err) {
     console.error('createTransaction error:', err.message, '| column:', err.column, '| detail:', err.detail, '| constraint:', err.constraint);
@@ -177,6 +180,7 @@ const update = async (req, res) => {
 
     if (!result.rows.length) return res.status(404).json({ success: false, message: 'Transaction not found' });
     const full = await query(`${BASE_SELECT} WHERE t.id=$1`, [result.rows[0].id]);
+    recordBalanceSnapshot(userId);
     res.json({ success: true, data: decryptTx(full.rows[0]) });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Server error' });
@@ -204,6 +208,7 @@ const remove = async (req, res) => {
       await query('DELETE FROM transactions WHERE id=$1 AND user_id=$2', [req.params.id, userId]);
     }
 
+    recordBalanceSnapshot(userId);
     res.json({ success: true, message: 'Transaction deleted' });
   } catch (err) {
     console.error(err);

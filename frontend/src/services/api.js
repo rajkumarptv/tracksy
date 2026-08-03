@@ -48,6 +48,7 @@ export const dashboardAPI = {
   recentTransactions: (params) => api.get('/dashboard/recent-transactions', { params }),
   categoryBreakdown: (params) => api.get('/dashboard/category-breakdown', { params }),
   analyticsStats: (params) => api.get('/dashboard/analytics-stats', { params }),
+  balanceHistory: (params) => api.get('/dashboard/balance-history', { params }),
 };
 
 // Transactions
