@@ -44,6 +44,35 @@ const PROMPT =
   '(strip currency symbols and commas). If the image is not a payment receipt or has no ' +
   'readable amount, set readable to false.';
 
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+/* Models tried in order. 'gemini-flash-latest' auto-tracks the current free
+   Flash model; 'gemini-flash-lite-latest' is lighter with more free-tier
+   headroom — a good fallback when Flash is overloaded (503). */
+const MODELS = ['gemini-flash-latest', 'gemini-flash-lite-latest'];
+
+/* Gemini's free tier returns 503 UNAVAILABLE ("high demand") or 429 under load.
+   These are transient — retry with backoff, and try the lite model, before
+   giving up. Non-transient errors (bad key, bad request) throw immediately. */
+async function generateWithRetry(ai, contents, config) {
+  let lastErr;
+  for (const model of MODELS) {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        return await ai.models.generateContent({ model, contents, config });
+      } catch (e) {
+        lastErr = e;
+        const msg = String((e && e.message) || e);
+        const transient = /\b(429|500|503)\b|UNAVAILABLE|overloaded|high demand|rate.?limit/i.test(msg);
+        if (!transient) throw e;                 // real error — don't waste retries
+        if (attempt < 2) await sleep(700 * (attempt + 1)); // 700ms, 1400ms
+      }
+    }
+    // this model kept failing transiently → fall through to the next model
+  }
+  throw lastErr;
+}
+
 /* Read a receipt image with Gemini → parsed fields, or null if unreadable. */
 async function readReceiptWithGemini(buffer) {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -54,22 +83,19 @@ async function readReceiptWithGemini(buffer) {
 
   const img = await shrink(buffer);
 
-  const response = await ai.models.generateContent({
-    // 'gemini-flash-latest' auto-tracks the current free Flash model, so this
-    // won't break when a specific version is retired for new keys.
-    model: 'gemini-flash-latest',
-    contents: [{
-      role: 'user',
-      parts: [
-        { inlineData: { mimeType: 'image/jpeg', data: img.toString('base64') } },
-        { text: PROMPT },
-      ],
-    }],
-    config: {
-      responseMimeType: 'application/json',
-      responseSchema: RESPONSE_SCHEMA,
-    },
-  });
+  const contents = [{
+    role: 'user',
+    parts: [
+      { inlineData: { mimeType: 'image/jpeg', data: img.toString('base64') } },
+      { text: PROMPT },
+    ],
+  }];
+  const config = {
+    responseMimeType: 'application/json',
+    responseSchema: RESPONSE_SCHEMA,
+  };
+
+  const response = await generateWithRetry(ai, contents, config);
 
   const data = JSON.parse(response.text);
 
