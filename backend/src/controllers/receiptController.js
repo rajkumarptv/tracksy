@@ -1,4 +1,5 @@
 const { parseReceipt } = require('../utils/receiptParser');
+const { readReceiptWithGemini } = require('../utils/geminiReceipt');
 const sharp = require('sharp');
 
 /* Preprocess: upscale + grayscale + high contrast → big OCR accuracy boost
@@ -35,14 +36,31 @@ const scan = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ success:false, message:'No image provided' });
 
-    const text   = await ocrImage(req.file.buffer);
-    const parsed = parseReceipt(text);
+    // 1) Primary: read the image with Gemini vision (understands the whole
+    //    receipt, no OCR/regex). Falls through to Tesseract if the key is
+    //    missing or the call fails (network/offline).
+    let parsed = null;
+    try {
+      parsed = await readReceiptWithGemini(req.file.buffer);
+      if (parsed) {
+        console.log('[receipt-scan] gemini parsed:', JSON.stringify(parsed));
+        return res.json({ success:true, data: parsed });
+      }
+      // Gemini ran but couldn't read a payment — treat as unreadable image.
+      console.log('[receipt-scan] gemini: image not a readable receipt');
+      return res.status(422).json({ success:false, message:'Could not read the receipt. Try a clearer image.' });
+    } catch (gemErr) {
+      console.warn('[receipt-scan] gemini unavailable, falling back to OCR:', gemErr.message);
+    }
 
+    // 2) Fallback: legacy Tesseract OCR + regex parser.
+    const text = await ocrImage(req.file.buffer);
+    parsed = parseReceipt(text);
     if (!parsed) {
       console.log('[receipt-scan] OCR text (no parse):\n', text.slice(0, 400));
       return res.status(422).json({ success:false, message:'Could not read the screenshot. Try a clearer image.', raw: text.slice(0, 300) });
     }
-    console.log('[receipt-scan] parsed:', JSON.stringify(parsed));
+    console.log('[receipt-scan] ocr parsed:', JSON.stringify(parsed));
     res.json({ success:true, data: parsed });
   } catch (err) {
     console.error('Receipt scan error:', err.message);
