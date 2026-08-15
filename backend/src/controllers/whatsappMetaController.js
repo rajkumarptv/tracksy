@@ -1,5 +1,6 @@
 const { query } = require('../db');
 const { parseReceipt } = require('../utils/receiptParser');
+const { readReceiptWithGemini } = require('../utils/geminiReceipt');
 
 const GRAPH = 'https://graph.facebook.com/v21.0';
 const TOKEN     = () => process.env.META_WA_TOKEN;
@@ -92,11 +93,15 @@ const receive = async (req, res) => {
     let caption = null;   // category typed under the screenshot
 
     if (msg.type === 'image') {
-      // Screenshot → OCR → parse. Caption (if any) = category.
+      // Screenshot → Gemini vision → parse. Caption (if any) = category.
       caption = (msg.image.caption || '').trim() || null;
       const buf  = await downloadMedia(msg.image.id);
-      const text = await ocrImage(buf);
-      parsed = parseReceipt(text);
+      try {
+        parsed = await readReceiptWithGemini(buf);
+      } catch (gemErr) {
+        console.warn('[wa] gemini unavailable, OCR fallback:', gemErr.message);
+        parsed = parseReceipt(await ocrImage(buf));
+      }
       if (!parsed) {
         await sendReply(from, `📷 I couldn't read that screenshot. Make sure the amount and recipient are clearly visible, or type it like: "paid 250 swiggy".`);
         return;
