@@ -242,7 +242,13 @@
       "mcp__visualize__read_me",
       "Bash(curl -s -o /dev/null -w \"backend:%{http_code}\\\\n\" http://localhost:5000/api/cron/ping)",
       "Bash(curl -s -o /dev/null -w \"frontend:%{http_code}\\\\n\" http://localhost:3000/)",
-      "Bash(node -e \"const d=require\\('./src/controllers/dashboardController'\\); const t=require\\('./src/controllers/transactionController'\\); console.log\\('dash exports:', Object.keys\\(d\\).join\\(','\\)\\); console.log\\('tx has create:', typeof t.create\\);\")"
+      "Bash(node -e \"const d=require\\('./src/controllers/dashboardController'\\); const t=require\\('./src/controllers/transactionController'\\); console.log\\('dash exports:', Object.keys\\(d\\).join\\(','\\)\\); console.log\\('tx has create:', typeof t.create\\);\")",
+      "Bash(curl -s -o /dev/null -w \"home:%{http_code} bh:\" https://tracksywallet.com)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" https://tracksywallet.com/api/dashboard/balance-history)",
+      "Bash(curl -s -o /dev/null -w \"health:%{http_code}\\\\n\" https://tracksywallet.com/health)",
+      "Bash(curl -s -o /dev/null -w \"api-root:%{http_code}\\\\n\" https://tracksywallet.com/api)",
+      "Bash(curl -s https://tracksywallet.com/health)",
+      "Bash(git commit -q -m 'fix: Google/Facebook OAuth 500 — ensure users OAuth columns + nullable password_hash exist in prod \\(+temp apply endpoint\\) *)"
     ]
   }
 }

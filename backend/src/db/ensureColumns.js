@@ -9,6 +9,13 @@ async function ensureColumns() {
   if (done) return;
   done = true;
   const stmts = [
+    // OAuth (Google/Facebook) login needs these on users — else the callback 500s
+    `ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL`,
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS oauth_provider VARCHAR(20)`,
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS oauth_id VARCHAR(100)`,
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT`,
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS is_premium BOOLEAN DEFAULT false`,
+    `ALTER TABLE users ADD COLUMN IF NOT EXISTS premium_expires_at TIMESTAMPTZ`,
     `ALTER TABLE budgets      ADD COLUMN IF NOT EXISTS type VARCHAR(10) DEFAULT 'expense'`,
     `ALTER TABLE categories   ADD COLUMN IF NOT EXISTS icon VARCHAR(40)`,
     `ALTER TABLE wallets      ADD COLUMN IF NOT EXISTS statement_day INTEGER`,
