@@ -248,7 +248,12 @@
       "Bash(curl -s -o /dev/null -w \"health:%{http_code}\\\\n\" https://tracksywallet.com/health)",
       "Bash(curl -s -o /dev/null -w \"api-root:%{http_code}\\\\n\" https://tracksywallet.com/api)",
       "Bash(curl -s https://tracksywallet.com/health)",
-      "Bash(git commit -q -m 'fix: Google/Facebook OAuth 500 — ensure users OAuth columns + nullable password_hash exist in prod \\(+temp apply endpoint\\) *)"
+      "Bash(git commit -q -m 'fix: Google/Facebook OAuth 500 — ensure users OAuth columns + nullable password_hash exist in prod \\(+temp apply endpoint\\) *)",
+      "Bash(curl -s https://tracksywallet.com/api/_fix-oauth)",
+      "Bash(node -e \"const d=JSON.parse\\(require\\('fs'\\).readFileSync\\(0,'utf8'\\)\\); d.applied.forEach\\(a=>console.log\\(a.ok?'OK':'FAIL', a.sql, a.err||''\\)\\); console.log\\('cols:', d.columns.map\\(c=>c.column_name+'\\('+c.is_nullable+'\\)'\\).join\\(', '\\)\\);\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://tracksywallet.com/api/cron/ping)",
+      "Bash(node -e \"const d=JSON.parse\\(require\\('fs'\\).readFileSync\\(0,'utf8'\\)\\); if\\(!d.ok\\){console.log\\('DB ERROR:', d.error\\); process.exit\\(0\\);} d.applied.forEach\\(a=>console.log\\(a.ok?'OK ':'FAIL', a.sql, a.err||''\\)\\); console.log\\('users cols:', d.columns.map\\(c=>c.column_name+' \\(nullable='+c.is_nullable+'\\)'\\).join\\(', '\\)\\);\")",
+      "Bash(git commit -q -m 'chore: remove temp _fix-oauth endpoint \\(users OAuth schema now applied to prod\\) *)"
     ]
   }
 }

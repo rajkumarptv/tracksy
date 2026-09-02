@@ -198,29 +198,4 @@ router.post('/cron/gmail-sync', async (req, res) => {
 // Lightweight keep-alive / uptime probe
 router.get('/cron/ping', (_req, res) => res.json({ ok: true, ts: Date.now() }));
 
-// TEMP: synchronously apply the users OAuth schema guards + report
-router.get('/_fix-oauth', async (_req, res) => {
-  try {
-    const { pool } = require('../db');
-    const stmts = [
-      `ALTER TABLE users ALTER COLUMN password_hash DROP NOT NULL`,
-      `ALTER TABLE users ADD COLUMN IF NOT EXISTS oauth_provider VARCHAR(20)`,
-      `ALTER TABLE users ADD COLUMN IF NOT EXISTS oauth_id VARCHAR(100)`,
-      `ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT`,
-      `ALTER TABLE users ADD COLUMN IF NOT EXISTS is_premium BOOLEAN DEFAULT false`,
-      `ALTER TABLE users ADD COLUMN IF NOT EXISTS premium_expires_at TIMESTAMPTZ`,
-    ];
-    const applied = [];
-    for (const sql of stmts) {
-      try { await pool.query(sql); applied.push({ sql: sql.slice(0, 60), ok: true }); }
-      catch (e) { applied.push({ sql: sql.slice(0, 60), ok: false, err: e.message }); }
-    }
-    const cols = await pool.query(
-      `SELECT column_name, is_nullable FROM information_schema.columns
-       WHERE table_name='users' AND column_name IN ('password_hash','oauth_provider','oauth_id','avatar_url','is_premium')`
-    );
-    res.json({ ok: true, applied, columns: cols.rows });
-  } catch (e) { res.status(500).json({ ok: false, error: e.message }); }
-});
-
 module.exports = router;
