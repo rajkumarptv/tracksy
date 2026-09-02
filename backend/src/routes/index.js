@@ -8,6 +8,7 @@ const txCtrl = require('../controllers/transactionController');
 const budgetCtrl = require('../controllers/budgetController');
 const res0 = require('../controllers/resourceController');
 const importCtrl = require('../controllers/importController');
+const analyticsCtrl = require('../controllers/analyticsController');
 
 // multer: store uploaded files in memory (max 20 MB)
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
@@ -59,6 +60,7 @@ router.get('/dashboard/recent-transactions', auth, dashCtrl.getRecentTransaction
 router.get('/dashboard/category-breakdown', auth, dashCtrl.getCategoryBreakdown);
 router.get('/dashboard/analytics-stats', auth, dashCtrl.getAnalyticsStats);
 router.get('/dashboard/balance-history', auth, dashCtrl.getBalanceHistory);
+router.get('/analytics/overview', auth, analyticsCtrl.getOverview);
 
 // Transactions
 router.get('/transactions', auth, txCtrl.getAll);

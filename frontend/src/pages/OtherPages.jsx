@@ -979,142 +979,205 @@ function AddWalletModal({ onClose, onSaved }) {
 // ─── Analytics page ────────────────────────────────────────────────────────────
 import { useQuery as useQ2 } from '@tanstack/react-query';
 import { BarChart, Bar, XAxis, YAxis, Tooltip as RTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, AreaChart, Area } from 'recharts';
-import { dashboardAPI } from '../services/api';
+import { dashboardAPI, analyticsAPI } from '../services/api';
+import { useNavigate as useNavAnalytics } from 'react-router-dom';
 import { Topbar as Topbar2, StatCard, PageLoader as PL2 } from '../components/ui';
 import { useT as useTAnalytics } from '../i18n';
 
+const ANALYTICS_PERIODS = [
+  { key:'this_month',  label:'This Month' },
+  { key:'last_month',  label:'Last Month' },
+  { key:'last_3m',     label:'Last 3 Months' },
+  { key:'last_6m',     label:'Last 6 Months' },
+  { key:'this_year',   label:'This Year' },
+];
+function analyticsRange(key) {
+  const iso = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()+1-1).padStart(2,'0')}`;
+  const fmtD = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const now = new Date(); const y = now.getFullYear(), m = now.getMonth();
+  const first = (yy,mm) => fmtD(new Date(yy, mm, 1));
+  if (key === 'this_month')  return { start_date:first(y,m),    end_date:first(y,m+1) };
+  if (key === 'last_month')  return { start_date:first(y,m-1),  end_date:first(y,m) };
+  if (key === 'last_3m')     return { start_date:first(y,m-2),  end_date:first(y,m+1) };
+  if (key === 'last_6m')     return { start_date:first(y,m-5),  end_date:first(y,m+1) };
+  if (key === 'this_year')   return { start_date:`${y}-01-01`,  end_date:`${y+1}-01-01` };
+  return { start_date:first(y,m), end_date:first(y,m+1) };
+}
+
+const BUCKET_STYLE = {
+  commitments:{ color:'#EF4444', bg:'rgba(239,68,68,.12)',  icon:'🏦' },
+  transfers:  { color:'#F59E0B', bg:'rgba(245,158,11,.12)', icon:'👤' },
+  essential:  { color:'#EAB308', bg:'rgba(234,179,8,.14)',  icon:'🏠' },
+  optional:   { color:'#22C55E', bg:'rgba(34,197,94,.12)',  icon:'🎯' },
+};
+const ACAT_COLORS = ['#2A78D6','#EB6834','#1BAF7A','#EDA100','#E87BA4','#8B5CF6','#008300','#00CEC9','#636E72'];
+
 export function Analytics() {
-  const t = useTAnalytics();
   const fmt = useFmtWallet();
-  const year = new Date().getFullYear();
-  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const PIE_COLORS = ['#8B5CF6','#3B82F6','#22C55E','#F59E0B','#EC4899','#A29BFE','#00CEC9','#636E72'];
+  const navigate = useNavAnalytics();
+  const [periodKey, setPeriodKey] = useState2('this_month');
+  const range = analyticsRange(periodKey);
 
-  const mf   = useQ2({ queryKey:['money-flow', year],          queryFn:() => dashboardAPI.moneyFlow({ year }).then(r=>r.data.data) });
-  const cats = useQ2({ queryKey:['category-breakdown', year],  queryFn:() => dashboardAPI.categoryBreakdown({ year }).then(r=>r.data.data) });
-  const stats= useQ2({ queryKey:['analytics-stats', year],     queryFn:() => dashboardAPI.analyticsStats({ year }).then(r=>r.data.data) });
+  const { data, isLoading } = useQ2({
+    queryKey:['analytics-overview', periodKey],
+    queryFn:() => analyticsAPI.overview(range).then(r=>r.data.data),
+  });
 
-  const flowData = (mf.data||[]).map((m,i) => ({ name:MONTHS[i], income:m.income, expense:m.expense }));
-  const pieData  = (cats.data||[]).filter(c => c.value > 0);
-  const st       = stats.data || {};
-  const totalExp = pieData.reduce((s,p) => s+p.value, 0);
+  const card = { background:'var(--surface)', borderRadius:18, padding:'18px 20px', border:'1px solid var(--border-light)', boxShadow:'0 4px 20px rgba(139,92,246,.06)' };
+  const money = (v) => fmt(v, { noDecimals:true });
 
-  const tooltipStyle = { borderRadius:12, border:'1px solid var(--border)', background:'var(--surface)', fontSize:12 };
+  if (isLoading || !data) return <div style={{ display:'flex', flexDirection:'column', height:'100%' }}><Topbar2 title="Analytics" subtitle="Your financial intelligence"/><PL2/></div>;
+
+  const k = data.kpis;
+  const donut = (data.categories||[]).slice(0,8).map((c,i)=>({ name:c.name, value:c.amount, color:ACAT_COLORS[i%ACAT_COLORS.length] }));
+  const goTx = (q) => navigate(q ? `/transactions?search=${encodeURIComponent(q)}` : '/transactions');
 
   return (
     <div style={{ display:'flex', flexDirection:'column', height:'100%' }}>
-      <Topbar2 title={t('analytics_title')} subtitle={`${t('analytics_sub')} — ${year}`}/>
-      <div style={{ padding:'28px 32px 40px', flex:1, overflow:'auto' }}>
+      <Topbar2 title="Analytics" subtitle="Where your money goes — and why"/>
+      <div style={{ padding:'22px 28px 48px', flex:1, overflow:'auto' }}>
 
-        {/* Stat cards */}
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))', gap:14, marginBottom:24 }}>
-          <StatCard label={t('analytics_avg_spend')} value={st.avg_daily||0}        icon="📊"/>
-          <StatCard label={t('analytics_largest')}   value={st.largest_expense||0}  icon="💸"/>
-          <StatCard label={t('analytics_savings')}   value={st.savings_rate||0}     prefix="" suffix="%" icon="💰"/>
-          <StatCard label={t('dash_total_income')}   value={st.income||0}           icon="📈"/>
+        {/* Period selector */}
+        <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:20 }}>
+          {ANALYTICS_PERIODS.map(p => {
+            const on = p.key === periodKey;
+            return (
+              <button key={p.key} onClick={()=>setPeriodKey(p.key)}
+                style={{ padding:'8px 15px', borderRadius:999, fontSize:13, fontWeight:700, cursor:'pointer',
+                  border:`1.5px solid ${on?'#8B5CF6':'var(--border)'}`, background:on?'rgba(139,92,246,.12)':'var(--surface)', color:on?'#8B5CF6':'var(--text2)' }}>
+                {p.label}
+              </button>
+            );
+          })}
         </div>
 
-        {/* Charts row */}
-        <div style={{ display:'grid', gridTemplateColumns:'2fr 1fr', gap:16, marginBottom:16 }}>
+        {/* KPI cards */}
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))', gap:12, marginBottom:22 }}>
+          <div style={card}><div style={{ fontSize:12.5, color:'var(--text3)' }}>Money Out</div><div style={{ fontSize:22, fontWeight:800, color:'#EC4899', marginTop:4 }}>{money(k.moneyOut)}</div><div style={{ fontSize:12, color:'var(--text3)', marginTop:2 }}>{k.outCount} txns</div></div>
+          <div style={card}><div style={{ fontSize:12.5, color:'var(--text3)' }}>Money In</div><div style={{ fontSize:22, fontWeight:800, color:'#22C55E', marginTop:4 }}>{money(k.moneyIn)}</div><div style={{ fontSize:12, color:'var(--text3)', marginTop:2 }}>{k.inCount} txns</div></div>
+          <div style={card}><div style={{ fontSize:12.5, color:'var(--text3)' }}>Net Cash Flow</div><div style={{ fontSize:22, fontWeight:800, color:k.net>=0?'#22C55E':'#EF4444', marginTop:4 }}>{k.net<0?'−':''}{money(Math.abs(k.net))}</div><div style={{ fontSize:12, color:'var(--text3)', marginTop:2 }}>{k.net>=0?'Surplus':'Deficit'}</div></div>
+          <div style={card}><div style={{ fontSize:12.5, color:'var(--text3)' }}>Avg Daily Spend</div><div style={{ fontSize:22, fontWeight:800, color:'var(--text)', marginTop:4 }}>{money(k.avgDaily)}</div></div>
+          <div style={card}><div style={{ fontSize:12.5, color:'var(--text3)' }}>Transactions</div><div style={{ fontSize:22, fontWeight:800, color:'var(--text)', marginTop:4 }}>{k.txCount}</div><div style={{ fontSize:12, color:'var(--text3)', marginTop:2 }}>{k.outCount} out · {k.inCount} in</div></div>
+        </div>
 
-          {/* Income vs Expense bar chart */}
-          <div style={{ background:'var(--surface)', borderRadius:22, padding:'22px 24px', boxShadow:'0 4px 24px rgba(139,92,246,.08)', border:'1px solid var(--border-light)' }}>
-            <div style={{ fontWeight:700, fontSize:15, color:'var(--text)', marginBottom:6 }}>{t('analytics_income_vs')} — {year}</div>
-            <div style={{ fontSize:12, color:'var(--text3)', marginBottom:18 }}>{t('analytics_monthly_comp')}</div>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={flowData} barGap={4} barCategoryGap="25%">
-                <defs>
-                  <linearGradient id="incBar" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#8B5CF6" stopOpacity={1}/>
-                    <stop offset="100%" stopColor="#3B82F6" stopOpacity={.8}/>
-                  </linearGradient>
-                  <linearGradient id="expBar" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#EC4899" stopOpacity={.7}/>
-                    <stop offset="100%" stopColor="#EC4899" stopOpacity={.3}/>
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="name" tick={{ fontSize:11, fill:'var(--text3)' }} axisLine={false} tickLine={false}/>
-                <YAxis tick={{ fontSize:10, fill:'var(--text3)' }} axisLine={false} tickLine={false} tickFormatter={v=>fmt(v/1000,{noDecimals:true})+'k'}/>
-                <RTooltip formatter={(v,n)=>[fmt(v),n]} contentStyle={tooltipStyle}/>
-                <Bar dataKey="income"  fill="url(#incBar)" radius={[6,6,0,0]} name="Income"/>
-                <Bar dataKey="expense" fill="url(#expBar)" radius={[6,6,0,0]} name="Expense"/>
-                <Legend wrapperStyle={{ fontSize:12, marginTop:8 }}/>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Category donut */}
-          <div style={{ background:'var(--surface)', borderRadius:22, padding:'22px 24px', boxShadow:'0 4px 24px rgba(139,92,246,.08)', border:'1px solid var(--border-light)' }}>
-            <div style={{ fontWeight:700, fontSize:15, color:'var(--text)', marginBottom:4 }}>{t('analytics_cat_exp')}</div>
-            <div style={{ fontSize:12, color:'var(--text3)', marginBottom:14 }}>{year} · {t('analytics_all_months')}</div>
-            {pieData.length === 0 ? (
-              <div style={{ textAlign:'center', padding:'40px 0', color:'var(--text3)', fontSize:13 }}>
-                <div style={{ fontSize:36, marginBottom:8 }}>📊</div>
-                {t('analytics_no_data')}
-              </div>
-            ) : (
-              <div style={{ display:'flex', flexDirection:'column', alignItems:'center' }}>
-                <div style={{ position:'relative' }}>
-                  <ResponsiveContainer width={160} height={160}>
-                    <PieChart>
-                      <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={72} dataKey="value" paddingAngle={3} startAngle={90} endAngle={-270}>
-                        {pieData.map((item,i) => <Cell key={i} fill={item.color || PIE_COLORS[i % PIE_COLORS.length]}/>)}
-                      </Pie>
-                      <RTooltip formatter={(v,_,p)=>[`${parseFloat(v).toLocaleString('en-US',{minimumFractionDigits:2})}`, p.payload.name]} contentStyle={tooltipStyle}/>
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', pointerEvents:'none' }}>
-                    <div className="mono" style={{ fontSize:13, fontWeight:900, color:'var(--text)' }}>
-                      ${totalExp.toLocaleString('en-US',{minimumFractionDigits:0})}
-                    </div>
-                    <div style={{ fontSize:9, color:'var(--text3)', fontWeight:600, textTransform:'uppercase', marginTop:2 }}>Total</div>
-                  </div>
+        {/* Money Flow buckets */}
+        <div style={{ fontSize:15, fontWeight:800, color:'var(--text)', margin:'8px 0 12px' }}>Smart Money Flow</div>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))', gap:12, marginBottom:24 }}>
+          {(data.moneyFlow||[]).map(b => {
+            const s = BUCKET_STYLE[b.key];
+            return (
+              <div key={b.key} style={{ ...card, borderLeft:`4px solid ${s.color}` }}>
+                <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
+                  <span style={{ width:34, height:34, borderRadius:10, background:s.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:17 }}>{s.icon}</span>
+                  <span style={{ fontSize:13.5, fontWeight:700, color:'var(--text)' }}>{b.label}</span>
                 </div>
-                <div style={{ width:'100%', display:'flex', flexDirection:'column', gap:7, marginTop:12 }}>
-                  {pieData.map((item,i) => {
-                    const pct = totalExp > 0 ? Math.round((item.value/totalExp)*100) : 0;
-                    return (
-                      <div key={i} style={{ display:'flex', alignItems:'center', gap:8 }}>
-                        <span style={{ fontSize:14 }}>{item.emoji}</span>
-                        <span style={{ flex:1, fontSize:12, color:'var(--text2)' }}>{item.name}</span>
-                        <span style={{ fontSize:11, color:'var(--text3)', marginRight:6 }}>{pct}%</span>
-                        <span className="mono" style={{ fontSize:12, fontWeight:700, color:'var(--text)' }}>${item.value.toLocaleString('en-US',{minimumFractionDigits:0})}</span>
-                      </div>
-                    );
-                  })}
+                <div style={{ fontSize:20, fontWeight:800, color:s.color }}>{money(b.amount)}</div>
+                <div style={{ fontSize:12.5, color:'var(--text3)', marginTop:3 }}>{b.pct}% of money out · {b.count} txns{b.recipients!=null?` · ${b.recipients} people`:''}</div>
+                <div style={{ height:6, borderRadius:99, background:'var(--surface2)', marginTop:10, overflow:'hidden' }}>
+                  <div style={{ height:'100%', width:`${Math.min(100,b.pct)}%`, background:s.color, borderRadius:99 }}/>
                 </div>
               </div>
+            );
+          })}
+        </div>
+
+        {/* Category analysis */}
+        <div style={{ display:'grid', gridTemplateColumns:'minmax(0,1fr) minmax(0,1.2fr)', gap:16, marginBottom:24 }} className="analytics-cat-grid">
+          <div style={card}>
+            <div style={{ fontSize:14, fontWeight:800, color:'var(--text)', marginBottom:10 }}>Spending by Category</div>
+            {donut.length === 0 ? <div style={{ fontSize:13, color:'var(--text3)', padding:'30px 0', textAlign:'center' }}>No spending yet</div> : (
+              <ResponsiveContainer width="100%" height={220}>
+                <PieChart>
+                  <Pie data={donut} dataKey="value" nameKey="name" innerRadius="58%" outerRadius="90%" paddingAngle={2} strokeWidth={0}>
+                    {donut.map((d,i)=><Cell key={i} fill={d.color}/>)}
+                  </Pie>
+                  <RTooltip formatter={(v)=>money(v)} contentStyle={{ borderRadius:12, border:'1px solid var(--border)', background:'var(--surface)', fontSize:12 }}/>
+                </PieChart>
+              </ResponsiveContainer>
             )}
           </div>
+          <div style={card}>
+            <div style={{ fontSize:14, fontWeight:800, color:'var(--text)', marginBottom:10 }}>Categories ranked</div>
+            <div style={{ display:'flex', flexDirection:'column', gap:2, maxHeight:230, overflowY:'auto' }}>
+              {(data.categories||[]).map((c,i)=>(
+                <div key={c.name} onClick={()=>goTx(c.name)} style={{ display:'flex', alignItems:'center', gap:10, padding:'9px 6px', borderRadius:9, cursor:'pointer', borderBottom:'1px solid var(--border-light)' }}>
+                  <span style={{ width:9, height:9, borderRadius:3, background:ACAT_COLORS[i%ACAT_COLORS.length], flexShrink:0 }}/>
+                  <span style={{ flex:1, fontSize:13, fontWeight:600, color:'var(--text)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{c.name}</span>
+                  <span style={{ fontSize:13, fontWeight:800, color:'var(--text)' }}>{money(c.amount)}</span>
+                  <span style={{ fontSize:12, color:'var(--text3)', width:42, textAlign:'right' }}>{c.pct}%</span>
+                </div>
+              ))}
+              {(data.categories||[]).length===0 && <div style={{ fontSize:13, color:'var(--text3)', padding:'20px 0', textAlign:'center' }}>No categories</div>}
+            </div>
+          </div>
         </div>
 
-        {/* Area chart */}
-        <div style={{ background:'var(--surface)', borderRadius:22, padding:'22px 24px', boxShadow:'0 4px 24px rgba(139,92,246,.08)', border:'1px solid var(--border-light)' }}>
-          <div style={{ fontWeight:700, fontSize:15, color:'var(--text)', marginBottom:4 }}>{t('analytics_cash_flow')}</div>
-          <div style={{ fontSize:12, color:'var(--text3)', marginBottom:18 }}>{t('analytics_cash_flow_sub')}</div>
-          <ResponsiveContainer width="100%" height={160}>
-            <AreaChart data={flowData} margin={{ top:5, right:4, left:-20, bottom:0 }}>
-              <defs>
-                <linearGradient id="areaInc" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#8B5CF6" stopOpacity={.18}/>
-                  <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}/>
-                </linearGradient>
-                <linearGradient id="areaExp" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#EC4899" stopOpacity={.15}/>
-                  <stop offset="95%" stopColor="#EC4899" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <XAxis dataKey="name" tick={{ fontSize:11, fill:'var(--text3)' }} axisLine={false} tickLine={false}/>
-              <RTooltip formatter={(v,n)=>[fmt(v),n]} contentStyle={tooltipStyle}/>
-              <Area type="monotone" dataKey="income"  stroke="#8B5CF6" strokeWidth={2.5} fill="url(#areaInc)" name="Income"  dot={false}/>
-              <Area type="monotone" dataKey="expense" stroke="#EC4899" strokeWidth={2}   fill="url(#areaExp)" name="Expense" dot={false}/>
-            </AreaChart>
+        {/* Weekly + highest */}
+        <div style={{ ...card, marginBottom:24 }}>
+          <div style={{ fontSize:14, fontWeight:800, color:'var(--text)', marginBottom:6 }}>Weekly Spending</div>
+          {data.topWeek && data.topWeek.amount>0 && (
+            <div style={{ fontSize:12.5, color:'var(--text2)', marginBottom:12 }}>🔥 Highest: <b style={{ color:'#EC4899' }}>{data.topWeek.label}</b> — {money(data.topWeek.amount)}</div>
+          )}
+          <ResponsiveContainer width="100%" height={180}>
+            <BarChart data={data.weekly||[]}>
+              <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize:11, fill:'var(--text3)' }}/>
+              <YAxis tickLine={false} axisLine={false} width={44} tick={{ fontSize:10.5, fill:'var(--text3)' }} tickFormatter={(v)=>v>=1000?`₹${Math.round(v/1000)}K`:`₹${v}`}/>
+              <RTooltip formatter={(v)=>money(v)} contentStyle={{ borderRadius:12, border:'1px solid var(--border)', background:'var(--surface)', fontSize:12 }}/>
+              <Bar dataKey="amount" radius={[6,6,0,0]}>
+                {(data.weekly||[]).map((w,i)=><Cell key={i} fill={data.topWeek&&w.week===data.topWeek.week?'#EC4899':'#8B5CF6'}/>)}
+              </Bar>
+            </BarChart>
           </ResponsiveContainer>
         </div>
+
+        {/* Highest day + top recipients */}
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(280px,1fr))', gap:16, marginBottom:24 }}>
+          {data.topDay && (
+            <div style={{ ...card }}>
+              <div style={{ fontSize:14, fontWeight:800, color:'var(--text)', marginBottom:6 }}>🔥 Highest Spending Day</div>
+              <div style={{ fontSize:22, fontWeight:800, color:'#EC4899' }}>{money(data.topDay.amount)}</div>
+              <div style={{ fontSize:12.5, color:'var(--text3)', marginTop:2 }}>{new Date(data.topDay.date).toLocaleDateString('en-IN',{ day:'numeric', month:'long' })} · {data.topDay.count} txns</div>
+              <button onClick={()=>goTx('')} style={{ marginTop:12, fontSize:12.5, fontWeight:700, color:'#8B5CF6', background:'rgba(139,92,246,.1)', border:'none', borderRadius:9, padding:'7px 14px', cursor:'pointer' }}>View transactions →</button>
+            </div>
+          )}
+          <div style={{ ...card }}>
+            <div style={{ fontSize:14, fontWeight:800, color:'var(--text)', marginBottom:10 }}>💸 Top Recipients & Merchants</div>
+            <div style={{ display:'flex', flexDirection:'column', gap:2 }}>
+              {(data.payees||[]).slice(0,6).map((p,i)=>(
+                <div key={p.name} onClick={()=>goTx(p.name)} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 6px', borderRadius:9, cursor:'pointer', borderBottom:'1px solid var(--border-light)' }}>
+                  <span style={{ fontSize:13, width:22 }}>{['🥇','🥈','🥉'][i]||`${i+1}.`}</span>
+                  <span style={{ flex:1, fontSize:13, fontWeight:600, color:'var(--text)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{p.name}</span>
+                  <span style={{ fontSize:13, fontWeight:800, color:'var(--text)' }}>{money(p.amount)}</span>
+                  <span style={{ fontSize:12, color:'var(--text3)', width:52, textAlign:'right' }}>{p.count} txns</span>
+                </div>
+              ))}
+              {(data.payees||[]).length===0 && <div style={{ fontSize:13, color:'var(--text3)', padding:'20px 0', textAlign:'center' }}>No payments yet</div>}
+            </div>
+          </div>
+        </div>
+
+        {/* Insights */}
+        {(data.insights||[]).length>0 && (
+          <>
+            <div style={{ fontSize:15, fontWeight:800, color:'var(--text)', margin:'8px 0 12px' }}>💡 Spending Insights</div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))', gap:12 }}>
+              {data.insights.map((ins,i)=>(
+                <div key={i} style={{ ...card, display:'flex', gap:12 }}>
+                  <span style={{ fontSize:22 }}>{ins.icon}</span>
+                  <div>
+                    <div style={{ fontSize:13.5, fontWeight:700, color:'var(--text)' }}>{ins.title}</div>
+                    <div style={{ fontSize:12.5, color:'var(--text2)', marginTop:3, lineHeight:1.5 }}>{ins.text}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
 }
+
 
 // ─── Settings page ─────────────────────────────────────────────────────────────
 import { useState as useState2 } from 'react';

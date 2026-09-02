@@ -51,6 +51,10 @@ export const dashboardAPI = {
   balanceHistory: (params) => api.get('/dashboard/balance-history', { params }),
 };
 
+export const analyticsAPI = {
+  overview: (params) => api.get('/analytics/overview', { params }),
+};
+
 // Transactions
 export const transactionsAPI = {
   getAll: (params) => api.get('/transactions', { params }),
