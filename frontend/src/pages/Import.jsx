@@ -55,6 +55,7 @@ export default function Import() {
   const [pwValue,  setPwValue]  = useState('');
   const [pwError,  setPwError]  = useState('');
   const [pwFile,   setPwFile]   = useState(null);
+  const [parseErr, setParseErr] = useState(null);
 
   // Receipt scan (from Paytm/GPay "Share → Tracksy" or manual upload)
   const [scanned,  setScanned]  = useState(null);  // parsed receipt for review
@@ -112,10 +113,14 @@ export default function Import() {
         setPwError(data.incorrect ? 'Incorrect password — please try again.' : '');
         return;
       }
-      setPwNeeded(false); setPwValue('');
+      setPwNeeded(false); setPwValue(''); setParseErr(null);
       setPreview(data.data);
       setRows(data.data.transactions.map((t, i) => ({ ...t, _id: i, skip: false, status: 'new' })));
       setStep(2);
+    },
+    onError: (err) => {
+      const d = err?.response?.data;
+      setParseErr({ message: d?.message || 'Could not parse the file.', sample: d?.sample || '' });
     },
   });
 
@@ -194,6 +199,22 @@ export default function Import() {
   return (
     <div style={{ display:'flex', flexDirection:'column', height:'100%' }}>
       <Topbar title={t('import_title')} subtitle={t('import_sub')}/>
+
+      {parseErr && (
+        <div style={{ margin:'14px 32px 0', background:'rgba(245,158,11,.08)', border:'1.5px solid rgba(245,158,11,.3)', borderRadius:14, padding:'14px 16px' }}>
+          <div style={{ fontSize:13.5, fontWeight:700, color:'#D97706', marginBottom:6 }}>⚠️ {parseErr.message}</div>
+          {parseErr.sample && (
+            <>
+              <div style={{ fontSize:12, color:'var(--text3)', marginBottom:6 }}>Copy this sample and send it in chat so we can add your statement format:</div>
+              <textarea readOnly value={parseErr.sample} onFocus={e=>e.target.select()}
+                style={{ width:'100%', height:90, fontSize:11, fontFamily:'monospace', padding:'8px 10px', borderRadius:10, border:'1px solid var(--border)', background:'var(--surface2)', color:'var(--text2)', resize:'vertical', boxSizing:'border-box' }}/>
+              <button onClick={()=>{ navigator.clipboard?.writeText(parseErr.sample); }}
+                style={{ marginTop:8, fontSize:12.5, fontWeight:700, color:'#8B5CF6', background:'rgba(139,92,246,.1)', border:'none', borderRadius:9, padding:'6px 14px', cursor:'pointer' }}>Copy sample</button>
+            </>
+          )}
+          <button onClick={()=>setParseErr(null)} style={{ marginLeft:8, marginTop:8, fontSize:12.5, color:'var(--text3)', background:'none', border:'none', cursor:'pointer' }}>Dismiss</button>
+        </div>
+      )}
 
       {pwNeeded && (
         <div className="modal-overlay" onClick={e => e.target===e.currentTarget && (setPwNeeded(false), setPwValue(''))}>

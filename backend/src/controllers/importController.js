@@ -604,6 +604,36 @@ function autoDetectAndParse(content, filename, source) {
    API HANDLERS
 ══════════════════════════════════════════════════════════════════ */
 
+/* ── Generic bank-statement PDF (best effort — HDFC/ICICI/SBI etc.) ──
+   Handles rows with a date + amounts. For most Indian bank statements the row
+   has Withdrawal / Deposit / Closing-balance amounts; we treat the amount right
+   before the (largest, last) balance as the transaction amount. */
+function parseGenericBankPDF(text) {
+  const lines = text.split('\n').map(l => l.replace(/\s+/g,' ').trim()).filter(Boolean);
+  const dateRe = /(\d{1,2}[\/\-.](?:\d{1,2}|[A-Za-z]{3})[\/\-.]\d{2,4})/;
+  const MON = { jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12' };
+  const out = [];
+  for (const l of lines) {
+    const dm = l.match(dateRe);
+    if (!dm) continue;
+    const amts = (l.match(/\d{1,3}(?:,\d{2,3})+(?:\.\d{1,2})?|\d+\.\d{2}/g) || [])
+      .map(a => parseFloat(a.replace(/,/g,''))).filter(n => n > 0);
+    if (!amts.length) continue;
+    const amount = amts.length >= 2 ? amts[amts.length - 2] : amts[0];  // before closing balance
+    if (!amount) continue;
+    // date → YYYY-MM-DD
+    const parts = dm[1].split(/[\/\-.]/);
+    let [d, mo, y] = parts;
+    mo = /^[A-Za-z]+$/.test(mo) ? (MON[mo.toLowerCase().slice(0,3)] || '01') : mo.padStart(2,'0');
+    y = y.length === 2 ? '20' + y : y;
+    const date = `${y}-${mo}-${d.padStart(2,'0')}`;
+    const desc = l.replace(dateRe,'').replace(/\d{1,3}(?:,\d{2,3})+(?:\.\d{1,2})?|\d+\.\d{2}/g,'').replace(/\s+/g,' ').trim().slice(0,60) || 'Transaction';
+    const isCredit = /\b(cr|credit|deposit|received|neft cr|imps cr)\b/i.test(l) && !/\b(dr|debit|withdrawal)\b/i.test(l);
+    out.push({ date, amount, type: isCredit ? 'income' : 'expense', category: detectCategory(desc,'',!isCredit) || 'Uncategorized', merchant: toTitleCase(desc), description: desc, ref:'', source:'bank_pdf' });
+  }
+  return out;
+}
+
 /* ── POST /api/import/preview ── */
 const previewStatement = async (req, res) => {
   try {
@@ -642,14 +672,24 @@ const previewStatement = async (req, res) => {
         }
         throw e;
       }
-      // Try Paytm UPI format first, then generic bank statement (HDFC etc.)
+      // Try Paytm UPI format, then generic auto-detect, then generic bank PDF
       parsed = parsePaytmPDF(text);
       detectedSource = 'paytm_pdf';
       if (!parsed.length) {
         const r = autoDetectAndParse(text, filename, source);
         parsed = r.parsed; detectedSource = r.source;
       }
-      if (!parsed.length) return res.status(400).json({ success:false, message:'No transactions found in the PDF. Make sure it is a bank/UPI statement.' });
+      if (!parsed.length) {
+        parsed = parseGenericBankPDF(text);
+        detectedSource = 'bank_pdf';
+      }
+      if (!parsed.length) {
+        return res.status(400).json({
+          success:false,
+          message:'Could not find transactions in this PDF. Please share the sample text below so we can add support for this statement format.',
+          sample: (text || '').replace(/\s+/g,' ').trim().slice(0, 1200),
+        });
+      }
     } else {
       // ── CSV / TXT ──
       const textContent = file ? file.buffer.toString('utf-8') : content;
