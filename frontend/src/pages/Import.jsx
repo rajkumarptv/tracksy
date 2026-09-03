@@ -639,7 +639,7 @@ export default function Import() {
                         {/* Merchant */}
                         <td style={{ padding:'9px 13px', maxWidth:200 }}>
                           <div style={{ fontSize:13, fontWeight:600, color:'var(--text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{tx.merchant}</div>
-                          <div style={{ fontSize:10.5, color:'var(--text3)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:190 }}>{tx.narration.substring(0,55)}</div>
+                          <div style={{ fontSize:10.5, color:'var(--text3)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:190 }}>{(tx.narration || tx.description || '').substring(0,55)}</div>
                         </td>
                         {/* Amount */}
                         <td style={{ padding:'9px 13px', textAlign:'right', whiteSpace:'nowrap' }}>

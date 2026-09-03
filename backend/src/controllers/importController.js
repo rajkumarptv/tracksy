@@ -660,6 +660,7 @@ function parseHDFCPDF(text) {
       category: detectCategory(narr, '', type === 'expense') || 'Uncategorized',
       merchant: toTitleCase(merchant),
       description: toTitleCase(merchant),
+      narration: narr.slice(0, 90),
       ref: '', source: 'hdfc_pdf',
     });
   }
