@@ -259,7 +259,11 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code} \" https://tracksywallet.com)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" https://tracksywallet.com/api/analytics/overview)",
       "Bash(node -e \"const ic=require\\('./src/controllers/importController'\\); const p=require\\('pdf-parse/lib/pdf.js/v1.10.100/build/pdf.js'\\); console.log\\('importController OK, getDocument:', typeof p.getDocument\\); process.exit\\(0\\)\")",
-      "Bash(node -e \"require\\('./src/controllers/importController'\\); console.log\\('importController OK'\\); process.exit\\(0\\)\")"
+      "Bash(node -e \"require\\('./src/controllers/importController'\\); console.log\\('importController OK'\\); process.exit\\(0\\)\")",
+      "Bash(sed -i \"s#/d/tracksy/backend/node_modules/pdf-parse/lib/pdf-parse.js#pdf-parse/lib/pdf-parse.js#\" /tmp/hdfctest.js)",
+      "Bash(node /tmp/hdfctest.js)",
+      "Bash(cp /tmp/hdfctest.js /d/tracksy/backend/_hdfctest.js)",
+      "Bash(node _hdfctest.js)"
     ]
   }
 }

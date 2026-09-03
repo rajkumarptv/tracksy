@@ -604,6 +604,68 @@ function autoDetectAndParse(content, filename, source) {
    API HANDLERS
 ══════════════════════════════════════════════════════════════════ */
 
+/* ── HDFC Bank statement PDF ──
+   Rows are concatenated as: <txnDate><narration><ref><valueDate><amount><closingBalance>.
+   Direction (debit/credit) is derived from the running closing balance, which
+   makes it self-validating regardless of which column the amount sits in. */
+function parseHDFCPDF(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+
+  // Opening balance from the statement summary
+  let opening = null;
+  const si = lines.findIndex(l => /Opening Balance/i.test(l) && /Closing Bal/i.test(l));
+  if (si >= 0 && lines[si + 1]) {
+    const m = lines[si + 1].match(/(\d{1,3}(?:,\d{3})*\.\d{2})/);
+    if (m) opening = parseFloat(m[1].replace(/,/g, ''));
+  }
+
+  const tailRe  = /(\d{2}\/\d{2}\/\d{2})(\d{1,3}(?:,\d{3})*\.\d{2})(\d{1,3}(?:,\d{3})*\.\d{2})/;
+  const startRe = /^(\d{2})\/(\d{2})\/(\d{2})/;
+  const out = [];
+  let prevClosing = opening;
+  let i = 0;
+
+  while (i < lines.length) {
+    if (!startRe.test(lines[i])) { i++; continue; }
+    const block = [lines[i]]; let j = i + 1;
+    while (j < lines.length && !startRe.test(lines[j])) { block.push(lines[j]); j++; }
+    i = j;
+
+    let tail = null;
+    for (const bl of block) { const m = bl.match(tailRe); if (m) { tail = m; break; } }
+    if (!tail) continue;
+
+    const dm = block[0].match(startRe);
+    const date    = `20${dm[3]}-${dm[2]}-${dm[1]}`;
+    const amount  = parseFloat(tail[2].replace(/,/g, ''));
+    const closing = parseFloat(tail[3].replace(/,/g, ''));
+    if (!amount) continue;
+
+    let type = 'expense';
+    if (prevClosing != null) {
+      if (Math.abs(prevClosing - amount - closing) < 1) type = 'expense';
+      else if (Math.abs(prevClosing + amount - closing) < 1) type = 'income';
+      else type = closing < prevClosing ? 'expense' : 'income';
+    }
+    prevClosing = closing;
+
+    // Narration → merchant/payee name
+    const narr = block.join(' ').replace(tailRe, ' ').replace(startRe, ' ').replace(/\s+/g, ' ').trim();
+    const stripped = narr.replace(/^(UPI|IMPS|NEFT|RTGS|ACH[\s-]*[DC]?|POS|ATW|MMT|EMI|CMS|ME DC|CC)\s*-?\s*/i, '');
+    const mm = stripped.match(/[A-Za-z][A-Za-z .&]{2,30}/);
+    let merchant = mm ? mm[0].replace(/\s+/g, ' ').trim() : (narr.slice(0, 30) || 'Transaction');
+
+    out.push({
+      date, amount, type,
+      category: detectCategory(narr, '', type === 'expense') || 'Uncategorized',
+      merchant: toTitleCase(merchant),
+      description: toTitleCase(merchant),
+      ref: '', source: 'hdfc_pdf',
+    });
+  }
+  return out;
+}
+
 /* ── Generic bank-statement PDF (best effort — HDFC/ICICI/SBI etc.) ──
    Handles rows with a date + amounts. For most Indian bank statements the row
    has Withdrawal / Deposit / Closing-balance amounts; we treat the amount right
@@ -672,9 +734,14 @@ const previewStatement = async (req, res) => {
         }
         throw e;
       }
-      // Try Paytm UPI format, then generic auto-detect, then generic bank PDF
-      parsed = parsePaytmPDF(text);
-      detectedSource = 'paytm_pdf';
+      // HDFC statements have a distinctive header; parse those precisely first
+      const isHDFC = /Withdrawal Amt\.?Deposit Amt\.?Closing Balance/i.test(text) || /HDFC BANK/i.test(text);
+      if (isHDFC) {
+        parsed = parseHDFCPDF(text);
+        detectedSource = 'hdfc_pdf';
+      }
+      // Otherwise try Paytm UPI, generic auto-detect, then generic bank PDF
+      if (!parsed || !parsed.length) { parsed = parsePaytmPDF(text); detectedSource = 'paytm_pdf'; }
       if (!parsed.length) {
         const r = autoDetectAndParse(text, filename, source);
         parsed = r.parsed; detectedSource = r.source;
