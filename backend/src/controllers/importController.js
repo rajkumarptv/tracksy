@@ -13,7 +13,14 @@ function toTitleCase(str) {
 }
 
 function parseAmount(raw) {
-  return parseFloat((raw || '0').toString().replace(/[₹,\s]/g, '').replace(/[()]/g, '')) || 0;
+  // Strip currency words FIRST — "Rs." leaves a stray dot that turns
+  // "Rs.540" into ".540" → 0.54 if removed naively.
+  return parseFloat(
+    (raw || '0').toString()
+      .replace(/rs\.?/gi, '')
+      .replace(/inr/gi, '')
+      .replace(/[₹,\s()]/g, '')
+  ) || 0;
 }
 
 function normalizeDate(raw) {
@@ -264,7 +271,7 @@ function parseGPayStatement(text) {
 
     if (status.includes('fail') || status.includes('decline')) continue;
 
-    const rawAmt = amtRaw.replace(/[₹,\s]/g,'');
+    const rawAmt = amtRaw.replace(/rs\.?/gi,'').replace(/[₹,\s]/g,'');
     const isNeg  = rawAmt.startsWith('-') || amtRaw.includes('(');
     const amount = parseFloat(rawAmt.replace(/[^0-9.]/g,'')) || 0;
     if (amount === 0) continue;
@@ -388,7 +395,7 @@ async function parsePaytmPDF(buffer) {
     const isSelf   = !isDebit && !isCredit; // self transfer — skip
     if (isSelf) continue;
 
-    const amount = parseFloat(amountRaw.replace(/[^0-9.]/g,''));
+    const amount = parseFloat(amountRaw.replace(/rs\.?/gi,'').replace(/[^0-9.]/g,''));
     if (!amount || amount === 0) continue;
 
     // Map tag to category

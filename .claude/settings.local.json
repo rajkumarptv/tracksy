@@ -255,7 +255,9 @@
       "Bash(node -e \"const d=JSON.parse\\(require\\('fs'\\).readFileSync\\(0,'utf8'\\)\\); if\\(!d.ok\\){console.log\\('DB ERROR:', d.error\\); process.exit\\(0\\);} d.applied.forEach\\(a=>console.log\\(a.ok?'OK ':'FAIL', a.sql, a.err||''\\)\\); console.log\\('users cols:', d.columns.map\\(c=>c.column_name+' \\(nullable='+c.is_nullable+'\\)'\\).join\\(', '\\)\\);\")",
       "Bash(git commit -q -m 'chore: remove temp _fix-oauth endpoint \\(users OAuth schema now applied to prod\\) *)",
       "Bash(awk 'NR>=986 && /^}/ {print NR\": \"$0; c++; if\\(c>=1\\) exit}' pages/OtherPages.jsx)",
-      "Bash(node -e \"require\\('./src/controllers/analyticsController'\\); require\\('./src/routes/index'\\); console.log\\('backend OK'\\); process.exit\\(0\\)\")"
+      "Bash(node -e \"require\\('./src/controllers/analyticsController'\\); require\\('./src/routes/index'\\); console.log\\('backend OK'\\); process.exit\\(0\\)\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code} \" https://tracksywallet.com)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" https://tracksywallet.com/api/analytics/overview)"
     ]
   }
 }
