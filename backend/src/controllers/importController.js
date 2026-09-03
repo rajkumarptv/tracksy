@@ -870,41 +870,45 @@ const confirmImport = async (req, res) => {
     // Track per-wallet balance delta so we can apply one UPDATE per wallet at the end
     const walletDelta = {}; // { wallet_id: delta }
 
+    // Dedup by ref_number in a single query (instead of one per row)
+    const refs = transactions.filter(t => !t.skip && t.status !== 'matched' && t.ref_number).map(t => t.ref_number);
+    let existingRefs = new Set();
+    if (refs.length) {
+      const ex = await query('SELECT payment_name FROM transactions WHERE user_id=$1 AND payment_name = ANY($2)', [userId, refs]);
+      existingRefs = new Set(ex.rows.map(r => r.payment_name));
+    }
+
+    // Build the rows to insert
+    const rows = [];
     for (const tx of transactions) {
       if (tx.skip || tx.status === 'matched') { skipped++; continue; }
-
-      if (tx.ref_number) {
-        const exists = await query(
-          'SELECT id FROM transactions WHERE user_id=$1 AND payment_name=$2',
-          [userId, tx.ref_number]
-        );
-        if (exists.rows.length) { skipped++; continue; }
-      }
-
+      if (tx.ref_number && existingRefs.has(tx.ref_number)) { skipped++; continue; }
       const wid = tx.wallet_id || wallet_id || null;
+      rows.push([userId, wid, tx.category_id || null, tx.type, parseFloat(tx.amount) || 0,
+        tx.description || tx.merchant || 'Transaction', tx.ref_number || null, tx.date]);
+      if (wid) {
+        const sign = tx.type === 'income' ? 1 : -1;
+        walletDelta[wid] = (walletDelta[wid] || 0) + sign * (parseFloat(tx.amount) || 0);
+      }
+      imported++;
+    }
 
+    // Bulk INSERT in chunks (one round-trip per chunk instead of per row)
+    const CHUNK = 100;
+    for (let c = 0; c < rows.length; c += CHUNK) {
+      const slice = rows.slice(c, c + CHUNK);
+      const values = [];
+      const params = [];
+      slice.forEach((r, i) => {
+        const b = i * 8;
+        values.push(`($${b+1},$${b+2},$${b+3},$${b+4},$${b+5},$${b+6},$${b+7},'completed',$${b+8})`);
+        params.push(...r);
+      });
       await query(`
         INSERT INTO transactions
           (user_id, wallet_id, category_id, type, amount, description, payment_name, status, transaction_date)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,'completed',$8)
-      `, [
-        userId,
-        wid,
-        tx.category_id || null,
-        tx.type,
-        tx.amount,
-        tx.description || tx.merchant,
-        tx.ref_number || null,
-        tx.date,
-      ]);
-
-      // Accumulate balance change for the wallet
-      if (wid) {
-        const sign = tx.type === 'income' ? 1 : -1;
-        walletDelta[wid] = (walletDelta[wid] || 0) + sign * parseFloat(tx.amount);
-      }
-
-      imported++;
+        VALUES ${values.join(',')}
+      `, params);
     }
 
     // Apply wallet balance updates in one pass
