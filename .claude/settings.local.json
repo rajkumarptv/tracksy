@@ -257,7 +257,9 @@
       "Bash(awk 'NR>=986 && /^}/ {print NR\": \"$0; c++; if\\(c>=1\\) exit}' pages/OtherPages.jsx)",
       "Bash(node -e \"require\\('./src/controllers/analyticsController'\\); require\\('./src/routes/index'\\); console.log\\('backend OK'\\); process.exit\\(0\\)\")",
       "Bash(curl -s -o /dev/null -w \"%{http_code} \" https://tracksywallet.com)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" https://tracksywallet.com/api/analytics/overview)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" https://tracksywallet.com/api/analytics/overview)",
+      "Bash(node -e \"const ic=require\\('./src/controllers/importController'\\); const p=require\\('pdf-parse/lib/pdf.js/v1.10.100/build/pdf.js'\\); console.log\\('importController OK, getDocument:', typeof p.getDocument\\); process.exit\\(0\\)\")",
+      "Bash(node -e \"require\\('./src/controllers/importController'\\); console.log\\('importController OK'\\); process.exit\\(0\\)\")"
     ]
   }
 }

@@ -5,6 +5,27 @@ const { query } = require('../db');
 const pdfParse  = require('pdf-parse/lib/pdf-parse.js');
 const XLSX      = require('xlsx');
 
+/* Extract text from a (possibly password-protected) PDF. pdf-parse's
+   getDocument accepts a { data, password } source, so we reuse it (it already
+   loads pdfjs correctly). Throws e.needsPassword when the PDF is encrypted and
+   no/incorrect password was supplied. */
+async function extractPdfText(buffer, password) {
+  try {
+    const src = password ? { data: buffer, password } : buffer;
+    const data = await pdfParse(src);
+    return data.text;
+  } catch (err) {
+    const msg = (err && (err.name || err.message) || '').toString();
+    if (/password/i.test(msg) || err?.name === 'PasswordException') {
+      const e = new Error(password ? 'Incorrect password' : 'This PDF is password protected');
+      e.needsPassword = true;
+      e.incorrect = !!password;
+      throw e;
+    }
+    throw err;
+  }
+}
+
 /* ══════════════════════════════════════════════════════════════════
    HELPERS
 ══════════════════════════════════════════════════════════════════ */
@@ -319,9 +340,7 @@ const PAYTM_TAG_MAP = {
   'self transfer':     null,             // skip self transfers
 };
 
-async function parsePaytmPDF(buffer) {
-  const data = await pdfParse(buffer);
-  const text = data.text;
+function parsePaytmPDF(text) {
   const transactions = [];
 
   // Split into lines, clean up
@@ -613,10 +632,24 @@ const previewStatement = async (req, res) => {
       detectedSource = 'paytm_excel';
       if (!parsed.length) return res.status(400).json({ success:false, message:'No transactions found in Excel. Make sure the file has a Passbook sheet.' });
     } else if (isPDF && file) {
-      // ── PDF fallback ──
-      parsed = await parsePaytmPDF(file.buffer);
+      // ── PDF (may be password protected) ──
+      let text;
+      try {
+        text = await extractPdfText(file.buffer, req.body.password);
+      } catch (e) {
+        if (e.needsPassword) {
+          return res.json({ success:false, needsPassword:true, incorrect: !!e.incorrect, message: e.message });
+        }
+        throw e;
+      }
+      // Try Paytm UPI format first, then generic bank statement (HDFC etc.)
+      parsed = parsePaytmPDF(text);
       detectedSource = 'paytm_pdf';
-      if (!parsed.length) return res.status(400).json({ success:false, message:'No transactions found in PDF. Make sure it is a Paytm UPI statement.' });
+      if (!parsed.length) {
+        const r = autoDetectAndParse(text, filename, source);
+        parsed = r.parsed; detectedSource = r.source;
+      }
+      if (!parsed.length) return res.status(400).json({ success:false, message:'No transactions found in the PDF. Make sure it is a bank/UPI statement.' });
     } else {
       // ── CSV / TXT ──
       const textContent = file ? file.buffer.toString('utf-8') : content;

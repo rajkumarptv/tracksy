@@ -50,6 +50,12 @@ export default function Import() {
   const [search,    setSearch]   = useState('');
   const [reconciled, setReconciled] = useState(false);
 
+  // Password-protected PDF flow
+  const [pwNeeded, setPwNeeded] = useState(false);
+  const [pwValue,  setPwValue]  = useState('');
+  const [pwError,  setPwError]  = useState('');
+  const [pwFile,   setPwFile]   = useState(null);
+
   // Receipt scan (from Paytm/GPay "Share → Tracksy" or manual upload)
   const [scanned,  setScanned]  = useState(null);  // parsed receipt for review
   const [scanning, setScanning] = useState(false);
@@ -101,6 +107,12 @@ export default function Import() {
   const previewMut = useMutation({
     mutationFn: (formData) => importAPI.preview(formData).then(r => r.data),
     onSuccess: (data) => {
+      if (data && data.needsPassword) {
+        setPwNeeded(true);
+        setPwError(data.incorrect ? 'Incorrect password — please try again.' : '');
+        return;
+      }
+      setPwNeeded(false); setPwValue('');
       setPreview(data.data);
       setRows(data.data.transactions.map((t, i) => ({ ...t, _id: i, skip: false, status: 'new' })));
       setStep(2);
@@ -130,13 +142,15 @@ export default function Import() {
     },
   });
 
-  const handleFile = (file) => {
+  const handleFile = (file, password) => {
     if (!file) return;
+    setPwFile(file);
     // Always send as multipart FormData — works for both PDF and CSV
     const fd = new FormData();
     fd.append('file', file);
     fd.append('filename', file.name);
     fd.append('source', source || 'auto');
+    if (password) fd.append('password', password);
     previewMut.mutate(fd);
   };
 
@@ -171,9 +185,39 @@ export default function Import() {
     previewMut.reset(); reconcileMut.reset(); confirmMut.reset();
   };
 
+  const submitPassword = () => {
+    if (!pwValue.trim() || !pwFile) return;
+    setPwError('');
+    handleFile(pwFile, pwValue.trim());
+  };
+
   return (
     <div style={{ display:'flex', flexDirection:'column', height:'100%' }}>
       <Topbar title={t('import_title')} subtitle={t('import_sub')}/>
+
+      {pwNeeded && (
+        <div className="modal-overlay" onClick={e => e.target===e.currentTarget && (setPwNeeded(false), setPwValue(''))}>
+          <div className="modal" style={{ maxWidth:400 }}>
+            <div className="modal-title">🔒 Password required</div>
+            <div style={{ fontSize:13.5, color:'var(--text2)', marginBottom:16, lineHeight:1.5 }}>
+              This PDF is password protected. Enter the password to unlock and read the statement. (HDFC statements are usually opened with a password from your welcome kit / customer ID.)
+            </div>
+            {pwError && <div style={{ background:'rgba(236,72,153,.08)', color:'#EC4899', padding:'9px 13px', borderRadius:10, marginBottom:12, fontSize:13, fontWeight:600 }}>⚠️ {pwError}</div>}
+            <input type="password" autoFocus value={pwValue}
+              onChange={e => setPwValue(e.target.value)}
+              onKeyDown={e => e.key==='Enter' && submitPassword()}
+              placeholder="PDF password"
+              style={{ width:'100%', padding:'12px 14px', borderRadius:12, border:'1.5px solid var(--border)', background:'var(--surface2)', color:'var(--text)', fontSize:15, outline:'none', boxSizing:'border-box', marginBottom:16 }}/>
+            <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
+              <button className="btn btn-ghost" onClick={() => { setPwNeeded(false); setPwValue(''); }}>Cancel</button>
+              <button className="btn btn-primary" disabled={!pwValue.trim() || previewMut.isPending} onClick={submitPassword}
+                style={{ background:'linear-gradient(135deg,#8B5CF6,#3B82F6)', border:'none' }}>
+                {previewMut.isPending ? 'Unlocking…' : 'Unlock PDF'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div style={{ padding:'24px 32px 40px', flex:1, overflow:'auto' }}>
 
         {/* ── Step indicator ── */}
