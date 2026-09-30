@@ -200,4 +200,17 @@ router.post('/cron/gmail-sync', async (req, res) => {
 // Lightweight keep-alive / uptime probe
 router.get('/cron/ping', (_req, res) => res.json({ ok: true, ts: Date.now() }));
 
+// Keep-alive — runs a real DB query so Supabase never idles into an auto-pause.
+// Called daily by Vercel Cron (see vercel.json).
+router.get('/cron/keepalive', async (_req, res) => {
+  try {
+    const { query } = require('../db');
+    await query('SELECT 1');
+    res.json({ ok: true, db: 'up', ts: Date.now() });
+  } catch (e) {
+    console.error('[cron/keepalive]', e.message);
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 module.exports = router;

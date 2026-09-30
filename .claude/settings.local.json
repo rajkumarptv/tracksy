@@ -263,7 +263,12 @@
       "Bash(sed -i \"s#/d/tracksy/backend/node_modules/pdf-parse/lib/pdf-parse.js#pdf-parse/lib/pdf-parse.js#\" /tmp/hdfctest.js)",
       "Bash(node /tmp/hdfctest.js)",
       "Bash(cp /tmp/hdfctest.js /d/tracksy/backend/_hdfctest.js)",
-      "Bash(node _hdfctest.js)"
+      "Bash(node _hdfctest.js)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://tracksywallet.com)",
+      "Bash(curl -s -X POST https://tracksywallet.com/api/auth/login -H \"Content-Type: application/json\" -d '{\"email\":\"x@x.com\",\"password\":\"x\"}')",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}  \\(%{time_total}s\\)\" https://tracksywallet.com)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\" https://tracksywallet.com/api/cron/ping)",
+      "Bash(curl -s -X POST https://tracksywallet.com/api/auth/login -H \"Content-Type: application/json\" -d '{\"email\":\"x@x.com\",\"password\":\"wrongpass\"}')"
     ]
   }
 }
