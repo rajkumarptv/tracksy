@@ -268,7 +268,10 @@
       "Bash(curl -s -X POST https://tracksywallet.com/api/auth/login -H \"Content-Type: application/json\" -d '{\"email\":\"x@x.com\",\"password\":\"x\"}')",
       "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}  \\(%{time_total}s\\)\" https://tracksywallet.com)",
       "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\" https://tracksywallet.com/api/cron/ping)",
-      "Bash(curl -s -X POST https://tracksywallet.com/api/auth/login -H \"Content-Type: application/json\" -d '{\"email\":\"x@x.com\",\"password\":\"wrongpass\"}')"
+      "Bash(curl -s -X POST https://tracksywallet.com/api/auth/login -H \"Content-Type: application/json\" -d '{\"email\":\"x@x.com\",\"password\":\"wrongpass\"}')",
+      "Bash(curl -s https://tracksywallet.com/api/cron/keepalive)",
+      "Skill(claude-api)",
+      "Bash(node -e \"require\\('@anthropic-ai/sdk'\\); require\\('./src/utils/claudeReceipt'\\); require\\('./src/controllers/receiptController'\\); console.log\\('all load OK'\\); process.exit\\(0\\)\")"
     ]
   }
 }

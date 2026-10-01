@@ -1,5 +1,6 @@
 const { parseReceipt } = require('../utils/receiptParser');
 const { readReceiptWithGemini } = require('../utils/geminiReceipt');
+const { readReceiptWithClaude } = require('../utils/claudeReceipt');
 const sharp = require('sharp');
 
 /* Preprocess: upscale + grayscale + high contrast → big OCR accuracy boost
@@ -36,21 +37,31 @@ const scan = async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ success:false, message:'No image provided' });
 
-    // 1) Primary: read the image with Gemini vision (understands the whole
-    //    receipt, no OCR/regex). Falls through to Tesseract if the key is
-    //    missing or the call fails (network/offline).
+    // 1) Primary: AI vision (understands the whole receipt, no OCR/regex).
+    //    Try Claude first (if configured), then Gemini. Only if both fail to
+    //    even run do we fall through to Tesseract OCR.
     let parsed = null;
-    try {
-      parsed = await readReceiptWithGemini(req.file.buffer);
-      if (parsed) {
-        console.log('[receipt-scan] gemini parsed:', JSON.stringify(parsed));
-        return res.json({ success:true, data: parsed });
+    let anyVisionRan = false;
+    const readers = [];
+    if (process.env.ANTHROPIC_API_KEY) readers.push(['claude', readReceiptWithClaude]);
+    if (process.env.GEMINI_API_KEY)    readers.push(['gemini', readReceiptWithGemini]);
+
+    for (const [name, read] of readers) {
+      try {
+        parsed = await read(req.file.buffer);
+        anyVisionRan = true;
+        if (parsed) {
+          console.log(`[receipt-scan] ${name} parsed:`, JSON.stringify(parsed));
+          return res.json({ success:true, data: parsed });
+        }
+        console.log(`[receipt-scan] ${name}: image not a readable receipt`);
+      } catch (e) {
+        console.warn(`[receipt-scan] ${name} unavailable:`, e.message);
       }
-      // Gemini ran but couldn't read a payment — treat as unreadable image.
-      console.log('[receipt-scan] gemini: image not a readable receipt');
+    }
+    // A vision model ran but genuinely couldn't read a payment → unreadable.
+    if (anyVisionRan) {
       return res.status(422).json({ success:false, message:'Could not read the receipt. Try a clearer image.' });
-    } catch (gemErr) {
-      console.warn('[receipt-scan] gemini unavailable, falling back to OCR:', gemErr.message);
     }
 
     // 2) Fallback: legacy Tesseract OCR + regex parser.
