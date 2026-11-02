@@ -55,9 +55,12 @@ const MODELS = ['gemini-flash-latest', 'gemini-flash-lite-latest'];
    These are transient — retry with backoff, and try the lite model, before
    giving up. Non-transient errors (bad key, bad request) throw immediately. */
 async function generateWithRetry(ai, contents, config) {
+  // Vercel Hobby kills the function at 10s. Gemini is only a fallback behind
+  // Claude now, so keep the whole budget tiny: one quick attempt per model, a
+  // short backoff, and no long retry storm that would 504 before returning.
   let lastErr;
   for (const model of MODELS) {
-    for (let attempt = 0; attempt < 3; attempt++) {
+    for (let attempt = 0; attempt < 2; attempt++) {
       try {
         return await ai.models.generateContent({ model, contents, config });
       } catch (e) {
@@ -65,7 +68,7 @@ async function generateWithRetry(ai, contents, config) {
         const msg = String((e && e.message) || e);
         const transient = /\b(429|500|503)\b|UNAVAILABLE|overloaded|high demand|rate.?limit/i.test(msg);
         if (!transient) throw e;                 // real error — don't waste retries
-        if (attempt < 2) await sleep(700 * (attempt + 1)); // 700ms, 1400ms
+        if (attempt < 1) await sleep(400);       // one short retry only
       }
     }
     // this model kept failing transiently → fall through to the next model
