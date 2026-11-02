@@ -12,14 +12,28 @@ const SAMPLE_TABLES = ['transactions','budgets','saving_goals','recurring_transa
 
 /* Self-heal: the is_sample columns are added by migrate.js, but deployments
    don't auto-run migrations, so ensure they exist before any sample op. All
-   IF NOT EXISTS, so this is idempotent and safe to run on every call. */
+   IF NOT EXISTS, so this is idempotent. Runs inside one transaction with a
+   short lock_timeout, so if the table is briefly locked (e.g. a prior load
+   still running on the single serverless connection) it fails fast with a
+   clear message instead of hanging until the function times out. */
 let columnsReady = false;
-async function ensureColumns(client = { query }) {
+async function ensureColumns() {
   if (columnsReady) return;
-  for (const t of SAMPLE_TABLES) {
-    await client.query(`ALTER TABLE ${t} ADD COLUMN IF NOT EXISTS is_sample BOOLEAN DEFAULT false`);
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query("SET LOCAL lock_timeout = '4s'");
+    for (const t of SAMPLE_TABLES) {
+      await client.query(`ALTER TABLE ${t} ADD COLUMN IF NOT EXISTS is_sample BOOLEAN DEFAULT false`);
+    }
+    await client.query('COMMIT');
+    columnsReady = true;
+  } catch (e) {
+    await client.query('ROLLBACK').catch(() => {});
+    throw e;
+  } finally {
+    client.release();
   }
-  columnsReady = true;
 }
 
 /* yyyy-mm-dd for a date N days before today */
@@ -32,10 +46,13 @@ const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const status = async (req, res) => {
   try {
     const uid = req.user.userId;
-    await ensureColumns();
     const r = await query('SELECT COUNT(*)::int AS n FROM transactions WHERE user_id=$1 AND is_sample=true', [uid]);
     res.json({ success: true, loaded: r.rows[0].n > 0, transactions: r.rows[0].n });
-  } catch (e) { res.status(500).json({ success: false, message: 'Server error' }); }
+  } catch (e) {
+    // Column not created yet → simply means no sample data is loaded.
+    if (/is_sample/i.test(e.message)) return res.json({ success: true, loaded: false, transactions: 0 });
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
 };
 
 /* DELETE /api/data/sample → remove every demo row for this user */
@@ -53,9 +70,9 @@ const remove = async (req, res) => {
 /* POST /api/data/sample → load a fresh year of demo data (replaces any existing demo data) */
 const load = async (req, res) => {
   const uid = req.user.userId;
+  await ensureColumns();
   const client = await pool.connect();
   try {
-    await ensureColumns(client);
     await client.query('BEGIN');
 
     // Start clean so repeated loads don't stack up.
@@ -125,12 +142,19 @@ const load = async (req, res) => {
         tx.push([bank, catId('Freelance'), 'income', rand(5000, 18000), 'Freelance Project', 'Upwork', monthsAgoDate(m, rand(10, 25))]);
     }
 
-    // Bulk insert transactions
-    for (const [wallet, category, type, amount, description, payment_name, date] of tx) {
+    // Bulk insert transactions in one round trip (fast, releases locks quickly).
+    if (tx.length) {
+      const cols = 8;
+      const values = [];
+      const rows = tx.map((t, i) => {
+        const b = i * cols;
+        values.push(uid, t[0], t[1], t[2], t[3], t[4], t[5], t[6]);
+        return `($${b+1},$${b+2},$${b+3},$${b+4},$${b+5},$${b+6},$${b+7},'completed',$${b+8},true)`;
+      }).join(',');
       await client.query(
         `INSERT INTO transactions (user_id, wallet_id, category_id, type, amount, description, payment_name, status, transaction_date, is_sample)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,'completed',$8,true)`,
-        [uid, wallet, category, type, amount, description, payment_name, date]
+         VALUES ${rows}`,
+        values
       );
     }
 
