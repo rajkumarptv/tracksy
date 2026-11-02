@@ -10,6 +10,18 @@ const { query, pool } = require('../db');
 
 const SAMPLE_TABLES = ['transactions','budgets','saving_goals','recurring_transactions','net_worth_snapshots','wallets'];
 
+/* Self-heal: the is_sample columns are added by migrate.js, but deployments
+   don't auto-run migrations, so ensure they exist before any sample op. All
+   IF NOT EXISTS, so this is idempotent and safe to run on every call. */
+let columnsReady = false;
+async function ensureColumns(client = { query }) {
+  if (columnsReady) return;
+  for (const t of SAMPLE_TABLES) {
+    await client.query(`ALTER TABLE ${t} ADD COLUMN IF NOT EXISTS is_sample BOOLEAN DEFAULT false`);
+  }
+  columnsReady = true;
+}
+
 /* yyyy-mm-dd for a date N days before today */
 const daysAgo = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().split('T')[0]; };
 const monthsAgoDate = (m, day = 1) => { const d = new Date(); d.setMonth(d.getMonth() - m); d.setDate(day); return d.toISOString().split('T')[0]; };
@@ -20,6 +32,7 @@ const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const status = async (req, res) => {
   try {
     const uid = req.user.userId;
+    await ensureColumns();
     const r = await query('SELECT COUNT(*)::int AS n FROM transactions WHERE user_id=$1 AND is_sample=true', [uid]);
     res.json({ success: true, loaded: r.rows[0].n > 0, transactions: r.rows[0].n });
   } catch (e) { res.status(500).json({ success: false, message: 'Server error' }); }
@@ -29,6 +42,7 @@ const status = async (req, res) => {
 const remove = async (req, res) => {
   try {
     const uid = req.user.userId;
+    await ensureColumns();
     for (const t of SAMPLE_TABLES) {
       await query(`DELETE FROM ${t} WHERE user_id=$1 AND is_sample=true`, [uid]);
     }
@@ -41,6 +55,7 @@ const load = async (req, res) => {
   const uid = req.user.userId;
   const client = await pool.connect();
   try {
+    await ensureColumns(client);
     await client.query('BEGIN');
 
     // Start clean so repeated loads don't stack up.
