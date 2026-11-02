@@ -161,11 +161,36 @@ export const familyAPI = {
   memberDetail: (id) => api.get(`/family/member/${id}`),
 };
 
+// Compress a receipt image in the browser before upload.
+// Why: Vercel serverless rejects request bodies over ~4.5 MB at the edge, so
+// large mobile photos/screenshots fail before reaching the function. Downscaling
+// to <=1600px JPEG keeps uploads tiny (usually <300 KB) and also cuts the image
+// tokens the vision model is billed for. Falls back to the original file if the
+// browser can't decode it (e.g. HEIC) so the server can still try.
+async function compressImage(file) {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const MAX = 1600;
+    const scale = Math.min(1, MAX / Math.max(bitmap.width, bitmap.height));
+    const w = Math.round(bitmap.width * scale);
+    const h = Math.round(bitmap.height * scale);
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(bitmap, 0, 0, w, h);
+    const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.8));
+    if (!blob) return file;
+    return new File([blob], 'receipt.jpg', { type: 'image/jpeg' });
+  } catch {
+    return file;
+  }
+}
+
 // Receipt screenshot OCR (share-target / upload)
 export const receiptAPI = {
-  scan: (file) => {
+  scan: async (file) => {
+    const compressed = await compressImage(file);
     const fd = new FormData();
-    fd.append('file', file, 'receipt.jpg');
+    fd.append('file', compressed, 'receipt.jpg');
     return api.post('/receipt/scan', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
   },
 };
