@@ -29,11 +29,12 @@ const RESPONSE_SCHEMA = {
     amount:   { type: 'number',  description: 'the transaction amount, numbers only' },
     type:     { type: 'string',  enum: ['expense', 'income'], description: 'expense if money was sent/paid, income if received/credited' },
     merchant: { type: 'string',  description: 'who was paid or who sent the money; empty string if unknown' },
+    category: { type: 'string',  enum: ['Food & Dining', 'Transport', 'Shopping', 'Bills & Utilities', 'Health', 'Entertainment', 'Education', 'Travel', 'Salary', 'Freelance', 'Business', 'Investment', 'Other Income', ''], description: 'best-fit category; use the receipt\'s own category label if shown (e.g. Paytm "Food"), else infer from merchant; empty string if unsure' },
     date:     { type: 'string',  description: 'transaction date as YYYY-MM-DD; empty string if not shown' },
     ref:      { type: 'string',  description: 'UPI/transaction/reference/order id; empty string if none' },
     source:   { type: 'string',  enum: ['paytm', 'phonepe', 'gpay', 'amazon_pay', 'upi', 'other'], description: 'the app the receipt is from' },
   },
-  required: ['readable', 'amount', 'type', 'merchant', 'date', 'ref', 'source'],
+  required: ['readable', 'amount', 'type', 'merchant', 'category', 'date', 'ref', 'source'],
 };
 
 const PROMPT =
@@ -114,6 +115,7 @@ async function readReceiptWithGemini(buffer) {
     amount:   Number(data.amount),
     type:     data.type === 'income' ? 'income' : 'expense',
     merchant: merchant.slice(0, 60),
+    category: (data.category || '').trim(),
     date:     /^\d{4}-\d{2}-\d{2}$/.test(data.date) ? data.date : today,
     ref:      data.ref ? String(data.ref).trim() : null,
     source,

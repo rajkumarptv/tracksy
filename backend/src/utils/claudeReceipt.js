@@ -31,10 +31,16 @@ const PROMPT =
   'A shared payment receipt is normally money the user SENT, so default type to "expense" ' +
   'unless the screen clearly says the money was received/credited. Amount is numbers only ' +
   '(strip currency symbols and commas). ' +
+  'For "category": if the receipt already shows a category label (e.g. Paytm shows "Food"), ' +
+  'use that to pick the closest match; otherwise infer from the merchant. Choose EXACTLY ONE ' +
+  'from this list, or "" if unsure: "Food & Dining", "Transport", "Shopping", ' +
+  '"Bills & Utilities", "Health", "Entertainment", "Education", "Travel", "Salary", ' +
+  '"Freelance", "Business", "Investment", "Other Income". ' +
   'Respond with ONLY a JSON object (no prose, no code fences) with exactly these keys: ' +
   '{"readable": boolean (true only if this is a payment receipt with a readable amount), ' +
   '"amount": number, "type": "expense" | "income", "merchant": string (who was paid / who ' +
-  'sent money; "" if unknown), "date": string (YYYY-MM-DD, "" if not shown), "ref": string ' +
+  'sent money; "" if unknown), "category": string (one of the list above, or ""), ' +
+  '"date": string (YYYY-MM-DD, "" if not shown), "ref": string ' +
   '(UPI/transaction/order id, "" if none), "source": "paytm" | "phonepe" | "gpay" | ' +
   '"amazon_pay" | "upi" | "other"}. If the image is not a payment receipt or has no ' +
   'readable amount, set readable to false.';
@@ -74,6 +80,7 @@ async function readReceiptWithClaude(buffer) {
     amount:   Math.abs(parseFloat(parsed.amount)) || 0,
     type:     parsed.type === 'income' ? 'income' : 'expense',
     merchant: (parsed.merchant || '').toString().trim(),
+    category: (parsed.category || '').toString().trim(),
     date:     (parsed.date || '').toString().trim(),
     ref:      (parsed.ref || '').toString().trim(),
     source:   parsed.source || 'other',

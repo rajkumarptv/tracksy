@@ -778,7 +778,19 @@ function ReceiptReviewModal({ data, wallets, categories, fmt, onClose, onSaved }
   const [type,     setType]     = useState(data.type || 'expense');
   const [merchant, setMerchant] = useState(data.merchant || '');
   const [date,     setDate]     = useState(data.date || new Date().toISOString().split('T')[0]);
-  const [catId,    setCatId]    = useState('');
+  // Auto-match the scanned category name to one of the user's categories.
+  // Exact name first, then first-word match ("Food" → "Food & Dining").
+  const matchCat = (name) => {
+    if (!name) return '';
+    const n = name.trim().toLowerCase();
+    const list = categories || [];
+    const exact = list.find(c => c.name.toLowerCase() === n);
+    if (exact) return exact.id;
+    const word = n.split(/[^a-z]+/)[0];
+    const partial = list.find(c => c.name.toLowerCase().startsWith(word));
+    return partial ? partial.id : '';
+  };
+  const [catId,    setCatId]    = useState(() => matchCat(data.category));
   const [walletId, setWalletId] = useState(wallets?.[0]?.id || '');
   const [saving,   setSaving]   = useState(false);
   const [err,      setErr]      = useState('');
