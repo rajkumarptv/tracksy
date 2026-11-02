@@ -134,6 +134,9 @@ export const categoriesAPI = {
 export const dataAPI = {
   export: () => api.get('/data/export'),
   reset:  (scope) => api.post('/data/reset', { scope }),
+  sampleStatus: () => api.get('/data/sample/status'),
+  sampleLoad:   () => api.post('/data/sample'),
+  sampleRemove: () => api.delete('/data/sample'),
 };
 
 // Gmail auto-import

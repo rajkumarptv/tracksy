@@ -1190,7 +1190,7 @@ import useCurrencyStore2, { CURRENCIES as ALL_CURRENCIES } from '../store/curren
 import useLangStore2 from '../store/langStore';
 import { useFmt as useFmtHook } from '../i18n';
 import { useT as useT2 } from '../i18n';
-import { User, Globe, Bell, Shield, ChevronRight as Chevron, Download, Trash2, Crown, Check, AlertTriangle, Eye, EyeOff, Key, Tag } from 'lucide-react';
+import { User, Globe, Bell, Shield, ChevronRight as Chevron, Download, Trash2, Crown, Check, AlertTriangle, Eye, EyeOff, Key, Tag, Sparkles } from 'lucide-react';
 import usePrivacyStore from '../store/privacyStore';
 import ThemedSelect from '../components/ThemedSelect';
 
@@ -1289,6 +1289,45 @@ export function Settings() {
   const [exporting, setExporting]   = useState2(false);
   const { open: showPremium, openPremium, closePremium } = usePremiumStore();
   const [exportDone, setExportDone] = useState2(false);
+  const [sampleLoaded, setSampleLoaded] = useState2(false);
+  const [sampleBusy, setSampleBusy]     = useState2('');
+
+  useEffect(() => { dataAPI.sampleStatus().then(r => setSampleLoaded(!!r.data.loaded)).catch(()=>{}); }, []);
+
+  // Seed/clear the demo Challenges (they live in localStorage, not the DB).
+  const SAMPLE_CHALLENGES = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const ago = (n) => { const d = new Date(); d.setDate(d.getDate()-n); return d.toISOString().split('T')[0]; };
+    return [
+      { id:'sample-52week', templateId:'52week', title:'52-Week Savings Challenge', emoji:'📅', color:'#8B5CF6', bg:'rgba(139,92,246,.12)',
+        desc:'Save increasing amounts each week.', target:137800, saved:48600, duration:52, unit:'weeks',
+        startDate: ago(120), checkIns:[ago(6),ago(5),ago(4),ago(3),ago(2),ago(1),today], completed:false,
+        milestones:[{at:13,label:'Quarter done! 🌱'},{at:26,label:'Halfway there! 🎯'},{at:39,label:'75% complete! 🔥'},{at:52,label:'Challenge Complete! 🏆'}], category:'savings' },
+      { id:'sample-emergency', templateId:'emergency', title:'Emergency Fund Challenge', emoji:'🛡️', color:'#22C55E', bg:'rgba(34,197,94,.12)',
+        desc:'Build a 3-month emergency fund.', target:150000, saved:92000, duration:90, unit:'days',
+        startDate: ago(60), checkIns:[ago(3),ago(2),ago(1),today], completed:false,
+        milestones:[{at:25,label:'Foundation set! 🏗️'},{at:50,label:'Halfway built! 🔨'},{at:100,label:'Emergency fund ready! 🛡️'}], category:'savings' },
+    ];
+  };
+
+  const loadSample = async () => {
+    setSampleBusy('load');
+    try {
+      await dataAPI.sampleLoad();
+      localStorage.setItem('tracksy_challenges', JSON.stringify(SAMPLE_CHALLENGES()));
+      localStorage.setItem('tracksy_badges', JSON.stringify(['first_start','week1','halfway']));
+      window.location.href = '/dashboard';
+    } catch (e) { setSampleBusy(''); alert(e.response?.data?.message || 'Failed to load sample data'); }
+  };
+  const removeSample = async () => {
+    setSampleBusy('remove');
+    try {
+      await dataAPI.sampleRemove();
+      localStorage.removeItem('tracksy_challenges');
+      localStorage.removeItem('tracksy_badges');
+      window.location.href = '/dashboard';
+    } catch (e) { setSampleBusy(''); alert(e.response?.data?.message || 'Failed to remove sample data'); }
+  };
 
   const mutation = useMutation2({
     mutationFn: (data) => authAPI.updateProfile(data),
@@ -1435,6 +1474,36 @@ export function Settings() {
                 <Download size={15}/> {exporting ? 'Exporting…' : exportDone ? '✓ Downloaded!' : 'Export JSON'}
               </button>
             </div>
+          </SectionCard>
+
+          {/* Sample / Demo Data */}
+          <SectionCard icon={<Sparkles size={18} color="#8B5CF6"/>} title="Sample Data">
+            <div style={{ fontSize:13.5, color:'var(--text3)', marginBottom:16, lineHeight:1.6 }}>
+              Load a full year of demo data — accounts, credit card, loan, assets, transactions, budgets, goals & savings challenges — to explore every feature. Your real data is never touched; remove the demo anytime to return to normal.
+            </div>
+            {sampleLoaded ? (
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px', borderRadius:14, background:'rgba(34,197,94,.1)', border:'1px solid #22C55E22', gap:12 }}>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:13.5, fontWeight:700, color:'var(--text)' }}>✓ Demo data is active</div>
+                  <div style={{ fontSize:12, color:'var(--text3)', marginTop:2 }}>Remove it to return to your normal data</div>
+                </div>
+                <button onClick={removeSample} disabled={!!sampleBusy}
+                  style={{ padding:'8px 18px', borderRadius:10, border:'1.5px solid #EC4899', background:'transparent', color:'#EC4899', fontSize:12.5, fontWeight:700, cursor:'pointer', flexShrink:0 }}>
+                  {sampleBusy==='remove' ? 'Removing…' : 'Return to Normal'}
+                </button>
+              </div>
+            ) : (
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px', borderRadius:14, background:'rgba(139,92,246,.1)', border:'1px solid #8B5CF622', gap:12 }}>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:13.5, fontWeight:700, color:'var(--text)' }}>Load 1 year of demo data</div>
+                  <div style={{ fontSize:12, color:'var(--text3)', marginTop:2 }}>See how Tracksy looks fully populated</div>
+                </div>
+                <button onClick={loadSample} disabled={!!sampleBusy}
+                  style={{ padding:'8px 18px', borderRadius:10, border:'none', background:'#8B5CF6', color:'#fff', fontSize:12.5, fontWeight:700, cursor:'pointer', flexShrink:0 }}>
+                  {sampleBusy==='load' ? 'Loading…' : 'Load Sample Data'}
+                </button>
+              </div>
+            )}
           </SectionCard>
 
           {/* Reset Data */}

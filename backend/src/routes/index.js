@@ -106,6 +106,12 @@ router.post('/recurring/process', auth, recurringCtrl.process);
 router.get('/data/export', auth, res0.exportData);
 router.post('/data/reset', auth, res0.resetData);
 
+// Sample / demo data — load a year of demo data, or remove it (non-destructive)
+const sampleCtrl = require('../controllers/sampleDataController');
+router.get('/data/sample/status', auth, sampleCtrl.status);
+router.post('/data/sample',       auth, sampleCtrl.load);
+router.delete('/data/sample',     auth, sampleCtrl.remove);
+
 // Bank statement import + reconciliation
 router.post('/import/preview',    auth, upload.single('file'), importCtrl.previewStatement);
 router.post('/import/reconcile',  auth, importCtrl.reconcileStatement);
