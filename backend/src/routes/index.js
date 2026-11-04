@@ -18,6 +18,12 @@ const adminCtrl = require('../controllers/adminController');
 const adminAuth = require('../middleware/adminAuth');
 const recurringCtrl = require('../controllers/recurringController');
 
+// Malformed ids can never match a row — answer 404 instead of a Postgres cast error (500)
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+['id', 'billId', 'userId'].forEach((name) =>
+  router.param(name, (req, res, next, val) =>
+    UUID_RE.test(val) ? next() : res.status(404).json({ success: false, message: 'Not found' })));
+
 // Auth — email/password
 router.post('/auth/register', authCtrl.register);
 router.post('/auth/login', authCtrl.login);

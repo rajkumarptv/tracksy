@@ -85,6 +85,10 @@ const create = async (req, res) => {
             // transfer-specific
             from_wallet_id, to_wallet_id } = req.body;
 
+    if (!['income', 'expense', 'transfer'].includes(type) || !(parseFloat(amount) > 0)) {
+      return res.status(400).json({ success: false, message: 'A valid type and a positive amount are required' });
+    }
+
     // ── TRANSFER ──────────────────────────────────────────────────────────────
     if (type === 'transfer') {
       if (!from_wallet_id || !to_wallet_id) {

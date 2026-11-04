@@ -40,6 +40,26 @@ ensureLocalDir();
 const objectUrl = (key) =>
   `${SUPABASE_URL.replace(/\/$/, '')}/storage/v1/object/${BUCKET}/${encodeURIComponent(key)}`;
 
+// New-style sb_secret_* keys aren't JWTs: they go in `apikey` only.
+const authHeaders = () => ({
+  apikey: SERVICE_KEY,
+  ...(SERVICE_KEY && SERVICE_KEY.startsWith('eyJ') ? { Authorization: `Bearer ${SERVICE_KEY}` } : {}),
+});
+
+/** Create the (private) bucket on first use so a fresh project needs no manual setup. */
+let bucketReady = false;
+async function ensureBucket() {
+  if (bucketReady) return;
+  const res = await fetch(`${SUPABASE_URL.replace(/\/$/, '')}/storage/v1/bucket`, {
+    method: 'POST',
+    headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: BUCKET, name: BUCKET, public: false }),
+  });
+  // 400/409 = already exists
+  if (res.ok || res.status === 400 || res.status === 409) bucketReady = true;
+  else throw new Error(`Could not create storage bucket (${res.status}): ${await res.text()}`);
+}
+
 /** Store a file. Returns the storage key to persist in the DB. */
 async function putObject(key, buffer, contentType = 'application/octet-stream') {
   if (!useSupabase) {
@@ -48,15 +68,20 @@ async function putObject(key, buffer, contentType = 'application/octet-stream') 
     fs.writeFileSync(path.join(LOCAL_DIR, key), buffer);
     return key;
   }
-  const res = await fetch(objectUrl(key), {
+  const upload = () => fetch(objectUrl(key), {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${SERVICE_KEY}`,
+      ...authHeaders(),
       'Content-Type': contentType,
       'x-upsert': 'true',
     },
     body: buffer,
   });
+  let res = await upload();
+  if (!res.ok && /bucket not found/i.test(await res.clone().text())) {
+    await ensureBucket();
+    res = await upload();
+  }
   if (!res.ok) {
     throw new Error(`Storage upload failed (${res.status}): ${await res.text()}`);
   }
@@ -70,7 +95,7 @@ async function getObject(key) {
     return fs.existsSync(p) ? fs.readFileSync(p) : null;
   }
   const res = await fetch(objectUrl(key), {
-    headers: { Authorization: `Bearer ${SERVICE_KEY}` },
+    headers: authHeaders(),
   });
   if (!res.ok) return null;
   return Buffer.from(await res.arrayBuffer());
@@ -86,7 +111,7 @@ async function deleteObject(key) {
     }
     const res = await fetch(objectUrl(key), {
       method: 'DELETE',
-      headers: { Authorization: `Bearer ${SERVICE_KEY}` },
+      headers: authHeaders(),
     });
     return res.ok;
   } catch (e) {
