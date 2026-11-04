@@ -231,6 +231,21 @@ const migrate = async () => {
       await client.query(`ALTER TABLE ${t} ADD COLUMN IF NOT EXISTS is_sample BOOLEAN DEFAULT false`);
     }
 
+    // Bill / receipt attachments (files live in Supabase Storage or local disk)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS transaction_bills (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        transaction_id UUID NOT NULL REFERENCES transactions(id) ON DELETE CASCADE,
+        user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        original_name TEXT NOT NULL,
+        file_name TEXT NOT NULL,
+        mime_type VARCHAR(150) NOT NULL,
+        file_size BIGINT,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+    await client.query(`CREATE INDEX IF NOT EXISTS idx_bills_tx ON transaction_bills(transaction_id);`);
+
     // Indexes for performance
     await client.query(`CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id);`);
     await client.query(`CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(transaction_date DESC);`);

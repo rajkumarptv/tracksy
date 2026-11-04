@@ -13,6 +13,9 @@ const generateToken = (userId, email) => {
 const register = async (req, res) => {
   try {
     const { first_name, last_name, email, password } = req.body;
+    if (!first_name || !last_name || !email || !password) {
+      return res.status(400).json({ success: false, message: 'First name, last name, email and password are required' });
+    }
 
     // Check existing user
     const existing = await query('SELECT id FROM users WHERE email = $1', [email.toLowerCase()]);

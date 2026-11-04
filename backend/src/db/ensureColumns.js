@@ -41,6 +41,16 @@ async function ensureColumns() {
        created_at TIMESTAMPTZ DEFAULT NOW(),
        UNIQUE(user_id, snapshot_date)
      )`,
+    `CREATE TABLE IF NOT EXISTS transaction_bills (
+       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+       transaction_id UUID NOT NULL REFERENCES transactions(id) ON DELETE CASCADE,
+       user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+       original_name TEXT NOT NULL,
+       file_name TEXT NOT NULL,
+       mime_type VARCHAR(150) NOT NULL,
+       file_size BIGINT,
+       created_at TIMESTAMPTZ DEFAULT NOW()
+     )`,
   ];
   for (const sql of stmts) {
     try { await pool.query(sql); }

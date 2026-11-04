@@ -75,7 +75,7 @@ const create = async (req, res) => {
       name || 'Budget',
       parseFloat(amount),
       period || 'monthly',
-      start_date || null,
+      start_date || new Date().toISOString().slice(0, 8) + '01',
       emoji || '📌',
       color || '#6c5ce7',
       type === 'income' ? 'income' : 'expense',
