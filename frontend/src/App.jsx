@@ -1,11 +1,11 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { QueryClient } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
 import { PageLoader } from './components/ui';
 import ErrorBoundary from './components/ErrorBoundary';
 import useAuthStore from './store/authStore';
+import queryClient from './lib/queryClient';
 
 // Auth pages load eagerly (tiny, needed first)
 import { Login, Register, OAuthCallback, ForgotPassword, ResetPassword } from './pages/Auth';
@@ -49,25 +49,6 @@ const DebtReduction = lazyWithReload(() => import('./pages/DebtReduction'));
 const Challenges    = lazyWithReload(() => import('./pages/Challenges'));
 const SmartInsights = lazyWithReload(() => import('./pages/SmartInsights'));
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      // Short staleTime: cached data still paints instantly (no spinner), but a
-      // background refresh starts right away so edits/deletes appear immediately.
-      staleTime: 15_000,
-      gcTime: 24 * 60 * 60_000,   // keep cache 24h for offline-first paint
-      // Re-sync when the user returns to the tab / regains connectivity —
-      // cheap (only stale queries refetch) and keeps screens truthful.
-      refetchOnWindowFocus: true,
-      refetchOnReconnect: true,
-      // Always revalidate on navigation; cached data shows first, so it's
-      // still instant — just never wrong.
-      refetchOnMount: 'always',
-    },
-  },
-});
-
 // Persist the query cache to localStorage → on app open, last data shows
 // instantly (no spinner), then refreshes quietly in the background.
 const persister = createSyncStoragePersister({
@@ -89,7 +70,7 @@ export default function App() {
   return (
     <PersistQueryClientProvider
       client={queryClient}
-      persistOptions={{ persister, maxAge: 24 * 60 * 60_000 }}
+      persistOptions={{ persister, maxAge: 24 * 60 * 60_000, buster: 'v2' }}
     >
       <BrowserRouter>
         <ErrorBoundary>

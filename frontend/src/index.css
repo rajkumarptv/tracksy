@@ -561,7 +561,7 @@ input, select, textarea { font-family: 'Inter', sans-serif; }
   .mob-fab {
     display: flex;
     position: fixed;
-    bottom: 28px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 78px);   /* sit above the bottom nav */
     right: 22px;
     width: 58px;
     height: 58px;

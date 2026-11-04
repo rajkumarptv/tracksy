@@ -1027,11 +1027,6 @@ export default function Transactions() {
         )}
       </div>
 
-      {/* ── Mobile FAB ── */}
-      <button className={styles.fab} onClick={openAdd}>
-        <Plus size={26} color="#fff"/>
-      </button>
-
       {billModalTx && (
         <BillAttachment
           txId={billModalTx.id}
