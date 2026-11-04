@@ -144,12 +144,6 @@ const migrate = async () => {
     await client.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS transfer_pair_id UUID`);
     await client.query(`ALTER TABLE transactions ADD COLUMN IF NOT EXISTS transfer_direction VARCHAR(3) CHECK (transfer_direction IN ('out','in'))`);
 
-    // Sample / demo data flag — lets a user load a full year of demo data to
-    // preview every feature, then remove it cleanly without touching real data.
-    for (const t of ['wallets','transactions','budgets','saving_goals','recurring_transactions','net_worth_snapshots']) {
-      await client.query(`ALTER TABLE ${t} ADD COLUMN IF NOT EXISTS is_sample BOOLEAN DEFAULT false`);
-    }
-
     // WhatsApp integration
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS whatsapp_phone VARCHAR(20) UNIQUE`);
 
@@ -230,6 +224,12 @@ const migrate = async () => {
         UNIQUE(user_id, snapshot_date)
       );
     `);
+
+    // Sample / demo data flag — lets a user load a full year of demo data to
+    // preview every feature, then remove it cleanly without touching real data.
+    for (const t of ['wallets','transactions','budgets','saving_goals','recurring_transactions','net_worth_snapshots']) {
+      await client.query(`ALTER TABLE ${t} ADD COLUMN IF NOT EXISTS is_sample BOOLEAN DEFAULT false`);
+    }
 
     // Indexes for performance
     await client.query(`CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id);`);

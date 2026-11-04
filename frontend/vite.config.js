@@ -22,7 +22,7 @@ export default defineConfig({
     allowedHosts: ['app.topfindstoday.in', 'topfindstoday.in', 'localhost'],
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: process.env.API_PROXY || 'http://localhost:5000',
         changeOrigin: true,
       },
     },
