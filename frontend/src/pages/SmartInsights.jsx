@@ -33,17 +33,17 @@ function pctChange(curr, prev) {
 
 /* ─────────────────────────── InsightCard ──────────────────────── */
 function InsightCard({ icon: Icon, color, bg, title, children, badge, priority }) {
-  const borderColor = priority === 'high' ? '#EC4899' : priority === 'medium' ? '#F59E0B' : 'var(--border-light)';
+  const borderColor = priority === 'high' ? '#DC2626' : priority === 'medium' ? '#D97706' : 'var(--border-light)';
   return (
     <div style={{
       background: 'var(--surface)',
       border: `1.5px solid ${borderColor}`,
-      borderRadius: 20,
+      borderRadius:14,
       padding: '18px 20px',
       display: 'flex',
       flexDirection: 'column',
       gap: 12,
-      boxShadow: priority === 'high' ? '0 4px 20px rgba(236,72,153,.08)' : '0 2px 12px rgba(0,0,0,.04)',
+      boxShadow: priority === 'high' ? '0 4px 20px rgba(220,38,38,.08)' : '0 2px 12px rgba(0,0,0,.04)',
     }}>
       <div style={{ display:'flex', alignItems:'flex-start', gap:12 }}>
         <div style={{ width:42, height:42, borderRadius:14, background:bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
@@ -53,9 +53,9 @@ function InsightCard({ icon: Icon, color, bg, title, children, badge, priority }
           <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
             <div style={{ fontSize:13.5, fontWeight:700, color:'var(--text)', lineHeight:1.3 }}>{title}</div>
             {badge && (
-              <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:20,
-                background: priority==='high'?'rgba(236,72,153,.12)':priority==='medium'?'rgba(245,158,11,.12)':'rgba(139,92,246,.12)',
-                color: priority==='high'?'#EC4899':priority==='medium'?'#F59E0B':'#8B5CF6' }}>
+              <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:14,
+                background: priority==='high'?'rgba(220,38,38,.12)':priority==='medium'?'rgba(217,119,6,.12)':'rgba(79,70,229,.12)',
+                color: priority==='high'?'#DC2626':priority==='medium'?'#D97706':'#4F46E5' }}>
                 {badge}
               </span>
             )}
@@ -79,8 +79,8 @@ function SpendBar({ label, amount, max, color, emoji, pct: pctOverride }) {
         </div>
         <span style={{ fontSize:12.5, fontWeight:700, color }}>{fmt2(amount)}</span>
       </div>
-      <div style={{ height:7, background:'var(--surface2)', borderRadius:20, overflow:'hidden' }}>
-        <div style={{ height:'100%', width:`${pct}%`, background:color, borderRadius:20, transition:'width .6s ease' }}/>
+      <div style={{ height:7, background:'var(--surface2)', borderRadius:14, overflow:'hidden' }}>
+        <div style={{ height:'100%', width:`${pct}%`, background:color, borderRadius:14, transition:'width .6s ease' }}/>
       </div>
     </div>
   );
@@ -107,7 +107,7 @@ function MonthTrend({ data, color, type }) {
 }
 
 /* ─────────────────────────── Main Page ─────────────────────────── */
-export default function SmartInsights() {
+export default function SmartInsights({ embedded = false }) {
   const fmt = useFmt();
   const [activeTab, setActiveTab] = useState('overview'); // overview | spending | trends | tips
 
@@ -221,14 +221,16 @@ export default function SmartInsights() {
       const day = new Date(t.transaction_date).getDay();
       daySpend[day] += parseFloat(t.amount||0);
     });
-    const peakDay = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][daySpend.indexOf(Math.max(...daySpend))];
+    const peakDay = Math.max(...daySpend) > 0
+      ? ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'][daySpend.indexOf(Math.max(...daySpend))]
+      : null;
 
     // Tips
     const tips = [];
-    if (savingsRate < 20) tips.push({ icon: PiggyBank, color:'#8B5CF6', bg:'rgba(139,92,246,.1)', text: `Your savings rate is ${savingsRate}%. Aim for 20%+ by trimming your top spending category: ${topCats[0]?.[0] || 'expenses'}.` });
-    if (unusualSpends.length) tips.push({ icon: AlertTriangle, color:'#F59E0B', bg:'rgba(245,158,11,.1)', text: `Unusual spend detected in ${unusualSpends[0].cat} — ${unusualSpends[0].pct}% above your 3-month average. Review if needed.` });
-    if (recurringMerchants.length > 3) tips.push({ icon: Repeat, color:'#EC4899', bg:'rgba(236,72,153,.1)', text: `You have ${recurringMerchants.length} recurring payments totalling ${fmt2(recurringMerchants.reduce((s,m)=>s+m.avg,0))}/mo. Audit subscriptions you no longer use.` });
-    if (savingsRate >= 30) tips.push({ icon: Award, color:'#22C55E', bg:'rgba(34,197,94,.1)', text: `Excellent! ${savingsRate}% savings rate this month. Consider moving the surplus into your investment or goal accounts.` });
+    if (savingsRate < 20) tips.push({ icon: PiggyBank, color:'#4F46E5', bg:'rgba(79,70,229,.1)', text: `Your savings rate is ${savingsRate}%. Aim for 20%+ by trimming your top spending category: ${topCats[0]?.[0] || 'expenses'}.` });
+    if (unusualSpends.length) tips.push({ icon: AlertTriangle, color:'#D97706', bg:'rgba(217,119,6,.1)', text: `Unusual spend detected in ${unusualSpends[0].cat} — ${unusualSpends[0].pct}% above your 3-month average. Review if needed.` });
+    if (recurringMerchants.length > 3) tips.push({ icon: Repeat, color:'#DC2626', bg:'rgba(220,38,38,.1)', text: `You have ${recurringMerchants.length} recurring payments totalling ${fmt2(recurringMerchants.reduce((s,m)=>s+m.avg,0))}/mo. Audit subscriptions you no longer use.` });
+    if (savingsRate >= 30) tips.push({ icon: Award, color:'#059669', bg:'rgba(5,150,105,.1)', text: `Excellent! ${savingsRate}% savings rate this month. Consider moving the surplus into your investment or goal accounts.` });
 
     return {
       thisIncome, thisExpense, lastIncome, lastExpense,
@@ -261,17 +263,17 @@ export default function SmartInsights() {
     <div style={{ display:'flex', flexDirection:'column', height:'100%' }}>
 
       {/* Mobile header */}
-      <div className="mob-header">
+      {!embedded && <div className="mob-header">
         <div>
           <div className="mob-header-title">Smart Insights</div>
           <div className="mob-header-sub">AI-powered analysis of your finances</div>
         </div>
-      </div>
+      </div>}
 
       {/* Desktop topbar */}
-      <div className="mob-hide">
+      {!embedded && <div className="mob-hide">
         <Topbar title="Smart Insights" subtitle="AI-powered analysis of your finances" />
-      </div>
+      </div>}
 
       <div style={{ flex:1, overflowY:'auto', padding:'20px 24px', display:'flex', flexDirection:'column', gap:20 }}>
 
@@ -285,7 +287,7 @@ export default function SmartInsights() {
                 fontWeight: activeTab===key ? 700 : 500,
                 fontSize: 12.5,
                 background: activeTab===key ? 'var(--surface)' : 'transparent',
-                color: activeTab===key ? '#8B5CF6' : 'var(--text3)',
+                color: activeTab===key ? '#4F46E5' : 'var(--text3)',
                 boxShadow: activeTab===key ? '0 2px 8px rgba(0,0,0,.08)' : 'none',
                 transition: 'all .18s',
               }}>
@@ -308,24 +310,24 @@ export default function SmartInsights() {
               <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
 
                 {/* Score card */}
-                <div style={{ background:'linear-gradient(135deg,#4C3BC4,#8B5CF6)', borderRadius:22, padding:'22px 24px', color:'#fff' }}>
+                <div style={{ background:'#4F46E5', borderRadius:14, padding:'22px 24px', color:'#fff' }}>
                   <div style={{ fontSize:11, fontWeight:700, opacity:.7, textTransform:'uppercase', letterSpacing:'.1em', marginBottom:6 }}>Financial Health Score</div>
                   <div style={{ display:'flex', alignItems:'flex-end', gap:12, marginBottom:16 }}>
                     <div style={{ fontSize:52, fontWeight:900, lineHeight:1 }}>
-                      {Math.min(100, Math.max(0,
+                      {insights.thisIncome <= 0 ? '—' : Math.min(100, Math.max(0,
                         40 +
                         Math.min(30, insights.savingsRate) +
                         (insights.unusualSpends.length === 0 ? 15 : 0) +
                         (insights.budgetHealth.every(b=>b.pct<=100) ? 15 : 0)
                       ))}
                     </div>
-                    <div style={{ fontSize:13, opacity:.75, paddingBottom:8 }}>/100</div>
+                    <div style={{ fontSize:13, opacity:.75, paddingBottom:8 }}>{insights.thisIncome <= 0 ? 'add income to see your score' : '/100'}</div>
                   </div>
                   <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
                     {[
-                      { label:'Income', value: fmt2(insights.thisIncome), sub: insights.incomePct !== null ? `${insights.incomePct > 0 ? '+' : ''}${insights.incomePct}% vs last month` : 'This month', color: insights.incomePct >= 0 ? '#6EF5C0' : '#FF9999' },
-                      { label:'Expense', value: fmt2(insights.thisExpense), sub: insights.expensePct !== null ? `${insights.expensePct > 0 ? '+' : ''}${insights.expensePct}% vs last month` : 'This month', color: insights.expensePct <= 0 ? '#6EF5C0' : '#FF9999' },
-                      { label:'Savings', value: fmt2(Math.abs(insights.savings)), sub: `${insights.savingsRate}% savings rate`, color: insights.savings >= 0 ? '#6EF5C0' : '#FF9999' },
+                      { label:'Income', value: fmt2(insights.thisIncome), sub: insights.incomePct !== null ? `${insights.incomePct > 0 ? '+' : ''}${insights.incomePct}% vs last month` : 'This month', color: insights.incomePct >= 0 ? '#6EE7B7' : '#FF9999' },
+                      { label:'Expense', value: fmt2(insights.thisExpense), sub: insights.expensePct !== null ? `${insights.expensePct > 0 ? '+' : ''}${insights.expensePct}% vs last month` : 'This month', color: insights.expensePct <= 0 ? '#6EE7B7' : '#FF9999' },
+                      { label:'Savings', value: `${insights.savings < 0 ? '−' : ''}${fmt2(Math.abs(insights.savings))}`, sub: `${insights.savingsRate}% savings rate`, color: insights.savings >= 0 ? '#6EE7B7' : '#FF9999' },
                       { label:'Transactions', value: insights.txCount, sub: `Avg ${fmt2(insights.avgTxSize)}/txn`, color: '#B8B5FF' },
                     ].map(({ label, value, sub, color }) => (
                       <div key={label} style={{ background:'rgba(255,255,255,.1)', borderRadius:14, padding:'12px 14px' }}>
@@ -340,12 +342,14 @@ export default function SmartInsights() {
                 {/* Quick insights */}
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(min(300px,100%),1fr))', gap:12 }}>
                   <InsightCard icon={insights.expensePct > 20 ? AlertTriangle : CheckCircle}
-                    color={insights.expensePct > 20 ? '#F59E0B' : '#22C55E'}
-                    bg={insights.expensePct > 20 ? 'rgba(245,158,11,.12)' : 'rgba(34,197,94,.12)'}
+                    color={insights.expensePct > 20 ? '#D97706' : '#059669'}
+                    bg={insights.expensePct > 20 ? 'rgba(217,119,6,.12)' : 'rgba(5,150,105,.12)'}
                     title="Spending vs Last Month"
-                    badge={insights.expensePct > 0 ? `+${insights.expensePct}%` : `${insights.expensePct}%`}
+                    badge={insights.expensePct === null ? 'New' : insights.expensePct > 0 ? `+${insights.expensePct}%` : `${insights.expensePct}%`}
                     priority={insights.expensePct > 20 ? 'medium' : 'low'}>
-                    {insights.expensePct > 20
+                    {insights.expensePct === null
+                      ? `No spending last month to compare against yet.`
+                      : insights.expensePct > 20
                       ? `Your expenses are ${insights.expensePct}% higher than last month. That's ${fmt2(insights.thisExpense - insights.lastExpense)} more than usual.`
                       : insights.expensePct < 0
                       ? `Great job! You spent ${fmt2(insights.lastExpense - insights.thisExpense)} less than last month.`
@@ -353,19 +357,20 @@ export default function SmartInsights() {
                   </InsightCard>
 
                   <InsightCard icon={PiggyBank}
-                    color={insights.savingsRate >= 20 ? '#22C55E' : '#EC4899'}
-                    bg={insights.savingsRate >= 20 ? 'rgba(34,197,94,.12)' : 'rgba(236,72,153,.12)'}
+                    color={insights.savingsRate >= 20 ? '#059669' : '#DC2626'}
+                    bg={insights.savingsRate >= 20 ? 'rgba(5,150,105,.12)' : 'rgba(220,38,38,.12)'}
                     title="Savings Rate"
                     badge={`${insights.savingsRate}%`}
                     priority={insights.savingsRate < 10 ? 'high' : insights.savingsRate < 20 ? 'medium' : 'low'}>
                     {insights.savingsRate >= 30 ? `Excellent savings rate! You're saving ${fmt2(insights.savings)} this month.`
                      : insights.savingsRate >= 20 ? `Good savings rate. You're saving ${fmt2(insights.savings)} this month.`
-                     : insights.savingsRate >= 0 ? `Your savings rate is below 20%. Try to reduce spending by ${fmt2(insights.thisExpense * 0.1)} to hit 10%.`
+                     : insights.thisIncome <= 0 ? `No income recorded this month, so a savings rate can't be calculated yet.`
+                     : insights.savingsRate >= 0 ? `Your savings rate is below 20%. Try to reduce spending by ${fmt2(Math.max(0, insights.thisExpense - insights.thisIncome * 0.8))} to reach 20%.`
                      : `You're spending more than you earn this month by ${fmt2(Math.abs(insights.savings))}. Review your expenses.`}
                   </InsightCard>
 
                   {insights.unusualSpends.length > 0 && (
-                    <InsightCard icon={Flame} color="#EC4899" bg="rgba(236,72,153,.12)"
+                    <InsightCard icon={Flame} color="#DC2626" bg="rgba(220,38,38,.12)"
                       title="Unusual Spending Detected" badge="Alert" priority="high">
                       {insights.unusualSpends.map(u => (
                         <div key={u.cat} style={{ marginBottom:4 }}>
@@ -375,9 +380,11 @@ export default function SmartInsights() {
                     </InsightCard>
                   )}
 
-                  <InsightCard icon={Coffee} color="#F59E0B" bg="rgba(245,158,11,.12)" title="Peak Spending Day">
-                    You spend the most on <strong>{insights.peakDay}s</strong>. Consider planning your budget-sensitive shopping on other days.
-                  </InsightCard>
+                  {insights.peakDay && (
+                    <InsightCard icon={Coffee} color="#D97706" bg="rgba(217,119,6,.12)" title="Peak Spending Day">
+                      You spend the most on <strong>{insights.peakDay}s</strong>. Consider planning your budget-sensitive shopping on other days.
+                    </InsightCard>
+                  )}
                 </div>
               </div>
             )}
@@ -387,7 +394,7 @@ export default function SmartInsights() {
               <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
 
                 {/* Category breakdown */}
-                <div style={{ background:'var(--surface)', border:'1.5px solid var(--border-light)', borderRadius:20, padding:'18px 20px' }}>
+                <div style={{ background:'var(--surface)', border:'1.5px solid var(--border-light)', borderRadius:14, padding:'18px 20px' }}>
                   <div style={{ fontSize:14, fontWeight:800, color:'var(--text)', marginBottom:16 }}>Top Spending Categories</div>
                   {insights.topCats.length === 0
                     ? <div style={{ color:'var(--text3)', fontSize:13 }}>No expense transactions this month.</div>
@@ -395,15 +402,15 @@ export default function SmartInsights() {
                       <SpendBar key={cat} label={cat} amount={amt}
                         max={insights.topCats[0][1]}
                         emoji={insights.catEmoji[cat]}
-                        color={['#8B5CF6','#EC4899','#F59E0B','#22C55E','#3B82F6','#FF79A8'][i % 6]} />
+                        color={['#4F46E5','#DC2626','#D97706','#059669','#3B82F6','#F87171'][i % 6]} />
                     ))}
                 </div>
 
                 {/* Recurring merchants */}
                 {insights.recurringMerchants.length > 0 && (
-                  <div style={{ background:'var(--surface)', border:'1.5px solid var(--border-light)', borderRadius:20, padding:'18px 20px' }}>
+                  <div style={{ background:'var(--surface)', border:'1.5px solid var(--border-light)', borderRadius:14, padding:'18px 20px' }}>
                     <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:16 }}>
-                      <Repeat size={16} color="#8B5CF6" />
+                      <Repeat size={16} color="#4F46E5" />
                       <div style={{ fontSize:14, fontWeight:800, color:'var(--text)' }}>Recurring Payments</div>
                     </div>
                     {insights.recurringMerchants.map(m => (
@@ -414,7 +421,7 @@ export default function SmartInsights() {
                           <div style={{ fontSize:11, color:'var(--text3)', marginTop:2 }}>{m.count}× in 3 months</div>
                         </div>
                         <div style={{ textAlign:'right' }}>
-                          <div style={{ fontSize:14, fontWeight:800, color:'#EC4899' }}>{fmt2(m.avg)}/mo</div>
+                          <div style={{ fontSize:14, fontWeight:800, color:'#DC2626' }}>{fmt2(m.avg)}/mo</div>
                           <div style={{ fontSize:11, color:'var(--text3)' }}>{fmt2(m.total)} total</div>
                         </div>
                       </div>
@@ -424,7 +431,7 @@ export default function SmartInsights() {
 
                 {/* Budget health */}
                 {insights.budgetHealth.length > 0 && (
-                  <div style={{ background:'var(--surface)', border:'1.5px solid var(--border-light)', borderRadius:20, padding:'18px 20px' }}>
+                  <div style={{ background:'var(--surface)', border:'1.5px solid var(--border-light)', borderRadius:14, padding:'18px 20px' }}>
                     <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:16 }}>
                       <Target size={16} color="#3B82F6" />
                       <div style={{ fontSize:14, fontWeight:800, color:'var(--text)' }}>Budget Health</div>
@@ -432,7 +439,7 @@ export default function SmartInsights() {
                     {insights.budgetHealth.map(b => {
                       const over = b.pct > 100;
                       const warn = b.pct > 80;
-                      const color = over ? '#EC4899' : warn ? '#F59E0B' : '#22C55E';
+                      const color = over ? '#DC2626' : warn ? '#D97706' : '#059669';
                       return (
                         <div key={b.id} style={{ marginBottom:14 }}>
                           <div style={{ display:'flex', justifyContent:'space-between', marginBottom:5 }}>
@@ -442,8 +449,8 @@ export default function SmartInsights() {
                               {over && <span style={{ marginLeft:4 }}>⚠️</span>}
                             </span>
                           </div>
-                          <div style={{ height:7, background:'var(--surface2)', borderRadius:20, overflow:'hidden' }}>
-                            <div style={{ height:'100%', width:`${Math.min(100, b.pct)}%`, background:color, borderRadius:20 }}/>
+                          <div style={{ height:7, background:'var(--surface2)', borderRadius:14, overflow:'hidden' }}>
+                            <div style={{ height:'100%', width:`${Math.min(100, b.pct)}%`, background:color, borderRadius:14 }}/>
                           </div>
                         </div>
                       );
@@ -459,12 +466,12 @@ export default function SmartInsights() {
 
                 {/* 6-month chart */}
                 {['income','expense','savings'].map(type => {
-                  const colors = { income:'#22C55E', expense:'#EC4899', savings:'#8B5CF6' };
+                  const colors = { income:'#059669', expense:'#DC2626', savings:'#4F46E5' };
                   const labels = { income:'Monthly Income', expense:'Monthly Expense', savings:'Monthly Savings' };
                   const data = insights.monthTrend.map(m => ({ label:m.label, value: Math.max(0, m[type]) }));
                   const total = data.reduce((s,d) => s+d.value, 0);
                   return (
-                    <div key={type} style={{ background:'var(--surface)', border:'1.5px solid var(--border-light)', borderRadius:20, padding:'18px 20px' }}>
+                    <div key={type} style={{ background:'var(--surface)', border:'1.5px solid var(--border-light)', borderRadius:14, padding:'18px 20px' }}>
                       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
                         <div style={{ fontSize:14, fontWeight:800, color:'var(--text)' }}>{labels[type]}</div>
                         <div style={{ fontSize:13, fontWeight:700, color: colors[type] }}>
@@ -493,7 +500,7 @@ export default function SmartInsights() {
                 </div>
 
                 {insights.tips.length === 0 && (
-                  <InsightCard icon={CheckCircle} color="#22C55E" bg="rgba(34,197,94,.12)" title="All good!" priority="low">
+                  <InsightCard icon={CheckCircle} color="#059669" bg="rgba(5,150,105,.12)" title="All good!" priority="low">
                     Your finances look healthy. Keep up the great work!
                   </InsightCard>
                 )}
@@ -507,8 +514,8 @@ export default function SmartInsights() {
 
                 {/* General always-on tips */}
                 {[
-                  { icon:Zap,      color:'#F59E0B', bg:'rgba(245,158,11,.1)',   text:'Set up recurring transactions for fixed expenses (rent, EMI, subscriptions) so your expense tracking stays accurate automatically.' },
-                  { icon:Target,   color:'#8B5CF6', bg:'rgba(139,92,246,.1)',   text:'Create a Savings Goal for your next big purchase. Even ₹500/week adds up to ₹26,000 a year.' },
+                  { icon:Zap,      color:'#D97706', bg:'rgba(217,119,6,.1)',   text:'Set up recurring transactions for fixed expenses (rent, EMI, subscriptions) so your expense tracking stays accurate automatically.' },
+                  { icon:Target,   color:'#4F46E5', bg:'rgba(79,70,229,.1)',   text:'Create a Savings Goal for your next big purchase. Even ₹500/week adds up to ₹26,000 a year.' },
                   { icon:BarChart2, color:'#3B82F6', bg:'rgba(59,130,246,.1)', text:'Review your budget categories every month. Adjust limits as your lifestyle changes rather than ignoring overages.' },
                 ].map((tip, i) => (
                   <InsightCard key={`gen-${i}`} icon={tip.icon} color={tip.color} bg={tip.bg}

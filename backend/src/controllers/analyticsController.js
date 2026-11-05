@@ -113,10 +113,15 @@ const getOverview = async (req, res) => {
     if (food) insights.push({ icon:'🍔', title:'Food spending', text:`You spent ₹${food.amount.toLocaleString('en-IN')} on food across ${food.count} transactions.` });
     if (categories[0]) insights.push({ icon:'📊', title:'Top category', text:`${categories[0].name} is your biggest expense at ₹${categories[0].amount.toLocaleString('en-IN')} (${categories[0].pct}%).` });
 
+    // Average over the days elapsed so far (end_date is exclusive; future days don't count)
+    const now = new Date();
+    const tomorrowMs = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const elapsedDays = Math.max(1, Math.round((Math.min(new Date(end_date).getTime(), tomorrowMs) - new Date(start_date).getTime()) / 86400000));
+
     res.json({ success:true, data:{
       period:{ start_date, end_date },
       kpis:{ moneyIn:inr(moneyIn), moneyOut:inr(moneyOut), net:inr(moneyIn-moneyOut), inCount, outCount, txCount:rows.length,
-        avgDaily: inr(moneyOut / Math.max(1, (new Date(end_date)-new Date(start_date))/86400000)) },
+        avgDaily: inr(moneyOut / elapsedDays) },
       moneyFlow, categories, weekly, topWeek, daily, topDay, payees, insights,
     }});
   } catch (err) {

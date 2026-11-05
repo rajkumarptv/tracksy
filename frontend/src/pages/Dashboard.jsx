@@ -134,7 +134,7 @@ function PeriodPill({ period, setPeriod, c, isDark }) {
                       marginTop: i%2===0 && i>0 ? 4 : 0,
                       borderTop: i%2===0 && i>0 ? `1px solid ${c.divider||'rgba(255,255,255,.06)'}` : 'none',
                       paddingTop: i%2===0 && i>0 ? 11 : 9,
-                      background: sel ? (isDark?'rgba(139,92,246,.16)':'#F5F3FF') : 'transparent',
+                      background: sel ? (isDark?'rgba(79,70,229,.16)':'#EEF0FF') : 'transparent',
                       color: sel ? (isDark?'#C4B5FD':c.purple) : c.text, fontSize:13, fontWeight: sel?700:500, fontFamily:'inherit' }}>
                     {PERIOD_LABEL[p]} {sel && <Check size={14}/>}
                   </button>
@@ -342,7 +342,7 @@ export default function Dashboard() {
 
   const txCount = scopedTx.length;
   // KPI: avg daily spend across the elapsed days of the period
-  const elapsedDays = Math.max(1, Math.round((Math.min(now, rEnd) - rStart) / 86400000) + 1);
+  const elapsedDays = Math.max(1, Math.floor((Math.min(now, rEnd) - rStart) / 86400000) + 1);
   const savingsRate = income > 0 ? Math.round((net / income) * 100) : 0;
   const dailyAvgSpend = Math.round(expense / elapsedDays);
 
@@ -431,7 +431,7 @@ export default function Dashboard() {
     const top = raw.slice(0,4);
     const restVal = raw.slice(4).reduce((s,x)=>s+x.value,0);
     const list = restVal > 0 ? [...top, { name:'Others', value:restVal, emoji:'🎯' }] : top;
-    const PALETTE = ['#2A78D6','#EB6834','#1BAF7A','#EDA100','#E87BA4','#8B5CF6','#008300','#00CEC9'];
+    const PALETTE = ['#2A78D6','#EB6834','#1BAF7A','#EDA100','#E87BA4','#4F46E5','#008300','#00CEC9'];
     return list.map((x,i)=>({ ...x, color: PALETTE[i % PALETTE.length] }));
   }, [catBreakdown, c]);
   const spendTotal = spendCats.reduce((s,x)=>s+x.value,0);
@@ -596,10 +596,10 @@ export default function Dashboard() {
                 <div style={{ display:'flex', alignItems:'center', gap:8, marginTop:12, overflowX:'auto', paddingBottom:2, scrollbarWidth:'none' }}>
                   {/* All */}
                   <button onClick={selectAll} title="All accounts"
-                    style={{ flexShrink:0, display:'flex', alignItems:'center', gap:6, height:34, padding:'0 12px', borderRadius:999, cursor:'pointer',
-                      border:`1.5px solid ${!isFiltered ? c.green : c.border}`,
-                      background: !isFiltered ? (isDark?'rgba(43,255,136,.14)':'#F0FDF4') : 'transparent',
-                      color: !isFiltered ? c.green : c.text2, fontSize:12.5, fontWeight:700 }}>
+                    style={{ flexShrink:0, display:'flex', alignItems:'center', gap:6, height:34, padding:'0 12px', borderRadius:8, cursor:'pointer',
+                      border:`1px solid ${!isFiltered ? c.purple : c.border}`,
+                      background: !isFiltered ? (isDark?'rgba(129,140,248,.16)':'#EEF0FF') : 'transparent',
+                      color: !isFiltered ? c.purple : c.text2, fontSize:12.5, fontWeight:700 }}>
                     <Wallet size={14}/> All
                   </button>
                   {accounts.map(acc => {
@@ -607,11 +607,11 @@ export default function Dashboard() {
                     const initial = (acc.name||'?').trim().charAt(0).toUpperCase();
                     return (
                       <button key={acc.id} onClick={()=>toggleAcc(acc.id)} title={acc.name}
-                        style={{ flexShrink:0, display:'flex', alignItems:'center', gap:7, height:34, padding:'0 12px 0 6px', borderRadius:999, cursor:'pointer',
-                          border:`1.5px solid ${on ? c.green : c.border}`,
-                          background: on ? (isDark?'rgba(43,255,136,.14)':'#F0FDF4') : 'transparent',
+                        style={{ flexShrink:0, display:'flex', alignItems:'center', gap:7, height:34, padding:'0 12px 0 6px', borderRadius:8, cursor:'pointer',
+                          border:`1px solid ${on ? c.purple : c.border}`,
+                          background: on ? (isDark?'rgba(129,140,248,.16)':'#EEF0FF') : 'transparent',
                           opacity: on ? 1 : 0.6, transition:'all .15s' }}>
-                        <span style={{ width:24, height:24, borderRadius:'50%', background: on ? c.green : c.text3, color: isDark?'#04220F':'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:800, flexShrink:0 }}>{initial}</span>
+                        <span style={{ width:24, height:24, borderRadius:'50%', background: on ? c.purple : c.text3, color: '#fff', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:800, flexShrink:0 }}>{initial}</span>
                         <span style={{ fontSize:12.5, fontWeight:700, color: on ? c.text : c.text2, whiteSpace:'nowrap', maxWidth:90, overflow:'hidden', textOverflow:'ellipsis' }}>{acc.name}</span>
                       </button>
                     );
@@ -652,7 +652,7 @@ export default function Dashboard() {
                     <Tooltip content={<BalTip fmt={fmt} c={c}/>}/>
                     <Area type="monotone" dataKey="value" stroke={c.stroke} strokeWidth={c.strokeW}
                       fill="url(#balGrad)" dot={chartData.length > 14 ? false : { r:3, fill: isDark?'#061B38':'#FFFFFF', stroke:c.stroke, strokeWidth:2 }}
-                      activeDot={{ r:6, fill:'#8B5CF6', stroke: isDark?'#061B38':'#fff', strokeWidth:3 }}
+                      activeDot={{ r:6, fill:'#4F46E5', stroke: isDark?'#061B38':'#fff', strokeWidth:3 }}
                       animationDuration={1200}/>
                   </AreaChart>
                 </ResponsiveContainer>
@@ -688,7 +688,7 @@ export default function Dashboard() {
                   </ResponsiveContainer>
                   <div className={styles.donutCenter}>
                     <div className={styles.donutCenterLabel} style={{ color:c.text2 }}>Total</div>
-                    <div className={styles.donutCenterAmt} style={{ color:c.text, fontFamily:'Space Grotesk, Inter, sans-serif' }}>
+                    <div className={styles.donutCenterAmt} style={{ color:c.text, fontFamily:'Inter, sans-serif' }}>
                       {fmt(spendTotal,{noDecimals:true})}
                     </div>
                   </div>
@@ -718,22 +718,21 @@ export default function Dashboard() {
                 <button className={styles.linkBtn} style={{ color:c.purple }} onClick={()=>navigate('/budget')}>
                   View Spending Analysis <ChevronRight size={15}/>
                 </button>
-                <div className={styles.walletArt}>👛<span className={styles.walletSpark}>✦</span></div>
               </div>
             </motion.div>
 
             {/* Money Flow card */}
             <motion.div variants={cardVar} className={styles.flowCard}
               style={{ background:c.flowBg, border:c.flowBorder,
-                boxShadow: isDark ? `${c.cardShadow}, 0 0 40px rgba(139,92,246,0.1)` : c.cardShadow }}>
+                boxShadow: isDark ? `${c.cardShadow}, 0 0 40px rgba(79,70,229,0.1)` : c.cardShadow }}>
               <div className={styles.cardHeadRow}>
                 <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                  <div className={styles.flowHeadIcon} style={{ background:'rgba(139,92,246,0.15)' }}>
+                  <div className={styles.flowHeadIcon} style={{ background:'rgba(79,70,229,0.15)' }}>
                     <Activity size={17} color={c.purple}/>
                   </div>
                   <span className={styles.cardTitle} style={{ color:c.text }}>Money Flow</span>
                 </div>
-                <button className={styles.iconBtnSm} style={{ background:'rgba(139,92,246,0.12)' }}>
+                <button className={styles.iconBtnSm} style={{ background:'rgba(79,70,229,0.12)' }}>
                   <ArrowLeftRight size={15} color={c.purple}/>
                 </button>
               </div>
@@ -743,7 +742,7 @@ export default function Dashboard() {
                 <div className={styles.flowLeft}>
                   <div className={styles.flowItem}>
                     <div className={styles.flowItemIcon} style={{ background:c.green }}>
-                      <ArrowDown size={15} color={isDark?'#04220F':'#fff'}/>
+                      <ArrowDown size={15} color={'#fff'}/>
                     </div>
                     <div>
                       <div style={{ fontSize:12.5, color:c.text2 }}>Money In</div>
@@ -753,7 +752,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div className={styles.flowBar} style={{ background:c.barTrack }}>
-                    <motion.div style={{ height:'100%', borderRadius:20, background:c.green }}
+                    <motion.div style={{ height:'100%', borderRadius:14, background:c.green }}
                       initial={{ width:0 }} animate={{ width:`${inPct}%` }} transition={{ duration:0.9, delay:0.4, ease:'easeOut' }}/>
                   </div>
 
@@ -769,7 +768,7 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div className={styles.flowBar} style={{ background:c.barTrack }}>
-                    <motion.div style={{ height:'100%', borderRadius:20, background:c.red }}
+                    <motion.div style={{ height:'100%', borderRadius:14, background:c.red }}
                       initial={{ width:0 }} animate={{ width:`${outPct}%` }} transition={{ duration:0.9, delay:0.55, ease:'easeOut' }}/>
                   </div>
 
@@ -787,7 +786,7 @@ export default function Dashboard() {
                 {/* Right: stat tiles */}
                 <div className={styles.flowTiles}>
                   {[
-                    { icon:<PiggyBank size={18} color={isDark?'#04220F':'#fff'}/>, bg:c.green, label:'Savings Rate', val:`${savingsRate}%` },
+                    { icon:<PiggyBank size={18} color={'#fff'}/>, bg:c.green, label:'Savings Rate', val:`${savingsRate}%` },
                     { icon:<ListChecks size={18} color="#fff"/>, bg:c.purple, label:'Transactions', val:String(txCount) },
                     { icon:<CalendarDays size={18} color="#fff"/>, bg:c.blue, label:'Avg Daily Spend', val:fmt(dailyAvgSpend,{noDecimals:true}) },
                   ].map((tItem,i)=>(
@@ -799,7 +798,6 @@ export default function Dashboard() {
                         <div style={{ fontSize:11.5, color:c.text2, lineHeight:1.25 }}>{tItem.label}</div>
                         <div className={styles.numSm} style={{ color:c.text }}>{tItem.val}</div>
                       </div>
-                      <ChevronRight size={15} color={c.text3}/>
                     </motion.div>
                   ))}
                 </div>
@@ -830,7 +828,7 @@ export default function Dashboard() {
                       style={{ borderBottom: i<recentList.length-1 ? `1px solid ${isDark?'rgba(255,255,255,0.05)':'#F2F4F7'}` : 'none' }}
                       initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.5+i*0.09 }}>
                       {isInc
-                        ? <div className={styles.recentIconInc} style={{ background: isDark?'rgba(43,255,136,0.15)':'#DCFCE7' }}>
+                        ? <div className={styles.recentIconInc} style={{ background: isDark?'rgba(52,211,153,0.15)':'#D1FAE5' }}>
                             <ArrowDown size={17} color={c.green}/>
                           </div>
                         : <MerchantLogo name={tx.description || tx.payment_name || tx.category_name} size={42}/>}
@@ -877,7 +875,7 @@ export default function Dashboard() {
                       style={{ display:'flex', alignItems:'center', gap:12, padding:'11px 0',
                         borderBottom: i<arr.length-1 ? `1px solid ${isDark?'rgba(255,255,255,0.05)':'#F2F4F7'}` : 'none' }}>
                       <div style={{ width:38, height:38, borderRadius:11, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center',
-                        background: isDark?'rgba(139,92,246,.14)':'#F5F3FF' }}>
+                        background: isDark?'rgba(79,70,229,.14)':'#EEF0FF' }}>
                         <Wallet size={18} color={c.purple}/>
                       </div>
                       <div style={{ flex:1, minWidth:0 }}>
@@ -921,7 +919,7 @@ export default function Dashboard() {
                         </div>
                         <div style={{ height:8, borderRadius:99, background:c.track, overflow:'hidden' }}>
                           <motion.div initial={{ width:0 }} animate={{ width:`${pct}%` }} transition={{ duration:.8, delay:.3+i*.08, ease:[.2,.8,.2,1] }}
-                            style={{ height:'100%', borderRadius:99, background: g.color ? `linear-gradient(90deg,${g.color},${c.green})` : 'linear-gradient(90deg,#8B5CF6,#22C55E)' }}/>
+                            style={{ height:'100%', borderRadius:99, background: g.color ? `linear-gradient(90deg,${g.color},${c.green})` : '#4F46E5' }}/>
                         </div>
                         <div style={{ fontSize:12, color:c.text2, marginTop:7 }}>
                           {fmt(saved,{noDecimals:true})} <span style={{ color:c.text3 }}>of {fmt(target,{noDecimals:true})}</span>

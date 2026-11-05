@@ -1,5 +1,6 @@
 const { query } = require('../db');
 const { encrypt, decryptRow } = require('../utils/crypto');
+const { parseAmount, blankToNull } = require('../utils/validate');
 
 const decryptWallet = row => decryptRow(row, ['name']);
 const decryptGoal   = row => decryptRow(row, ['name']);
@@ -20,13 +21,24 @@ const getAllGoals = async (req, res) => {
   } catch (err) { res.status(500).json({ success: false, message: 'Server error' }); }
 };
 
+const validateGoal = ({ name, target_amount, current_amount, monthly_contribution }) => {
+  if (!name || !String(name).trim()) return 'Please enter a goal name';
+  if (parseAmount(target_amount) === null) return 'Please enter a valid target amount';
+  if (current_amount !== undefined && current_amount !== '' && parseAmount(current_amount, { allowZero: true }) === null) return 'Please enter a valid saved amount';
+  if (monthly_contribution !== undefined && monthly_contribution !== '' && parseAmount(monthly_contribution, { allowZero: true }) === null) return 'Please enter a valid monthly contribution';
+  if (Number(current_amount) > Number(target_amount)) return "Saved amount can't exceed the target";
+  return null;
+};
+
 const createGoal = async (req, res) => {
   try {
     const { name, target_amount, current_amount, emoji, color, target_date, monthly_contribution } = req.body;
+    const err = validateGoal(req.body);
+    if (err) return res.status(400).json({ success: false, message: err });
     const result = await query(`
       INSERT INTO saving_goals (user_id, name, target_amount, current_amount, emoji, color, target_date, monthly_contribution)
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *
-    `, [req.user.userId, encrypt(name), target_amount, current_amount || 0, emoji || '🎯', color || '#6c5ce7', target_date, monthly_contribution || 0]);
+    `, [req.user.userId, encrypt(name.trim()), Number(target_amount), Number(current_amount) || 0, emoji || '🎯', color || '#6c5ce7', blankToNull(target_date), Number(monthly_contribution) || 0]);
     res.status(201).json({ success: true, data: decryptGoal(result.rows[0]) });
   } catch (err) { res.status(500).json({ success: false, message: 'Server error' }); }
 };
@@ -34,11 +46,13 @@ const createGoal = async (req, res) => {
 const updateGoal = async (req, res) => {
   try {
     const { name, target_amount, current_amount, emoji, color, target_date, monthly_contribution } = req.body;
+    const err = validateGoal(req.body);
+    if (err) return res.status(400).json({ success: false, message: err });
     const result = await query(`
       UPDATE saving_goals SET name=$1, target_amount=$2, current_amount=$3, emoji=$4, color=$5,
         target_date=$6, monthly_contribution=$7, updated_at=NOW()
       WHERE id=$8 AND user_id=$9 RETURNING *
-    `, [encrypt(name), target_amount, current_amount, emoji, color, target_date, monthly_contribution, req.params.id, req.user.userId]);
+    `, [encrypt(name.trim()), Number(target_amount), Number(current_amount) || 0, emoji, color, blankToNull(target_date), Number(monthly_contribution) || 0, req.params.id, req.user.userId]);
     if (!result.rows.length) return res.status(404).json({ success: false, message: 'Goal not found' });
     res.json({ success: true, data: decryptGoal(result.rows[0]) });
   } catch (err) { res.status(500).json({ success: false, message: 'Server error' }); }

@@ -1,4 +1,5 @@
 const { query } = require('../db');
+const { parseAmount } = require('../utils/validate');
 
 // GET /api/budgets
 const getAll = async (req, res) => {
@@ -42,7 +43,7 @@ const getAll = async (req, res) => {
 const create = async (req, res) => {
   try {
     const { category_id, name, amount, period, start_date, emoji, color, type } = req.body;
-    if (!amount || isNaN(parseFloat(amount))) {
+    if (parseAmount(amount) === null) {
       return res.status(400).json({ success: false, message: 'Please enter a valid amount' });
     }
     const result = await query(`
@@ -69,7 +70,7 @@ const create = async (req, res) => {
 const update = async (req, res) => {
   try {
     const { name, amount, emoji, color } = req.body;
-    if (!amount || isNaN(parseFloat(amount))) {
+    if (parseAmount(amount) === null) {
       return res.status(400).json({ success: false, message: 'Please enter a valid amount' });
     }
     const result = await query(`
