@@ -54,7 +54,7 @@
 
 /* ── Overview card ── */
 .overview {
-  border-radius: 20px;
+  border-radius: 14px;
   padding: 20px;
 }
 
@@ -91,7 +91,7 @@
   font-size: 30px;
   font-weight: 800;
   letter-spacing: -1px;
-  font-family: 'Space Grotesk', Inter, sans-serif;
+  font-family: 'Inter', Inter, sans-serif;
   line-height: 1.15;
 }
 
@@ -113,7 +113,7 @@
 
 /* ── Generic card ── */
 .card {
-  border-radius: 20px;
+  border-radius: 14px;
   padding: 20px;
 }
 

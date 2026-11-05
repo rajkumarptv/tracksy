@@ -10,14 +10,14 @@ import { invalidateFinance } from '../lib/cache';
 
 const FREQ_COLORS = {
   daily:   { bg: 'rgba(59,130,246,.12)',  color: '#3B82F6' },
-  weekly:  { bg: 'rgba(34,197,94,.12)', color: '#22C55E' },
-  monthly: { bg: 'rgba(139,92,246,.12)', color: '#8B5CF6' },
-  yearly:  { bg: 'rgba(245,158,11,.12)', color: '#F59E0B' },
+  weekly:  { bg: 'rgba(5,150,105,.12)', color: '#059669' },
+  monthly: { bg: 'rgba(79,70,229,.12)', color: '#4F46E5' },
+  yearly:  { bg: 'rgba(217,119,6,.12)', color: '#D97706' },
 };
 
 const TYPE_CFG = {
-  income:  { label: 'Income',  color: '#22C55E', bg: 'rgba(34,197,94,.1)' },
-  expense: { label: 'Expense', color: '#EC4899', bg: 'rgba(236,72,153,.1)' },
+  income:  { label: 'Income',  color: '#059669', bg: 'rgba(5,150,105,.1)' },
+  expense: { label: 'Expense', color: '#DC2626', bg: 'rgba(220,38,38,.1)' },
 };
 
 function RecurringModal({ item, wallets, categories, onClose, onSave }) {
@@ -62,7 +62,7 @@ function RecurringModal({ item, wallets, categories, onClose, onSave }) {
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
     }} onClick={e => e.target === e.currentTarget && onClose()}>
       <div style={{
-        background: 'var(--surface)', borderRadius: 20, padding: 28, width: '100%', maxWidth: 480,
+        background: 'var(--surface)', borderRadius:14, padding: 28, width: '100%', maxWidth: 480,
         maxHeight: '90vh', overflowY: 'auto',
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
@@ -73,7 +73,7 @@ function RecurringModal({ item, wallets, categories, onClose, onSave }) {
         </div>
 
         {error && (
-          <div style={{ background: 'rgba(236,72,153,.1)', border: '1px solid rgba(236,72,153,.3)', borderRadius: 10, padding: '10px 14px', marginBottom: 16, color: '#EC4899', fontSize: 13 }}>
+          <div style={{ background: 'rgba(220,38,38,.1)', border: '1px solid rgba(220,38,38,.3)', borderRadius: 10, padding: '10px 14px', marginBottom: 16, color: '#DC2626', fontSize: 13 }}>
             {error}
           </div>
         )}
@@ -107,10 +107,10 @@ function RecurringModal({ item, wallets, categories, onClose, onSave }) {
               <label style={labelStyle}>Frequency *</label>
               <ThemedSelect value={form.frequency} onChange={v => set('frequency', v)}
                 options={[
-                  { value:'daily',   label:'Daily',   icon:<Sun size={16} color="#8B5CF6"/> },
-                  { value:'weekly',  label:'Weekly',  icon:<CalendarRange size={16} color="#8B5CF6"/> },
-                  { value:'monthly', label:'Monthly', icon:<CalendarDays size={16} color="#8B5CF6"/> },
-                  { value:'yearly',  label:'Yearly',  icon:<Calendar size={16} color="#8B5CF6"/> },
+                  { value:'daily',   label:'Daily',   icon:<Sun size={16} color="#4F46E5"/> },
+                  { value:'weekly',  label:'Weekly',  icon:<CalendarRange size={16} color="#4F46E5"/> },
+                  { value:'monthly', label:'Monthly', icon:<CalendarDays size={16} color="#4F46E5"/> },
+                  { value:'yearly',  label:'Yearly',  icon:<Calendar size={16} color="#4F46E5"/> },
                 ]}/>
             </div>
           </div>
@@ -159,7 +159,7 @@ function RecurringModal({ item, wallets, categories, onClose, onSave }) {
           }}>Cancel</button>
           <button onClick={handleSave} disabled={saving} style={{
             flex: 2, padding: '12px 0', borderRadius: 12, border: 'none',
-            background: 'linear-gradient(135deg,#8B5CF6,#3B82F6)', color: '#fff',
+            background: '#4F46E5', color: '#fff',
             fontWeight: 700, cursor: 'pointer', opacity: saving ? .7 : 1,
           }}>
             {saving ? 'Saving...' : item ? 'Save Changes' : 'Add Recurring'}
@@ -257,11 +257,11 @@ export default function Recurring() {
       <div style={{ padding: '0 20px' }}>
         {/* Summary card */}
         <div style={{
-          background: 'linear-gradient(135deg,#8B5CF6,#3B82F6)', borderRadius: 16, padding: '20px 24px',
+          background: '#4F46E5', borderRadius: 16, padding: '20px 24px',
           marginBottom: 24, color: '#fff',
         }}>
           <div style={{ fontSize: 12, fontWeight: 600, opacity: .8, marginBottom: 6 }}>MONTHLY NET RECURRING</div>
-          <div style={{ fontSize: 28, fontWeight: 800, fontFamily: 'Space Grotesk, Inter, sans-serif' }}>
+          <div style={{ fontSize: 28, fontWeight: 800, fontFamily: 'Inter, sans-serif' }}>
             {fmt(Math.abs(totalMonthly))}
           </div>
           <div style={{ fontSize: 12, opacity: .75, marginTop: 4 }}>
@@ -271,7 +271,7 @@ export default function Recurring() {
 
         {/* Error */}
         {error && (
-          <div style={{ background: 'rgba(236,72,153,.1)', border: '1px solid rgba(236,72,153,.3)', borderRadius: 12, padding: '14px 18px', marginBottom: 20, color: '#EC4899', fontSize: 13 }}>
+          <div style={{ background: 'rgba(220,38,38,.1)', border: '1px solid rgba(220,38,38,.3)', borderRadius: 12, padding: '14px 18px', marginBottom: 20, color: '#DC2626', fontSize: 13 }}>
             Failed to load recurring transactions. Please try again.
           </div>
         )}
@@ -340,7 +340,7 @@ export default function Recurring() {
 
               {/* Amount */}
               <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                <div style={{ fontSize: 15, fontWeight: 800, color: typ.color, fontFamily: 'Space Grotesk, Inter, sans-serif' }}>
+                <div style={{ fontSize: 15, fontWeight: 800, color: typ.color, fontFamily: 'Inter, sans-serif' }}>
                   {item.type === 'expense' ? '−' : '+'}{fmt(item.amount)}
                 </div>
                 <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 2 }}>per {item.frequency}</div>
@@ -349,7 +349,7 @@ export default function Recurring() {
               {/* Actions */}
               <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                 <button onClick={() => handleToggle(item)} style={{
-                  background: 'none', border: 'none', cursor: 'pointer', color: item.is_active ? '#22C55E' : 'var(--text3)', padding: 4,
+                  background: 'none', border: 'none', cursor: 'pointer', color: item.is_active ? '#059669' : 'var(--text3)', padding: 4,
                 }} title={item.is_active ? 'Deactivate' : 'Activate'}>
                   {item.is_active ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
                 </button>
@@ -359,7 +359,7 @@ export default function Recurring() {
                   <Edit2 size={15} />
                 </button>
                 <button onClick={() => { if (confirm('Delete this recurring rule?')) deleteMut.mutate(item.id); }} style={{
-                  background: 'none', border: 'none', cursor: 'pointer', color: '#EC4899', padding: 4,
+                  background: 'none', border: 'none', cursor: 'pointer', color: '#DC2626', padding: 4,
                 }} title="Delete">
                   <Trash2 size={15} />
                 </button>

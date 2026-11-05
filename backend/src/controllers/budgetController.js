@@ -1,14 +1,5 @@
 const { query } = require('../db');
-
-const FREE_BUDGET_LIMIT = 3;
-
-async function isPremium(userId) {
-  const r = await query('SELECT is_premium, premium_expires_at FROM users WHERE id=$1', [userId]);
-  const u = r.rows[0];
-  if (!u || !u.is_premium) return false;
-  if (u.premium_expires_at && new Date(u.premium_expires_at) < new Date()) return false;
-  return true;
-}
+const { parseAmount } = require('../utils/validate');
 
 // GET /api/budgets
 const getAll = async (req, res) => {
@@ -51,19 +42,8 @@ const getAll = async (req, res) => {
 // POST /api/budgets
 const create = async (req, res) => {
   try {
-    const premium = await isPremium(req.user.userId);
-    if (!premium) {
-      const cnt = await query('SELECT COUNT(*) FROM budgets WHERE user_id=$1', [req.user.userId]);
-      if (parseInt(cnt.rows[0].count) >= FREE_BUDGET_LIMIT) {
-        return res.status(403).json({
-          success: false,
-          code: 'FREE_LIMIT_BUDGETS',
-          message: `Free plan allows up to ${FREE_BUDGET_LIMIT} budgets. Upgrade to Premium for unlimited budgets.`,
-        });
-      }
-    }
     const { category_id, name, amount, period, start_date, emoji, color, type } = req.body;
-    if (!amount || isNaN(parseFloat(amount))) {
+    if (parseAmount(amount) === null) {
       return res.status(400).json({ success: false, message: 'Please enter a valid amount' });
     }
     const result = await query(`
@@ -90,7 +70,7 @@ const create = async (req, res) => {
 const update = async (req, res) => {
   try {
     const { name, amount, emoji, color } = req.body;
-    if (!amount || isNaN(parseFloat(amount))) {
+    if (parseAmount(amount) === null) {
       return res.status(400).json({ success: false, message: 'Please enter a valid amount' });
     }
     const result = await query(`

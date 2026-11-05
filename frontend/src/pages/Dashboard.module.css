@@ -43,7 +43,7 @@
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #8B5CF6, #8B5CF6);
+  background: #4F46E5;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -123,7 +123,7 @@
   min-width: 19px;
   height: 19px;
   border-radius: 10px;
-  background: #8B5CF6;
+  background: #4F46E5;
   color: #fff;
   font-size: 11px;
   font-weight: 800;
@@ -164,19 +164,19 @@
 .accountsCard {
   grid-area: accounts;
   padding: 24px 26px;
-  border-radius: 32px;
+  border-radius: 14px;
   display: flex;
   flex-direction: column;
 }
 .goalsCard {
   grid-area: goals;
   padding: 24px 26px;
-  border-radius: 32px;
+  border-radius: 14px;
 }
 .upcomingCard {
   grid-area: upcoming;
   padding: 24px 26px;
-  border-radius: 32px;
+  border-radius: 14px;
   display: flex;
   flex-direction: column;
 }
@@ -241,7 +241,7 @@
   align-items: center;
   gap: 16px;
   padding: 20px 24px;
-  border-radius: 28px;
+  border-radius: 14px;
   transition: box-shadow .2s ease;
 }
 
@@ -259,7 +259,7 @@
 .balanceCard {
   position: relative;
   padding: 26px 28px 24px;
-  border-radius: 32px;
+  border-radius: 14px;
 }
 
 .balanceBig {
@@ -267,7 +267,7 @@
   font-weight: 800;
   letter-spacing: -1.5px;
   margin-top: 16px;
-  font-family: 'Space Grotesk', Inter, sans-serif;
+  font-family: 'Inter', Inter, sans-serif;
   line-height: 1;
 }
 
@@ -303,7 +303,7 @@
   align-items: center;
   gap: 14px;
   padding: 18px 20px;
-  border-radius: 28px;
+  border-radius: 14px;
   min-height: 96px;
   box-sizing: border-box;
 }
@@ -316,7 +316,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 6px 18px rgba(139,92,246,.4);
+  box-shadow: 0 6px 18px rgba(79,70,229,.4);
   animation: insightGlow 2.6s ease-in-out infinite;
 }
 
@@ -328,8 +328,8 @@
 }
 
 @keyframes insightGlow {
-  0%, 100% { box-shadow: 0 6px 18px rgba(139,92,246,.4); }
-  50%      { box-shadow: 0 6px 26px rgba(139,92,246,.7); }
+  0%, 100% { box-shadow: 0 6px 18px rgba(79,70,229,.4); }
+  50%      { box-shadow: 0 6px 26px rgba(79,70,229,.7); }
 }
 
 @keyframes pulseDot {
@@ -337,11 +337,11 @@
   50%      { opacity: .4; transform: scale(.7); }
 }
 
-/* ── Responsive money numbers (Space Grotesk, weight 800) ── */
-.numLg { font-size: 22px; font-weight: 800; font-family: 'Space Grotesk', Inter, sans-serif; }
-.numMd { font-size: 19px; font-weight: 800; font-family: 'Space Grotesk', Inter, sans-serif; }
-.numSm { font-size: 16px; font-weight: 800; font-family: 'Space Grotesk', Inter, sans-serif; }
-.numXs { font-size: 14px; font-weight: 800; font-family: 'Space Grotesk', Inter, sans-serif; }
+/* ── Responsive money numbers (Inter, weight 800) ── */
+.numLg { font-size: 22px; font-weight: 800; font-family: 'Inter', Inter, sans-serif; }
+.numMd { font-size: 19px; font-weight: 800; font-family: 'Inter', Inter, sans-serif; }
+.numSm { font-size: 16px; font-weight: 800; font-family: 'Inter', Inter, sans-serif; }
+.numXs { font-size: 14px; font-weight: 800; font-family: 'Inter', Inter, sans-serif; }
 
 @media (max-width: 768px) {
   .numLg { font-size: 17px; }
@@ -353,7 +353,7 @@
 /* ── Money Flow card ───────────────────────────────────── */
 .flowCard {
   padding: 24px 26px;
-  border-radius: 32px;
+  border-radius: 14px;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -398,7 +398,7 @@
 
 .flowBar {
   height: 7px;
-  border-radius: 20px;
+  border-radius: 14px;
   overflow: hidden;
 }
 
@@ -424,7 +424,7 @@
   align-items: center;
   gap: 12px;
   padding: 14px 14px;
-  border-radius: 18px;
+  border-radius: 14px;
   cursor: pointer;
 }
 
@@ -441,7 +441,7 @@
 /* ── Top Spending card ─────────────────────────────────── */
 .spendCard {
   padding: 26px 28px 22px;
-  border-radius: 32px;
+  border-radius: 14px;
 }
 
 .spendBody {
@@ -513,7 +513,7 @@
 .spendRowAmt {
   font-size: 14px;
   font-weight: 700;
-  font-family: 'Space Grotesk', Inter, sans-serif;
+  font-family: 'Inter', Inter, sans-serif;
 }
 
 .spendRowPct {
@@ -533,7 +533,7 @@
 .walletArt {
   position: relative;
   font-size: 34px;
-  filter: drop-shadow(0 6px 12px rgba(139,92,246,.35));
+  filter: drop-shadow(0 6px 12px rgba(79,70,229,.35));
   animation: floaty 3.4s ease-in-out infinite;
 }
 
@@ -542,7 +542,7 @@
   top: -8px;
   right: -12px;
   font-size: 13px;
-  color: #A78BFA;
+  color: #818CF8;
   animation: sparkle 2.2s ease-in-out infinite;
 }
 
@@ -559,7 +559,7 @@
 /* ── Recent Transactions card ──────────────────────────── */
 .recentCard {
   padding: 24px 26px;
-  border-radius: 32px;
+  border-radius: 14px;
 }
 
 .recentList {
@@ -614,18 +614,18 @@
 
   .cardTitle { font-size: 14px; }
 
-  .salaryCard  { padding: 12px 14px; border-radius: 18px; gap: 10px; }
+  .salaryCard  { padding: 12px 14px; border-radius: 14px; gap: 10px; }
   .salaryIcon  { width: 40px; height: 40px; }
 
-  .balanceCard { padding: 15px 14px; border-radius: 20px; }
+  .balanceCard { padding: 15px 14px; border-radius: 14px; }
   .balanceBig  { font-size: 23px; margin-top: 8px; letter-spacing: -0.8px; }
 
-  .flowCard    { padding: 16px 15px; border-radius: 22px; }
-  .spendCard   { padding: 16px 15px; border-radius: 22px; }
-  .recentCard  { padding: 15px 15px; border-radius: 22px; }
-  .accountsCard{ padding: 15px 15px; border-radius: 22px; }
-  .goalsCard   { padding: 16px 15px; border-radius: 22px; }
-  .upcomingCard{ padding: 15px 15px; border-radius: 22px; }
+  .flowCard    { padding: 16px 15px; border-radius: 14px; }
+  .spendCard   { padding: 16px 15px; border-radius: 14px; }
+  .recentCard  { padding: 15px 15px; border-radius: 14px; }
+  .accountsCard{ padding: 15px 15px; border-radius: 14px; }
+  .goalsCard   { padding: 16px 15px; border-radius: 14px; }
+  .upcomingCard{ padding: 15px 15px; border-radius: 14px; }
 
   .recentRow  { padding: 10px 0; }
   .chartWrap  { margin-top: 2px; }

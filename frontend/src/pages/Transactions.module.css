@@ -15,7 +15,7 @@
 }
 .summaryCard {
   background: var(--surface);
-  border-radius: 18px; padding: 18px 20px;
+  border-radius: 14px; padding: 18px 20px;
   box-shadow: 0 4px 20px rgba(16,24,40,.06);
   border: 1px solid var(--border-light);
   display: flex; align-items: center; gap: 14px;
@@ -30,7 +30,7 @@
 /* ── Desktop table ─────────────────────────────────── */
 .tableCard {
   background: var(--surface);
-  border-radius: 22px;
+  border-radius: 14px;
   box-shadow: 0 4px 24px rgba(16,24,40,.06);
   border: 1px solid var(--border-light);
   overflow: hidden;
@@ -140,13 +140,13 @@
   }
   .monthTotal {
     font-size: 15px; font-weight: 700;
-    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-variant-numeric: tabular-nums;
   }
 
   .txGroup {
     background: var(--surface);
-    border-radius: 20px;
+    border-radius: 14px;
     margin: 0 12px;
     border: 1px solid var(--border-light);
     box-shadow: 0 2px 12px rgba(16,24,40,.05);
@@ -182,7 +182,7 @@
 
   .txAmount {
     font-size: 16px; font-weight: 800;
-    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-variant-numeric: tabular-nums;
     flex-shrink: 0; text-align: right;
   }
@@ -202,9 +202,9 @@
     display: flex; align-items: center; justify-content: center;
     position: fixed; bottom: 28px; right: 22px;
     width: 58px; height: 58px; border-radius: 50%;
-    background: linear-gradient(135deg, #8B5CF6, #A78BFA);
+    background: #4F46E5;
     border: none; cursor: pointer; z-index: 50;
-    box-shadow: 0 6px 24px rgba(139,92,246,.5);
+    box-shadow: 0 6px 24px rgba(79,70,229,.5);
     transition: transform .2s, box-shadow .2s;
   }
   .fab:active { transform: scale(.94); }

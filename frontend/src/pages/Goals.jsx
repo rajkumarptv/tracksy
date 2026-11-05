@@ -9,26 +9,24 @@ import {
   ChevronsUp, Minus, ChevronsDown,
 } from 'lucide-react';
 import useAuthStore from '../store/authStore';
-import usePremiumStore from '../store/premiumStore';
 import useThemeStore from '../store/themeStore';
 import { THEME } from '../theme';
 import styles from './Goals.module.css';
 import { invalidateFinance } from '../lib/cache';
 import ThemedSelect from '../components/ThemedSelect';
 
-const FREE_GOAL_LIMIT = 3;
 
 const BADGE_CFG_DARK = {
-  High:      { text:'High Priority',   bg:'rgba(139,92,246,.25)',  color:'#C4B5FD' },
-  Medium:    { text:'Medium Priority', bg:'rgba(245,158,11,.22)',  color:'#FCD34D' },
+  High:      { text:'High Priority',   bg:'rgba(79,70,229,.25)',  color:'#C4B5FD' },
+  Medium:    { text:'Medium Priority', bg:'rgba(217,119,6,.22)',  color:'#FCD34D' },
   Low:       { text:'Low Priority',    bg:'rgba(59,130,246,.22)',  color:'#93C5FD' },
-  Completed: { text:'Completed',       bg:'rgba(43,255,136,.18)',  color:'#2BFF88' },
+  Completed: { text:'Completed',       bg:'rgba(52,211,153,.18)',  color:'#34D399' },
 };
 const BADGE_CFG_LIGHT = {
-  High:      { text:'High Priority',   bg:'#F3E8FF', color:'#8B5CF6' },
-  Medium:    { text:'Medium Priority', bg:'#FFF7ED', color:'#F59E0B' },
+  High:      { text:'High Priority',   bg:'#F3E8FF', color:'#4F46E5' },
+  Medium:    { text:'Medium Priority', bg:'#FFF7ED', color:'#D97706' },
   Low:       { text:'Low Priority',    bg:'#EFF6FF', color:'#3B82F6' },
-  Completed: { text:'Completed',       bg:'#DCFCE7', color:'#16A34A' },
+  Completed: { text:'Completed',       bg:'#D1FAE5', color:'#047857' },
 };
 
 function fmtINR(n) {
@@ -44,7 +42,7 @@ const containerVar = { hidden:{}, show:{ transition:{ staggerChildren:.07 } } };
 const cardVar = { hidden:{ opacity:0, y:22 }, show:{ opacity:1, y:0, transition:spring } };
 
 /* ── Glowing donut (dashboard style) ── */
-function DonutChart({ pct, size=160, stroke=14, color='#8B5CF6', track, label, sublabel, labelColor, glow }) {
+function DonutChart({ pct, size=160, stroke=14, color='#4F46E5', track, label, sublabel, labelColor, glow }) {
   const r = (size - stroke) / 2;
   const circ = 2 * Math.PI * r;
   const clamped = Math.min(100, pct);
@@ -67,7 +65,7 @@ function DonutChart({ pct, size=160, stroke=14, color='#8B5CF6', track, label, s
           transition={{ duration:1.1, ease:[.2,.8,.2,1], delay:.3 }}/>
       </svg>
       <div style={{ position:'absolute', inset:0, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', textAlign:'center', gap:2 }}>
-        {label && <div style={{ fontSize:15, fontWeight:800, color:labelColor, fontFamily:'Space Grotesk,Inter,sans-serif', letterSpacing:-0.3 }}>{label}</div>}
+        {label && <div style={{ fontSize:15, fontWeight:800, color:labelColor, fontFamily:'Inter,sans-serif', letterSpacing:-0.3 }}>{label}</div>}
         {sublabel && <div style={{ fontSize:11, color:'inherit', opacity:.55, fontWeight:500 }}>{sublabel}</div>}
       </div>
     </div>
@@ -78,7 +76,6 @@ function DonutChart({ pct, size=160, stroke=14, color='#8B5CF6', track, label, s
 export default function Goals() {
   const qc = useQueryClient();
   const { user } = useAuthStore();
-  const { openPremium } = usePremiumStore();
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
   const t = isDark ? THEME.dark : THEME.light;
@@ -101,14 +98,13 @@ export default function Goals() {
     return apiGoals.map(g => ({
       ...g,
       desc: g.desc || g.description || '',
-      iconBg: g.color || '#8B5CF6',
+      iconBg: g.color || '#4F46E5',
       priority: g.priority || 'Medium',
       status: parseFloat(g.percentage||0) >= 100 ? 'Completed' : (g.status || 'In Progress'),
     }));
   }, [apiGoals]);
 
-  const atGoalLimit = !user?.is_premium && rawGoals.length >= FREE_GOAL_LIMIT;
-  const openAddGoal = () => atGoalLimit ? openPremium() : (setEditGoal(null), setShowModal(true));
+  const openAddGoal = () => { setEditGoal(null); setShowModal(true); };
 
   const filteredGoals = useMemo(() => {
     let g = rawGoals;
@@ -160,7 +156,7 @@ export default function Goals() {
               <BarChart2 size={19} color={t.text2}/>
             </button>
             <motion.button className={styles.circleBtn} whileTap={{ scale:.9 }}
-              style={{ background:'linear-gradient(180deg,#8B5CF6,#6D28D9)', border:'none', boxShadow:'0 8px 24px rgba(124,58,237,.35)' }}
+              style={{ background:'#4F46E5', border:'none', boxShadow:'0 8px 24px rgba(124,58,237,.35)' }}
               onClick={openAddGoal}>
               <Plus size={22} color="#fff"/>
             </motion.button>
@@ -177,17 +173,17 @@ export default function Goals() {
             <div className={styles.overviewStats}>
               <div>
                 <div style={{ fontSize:10.5, color:t.text3, fontWeight:600, textTransform:'uppercase', letterSpacing:'.04em' }}>Total Goal Target</div>
-                <div style={{ fontSize:16, fontWeight:800, color:t.text, fontFamily:'Space Grotesk,Inter,sans-serif', marginTop:2 }}>{fmtFull(totalTarget)}</div>
+                <div style={{ fontSize:16, fontWeight:800, color:t.text, fontFamily:'Inter,sans-serif', marginTop:2 }}>{fmtFull(totalTarget)}</div>
               </div>
               <div>
                 <div style={{ fontSize:10.5, color:t.text3, fontWeight:600, textTransform:'uppercase', letterSpacing:'.04em' }}>Total Amount Saved</div>
-                <div style={{ fontSize:16, fontWeight:800, color:t.green, fontFamily:'Space Grotesk,Inter,sans-serif', marginTop:2 }}>{fmtFull(totalSaved)}</div>
+                <div style={{ fontSize:16, fontWeight:800, color:t.green, fontFamily:'Inter,sans-serif', marginTop:2 }}>{fmtFull(totalSaved)}</div>
               </div>
             </div>
           </div>
           <div className={styles.overviewDonut}>
             <DonutChart pct={overallPct} size={156} stroke={13}
-              color={t.purple} track={isDark?'rgba(139,92,246,.18)':'#EEE8FF'}
+              color={t.purple} track={isDark?'rgba(79,70,229,.18)':'#EEE8FF'}
               label={fmtINR(totalSaved)} sublabel="Saved" labelColor={t.text} glow={isDark}/>
           </div>
         </motion.div>
@@ -200,7 +196,7 @@ export default function Goals() {
               return (
                 <motion.button key={key} whileTap={{ scale:.94 }} className={styles.chip}
                   style={{
-                    background: active ? (isDark?'rgba(139,92,246,.18)':'#F5F3FF') : t.cardBg,
+                    background: active ? (isDark?'rgba(79,70,229,.18)':'#EEF0FF') : t.cardBg,
                     border: `1.5px solid ${active ? t.purple : t.border}`,
                     color: active ? (isDark?'#C4B5FD':t.purple) : t.text2,
                   }}
@@ -222,7 +218,7 @@ export default function Goals() {
                   style={{ position:'absolute', right:0, top:'calc(100% + 6px)', background:t.cardBg, border:`1px solid ${t.border}`, borderRadius:14, zIndex:50, minWidth:150, overflow:'hidden', boxShadow:t.cardShadow }}>
                   {['Priority','Progress','Amount','Name'].map(s => (
                     <button key={s} onClick={()=>{setSortBy(s);setShowSort(false);}}
-                      style={{ display:'block', width:'100%', textAlign:'left', padding:'10px 15px', background:sortBy===s?'rgba(139,92,246,.12)':'transparent', color:sortBy===s?(isDark?'#C4B5FD':t.purple):t.text2, border:'none', fontSize:12.5, fontWeight:sortBy===s?700:500, cursor:'pointer' }}>
+                      style={{ display:'block', width:'100%', textAlign:'left', padding:'10px 15px', background:sortBy===s?'rgba(79,70,229,.12)':'transparent', color:sortBy===s?(isDark?'#C4B5FD':t.purple):t.text2, border:'none', fontSize:12.5, fontWeight:sortBy===s?700:500, cursor:'pointer' }}>
                       {s}
                     </button>
                   ))}
@@ -265,7 +261,7 @@ export default function Goals() {
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
                       <span style={{ fontSize:15, fontWeight:700, color:t.text }}>{g.name}</span>
-                      <span style={{ fontSize:10.5, fontWeight:700, padding:'2px 9px', borderRadius:20, background:badge.bg, color:badge.color, whiteSpace:'nowrap' }}>{badge.text}</span>
+                      <span style={{ fontSize:10.5, fontWeight:700, padding:'2px 9px', borderRadius:14, background:badge.bg, color:badge.color, whiteSpace:'nowrap' }}>{badge.text}</span>
                     </div>
                     {g.desc && <div style={{ fontSize:12, color:t.text3, marginTop:2 }}>{g.desc}</div>}
                     <div className={styles.goalTrack} style={{ background:t.track }}>
@@ -274,7 +270,7 @@ export default function Goals() {
                         transition={{ duration:.8, delay:.3+idx*.06, ease:[.2,.8,.2,1] }}/>
                     </div>
                     <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:5 }}>
-                      <span style={{ fontSize:11.5, color:t.text3, fontFamily:'Space Grotesk,Inter,sans-serif' }}>
+                      <span style={{ fontSize:11.5, color:t.text3, fontFamily:'Inter,sans-serif' }}>
                         {fmtFull(g.current_amount)} / {fmtFull(g.target_amount)}
                       </span>
                       <div style={{ display:'flex', alignItems:'center', gap:8 }}>
@@ -292,7 +288,7 @@ export default function Goals() {
                         )}
                         {!isComplete && (
                           <button onClick={()=>!isDummy && setShowFunds(g)}
-                            style={{ fontSize:11, fontWeight:700, padding:'4px 11px', borderRadius:10, border:'none', background:`${g.iconBg||'#8B5CF6'}22`, color:g.iconBg||t.purple, cursor:'pointer', whiteSpace:'nowrap' }}>
+                            style={{ fontSize:11, fontWeight:700, padding:'4px 11px', borderRadius:10, border:'none', background:`${g.iconBg||'#4F46E5'}22`, color:g.iconBg||t.purple, cursor:'pointer', whiteSpace:'nowrap' }}>
                             + Add Funds
                           </button>
                         )}
@@ -300,7 +296,7 @@ export default function Goals() {
                     </div>
                   </div>
                   <div style={{ flexShrink:0, textAlign:'right' }}>
-                    <span style={{ fontSize:15, fontWeight:800, color:barColor, fontFamily:'Space Grotesk,Inter,sans-serif' }}>{pct}%</span>
+                    <span style={{ fontSize:15, fontWeight:800, color:barColor, fontFamily:'Inter,sans-serif' }}>{pct}%</span>
                   </div>
                 </motion.div>
               );
@@ -310,12 +306,12 @@ export default function Goals() {
           {/* Motivation card */}
           <motion.div className={styles.motivCard} variants={cardVar}
             style={{ background:t.cardBg, border:`1px solid ${t.border}`, boxShadow:t.cardShadow }}>
-            <span className={styles.spark} style={{ top:12, right:16, color: isDark?'rgba(43,255,136,.4)':'rgba(34,197,94,.4)' }}>✦</span>
-            <span className={styles.spark} style={{ bottom:16, right:52, fontSize:8, color: isDark?'rgba(43,255,136,.25)':'rgba(34,197,94,.25)' }}>✦</span>
+            <span className={styles.spark} style={{ top:12, right:16, color: isDark?'rgba(52,211,153,.4)':'rgba(5,150,105,.4)' }}>✦</span>
+            <span className={styles.spark} style={{ bottom:16, right:52, fontSize:8, color: isDark?'rgba(52,211,153,.25)':'rgba(5,150,105,.25)' }}>✦</span>
 
             <div style={{ display:'flex', justifyContent:'center', marginBottom:6 }}>
-              <div className={styles.motivRing} style={{ border:`2.5px solid ${isDark?'rgba(43,255,136,.3)':'#BBF7D0'}` }}>
-                <div className={styles.motivRingInner} style={{ background: isDark?'rgba(43,255,136,.12)':'rgba(34,197,94,.1)' }}>
+              <div className={styles.motivRing} style={{ border:`2.5px solid ${isDark?'rgba(52,211,153,.3)':'#A7F3D0'}` }}>
+                <div className={styles.motivRingInner} style={{ background: isDark?'rgba(52,211,153,.12)':'rgba(5,150,105,.1)' }}>
                   <Rocket size={26} color={t.green}/>
                 </div>
               </div>
@@ -331,8 +327,8 @@ export default function Goals() {
 
             <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
               {[
-                { Icon:TargetIcon, label:'Monthly Target',   val:fmtFull(totalMonthly),   clr:t.text,  bg:'rgba(139,92,246,.14)', ic:t.purple },
-                { Icon:Wallet,     label:'Saved This Month', val:fmtFull(savedThisMonth), clr:t.green, bg: isDark?'rgba(43,255,136,.12)':'rgba(34,197,94,.12)', ic:t.green },
+                { Icon:TargetIcon, label:'Monthly Target',   val:fmtFull(totalMonthly),   clr:t.text,  bg:'rgba(79,70,229,.14)', ic:t.purple },
+                { Icon:Wallet,     label:'Saved This Month', val:fmtFull(savedThisMonth), clr:t.green, bg: isDark?'rgba(52,211,153,.12)':'rgba(5,150,105,.12)', ic:t.green },
               ].map(({ Icon, label, val, clr, bg, ic })=>(
                 <div key={label} style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                   <div style={{ display:'flex', alignItems:'center', gap:10 }}>
@@ -341,7 +337,7 @@ export default function Goals() {
                     </div>
                     <span style={{ fontSize:12.5, color:t.text2 }}>{label}</span>
                   </div>
-                  <span style={{ fontSize:14.5, fontWeight:800, color:clr, fontFamily:'Space Grotesk,Inter,sans-serif' }}>{val}</span>
+                  <span style={{ fontSize:14.5, fontWeight:800, color:clr, fontFamily:'Inter,sans-serif' }}>{val}</span>
                 </div>
               ))}
             </div>
@@ -351,13 +347,13 @@ export default function Goals() {
             <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
               <div style={{ fontSize:10.5, fontWeight:700, color:t.text3, textTransform:'uppercase', letterSpacing:'.06em' }}>Goal Breakdown</div>
               {[
-                { label:'In Progress', count:inProgressCt, color:t.purple, bg:'rgba(139,92,246,.14)' },
-                { label:'Completed',   count:completedCt,  color:t.green,  bg: isDark?'rgba(43,255,136,.12)':'rgba(34,197,94,.12)' },
-                { label:'Paused',      count:pausedCt,     color:t.orange, bg:'rgba(245,158,11,.14)' },
+                { label:'In Progress', count:inProgressCt, color:t.purple, bg:'rgba(79,70,229,.14)' },
+                { label:'Completed',   count:completedCt,  color:t.green,  bg: isDark?'rgba(52,211,153,.12)':'rgba(5,150,105,.12)' },
+                { label:'Paused',      count:pausedCt,     color:t.orange, bg:'rgba(217,119,6,.14)' },
               ].map(({ label, count, color, bg })=>(
                 <div key={label} style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                   <span style={{ fontSize:12.5, color:t.text2 }}>{label}</span>
-                  <span style={{ fontSize:12.5, fontWeight:800, padding:'2px 11px', borderRadius:20, background:bg, color }}>{count}</span>
+                  <span style={{ fontSize:12.5, fontWeight:800, padding:'2px 11px', borderRadius:14, background:bg, color }}>{count}</span>
                 </div>
               ))}
             </div>
@@ -377,11 +373,11 @@ function GoalModal({ goal, onClose, onSaved }) {
   const [form, setForm] = useState({
     name:                goal?.name                || '',
     target_amount:       goal?.target_amount       || '',
-    current_amount:      goal?.current_amount      || 0,
+    current_amount:      goal?.current_amount      || '',
     emoji:               goal?.emoji               || '🎯',
-    color:               goal?.color               || '#8B5CF6',
+    color:               goal?.color               || '#4F46E5',
     target_date:         goal?.target_date ? goal.target_date.split('T')[0] : '',
-    monthly_contribution:goal?.monthly_contribution|| 0,
+    monthly_contribution:goal?.monthly_contribution|| '',
     priority:            goal?.priority            || 'Medium',
     desc:                goal?.desc                || '',
   });
@@ -391,7 +387,14 @@ function GoalModal({ goal, onClose, onSaved }) {
     onSuccess: onSaved,
     onError: (e) => setError(e.response?.data?.message || 'Error saving goal'),
   });
-  const COLORS = ['#8B5CF6','#22C55E','#EC4899','#3B82F6','#F59E0B','#EF4444','#8B5CF6','#10B981'];
+  const submit = () => {
+    if (!form.name.trim()) return setError('Please enter a goal name');
+    if (!(parseFloat(form.target_amount) > 0)) return setError('Please enter a valid target amount');
+    if (parseFloat(form.current_amount) > parseFloat(form.target_amount)) return setError("Saved amount can't exceed the target");
+    setError('');
+    mutation.mutate(form);
+  };
+  const COLORS = ['#4F46E5','#059669','#DC2626','#3B82F6','#D97706','#EF4444','#06B6D4','#10B981'];
   return (
     <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
       <div className="modal">
@@ -408,15 +411,15 @@ function GoalModal({ goal, onClose, onSaved }) {
           </div>
           <div className="form-group">
             <label className="form-label">Target Amount</label>
-            <input className="form-input" type="number" value={form.target_amount} onChange={e=>setForm(f=>({...f,target_amount:e.target.value}))} placeholder="100000"/>
+            <input className="form-input" type="number" min="0" value={form.target_amount} onChange={e=>setForm(f=>({...f,target_amount:e.target.value}))} placeholder="100000"/>
           </div>
           <div className="form-group">
             <label className="form-label">Already Saved</label>
-            <input className="form-input" type="number" value={form.current_amount} onChange={e=>setForm(f=>({...f,current_amount:e.target.value}))} placeholder="0"/>
+            <input className="form-input" type="number" min="0" value={form.current_amount} onChange={e=>setForm(f=>({...f,current_amount:e.target.value}))} placeholder="0"/>
           </div>
           <div className="form-group">
             <label className="form-label">Monthly Contribution</label>
-            <input className="form-input" type="number" value={form.monthly_contribution} onChange={e=>setForm(f=>({...f,monthly_contribution:e.target.value}))} placeholder="5000"/>
+            <input className="form-input" type="number" min="0" value={form.monthly_contribution} onChange={e=>setForm(f=>({...f,monthly_contribution:e.target.value}))} placeholder="5000"/>
           </div>
           <div className="form-group">
             <label className="form-label">Target Date</label>
@@ -427,8 +430,8 @@ function GoalModal({ goal, onClose, onSaved }) {
             <ThemedSelect value={form.priority} onChange={v=>setForm(f=>({...f,priority:v}))}
               options={[
                 { value:'High',   label:'High',   icon:<ChevronsUp size={16} color="#EF4444"/> },
-                { value:'Medium', label:'Medium', icon:<Minus size={16} color="#F59E0B"/> },
-                { value:'Low',    label:'Low',    icon:<ChevronsDown size={16} color="#22C55E"/> },
+                { value:'Medium', label:'Medium', icon:<Minus size={16} color="#D97706"/> },
+                { value:'Low',    label:'Low',    icon:<ChevronsDown size={16} color="#059669"/> },
               ]}/>
           </div>
           <div className="form-group">
@@ -447,7 +450,7 @@ function GoalModal({ goal, onClose, onSaved }) {
         </div>
         <div style={{ display:'flex', gap:10, marginTop:16, justifyContent:'flex-end' }}>
           <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" disabled={mutation.isPending} onClick={()=>mutation.mutate(form)} style={{ background:'linear-gradient(135deg,#8B5CF6,#A78BFA)', border:'none' }}>
+          <button className="btn btn-primary" disabled={mutation.isPending} onClick={submit} style={{ background:'#4F46E5', border:'none' }}>
             {mutation.isPending ? 'Saving' : goal ? 'Update Goal' : 'Create Goal'}
           </button>
         </div>
@@ -463,7 +466,7 @@ function AddFundsModal({ goal, onClose, onSaved }) {
     onSuccess: onSaved,
   });
   const pct = Math.min(100, Math.round((parseFloat(goal.current_amount)||0)/(parseFloat(goal.target_amount)||1)*100));
-  const clr = goal.color || '#8B5CF6';
+  const clr = goal.color || '#4F46E5';
   return (
     <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
       <div className="modal" style={{ maxWidth:400 }}>

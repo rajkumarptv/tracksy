@@ -2,6 +2,7 @@ const { query } = require('../db');
 const { randomUUID } = require('crypto');
 const { encrypt, decrypt, decryptRow } = require('../utils/crypto');
 const { recordBalanceSnapshot } = require('./dashboardController');
+const { parseAmount } = require('../utils/validate');
 
 // Fields to decrypt on every transaction row returned to client
 // payment_name is intentionally NOT encrypted — it's needed for ILIKE search
@@ -85,7 +86,7 @@ const create = async (req, res) => {
             // transfer-specific
             from_wallet_id, to_wallet_id } = req.body;
 
-    if (!['income', 'expense', 'transfer'].includes(type) || !(parseFloat(amount) > 0)) {
+    if (!['income', 'expense', 'transfer'].includes(type) || parseAmount(amount) === null) {
       return res.status(400).json({ success: false, message: 'A valid type and a positive amount are required' });
     }
 
@@ -168,13 +169,31 @@ const create = async (req, res) => {
   }
 };
 
+// Wallet balance effect of a stored transaction row (income +, expense −, transfer by direction).
+const balanceDelta = r => {
+  const amt = parseFloat(r.amount) || 0;
+  if (r.type === 'income') return amt;
+  if (r.type === 'expense') return -amt;
+  if (r.type === 'transfer') return r.transfer_direction === 'in' ? amt : -amt;
+  return 0;
+};
+const adjustWallet = (walletId, delta, userId) =>
+  walletId && delta ? query('UPDATE wallets SET balance = balance + $1 WHERE id=$2 AND user_id=$3', [delta, walletId, userId]) : null;
+
 // ── PUT /api/transactions/:id ────────────────────────────────────────────────
 const update = async (req, res) => {
   try {
     const userId = req.user.userId;
     const { wallet_id, category_id, type, amount, description, payment_name, status, transaction_date } = req.body;
+    if (parseAmount(amount) === null) {
+      return res.status(400).json({ success: false, message: 'A valid positive amount is required' });
+    }
 
     // Don't allow editing transfer type via regular update
+    const old = await query(
+      "SELECT wallet_id, type, amount, transfer_direction FROM transactions WHERE id=$1 AND user_id=$2 AND type != 'transfer'",
+      [req.params.id, userId]
+    );
     const result = await query(`
       UPDATE transactions SET wallet_id=$1, category_id=$2, type=$3, amount=$4,
         description=$5, payment_name=$6, status=$7, transaction_date=$8, updated_at=NOW()
@@ -183,6 +202,11 @@ const update = async (req, res) => {
     `, [wallet_id, category_id, type, amount, encrypt(description), payment_name, status, transaction_date, req.params.id, userId]);
 
     if (!result.rows.length) return res.status(404).json({ success: false, message: 'Transaction not found' });
+    // Keep wallet balances in step with the edit: undo the old effect, apply the new one.
+    if (old.rows.length) {
+      await adjustWallet(old.rows[0].wallet_id, -balanceDelta(old.rows[0]), userId);
+      await adjustWallet(wallet_id, balanceDelta({ type, amount }), userId);
+    }
     const full = await query(`${BASE_SELECT} WHERE t.id=$1`, [result.rows[0].id]);
     recordBalanceSnapshot(userId);
     res.json({ success: true, data: decryptTx(full.rows[0]) });
@@ -203,14 +227,20 @@ const remove = async (req, res) => {
     );
     if (!check.rows.length) return res.status(404).json({ success: false, message: 'Not found' });
 
+    let removed;
     if (check.rows[0].type === 'transfer' && check.rows[0].transfer_pair_id) {
-      await query(
-        'DELETE FROM transactions WHERE transfer_pair_id=$1 AND user_id=$2',
+      removed = await query(
+        'DELETE FROM transactions WHERE transfer_pair_id=$1 AND user_id=$2 RETURNING wallet_id, type, amount, transfer_direction',
         [check.rows[0].transfer_pair_id, userId]
       );
     } else {
-      await query('DELETE FROM transactions WHERE id=$1 AND user_id=$2', [req.params.id, userId]);
+      removed = await query(
+        'DELETE FROM transactions WHERE id=$1 AND user_id=$2 RETURNING wallet_id, type, amount, transfer_direction',
+        [req.params.id, userId]
+      );
     }
+    // Give the money back: reverse each deleted row's effect on its wallet.
+    for (const r of removed.rows) await adjustWallet(r.wallet_id, -balanceDelta(r), userId);
 
     recordBalanceSnapshot(userId);
     res.json({ success: true, message: 'Transaction deleted' });

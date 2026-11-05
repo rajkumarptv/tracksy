@@ -144,7 +144,6 @@ router.post('/receipt/scan', auth, upload.single('file'), receiptCtrl.scan);
 // Admin — requires valid JWT + is_admin flag
 router.get('/admin/stats',                    auth, adminAuth, adminCtrl.getStats);
 router.get('/admin/users',                    auth, adminAuth, adminCtrl.getUsers);
-router.patch('/admin/users/:userId/premium',  auth, adminAuth, adminCtrl.togglePremium);
 
 // Admin — read-only family oversight
 router.get('/admin/families',                       auth, adminAuth, adminCtrl.listFamilies);
@@ -158,11 +157,7 @@ router.post('/gmail/sync',        auth, gmailCtrl.syncNow);
 router.post('/gmail/toggle',      auth, gmailCtrl.toggleSync);
 router.post('/gmail/disconnect',  auth, gmailCtrl.disconnect);
 
-// Broker integrations (Dhan)
-const brokerCtrl = require('../controllers/brokerController');
-router.post('/broker/dhan/holdings', auth, brokerCtrl.getDhanHoldings);
-
-// Family — consent-based: create (premium), join by code, leave, overview
+// Family — consent-based: create, join by code, leave, overview
 const familyCtrl = require('../controllers/familyController');
 router.get('/family/status',          auth, familyCtrl.getStatus);
 router.post('/family/create',         auth, familyCtrl.createFamily);

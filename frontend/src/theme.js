@@ -1,73 +1,67 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   Tracksy shared theme — SINGLE SOURCE OF TRUTH for all pages.
-   Values come from the Dashboard page design (the app-wide standard).
+   Tracksy shared theme for chart/inline-styled pages — mirrors the CSS
+   variables in index.css (single palette: indigo brand, green income,
+   red expense, slate neutrals). Flat surfaces, no gradients or glows.
    Usage:  import { THEME, ACCENT } from '../theme';
            const c = isDark ? THEME.dark : THEME.light;
 ═══════════════════════════════════════════════════════════════════════ */
 
-export const ACCENT = '#8B5CF6';
+export const ACCENT = '#4F46E5';
+
+const PIE_LIGHT = ['#4F46E5', '#0EA5E9', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#14B8A6', '#64748B'];
+const PIE_DARK  = ['#818CF8', '#38BDF8', '#34D399', '#FBBF24', '#F87171', '#A78BFA', '#2DD4BF', '#94A3B8'];
 
 export const THEME = {
   light: {
-    /* semantic */
-    green:'#22C55E', red:'#EC4899', blue:'#3B82F6', orange:'#F59E0B', purple:'#8B5CF6',
-    /* text */
-    text:'#101828', text2:'#667085', text3:'#9896B2',
-    /* surfaces */
-    bg:'#FEFEFE',
+    green:'#059669', red:'#DC2626', blue:'#2563EB', orange:'#D97706', purple:'#4F46E5',
+    text:'#0F172A', text2:'#475569', text3:'#64748B',
+    bg:'#F6F7F9',
     cardBg:'#FFFFFF',
-    surface:'#F7F8FF',
-    hover:'#EAECF0',
-    border:'#EAECF0',
-    divider:'#EAECF0',
-    cardShadow:'0 10px 40px rgba(16,24,40,0.06)',
-    glowShadow:'0 10px 40px rgba(16,24,40,0.06)',
-    /* special cards */
-    balanceBorder:'2px solid #BBF7D0',
+    surface:'#F4F6F8',
+    hover:'#EDF0F3',
+    border:'#E3E7EC',
+    divider:'#E3E7EC',
+    cardShadow:'0 1px 3px rgba(15,23,42,0.08), 0 1px 2px rgba(15,23,42,0.04)',
+    glowShadow:'0 1px 3px rgba(15,23,42,0.08), 0 1px 2px rgba(15,23,42,0.04)',
+    balanceBorder:'1px solid #E3E7EC',
     balanceBg:'#FFFFFF',
-    flowBorder:'1px solid #E9D5FF',
+    flowBorder:'1px solid #E3E7EC',
     flowBg:'#FFFFFF',
-    salaryBg:'#FFFFFF', salaryBorder:'1px solid transparent',
-    spendBg:'#FFFFFF', spendBorder:'1px solid transparent',
-    tileBg:'#F7F8FF',
-    viewDetailsBg:'#F0FDF4', viewDetailsBorder:'1.5px solid #BBF7D0',
-    insightBg:'#F5F3FF',
-    /* charts */
-    grid:'#EAECF0', axis:'#667085',
-    areaTop:'rgba(34,197,94,0.22)',
-    stroke:'#22C55E', strokeW:3,
-    barTrack:'#EEF0F6', track:'#EEF0F6',
-    pie:['#7CFF6B','#3B82F6','#8B5CF6','#F59E0B','#EC4899','#22C55E','#A78BFA','#00CEC9'],
+    salaryBg:'#FFFFFF', salaryBorder:'1px solid #E3E7EC',
+    spendBg:'#FFFFFF', spendBorder:'1px solid #E3E7EC',
+    tileBg:'#F4F6F8',
+    viewDetailsBg:'#EEF0FF', viewDetailsBorder:'1px solid #C7CCFA',
+    insightBg:'#EEF0FF',
+    grid:'#E3E7EC', axis:'#64748B',
+    areaTop:'rgba(79,70,229,0.18)',
+    stroke:'#4F46E5', strokeW:2.5,
+    barTrack:'#EDF0F3', track:'#EDF0F3',
+    pie: PIE_LIGHT,
   },
   dark: {
-    /* semantic */
-    green:'#2BFF88', red:'#FF4D8D', blue:'#4F8DFF', orange:'#FF9D00', purple:'#8B5CF6',
-    /* text */
-    text:'#FFFFFF', text2:'#B8C2D1', text3:'#A7B1C2',
-    /* surfaces */
-    bg:'#020617',
-    cardBg:'#071730',
-    surface:'rgba(255,255,255,0.05)',
-    hover:'rgba(255,255,255,0.08)',
-    border:'rgba(255,255,255,0.08)',
-    divider:'rgba(255,255,255,0.08)',
-    cardShadow:'0 20px 40px rgba(0,0,0,0.45)',
-    glowShadow:'0 20px 40px rgba(0,0,0,0.45), 0 0 40px rgba(139,92,246,0.1)',
-    /* special cards */
-    balanceBorder:'1px solid rgba(43,255,136,0.4)',
-    balanceBg:'linear-gradient(135deg, #08222D 0%, #061B38 100%)',
-    flowBorder:'1px solid rgba(139,92,246,0.25)',
-    flowBg:'linear-gradient(135deg, #0B1136 0%, #09152B 100%)',
-    salaryBg:'linear-gradient(135deg, #08263A 0%, #081A42 100%)', salaryBorder:'1px solid rgba(79,141,255,0.2)',
-    spendBg:'#071730', spendBorder:'1px solid rgba(255,255,255,0.08)',
-    tileBg:'rgba(255,255,255,0.05)',
-    viewDetailsBg:'rgba(43,255,136,0.1)', viewDetailsBorder:'1.5px solid rgba(43,255,136,0.35)',
-    insightBg:'rgba(124,58,237,.14)',
-    /* charts */
-    grid:'rgba(255,255,255,0.05)', axis:'rgba(255,255,255,0.4)',
-    areaTop:'rgba(43,255,136,0.4)',
-    stroke:'#2BFF88', strokeW:2.5,
-    barTrack:'rgba(255,255,255,0.08)', track:'rgba(255,255,255,0.08)',
-    pie:['#7CFF6B','#4F8DFF','#8B5CF6','#FF9D00','#FF4D8D','#2BFF88','#A78BFA','#00CEC9'],
+    green:'#34D399', red:'#F87171', blue:'#60A5FA', orange:'#FBBF24', purple:'#818CF8',
+    text:'#F1F5F9', text2:'#CBD5E1', text3:'#94A3B8',
+    bg:'#0B1220',
+    cardBg:'#111A2B',
+    surface:'#162036',
+    hover:'#1B2740',
+    border:'rgba(148,163,184,0.18)',
+    divider:'rgba(148,163,184,0.18)',
+    cardShadow:'0 1px 3px rgba(0,0,0,0.45)',
+    glowShadow:'0 1px 3px rgba(0,0,0,0.45)',
+    balanceBorder:'1px solid rgba(148,163,184,0.18)',
+    balanceBg:'#111A2B',
+    flowBorder:'1px solid rgba(148,163,184,0.18)',
+    flowBg:'#111A2B',
+    salaryBg:'#111A2B', salaryBorder:'1px solid rgba(148,163,184,0.18)',
+    spendBg:'#111A2B', spendBorder:'1px solid rgba(148,163,184,0.18)',
+    tileBg:'#162036',
+    viewDetailsBg:'rgba(129,140,248,0.14)', viewDetailsBorder:'1px solid rgba(129,140,248,0.35)',
+    insightBg:'rgba(129,140,248,0.14)',
+    grid:'rgba(148,163,184,0.12)', axis:'rgba(203,213,225,0.55)',
+    areaTop:'rgba(129,140,248,0.30)',
+    stroke:'#818CF8', strokeW:2.5,
+    barTrack:'rgba(148,163,184,0.16)', track:'rgba(148,163,184,0.16)',
+    pie: PIE_DARK,
   },
 };

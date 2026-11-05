@@ -15,14 +15,6 @@ function oauthClient() {
   );
 }
 
-async function isPremium(userId) {
-  const r = await query('SELECT is_premium, premium_expires_at FROM users WHERE id=$1', [userId]);
-  const u = r.rows[0];
-  if (!u || !u.is_premium) return false;
-  if (u.premium_expires_at && new Date(u.premium_expires_at) < new Date()) return false;
-  return true;
-}
-
 /* ══════════════════════════════════════════════════════════════════════════
    EMAIL PARSER — best-effort extraction of bank / UPI transaction emails
 ══════════════════════════════════════════════════════════════════════════ */
@@ -283,7 +275,6 @@ const status = async (req, res) => {
       connected:    !!u?.gmail_connected,
       sync_enabled: !!u?.gmail_sync_enabled,
       last_sync:    u?.gmail_last_sync || null,
-      is_premium:   await isPremium(req.user.userId),
     }});
   } catch (err) {
     res.status(500).json({ success:false, message:'Server error' });
@@ -293,8 +284,6 @@ const status = async (req, res) => {
 // POST /api/gmail/sync  (manual trigger)
 const syncNow = async (req, res) => {
   try {
-    if (!(await isPremium(req.user.userId)))
-      return res.status(403).json({ success:false, code:'FREE_LIMIT', message:'Gmail auto-import is a Premium feature.' });
     const result = await syncUserGmail(req.user.userId, { days: 30 });
     res.json({ success:true, data: result });
   } catch (err) {

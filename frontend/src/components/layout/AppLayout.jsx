@@ -6,15 +6,12 @@ import Sidebar from './Sidebar';
 import BottomNav from './BottomNav';
 import { PageLoader } from '../ui';
 import useThemeStore from '../../store/themeStore';
-import usePremiumStore from '../../store/premiumStore';
 import useAuthStore from '../../store/authStore';
-import { PremiumModal } from '../../pages/OtherPages';
 import api from '../../services/api';
 import styles from './AppLayout.module.css';
 
 export default function AppLayout() {
   const { initTheme } = useThemeStore();
-  const { open: premiumOpen, closePremium } = usePremiumStore();
   const { updateUser } = useAuthStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
@@ -83,8 +80,6 @@ export default function AppLayout() {
 
       {/* Mobile bottom nav */}
       <BottomNav />
-
-      {premiumOpen && <PremiumModal onClose={closePremium} />}
     </div>
   );
 }

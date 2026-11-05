@@ -21,7 +21,7 @@ const BRANDS = {
   bank:         { type:'badge',   bg:'#1d4ed8', text:'🏦', fw:700 },
   bank_transfer:{ type:'badge',   bg:'#1d4ed8', text:'🏦', fw:700 },
   netbanking:   { type:'badge',   bg:'#1d4ed8', text:'NB', fw:800 },
-  cash:         { type:'badge',   bg:'#16a34a', text:'₹',  fw:700 },
+  cash:         { type:'badge',   bg:'#047857', text:'₹',  fw:700 },
 
   /* Cards */
   credit:       { type:'badge',   bg:'#6d28d9', text:'CC', fw:800 },
@@ -33,7 +33,7 @@ const BRANDS = {
   crypto:       { type:'badge',   bg:'#d97706', text:'₿',  fw:700 },
   asset:        { type:'badge',   bg:'#0891b2', text:'📈', fw:700 },
   loan:         { type:'badge',   bg:'#d97706', text:'📋', fw:700 },
-  lending:      { type:'badge',   bg:'#7c3aed', text:'🤝', fw:700 },
+  lending:      { type:'badge',   bg:'#4338CA', text:'🤝', fw:700 },
   other:        { type:'badge',   bg:'#6b7280', text:'···',fw:700 },
 };
 

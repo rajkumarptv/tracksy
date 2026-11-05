@@ -3,14 +3,6 @@ const { decryptRow } = require('../utils/crypto');
 
 const decryptWallet = row => decryptRow(row, ['name']);
 
-async function isPremium(userId) {
-  const r = await query('SELECT is_premium, premium_expires_at FROM users WHERE id=$1', [userId]);
-  const u = r.rows[0];
-  if (!u || !u.is_premium) return false;
-  if (u.premium_expires_at && new Date(u.premium_expires_at) < new Date()) return false;
-  return true;
-}
-
 // Generate an unambiguous 6-char code (no 0/O/1/I)
 function genCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -18,10 +10,6 @@ function genCode() {
   for (let i = 0; i < 6; i++) c += chars[Math.floor(Math.random() * chars.length)];
   return c;
 }
-
-const premiumGate = (res) =>
-  res.status(403).json({ success:false, code:'FREE_LIMIT_FAMILY',
-    message:'Family Budget is a Premium feature. Upgrade to create or join a family.' });
 
 /* ── GET /api/family/status ─────────────────────────────────────────────────
    Any user: their family state, role, code (primary only), and members list.
@@ -52,7 +40,6 @@ const getStatus = async (req, res) => {
       // Only the primary sees/shares the code
       family_code: me?.family_role === 'primary' ? me.family_code : null,
       members,
-      is_premium:  await isPremium(userId),
     }});
   } catch (err) {
     console.error('Family status error:', err);
@@ -66,8 +53,6 @@ const getStatus = async (req, res) => {
 const createFamily = async (req, res) => {
   try {
     const userId = req.user.userId;
-    if (!(await isPremium(userId))) return premiumGate(res);
-
     const { name, share_mode } = req.body;
     if (!name || !name.trim())
       return res.status(400).json({ success:false, message:'Family name is required' });
@@ -106,8 +91,6 @@ const createFamily = async (req, res) => {
 const joinFamily = async (req, res) => {
   try {
     const userId = req.user.userId;
-    if (!(await isPremium(userId))) return premiumGate(res);
-
     const code = (req.body.code || '').trim().toUpperCase();
     if (!code) return res.status(400).json({ success:false, message:'Family code is required' });
 
@@ -182,8 +165,6 @@ const removeMember = async (req, res) => {
 const getOverview = async (req, res) => {
   try {
     const userId = req.user.userId;
-    if (!(await isPremium(userId))) return premiumGate(res);
-
     const me = (await query('SELECT family_id, family_role FROM users WHERE id=$1', [userId])).rows[0];
     if (!me?.family_id)
       return res.status(403).json({ success:false, code:'NOT_PRIMARY',
@@ -253,8 +234,6 @@ const getMemberDetail = async (req, res) => {
   try {
     const userId   = req.user.userId;
     const memberId = req.params.id;
-    if (!(await isPremium(userId))) return premiumGate(res);
-
     const me = (await query('SELECT family_id, family_role FROM users WHERE id=$1', [userId])).rows[0];
     if (!me?.family_id)
       return res.status(403).json({ success:false, message:'You are not in a family.' });

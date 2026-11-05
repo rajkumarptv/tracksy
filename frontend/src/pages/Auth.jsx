@@ -11,30 +11,29 @@ function AuthShell({ children }) {
   const { theme, toggleTheme } = useThemeStore();
   return (
     <div style={{ minHeight:'100vh', display:'flex', background:'var(--bg)' }}>
-      {/* Left decorative panel */}
+      {/* Left brand panel */}
       <div className="hide-mobile" style={{
         width:'42%', flexShrink:0,
-        background:'linear-gradient(160deg,#8B5CF6 0%,#a29bfe 55%,#fd79a8 100%)',
-        display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center',
-        position:'relative', overflow:'hidden', padding:48,
+        background:'linear-gradient(180deg,#1E1B4B 0%,#312E81 100%)',
+        display:'flex', flexDirection:'column', justifyContent:'center',
+        position:'relative', overflow:'hidden', padding:'64px 56px',
       }}>
-        <div style={{ position:'absolute', top:-80, left:-80, width:280, height:280, background:'rgba(255,255,255,.07)', borderRadius:'50%' }}/>
-        <div style={{ position:'absolute', bottom:-60, right:-60, width:220, height:220, background:'rgba(255,255,255,.05)', borderRadius:'50%' }}/>
-        <div style={{ fontSize:72, marginBottom:24 }}>💰</div>
-        <div style={{ fontSize:28, fontWeight:800, color:'#fff', marginBottom:12, textAlign:'center', letterSpacing:-0.5 }}>
-          Take Control of Your<br/>Financial Future
+        <div style={{ fontSize:30, fontWeight:700, color:'#fff', marginBottom:12, letterSpacing:-0.6, lineHeight:1.2 }}>
+          Know where your money<br/>goes — and where it's headed.
         </div>
-        <div style={{ fontSize:15, color:'rgba(255,255,255,.75)', textAlign:'center', lineHeight:1.6 }}>
-          Track, manage, and grow your money<br/>with confidence.
+        <div style={{ fontSize:15, color:'rgba(255,255,255,.7)', lineHeight:1.6, maxWidth:380 }}>
+          Track spending, plan budgets and goals, and stay on top of debts — all in one place.
         </div>
-        <div style={{ marginTop:40, display:'flex', gap:20 }}>
-          {[['📊','Analytics'],['🎯','Goals'],['💳','Budgets']].map(([e,l]) => (
-            <div key={l} style={{ background:'rgba(255,255,255,.15)', borderRadius:14, padding:'14px 18px', textAlign:'center', backdropFilter:'blur(8px)' }}>
-              <div style={{ fontSize:24, marginBottom:4 }}>{e}</div>
-              <div style={{ fontSize:12, color:'rgba(255,255,255,.85)', fontWeight:600 }}>{l}</div>
-            </div>
+        <ul style={{ listStyle:'none', marginTop:36, display:'flex', flexDirection:'column', gap:14 }}>
+          {['Every account, card and loan in one view','Budgets and goals that update as you spend','Clear insights, not spreadsheets'].map(t => (
+            <li key={t} style={{ display:'flex', alignItems:'center', gap:10, fontSize:14, color:'rgba(255,255,255,.85)' }}>
+              <span style={{ width:20, height:20, borderRadius:'50%', background:'rgba(255,255,255,.14)', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </span>
+              {t}
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
 
       {/* Right form panel */}
@@ -48,8 +47,8 @@ function AuthShell({ children }) {
 
         {/* Logo */}
         <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:32 }}>
-          <img src="/icons/logo.png" alt="Tracksy" style={{ width:44, height:44, borderRadius:12, objectFit:'cover', boxShadow:'0 4px 14px rgba(139,92,246,.35)' }} />
-          <span style={{ fontSize:22, fontWeight:800, letterSpacing:-0.5, background:'linear-gradient(135deg,var(--accent),#a29bfe)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text' }}>Tracksy</span>
+          <img src="/icons/logo.png" alt="Tracksy" style={{ width:40, height:40, borderRadius:10, objectFit:'cover', }} />
+          <span style={{ fontSize:22, fontWeight:700, letterSpacing:-0.5, color:'var(--text)' }}>Tracksy</span>
         </div>
 
         <div style={{ width:'100%', maxWidth:400 }}>{children}</div>
@@ -92,14 +91,14 @@ function SocialButtons() {
       {/* Trust / feature icons — visible on mobile too (left panel is hidden there) */}
       <div style={{ display:'flex', justifyContent:'center', gap:22, marginTop:26 }}>
         {[
-          { c:'#22C55E', label:'Bank-grade\nencryption', icon:(
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+          { c:'#059669', label:'Bank-grade\nencryption', icon:(
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
           )},
           { c:'#3B82F6', label:'Real-time\ninsights', icon:(
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
           )},
-          { c:'#F59E0B', label:'Goals &\nbudgets', icon:(
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>
+          { c:'#D97706', label:'Goals &\nbudgets', icon:(
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>
           )},
         ].map(({ c, label, icon }) => (
           <div key={label} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:7, flex:1, maxWidth:96 }}>
@@ -367,9 +366,9 @@ export function ResetPassword() {
       )}
 
       {success ? (
-        <div style={{ background:'rgba(34,197,94,.1)', border:'1.5px solid rgba(34,197,94,.3)', borderRadius:14, padding:'20px', textAlign:'center' }}>
+        <div style={{ background:'rgba(5,150,105,.1)', border:'1.5px solid rgba(5,150,105,.3)', borderRadius:14, padding:'20px', textAlign:'center' }}>
           <div style={{ fontSize:32, marginBottom:10 }}>✅</div>
-          <div style={{ fontSize:15, fontWeight:700, color:'#22C55E', marginBottom:6 }}>Password reset successfully!</div>
+          <div style={{ fontSize:15, fontWeight:700, color:'#059669', marginBottom:6 }}>Password reset successfully!</div>
           <div style={{ fontSize:13, color:'var(--text3)' }}>Redirecting to login in 3 seconds…</div>
         </div>
       ) : (

@@ -46,12 +46,12 @@ const THIS_YEAR = new Date().getFullYear();
 const YEARS = [THIS_YEAR, THIS_YEAR - 1, THIS_YEAR - 2];
 
 const CAT_COLORS = {
-  Food:      { bg:'#e8f9f0', color:'#22C55E' },
+  Food:      { bg:'#e8f9f0', color:'#059669' },
   Income:    { bg:'#eef3ff', color:'#3B82F6' },
   Transport: { bg:'#eef3ff', color:'#3B82F6' },
   Shopping:  { bg:'#fff8ea', color:'#f5a623' },
   Health:    { bg:'#ffe8f0', color:'#e0457b' },
-  Bills:     { bg:'#f0edff', color:'#8B5CF6' },
+  Bills:     { bg:'#f0edff', color:'#4F46E5' },
 };
 
 /* Group transactions by day — "Today", "Yesterday", then "28 May 2026" */
@@ -79,7 +79,7 @@ function groupByMonth(txList) {
 const CREDIT_WALLET_TYPES = ['visa', 'mastercard'];
 
 /* ── Multi-segment mini donut (SVG, dashboard pie palette) ────────────── */
-const DONUT_COLORS = ['#8B5CF6','#3B82F6','#EC4899','#F59E0B','#22C55E','#00CEC9'];
+const DONUT_COLORS = ['#4F46E5','#3B82F6','#DC2626','#D97706','#059669','#00CEC9'];
 function MiniDonut({ segments, size = 110, stroke = 14 }) {
   const r = (size - stroke) / 2;
   const circ = 2 * Math.PI * r;
@@ -119,17 +119,17 @@ function TxSummaryCard({ txList, fmt, isDark, periodLabel }) {
   });
   const segs = Object.values(catMap).sort((a,b)=>b-a).slice(0,6);
 
-  const green = isDark ? '#2BFF88' : '#22C55E';
-  const pink  = isDark ? '#FF4D8D' : '#EC4899';
+  const green = isDark ? '#34D399' : '#059669';
+  const pink  = isDark ? '#F87171' : '#DC2626';
   const blue  = isDark ? '#4F8DFF' : '#3B82F6';
 
   return (
     <div style={{
-      margin:'0 16px 4px', padding:'18px 18px', borderRadius:24,
+      margin:'0 16px 4px', padding:'18px 18px', borderRadius:14,
       background: isDark ? 'linear-gradient(135deg, #0B1136 0%, #09152B 100%)' : '#FFFFFF',
-      border: `1px solid ${isDark ? 'rgba(139,92,246,0.25)' : '#E9D5FF'}`,
+      border: `1px solid ${isDark ? 'rgba(79,70,229,0.25)' : '#C7CCFA'}`,
       boxShadow: isDark
-        ? '0 20px 40px rgba(0,0,0,0.45), 0 0 40px rgba(139,92,246,0.1)'
+        ? '0 20px 40px rgba(0,0,0,0.45), 0 0 40px rgba(79,70,229,0.1)'
         : '0 10px 40px rgba(16,24,40,0.06)',
       display:'flex', alignItems:'center', gap:14,
     }}>
@@ -138,7 +138,7 @@ function TxSummaryCard({ txList, fmt, isDark, periodLabel }) {
         <div style={{ fontSize:12.5, color: isDark ? '#B8C2D1' : '#667085', display:'flex', alignItems:'center', gap:5 }}>
           {periodLabel} <ChevronDown size={12}/>
         </div>
-        <div style={{ fontSize:26, fontWeight:800, color: isDark ? '#fff' : '#101828', fontFamily:'Space Grotesk, Inter, sans-serif', letterSpacing:'-1px', marginTop:4 }}>
+        <div style={{ fontSize:26, fontWeight:800, color: isDark ? '#fff' : '#101828', fontFamily:'Inter, sans-serif', letterSpacing:'-1px', marginTop:4 }}>
           {fmt(expense,{noDecimals:true})}
         </div>
         <div style={{ fontSize:12, color: isDark ? '#B8C2D1' : '#667085', marginTop:2 }}>Total Spent</div>
@@ -149,8 +149,8 @@ function TxSummaryCard({ txList, fmt, isDark, periodLabel }) {
         <div style={{ position:'relative', flexShrink:0 }}>
           <MiniDonut segments={segs}/>
           <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center' }}>
-            <div style={{ width:38, height:38, borderRadius:'50%', border:`1.5px solid ${isDark?'rgba(139,92,246,.5)':'#E9D5FF'}`, display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <TrendingUp size={15} color="#8B5CF6"/>
+            <div style={{ width:38, height:38, borderRadius:'50%', border:`1.5px solid ${isDark?'rgba(79,70,229,.5)':'#C7CCFA'}`, display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <TrendingUp size={15} color="#4F46E5"/>
             </div>
           </div>
         </div>
@@ -160,15 +160,15 @@ function TxSummaryCard({ txList, fmt, isDark, periodLabel }) {
       <div style={{ display:'flex', flexDirection:'column', gap:8, flexShrink:0 }}>
         <div>
           <div style={{ fontSize:11, color: isDark ? '#B8C2D1' : '#667085' }}>Income</div>
-          <div style={{ fontSize:13.5, fontWeight:800, color:green, fontFamily:'Space Grotesk, Inter, sans-serif' }}>{fmt(income,{noDecimals:true})}</div>
+          <div style={{ fontSize:13.5, fontWeight:800, color:green, fontFamily:'Inter, sans-serif' }}>{fmt(income,{noDecimals:true})}</div>
         </div>
         <div>
           <div style={{ fontSize:11, color: isDark ? '#B8C2D1' : '#667085' }}>Expenses</div>
-          <div style={{ fontSize:13.5, fontWeight:800, color:pink, fontFamily:'Space Grotesk, Inter, sans-serif' }}>{fmt(expense,{noDecimals:true})}</div>
+          <div style={{ fontSize:13.5, fontWeight:800, color:pink, fontFamily:'Inter, sans-serif' }}>{fmt(expense,{noDecimals:true})}</div>
         </div>
         <div>
           <div style={{ fontSize:11, color: isDark ? '#B8C2D1' : '#667085' }}>Net Savings</div>
-          <div style={{ fontSize:13.5, fontWeight:800, color:blue, fontFamily:'Space Grotesk, Inter, sans-serif' }}>{net>=0?'':'−'}{fmt(Math.abs(net),{noDecimals:true})}</div>
+          <div style={{ fontSize:13.5, fontWeight:800, color:blue, fontFamily:'Inter, sans-serif' }}>{net>=0?'':'−'}{fmt(Math.abs(net),{noDecimals:true})}</div>
         </div>
       </div>
     </div>
@@ -310,7 +310,7 @@ function InlineCategoryCell({ tx, categories, onSave, catColor }) {
     <div ref={ref} style={{ position:'relative', display:'inline-block' }}>
       <button type="button" onClick={() => !saving && setOpen(o => !o)}
         title="Click to change category"
-        style={{ display:'flex', alignItems:'center', gap:5, padding:'4px 10px 4px 7px', borderRadius:20, border:'1.5px solid transparent', cursor: saving ? 'wait' : 'pointer',
+        style={{ display:'flex', alignItems:'center', gap:5, padding:'4px 10px 4px 7px', borderRadius:14, border:'1.5px solid transparent', cursor: saving ? 'wait' : 'pointer',
           background: catColor.bg, color: catColor.color, fontSize:11.5, fontWeight:700,
           transition:'all .15s', opacity: saving ? 0.6 : 1,
           outline:'none',
@@ -351,7 +351,7 @@ function InlineCategoryCell({ tx, categories, onSave, catColor }) {
                   }}
                   onMouseEnter={e => { if (!isSel) e.currentTarget.style.background='var(--surface2)'; }}
                   onMouseLeave={e => { if (!isSel) e.currentTarget.style.background='transparent'; }}>
-                  <span style={{ width:22, height:22, borderRadius:6, background:`${c.color||'#8B5CF6'}22`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, flexShrink:0 }}>{c.emoji}</span>
+                  <span style={{ width:22, height:22, borderRadius:6, background:`${c.color||'#4F46E5'}22`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, flexShrink:0 }}>{c.emoji}</span>
                   <span style={{ fontWeight:600, flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{c.name}</span>
                   {isSel && <span style={{ color:'var(--accent)', fontSize:13, flexShrink:0 }}>✓</span>}
                 </button>
@@ -557,12 +557,12 @@ export default function Transactions() {
 
       {/* ── Desktop Topbar ── */}
       <div className={styles.desktopOnly}>
-        <Topbar title={t('tx_title')} subtitle={t('tx_subtitle')}>
+        <Topbar title={t('tx_title')} subtitle={t('tx_subtitle')} showSearch={false}>
           <button className="btn btn-ghost btn-sm" style={{ display:'flex', alignItems:'center', gap:6 }} onClick={handleExportCSV} disabled={exporting}>
             <Upload size={13}/> {exporting ? 'Exporting…' : t('tx_export')}
           </button>
           <button className="btn btn-primary btn-sm"
-            style={{ display:'flex', alignItems:'center', gap:6, background:'linear-gradient(135deg,#8B5CF6,#3B82F6)', border:'none', boxShadow:'0 4px 14px rgba(139,92,246,.35)' }}
+            style={{ display:'flex', alignItems:'center', gap:6, background:'#4F46E5', border:'none', boxShadow:'0 4px 14px rgba(79,70,229,.35)' }}
             onClick={openAdd}>
             <Plus size={13}/> {t('tx_add')}
           </button>
@@ -633,7 +633,7 @@ export default function Transactions() {
         <div className={styles.mobileHeaderRow}>
           <h1 className={styles.mobileTitle}>{t('tx_title')}</h1>
           <button className={styles.mobileDownload} onClick={openAdd}>
-            <Plus size={20} color="#8B5CF6"/>
+            <Plus size={20} color="#4F46E5"/>
           </button>
         </div>
 
@@ -705,7 +705,7 @@ export default function Transactions() {
             <div className={`${styles.desktopOnly} ${styles.tableCard}`}>
               {/* Bulk action bar */}
               {selectedIds.size > 0 && (
-                <div style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 18px', background:'rgba(236,72,153,.07)', borderBottom:'1px solid rgba(236,72,153,.15)' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:12, padding:'10px 18px', background:'rgba(220,38,38,.07)', borderBottom:'1px solid rgba(220,38,38,.15)' }}>
                   <span style={{ fontSize:13, fontWeight:600, color:'var(--text)' }}>
                     {selectedIds.size} selected
                   </span>
@@ -715,7 +715,7 @@ export default function Transactions() {
                     Deselect All
                   </button>
                   <button onClick={bulkDelete} disabled={bulkDeleting}
-                    style={{ padding:'6px 16px', borderRadius:9, border:'none', background:'#EC4899', color:'#fff', fontSize:12.5, fontWeight:700, cursor:'pointer', opacity: bulkDeleting ? .6 : 1 }}>
+                    style={{ padding:'6px 16px', borderRadius:9, border:'none', background:'#DC2626', color:'#fff', fontSize:12.5, fontWeight:700, cursor:'pointer', opacity: bulkDeleting ? .6 : 1 }}>
                     {bulkDeleting ? '⏳ Deleting…' : `🗑 Delete ${selectedIds.size}`}
                   </button>
                 </div>
@@ -729,7 +729,7 @@ export default function Transactions() {
                         <input type="checkbox"
                           checked={txList.length > 0 && txList.every(tx => selectedIds.has(tx.id))}
                           onChange={e => setSelectedIds(e.target.checked ? new Set(txList.map(t => t.id)) : new Set())}
-                          style={{ width:15, height:15, cursor:'pointer', accentColor:'#8B5CF6' }}
+                          style={{ width:15, height:15, cursor:'pointer', accentColor:'#4F46E5' }}
                         />
                       </th>
                       {[t('tx_col_date'),t('tx_col_amount'),t('tx_col_name'),t('tx_col_wallet'),t('tx_col_category'),t('tx_col_status'),''].map(h => (
@@ -745,25 +745,25 @@ export default function Transactions() {
                         ? { bg:'rgba(59,130,246,.1)', color:'#3B82F6' }
                         : (CAT_COLORS[tx.category_name] || { bg:'var(--accent-light)', color:'var(--accent)' });
                       const amtColor = isTransfer
-                        ? (isOut ? '#EC4899' : '#22C55E')
-                        : tx.type === 'income' ? '#22C55E' : '#EC4899';
+                        ? (isOut ? '#DC2626' : '#059669')
+                        : tx.type === 'income' ? '#059669' : '#DC2626';
                       const amtPrefix = isTransfer ? (isOut ? '−' : '+') : tx.type === 'income' ? '+' : '−';
                       return (
                         <tr key={tx.id}
                           onMouseEnter={e => e.currentTarget.style.background='var(--surface2)'}
-                          onMouseLeave={e => e.currentTarget.style.background=selectedIds.has(tx.id)?'rgba(139,92,246,.06)':''}
-                          style={{ transition:'background .1s', cursor:'default', background: selectedIds.has(tx.id) ? 'rgba(139,92,246,.06)' : '' }}>
+                          onMouseLeave={e => e.currentTarget.style.background=selectedIds.has(tx.id)?'rgba(79,70,229,.06)':''}
+                          style={{ transition:'background .1s', cursor:'default', background: selectedIds.has(tx.id) ? 'rgba(79,70,229,.06)' : '' }}>
                           <td style={{ padding:'13px 10px 13px 18px', borderBottom:'1px solid var(--border-light)', width:36 }}>
                             <input type="checkbox" checked={selectedIds.has(tx.id)}
                               onChange={() => toggleSelect(tx.id)}
-                              style={{ width:15, height:15, cursor:'pointer', accentColor:'#8B5CF6' }}
+                              style={{ width:15, height:15, cursor:'pointer', accentColor:'#4F46E5' }}
                             />
                           </td>
                           <td style={{ padding:'13px 18px', borderBottom:'1px solid var(--border-light)', fontSize:12.5, color:'var(--text3)', whiteSpace:'nowrap' }}>
                             {new Date(tx.transaction_date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
                           </td>
-                          <td style={{ padding:'13px 18px', borderBottom:'1px solid var(--border-light)', fontWeight:700, color:amtColor, fontFamily:'Space Grotesk, Inter, sans-serif', fontSize:13.5 }}>
-                            {amtPrefix}{tx.amount}
+                          <td style={{ padding:'13px 18px', borderBottom:'1px solid var(--border-light)', fontWeight:700, color:amtColor, fontFamily:'Inter, sans-serif', fontSize:13.5 }}>
+                            {amtPrefix}{fmt(parseFloat(tx.amount))}
                           </td>
                           <td style={{ padding:'13px 18px', borderBottom:'1px solid var(--border-light)' }}>
                             <div style={{ display:'flex', alignItems:'center', gap:10 }}>
@@ -781,7 +781,7 @@ export default function Transactions() {
                                     {isOut ? t('tx_sent') : t('tx_received')} · {tx.wallet_name}{tx.last_four ? ` *${tx.last_four}` : ''}
                                   </div>
                                 ) : tx.payment_name && tx.description ? (
-                                  <div style={{ fontSize:11, color:'var(--text3)', marginTop:1, fontFamily:'Space Grotesk, Inter, sans-serif', letterSpacing:0 }}>Ref: {tx.payment_name}</div>
+                                  <div style={{ fontSize:11, color:'var(--text3)', marginTop:1, fontFamily:'Inter, sans-serif', letterSpacing:0 }}>Ref: {tx.payment_name}</div>
                                 ) : null}
                               </div>
                             </div>
@@ -791,7 +791,7 @@ export default function Transactions() {
                           </td>
                           <td style={{ padding:'13px 18px', borderBottom:'1px solid var(--border-light)' }}>
                             {isTransfer ? (
-                              <span style={{ fontSize:11.5, fontWeight:700, padding:'4px 10px', borderRadius:20, background:'rgba(59,130,246,.12)', color:'#3B82F6' }}>
+                              <span style={{ fontSize:11.5, fontWeight:700, padding:'4px 10px', borderRadius:14, background:'rgba(59,130,246,.12)', color:'#3B82F6' }}>
                                 🔄 Transfer
                               </span>
                             ) : (
@@ -811,7 +811,7 @@ export default function Transactions() {
                               <div style={{ display:'flex', alignItems:'center', gap:6, animation:'dropFade .15s ease' }}>
                                 <span style={{ fontSize:11.5, color:'var(--text3)', whiteSpace:'nowrap' }}>Delete?</span>
                                 <button onClick={() => { deleteMutation.mutate(tx.id); setDeleteConfirmId(null); }}
-                                  style={{ padding:'5px 10px', borderRadius:8, border:'none', background:'#EC4899', color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>
+                                  style={{ padding:'5px 10px', borderRadius:8, border:'none', background:'#DC2626', color:'#fff', fontSize:12, fontWeight:700, cursor:'pointer' }}>
                                   Yes
                                 </button>
                                 <button onClick={() => setDeleteConfirmId(null)}
@@ -827,13 +827,13 @@ export default function Transactions() {
                                     title="Edit">✏️</button>
                                 )}
                                 <button onClick={() => setBillModalTx(tx)}
-                                  style={{ background:'rgba(139,92,246,.1)', border:'1px solid rgba(139,92,246,.2)', borderRadius:8, cursor:'pointer', padding:'5px 8px', fontSize:12, color:'#8B5CF6', display:'flex', alignItems:'center', gap:3 }}
+                                  style={{ background:'rgba(79,70,229,.1)', border:'1px solid rgba(79,70,229,.2)', borderRadius:8, cursor:'pointer', padding:'5px 8px', fontSize:12, color:'#4F46E5', display:'flex', alignItems:'center', gap:3 }}
                                   title="Attach Bill">
                                   <Paperclip size={12}/>
                                 </button>
                                 <BillBadge txId={tx.id} onClick={() => setBillModalTx(tx)}/>
                                 <button onClick={() => setDeleteConfirmId(tx.id)}
-                                  style={{ background:'var(--red-light)', border:'1px solid rgba(236,72,153,.2)', borderRadius:8, cursor:'pointer', padding:'5px 8px', fontSize:12 }}
+                                  style={{ background:'var(--red-light)', border:'1px solid rgba(220,38,38,.2)', borderRadius:8, cursor:'pointer', padding:'5px 8px', fontSize:12 }}
                                   title="Delete">🗑️</button>
                               </div>
                             )}
@@ -873,7 +873,7 @@ export default function Transactions() {
                   <input type="checkbox"
                     checked={txList.every(tx => selectedIds.has(tx.id))}
                     onChange={e => setSelectedIds(e.target.checked ? new Set(txList.map(t => t.id)) : new Set())}
-                    style={{ width:16, height:16, cursor:'pointer', accentColor:'#8B5CF6' }}
+                    style={{ width:16, height:16, cursor:'pointer', accentColor:'#4F46E5' }}
                   />
                   <span style={{ fontSize:12.5, fontWeight:600, color:'var(--text3)' }}>
                     {selectedIds.size > 0 ? `${selectedIds.size} selected` : 'Select all'}
@@ -882,7 +882,7 @@ export default function Transactions() {
                     <>
                       <div style={{ flex:1 }} />
                       <button onClick={bulkDelete} disabled={bulkDeleting}
-                        style={{ padding:'6px 14px', borderRadius:9, border:'none', background:'#EC4899', color:'#fff', fontSize:12.5, fontWeight:700, cursor:'pointer' }}>
+                        style={{ padding:'6px 14px', borderRadius:9, border:'none', background:'#DC2626', color:'#fff', fontSize:12.5, fontWeight:700, cursor:'pointer' }}>
                         {bulkDeleting ? '⏳' : `🗑 Delete ${selectedIds.size}`}
                       </button>
                     </>
@@ -916,9 +916,9 @@ export default function Transactions() {
                       const isIncome   = tx.type === 'income';
                       const catColor   = isTransfer
                         ? { bg:'rgba(59,130,246,.13)', color:'#3B82F6' }
-                        : (CAT_COLORS[tx.category_name] || { bg:'rgba(139,92,246,.1)', color:'var(--accent)' });
-                      const circleColor = isTransfer ? 'rgba(59,130,246,.13)' : isIncome ? 'rgba(34,197,94,.15)' : 'rgba(139,92,246,.13)';
-                      const iconColor   = isTransfer ? '#3B82F6' : isIncome ? '#22C55E' : '#8B5CF6';
+                        : (CAT_COLORS[tx.category_name] || { bg:'rgba(79,70,229,.1)', color:'var(--accent)' });
+                      const circleColor = isTransfer ? 'rgba(59,130,246,.13)' : isIncome ? 'rgba(5,150,105,.15)' : 'rgba(79,70,229,.13)';
+                      const iconColor   = isTransfer ? '#3B82F6' : isIncome ? '#059669' : '#4F46E5';
                       const amtColor    = isTransfer ? (isOut ? 'var(--red)' : 'var(--green)') : isIncome ? 'var(--green)' : 'var(--red)';
                       const amtPrefix   = isTransfer ? (isOut ? '−' : '+') : isIncome ? '+' : '−';
                       const d = new Date(tx.transaction_date);
@@ -928,13 +928,13 @@ export default function Transactions() {
                       return (
                         <div key={tx.id} style={{ borderBottom: isLast ? 'none' : '1px solid var(--border-light)' }}>
                           {/* Main row */}
-                          <div className={styles.txRow} style={{ borderBottom:'none', background: selectedIds.has(tx.id) ? 'rgba(139,92,246,.06)' : '' }}
+                          <div className={styles.txRow} style={{ borderBottom:'none', background: selectedIds.has(tx.id) ? 'rgba(79,70,229,.06)' : '' }}
                             onClick={() => { if (isConfirming) { setDeleteConfirmId(null); return; } if (!isTransfer) openEdit(tx); }}>
                             {/* Select checkbox */}
                             <input type="checkbox" checked={selectedIds.has(tx.id)}
                               onChange={() => toggleSelect(tx.id)}
                               onClick={e => e.stopPropagation()}
-                              style={{ width:15, height:15, cursor:'pointer', accentColor:'#8B5CF6', flexShrink:0, marginRight:4 }}
+                              style={{ width:15, height:15, cursor:'pointer', accentColor:'#4F46E5', flexShrink:0, marginRight:4 }}
                             />
                             {/* Icon — merchant logo for named tx, category icon otherwise */}
                             {isTransfer ? (
@@ -979,7 +979,7 @@ export default function Transactions() {
                               </div>
                               <div style={{ display:'flex', alignItems:'center', gap:4 }}>
                                 <button onClick={e => { e.stopPropagation(); setBillModalTx(tx); }}
-                                  style={{ background:'none', border:'none', padding:'2px 4px', cursor:'pointer', fontSize:13, opacity:0.55, lineHeight:1, borderRadius:6, transition:'opacity .15s', display:'flex', alignItems:'center', gap:2, color:'#8B5CF6' }}
+                                  style={{ background:'none', border:'none', padding:'2px 4px', cursor:'pointer', fontSize:13, opacity:0.55, lineHeight:1, borderRadius:6, transition:'opacity .15s', display:'flex', alignItems:'center', gap:2, color:'#4F46E5' }}
                                   onMouseEnter={e => e.currentTarget.style.opacity='1'}
                                   onMouseLeave={e => e.currentTarget.style.opacity='0.55'}
                                   title="Attach Bill">
@@ -997,10 +997,10 @@ export default function Transactions() {
 
                           {/* Inline delete confirm bar */}
                           {isConfirming && (
-                            <div style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 16px', background:'rgba(236,72,153,.06)', borderTop:'1px solid rgba(236,72,153,.12)', animation:'dropFade .15s ease' }}>
-                              <span style={{ flex:1, fontSize:12.5, color:'#EC4899', fontWeight:600 }}>Delete this transaction?</span>
+                            <div style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 16px', background:'rgba(220,38,38,.06)', borderTop:'1px solid rgba(220,38,38,.12)', animation:'dropFade .15s ease' }}>
+                              <span style={{ flex:1, fontSize:12.5, color:'#DC2626', fontWeight:600 }}>Delete this transaction?</span>
                               <button onClick={() => { deleteMutation.mutate(tx.id); setDeleteConfirmId(null); }}
-                                style={{ padding:'6px 14px', borderRadius:9, border:'none', background:'#EC4899', color:'#fff', fontSize:12.5, fontWeight:700, cursor:'pointer' }}>
+                                style={{ padding:'6px 14px', borderRadius:9, border:'none', background:'#DC2626', color:'#fff', fontSize:12.5, fontWeight:700, cursor:'pointer' }}>
                                 Delete
                               </button>
                               <button onClick={() => setDeleteConfirmId(null)}
@@ -1062,12 +1062,12 @@ export default function Transactions() {
 ───────────────────────────────────────────────────────────────────────── */
 const QUICK_EMOJIS_EXPENSE = ['🍔','🚗','🏠','🎭','💊','📚','✈️','🛍️','⚡','📱','🎮','☕','🐾','🧴','💇','🎵'];
 const QUICK_EMOJIS_INCOME  = ['💰','💼','🎁','📈','🏆','💵','🎯','💳','🤝','🧑‍💻','🏗️','📦'];
-const QUICK_COLORS = ['#8B5CF6','#EC4899','#22C55E','#F59E0B','#3B82F6','#00CEC9','#fd79a8','#a29bfe','#e17055','#00b894'];
+const QUICK_COLORS = ['#4F46E5','#DC2626','#059669','#D97706','#3B82F6','#00CEC9','#fd79a8','#818CF8','#e17055','#00b894'];
 
 function NewCategoryInline({ txType, onCreated, onCancel }) {
   const [name,   setName]   = useState('');
   const [emoji,  setEmoji]  = useState('');
-  const [color,  setColor]  = useState('#8B5CF6');
+  const [color,  setColor]  = useState('#4F46E5');
   const [saving, setSaving] = useState(false);
   const [err,    setErr]    = useState('');
 
@@ -1204,7 +1204,7 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
 
   /* ── Data ─────────────────────────────────────────────── */
   const { data: wallets }    = useQuery({ queryKey:['wallets'],    queryFn:() => walletsAPI.getAll().then(r=>r.data.data) });
-  const { data: categories } = useQuery({ queryKey:['categories'], queryFn:() => categoriesAPI.getAll().then(r=>r.data.data) });
+  const { data: categories, isLoading: catsLoading } = useQuery({ queryKey:['categories'], queryFn:() => categoriesAPI.getAll().then(r=>r.data.data) });
 
   /* Show the accounts the user actually added in the Accounts tab.
      Exclude pure loans/lending (you don't spend "from" those). Credit cards
@@ -1243,7 +1243,7 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
   /* filtered cats for main tx */
   const filteredCats = (categories||[]).filter(c => c.type === txType || c.type === 'both');
 
-  const typeColor = isTransfer ? '#3B82F6' : txType === 'income' ? '#22C55E' : '#EC4899';
+  const typeColor = isTransfer ? '#3B82F6' : txType === 'income' ? '#059669' : '#DC2626';
 
   /* ── Submit ───────────────────────────────────────────── */
   const handleSubmit = async () => {
@@ -1288,7 +1288,7 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
           if (!intCatId) {
             try {
               const newCat = await categoriesAPI.create({
-                name: 'Credit Card Interest', type: 'expense', emoji: '💳', color: '#EC4899',
+                name: 'Credit Card Interest', type: 'expense', emoji: '💳', color: '#DC2626',
               });
               intCatId = newCat.data.data.id;
               qc.invalidateQueries({ queryKey: ['categories'] });
@@ -1330,14 +1330,14 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
   };
 
   const TAB_OPTS = [
-    { key:'expense',  label:`📤 ${t('tx_expense')}`,  color:'var(--red)',   activeColor:'rgba(236,72,153,.1)'   },
-    { key:'income',   label:`📥 ${t('tx_income')}`,   color:'var(--green)', activeColor:'rgba(34,197,94,.1)'  },
+    { key:'expense',  label:`📤 ${t('tx_expense')}`,  color:'var(--red)',   activeColor:'rgba(220,38,38,.1)'   },
+    { key:'income',   label:`📥 ${t('tx_income')}`,   color:'var(--green)', activeColor:'rgba(5,150,105,.1)'  },
     { key:'transfer', label:`🔄 ${t('tx_transfer')}`, color:'#3B82F6',      activeColor:'rgba(59,130,246,.1)'  },
   ];
 
   const headerBg = isTransfer
     ? 'rgba(59,130,246,.12)'
-    : txType === 'income' ? 'rgba(34,197,94,.12)' : 'rgba(236,72,153,.12)';
+    : txType === 'income' ? 'rgba(5,150,105,.12)' : 'rgba(220,38,38,.12)';
 
   /* Payment-method grid removed — transactions use the user's real accounts directly. */
   const showMethodPicker = false;
@@ -1348,8 +1348,8 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
 
   /* ── Premium type config ── */
   const TYPE_CFG = {
-    expense:  { color:'#EC4899', bg:'rgba(236,72,153,.14)',  border:'rgba(236,72,153,.3)',  gradient:'linear-gradient(135deg,#EC4899,#F472B6)', icon:'📤', label:'Expense'  },
-    income:   { color:'#22C55E', bg:'rgba(34,197,94,.14)',   border:'rgba(34,197,94,.3)',   gradient:'linear-gradient(135deg,#22C55E,#4ADE80)',  icon:'📥', label:'Income'   },
+    expense:  { color:'#DC2626', bg:'rgba(220,38,38,.14)',  border:'rgba(220,38,38,.3)',  gradient:'#DC2626', icon:'📤', label:'Expense'  },
+    income:   { color:'#059669', bg:'rgba(5,150,105,.14)',   border:'rgba(5,150,105,.3)',   gradient:'#059669',  icon:'📥', label:'Income'   },
     transfer: { color:'#3B82F6', bg:'rgba(59,130,246,.14)',  border:'rgba(59,130,246,.3)',  gradient:'linear-gradient(135deg,#3B82F6,#60A5FA)',  icon:'🔄', label:'Transfer' },
   };
   const tc = TYPE_CFG[txType] || TYPE_CFG.expense;
@@ -1437,7 +1437,7 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
 
         {/* Error */}
         {error && (
-          <div style={{ margin:'12px 20px 0', background:'rgba(236,72,153,.08)', border:'1.5px solid rgba(236,72,153,.25)', borderRadius:12, padding:'10px 14px', fontSize:13, color:'#EC4899', fontWeight:500 }}>
+          <div style={{ margin:'12px 20px 0', background:'rgba(220,38,38,.08)', border:'1.5px solid rgba(220,38,38,.25)', borderRadius:12, padding:'10px 14px', fontSize:13, color:'#DC2626', fontWeight:500 }}>
             ⚠️ {error}
           </div>
         )}
@@ -1445,15 +1445,15 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
         <div style={{ ...scrollSt, padding:'16px 20px', display:'grid', gap:14, alignContent:'start' }}>
 
           {/* ══ AMOUNT — big hero input ══ */}
-          <div style={{ background:`linear-gradient(135deg,${tc.bg},${tc.bg.replace('.14','.07')})`, border:`1.5px solid ${tc.border}`, borderRadius:20, padding:'20px 20px 16px', textAlign:'center' }}>
+          <div style={{ background:`linear-gradient(135deg,${tc.bg},${tc.bg.replace('.14','.07')})`, border:`1.5px solid ${tc.border}`, borderRadius:14, padding:'20px 20px 16px', textAlign:'center' }}>
             <div style={{ fontSize:11, fontWeight:700, color:tc.color, textTransform:'uppercase', letterSpacing:'.08em', marginBottom:10 }}>Amount</div>
             <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:4 }}>
-              <span style={{ fontSize:28, fontWeight:900, color:tc.color, fontFamily:'Space Grotesk,sans-serif' }}>₹</span>
+              <span style={{ fontSize:28, fontWeight:900, color:tc.color, fontFamily:'Inter,sans-serif' }}>₹</span>
               <input
                 type="number" step="0.01" placeholder="0.00"
                 value={amount} onChange={e=>setAmount(e.target.value)}
                 autoFocus
-                style={{ fontSize:36, fontWeight:900, color:tc.color, border:'none', background:'transparent', outline:'none', textAlign:'center', width:'100%', fontFamily:'Space Grotesk,sans-serif', caretColor:tc.color }}
+                style={{ fontSize:36, fontWeight:900, color:tc.color, border:'none', background:'transparent', outline:'none', textAlign:'center', width:'100%', fontFamily:'Inter,sans-serif', caretColor:tc.color }}
               />
             </div>
           </div>
@@ -1471,7 +1471,7 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
                 options={(wallets||[]).filter(w=>w.id!==fromWalletId).map(w => ({ value:w.id, label:`${w.name}${w.last_four?` *${w.last_four}`:''}`, emoji: CREDIT_WALLET_TYPES.includes(w.type)?'💳':undefined, sub:`Balance: ${fmt(w.balance||0)}` }))}/>
             </div>
             {CREDIT_WALLET_TYPES.includes((wallets||[]).find(w=>w.id===toWalletId)?.type) && (
-              <div style={{ display:'flex', gap:10, background:'rgba(245,158,11,.08)', border:'1.5px solid rgba(245,158,11,.25)', borderRadius:14, padding:'12px 14px' }}>
+              <div style={{ display:'flex', gap:10, background:'rgba(217,119,6,.08)', border:'1.5px solid rgba(217,119,6,.25)', borderRadius:14, padding:'12px 14px' }}>
                 <span style={{ fontSize:20 }}>💳</span>
                 <div>
                   <div style={{ fontSize:13, fontWeight:700, color:'#D97706' }}>Credit Card Bill Payment</div>
@@ -1504,7 +1504,7 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
                   <label style={{ ...fieldLbl, marginBottom:0 }}>Category</label>
                   <button type="button" onClick={() => setShowNewCat(v=>!v)}
-                    style={{ fontSize:11, fontWeight:700, color: showNewCat ? '#EC4899' : 'var(--accent)', background: showNewCat ? 'rgba(236,72,153,.08)' : 'var(--accent-light)', border:'none', borderRadius:8, padding:'4px 10px', cursor:'pointer' }}>
+                    style={{ fontSize:11, fontWeight:700, color: showNewCat ? '#DC2626' : 'var(--accent)', background: showNewCat ? 'rgba(220,38,38,.08)' : 'var(--accent-light)', border:'none', borderRadius:8, padding:'4px 10px', cursor:'pointer' }}>
                     {showNewCat ? '✕ Cancel' : '+ New'}
                   </button>
                 </div>
@@ -1513,14 +1513,17 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
                     onCreated={cat => { setCatId(cat.id); setShowNewCat(false); qc.invalidateQueries({ queryKey:['categories'] }); }}/>
                 ) : (
                   <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8, maxHeight:224, overflowY:'auto', paddingRight:2, scrollbarWidth:'thin' }}>
-                    {filteredCats.length === 0 && (
+                    {catsLoading && filteredCats.length === 0 && (
+                      <div style={{ gridColumn:'1/-1', textAlign:'center', padding:'18px 8px', fontSize:12.5, color:'var(--text3)' }}>Loading categories…</div>
+                    )}
+                    {!catsLoading && filteredCats.length === 0 && (
                       <div style={{ gridColumn:'1/-1', textAlign:'center', padding:'18px 8px', fontSize:12.5, color:'var(--text3)' }}>
                         No categories yet — tap “+ New” to add one.
                       </div>
                     )}
                     {filteredCats.map(c => {
                       const sel = catId === c.id;
-                      const col = c.color || '#8B5CF6';
+                      const col = c.color || '#4F46E5';
                       return (
                         <button key={c.id} onClick={() => setCatId(sel ? '' : c.id)}
                           style={{ display:'flex', flexDirection:'column', alignItems:'center', padding:'10px 6px', borderRadius:14, border:`1.5px solid ${sel ? col+'60' : 'var(--border-light)'}`, background: sel ? col+'18' : 'var(--surface2)', cursor:'pointer', transition:'all .15s', gap:5 }}>
@@ -1541,7 +1544,7 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
                   {isCreditSelected ? 'Credit Card' : txType==='income' ? 'Credited To' : 'Paid From'}
                 </label>
                 {allowedWallets.length === 0 ? (
-                  <div style={{ background:'rgba(245,158,11,.08)', border:'1.5px solid rgba(245,158,11,.25)', borderRadius:12, padding:'10px 14px', fontSize:13, color:'#D97706' }}>
+                  <div style={{ background:'rgba(217,119,6,.08)', border:'1.5px solid rgba(217,119,6,.25)', borderRadius:12, padding:'10px 14px', fontSize:13, color:'#D97706' }}>
                     ⚠️ No matching account. Add one in Accounts first.
                   </div>
                 ) : (
@@ -1552,23 +1555,23 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
 
               {/* Credit card interest toggle */}
               {isCreditSelected && walletId && (
-                <div style={{ background:'rgba(236,72,153,.06)', border:'1.5px solid rgba(236,72,153,.18)', borderRadius:16, padding:'14px 16px' }}>
+                <div style={{ background:'rgba(220,38,38,.06)', border:'1.5px solid rgba(220,38,38,.18)', borderRadius:16, padding:'14px 16px' }}>
                   <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                     <div style={{ display:'flex', gap:10, alignItems:'center' }}>
-                      <div style={{ width:36, height:36, borderRadius:11, background:'rgba(236,72,153,.12)', border:'1.5px solid rgba(236,72,153,.25)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16 }}>💳</div>
+                      <div style={{ width:36, height:36, borderRadius:11, background:'rgba(220,38,38,.12)', border:'1.5px solid rgba(220,38,38,.25)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16 }}>💳</div>
                       <div>
                         <div style={{ fontSize:13, fontWeight:700, color:'var(--text)' }}>Add Interest Charges?</div>
                         <div style={{ fontSize:11, color:'var(--text3)', marginTop:1 }}>Logged as separate expense</div>
                       </div>
                     </div>
-                    <div onClick={() => setHasInterest(h=>!h)} style={{ width:44, height:24, borderRadius:12, cursor:'pointer', transition:'background .2s', background: hasInterest ? '#EC4899' : 'var(--surface3)', position:'relative', flexShrink:0 }}>
+                    <div onClick={() => setHasInterest(h=>!h)} style={{ width:44, height:24, borderRadius:12, cursor:'pointer', transition:'background .2s', background: hasInterest ? '#DC2626' : 'var(--surface3)', position:'relative', flexShrink:0 }}>
                       <div style={{ position:'absolute', top:4, left: hasInterest ? 24 : 4, width:16, height:16, borderRadius:'50%', background:'#fff', boxShadow:'0 1px 4px rgba(0,0,0,.25)', transition:'left .2s' }}/>
                     </div>
                   </div>
                   {hasInterest && (
                     <div style={{ marginTop:14, display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
                       <div><label style={fieldLbl}>Interest Amount</label>
-                        <input style={{ ...fieldIn, color:'#EC4899', fontWeight:700 }} type="number" step="0.01" placeholder="0.00" value={interestAmount} onChange={e=>setInterestAmount(e.target.value)}/></div>
+                        <input style={{ ...fieldIn, color:'#DC2626', fontWeight:700 }} type="number" step="0.01" placeholder="0.00" value={interestAmount} onChange={e=>setInterestAmount(e.target.value)}/></div>
                       <div><label style={fieldLbl}>Interest Category</label>
                         <CustomSelect value={interestCatId} onChange={setInterestCatId} placeholder="CC Interest"
                           options={expenseCats.map(c => ({ value:c.id, label:c.name, emoji:c.emoji, color:c.color }))}/></div>
@@ -1600,7 +1603,7 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
             {/* Attach Bill — edit mode */}
             {isEdit && !confirmDelete && (
               <button onClick={() => setShowBills(true)}
-                style={{ padding:'12px', borderRadius:14, border:'1.5px solid rgba(139,92,246,.3)', background:'rgba(139,92,246,.08)', color:'#8B5CF6', fontSize:13, fontWeight:700, cursor:'pointer', width:'100%', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+                style={{ padding:'12px', borderRadius:14, border:'1.5px solid rgba(79,70,229,.3)', background:'rgba(79,70,229,.08)', color:'#4F46E5', fontSize:13, fontWeight:700, cursor:'pointer', width:'100%', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
                 <Paperclip size={15}/> Attach Bill / Receipt
               </button>
             )}
@@ -1609,13 +1612,13 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
             {isEdit && (
               confirmDelete ? (
                 <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-                  <span style={{ fontSize:12.5, color:'#EC4899', fontWeight:600, flex:1 }}>Delete this transaction?</span>
-                  <button onClick={() => onDelete(tx.id)} style={{ padding:'9px 16px', borderRadius:12, border:'none', background:'#EC4899', color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>Delete</button>
+                  <span style={{ fontSize:12.5, color:'#DC2626', fontWeight:600, flex:1 }}>Delete this transaction?</span>
+                  <button onClick={() => onDelete(tx.id)} style={{ padding:'9px 16px', borderRadius:12, border:'none', background:'#DC2626', color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>Delete</button>
                   <button onClick={() => setConfirmDelete(false)} style={{ padding:'9px 14px', borderRadius:12, border:'1.5px solid var(--border)', background:'var(--surface2)', color:'var(--text3)', fontSize:13, cursor:'pointer' }}>Cancel</button>
                 </div>
               ) : (
                 <button onClick={() => setConfirmDelete(true)}
-                  style={{ padding:'12px', borderRadius:14, border:'1.5px solid rgba(236,72,153,.3)', background:'rgba(236,72,153,.06)', color:'#EC4899', fontSize:13, fontWeight:700, cursor:'pointer', width:'100%' }}>
+                  style={{ padding:'12px', borderRadius:14, border:'1.5px solid rgba(220,38,38,.3)', background:'rgba(220,38,38,.06)', color:'#DC2626', fontSize:13, fontWeight:700, cursor:'pointer', width:'100%' }}>
                   🗑️ Delete Transaction
                 </button>
               )

@@ -2,7 +2,7 @@ import { ICON_REGISTRY } from './icons/CategoryIcon';
 
 /* Grid of choosable category icons. Selecting one calls onChange(key);
    selecting the active one again clears it (falls back to name/emoji). */
-export default function CategoryIconPicker({ value, onChange, color = '#8B5CF6' }) {
+export default function CategoryIconPicker({ value, onChange, color = '#4F46E5' }) {
   const keys = Object.keys(ICON_REGISTRY);
   return (
     <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(46px,1fr))', gap:8 }}>

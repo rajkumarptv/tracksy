@@ -58,7 +58,7 @@
   grid-template-columns: 1fr 1px 1.35fr;
   gap: 20px;
   padding: 20px;
-  border-radius: 20px;
+  border-radius: 14px;
   align-items: center;
 }
 
@@ -73,7 +73,7 @@
   font-size: 34px;
   font-weight: 800;
   letter-spacing: -1px;
-  font-family: 'Space Grotesk', Inter, sans-serif;
+  font-family: 'Inter', Inter, sans-serif;
   line-height: 1.1;
 }
 
@@ -130,7 +130,7 @@
 .legendVal {
   font-size: 13px;
   font-weight: 700;
-  font-family: 'Space Grotesk', Inter, sans-serif;
+  font-family: 'Inter', Inter, sans-serif;
   white-space: nowrap;
 }
 
@@ -169,7 +169,7 @@
 
 /* ── Group cards ── */
 .groupCard {
-  border-radius: 20px;
+  border-radius: 14px;
   overflow: hidden;
 }
 
@@ -208,7 +208,7 @@
 .groupTotalAmt {
   font-size: 15px;
   font-weight: 800;
-  font-family: 'Space Grotesk', Inter, sans-serif;
+  font-family: 'Inter', Inter, sans-serif;
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -256,7 +256,7 @@
   padding: 3px 10px;
   border-radius: 999px;
   background: rgba(124,58,237,.14);
-  color: #8B5CF6;
+  color: #4F46E5;
   flex-shrink: 0;
 }
 

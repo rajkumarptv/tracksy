@@ -19,7 +19,6 @@ async function runGmailSyncForAllUsers({ days = 2 } = {}) {
     `SELECT id FROM users
       WHERE gmail_connected = true
         AND gmail_sync_enabled = true
-        AND is_premium = true
         AND gmail_refresh_token IS NOT NULL`
   )).rows;
 

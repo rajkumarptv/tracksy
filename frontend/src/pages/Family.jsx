@@ -8,7 +8,6 @@ import { familyAPI } from '../services/api';
 import { PageLoader } from '../components/ui';
 import { useFmt } from '../i18n';
 import useAuthStore from '../store/authStore';
-import usePremiumStore from '../store/premiumStore';
 import useThemeStore from '../store/themeStore';
 import { THEME } from '../theme';
 import styles from './Budget.module.css';
@@ -27,7 +26,7 @@ const DS = {
     card: THEME.dark.cardBg, shadow: THEME.dark.cardShadow,
     overviewBg: THEME.dark.flowBg, overviewBorder: THEME.dark.flowBorder,
   },
-  purple:'#8B5CF6', green:'#22C55E', pink:'#EC4899', orange:'#F59E0B', blue:'#3B82F6', danger:'#EF4444',
+  purple:'#4F46E5', green:'#059669', pink:'#DC2626', orange:'#D97706', blue:'#3B82F6', danger:'#EF4444',
 };
 
 const spring = { type:'spring', stiffness:280, damping:28 };
@@ -63,7 +62,6 @@ export default function Family() {
   const fmt = useFmt();
   const { t } = usePalette();
   const { user } = useAuthStore();
-  const { openPremium } = usePremiumStore();
   const qc = useQueryClient();
   const [activeMember, setActiveMember] = useState(null);
 
@@ -73,7 +71,6 @@ export default function Family() {
     retry: false,
   });
 
-  const isPremium  = user?.is_premium || status?.is_premium;
   const inFamily   = status?.in_family;
   const isPrimary  = status?.role === 'primary';
   const sharedMode = status?.share_mode === 'shared';
@@ -82,36 +79,13 @@ export default function Family() {
   const { data: overview, isLoading: ovLoading } = useQuery({
     queryKey: ['family-overview'],
     queryFn: () => familyAPI.overview().then(r => r.data.data),
-    enabled: !!isPremium && canSeeOverview,
+    enabled: !!canSeeOverview,
     retry: false,
   });
 
   if (statusLoading) return <PageLoader />;
 
-  /* ── 1. NOT PREMIUM → upgrade prompt ── */
-  if (!isPremium) {
-    return (
-      <Page t={t} title="Family" subtitle="Shared finances for your whole household">
-        <motion.div variants={cardVar} className={styles.card}
-          style={{ background:t.card, border:`1px solid ${t.border}`, boxShadow:t.shadow, textAlign:'center', padding:'40px 24px' }}>
-          <div style={{ fontSize:52, marginBottom:14 }}>👨‍👩‍👧</div>
-          <div style={{ fontSize:20, fontWeight:800, color:t.text, marginBottom:10 }}>Family Budget</div>
-          <div style={{ fontSize:14, color:t.text2, marginBottom:14, lineHeight:1.6, maxWidth:420, marginInline:'auto' }}>
-            Create a private family space and invite members with a code. See everyone's income, spending and balances in one combined view.
-          </div>
-          <div style={{ fontSize:12.5, color:t.text2, marginBottom:22, background:t.surface, borderRadius:12, padding:'10px 14px', maxWidth:420, marginInline:'auto' }}>
-            🔒 Members join only with your code — nobody's data is shared without consent.
-          </div>
-          <button onClick={openPremium}
-            style={{ padding:'13px 30px', borderRadius:14, border:'none', background:'linear-gradient(135deg,#F59E0B,#FF79A8)', color:'#fff', fontWeight:800, fontSize:15, cursor:'pointer', boxShadow:'0 8px 24px rgba(245,158,11,.4)' }}>
-            ✨ Upgrade to Premium
-          </button>
-        </motion.div>
-      </Page>
-    );
-  }
-
-  /* ── 2. PREMIUM, NOT IN FAMILY → create or join ── */
+  /* ── 1. NOT IN A FAMILY → create or join ── */
   if (!inFamily) return <SetupFamily qc={qc} />;
 
   /* ── 3. head_only MEMBER (not primary, not shared) → own status + leave ── */
@@ -129,8 +103,8 @@ export default function Family() {
 
       {/* Mode badge */}
       <motion.div variants={cardVar}
-        style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'6px 13px', borderRadius:20, fontSize:12, fontWeight:700, width:'fit-content',
-          background: sharedMode ? 'rgba(34,197,94,.12)' : 'rgba(245,158,11,.12)', color: sharedMode ? DS.green : DS.orange }}>
+        style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'6px 13px', borderRadius:14, fontSize:12, fontWeight:700, width:'fit-content',
+          background: sharedMode ? 'rgba(5,150,105,.12)' : 'rgba(217,119,6,.12)', color: sharedMode ? DS.green : DS.orange }}>
         {sharedMode ? '🤝 Shared — everyone sees everyone' : '👑 Head-only — only you see members'}
       </motion.div>
 
@@ -159,17 +133,17 @@ export default function Family() {
             <div className={styles.statRow}>
               <span className={styles.dot} style={{ background:DS.green }}/>
               <span style={{ flex:1, fontSize:13.5, color:t.text2 }}>Family Income</span>
-              <span style={{ fontSize:14.5, fontWeight:800, color:DS.green, fontFamily:'Space Grotesk, Inter, sans-serif' }}>{fmt(combined.income,{noDecimals:true})}</span>
+              <span style={{ fontSize:14.5, fontWeight:800, color:DS.green, fontFamily:'Inter, sans-serif' }}>{fmt(combined.income,{noDecimals:true})}</span>
             </div>
             <div className={styles.statRow}>
               <span className={styles.dot} style={{ background:DS.pink }}/>
               <span style={{ flex:1, fontSize:13.5, color:t.text2 }}>Family Expense</span>
-              <span style={{ fontSize:14.5, fontWeight:800, color:DS.pink, fontFamily:'Space Grotesk, Inter, sans-serif' }}>{fmt(combined.expense,{noDecimals:true})}</span>
+              <span style={{ fontSize:14.5, fontWeight:800, color:DS.pink, fontFamily:'Inter, sans-serif' }}>{fmt(combined.expense,{noDecimals:true})}</span>
             </div>
             <div style={{ height:1, background:t.border, margin:'10px 0' }}/>
             <div className={styles.statRow}>
               <span style={{ flex:1, fontSize:13.5, color:t.text2 }}>{combined.net >= 0 ? 'Net Saved' : 'Over Budget'}</span>
-              <span style={{ fontSize:14.5, fontWeight:800, color: combined.net>=0?DS.green:DS.danger, fontFamily:'Space Grotesk, Inter, sans-serif' }}>
+              <span style={{ fontSize:14.5, fontWeight:800, color: combined.net>=0?DS.green:DS.danger, fontFamily:'Inter, sans-serif' }}>
                 {combined.net<0 && '−'}{fmt(Math.abs(combined.net),{noDecimals:true})}
               </span>
             </div>
@@ -192,15 +166,15 @@ export default function Family() {
                 whileHover={m.is_me ? {} : { y:-2 }}
                 style={{ background:t.surface, borderRadius:16, padding:'16px', border:`1px solid ${t.border}`, cursor: m.is_me ? 'default':'pointer' }}>
                 <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:12 }}>
-                  <div style={{ width:44, height:44, borderRadius:'50%', background:'linear-gradient(135deg,#8B5CF6,#a29bfe)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontWeight:800, color:'#fff', flexShrink:0 }}>
+                  <div style={{ width:44, height:44, borderRadius:'50%', background:'#4F46E5', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontWeight:800, color:'#fff', flexShrink:0 }}>
                     {m.name.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase()}
                   </div>
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ fontSize:14.5, fontWeight:700, color:t.text, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
                       {m.name}{m.is_me ? ' (You)' : ''}
                     </div>
-                    <span style={{ fontSize:10.5, fontWeight:700, padding:'2px 8px', borderRadius:20, display:'inline-block', marginTop:3,
-                      background: m.role==='primary' ? 'rgba(245,158,11,.15)' : 'rgba(139,92,246,.12)', color: m.role==='primary' ? DS.orange : DS.purple }}>
+                    <span style={{ fontSize:10.5, fontWeight:700, padding:'2px 8px', borderRadius:14, display:'inline-block', marginTop:3,
+                      background: m.role==='primary' ? 'rgba(217,119,6,.15)' : 'rgba(79,70,229,.12)', color: m.role==='primary' ? DS.orange : DS.purple }}>
                       {m.role === 'primary' ? '👑 Head' : 'Member'}
                     </span>
                   </div>
@@ -215,7 +189,7 @@ export default function Family() {
                   ].map(s => (
                     <div key={s.l} style={{ background:t.card, borderRadius:11, padding:'9px 11px', border:`1px solid ${t.border}` }}>
                       <div style={{ fontSize:10, color:t.text3, fontWeight:600, marginBottom:2 }}>{s.l}</div>
-                      <div style={{ fontSize:13.5, fontWeight:800, color:s.c, fontFamily:'Space Grotesk, Inter, sans-serif' }}>{s.v}</div>
+                      <div style={{ fontSize:13.5, fontWeight:800, color:s.c, fontFamily:'Inter, sans-serif' }}>{s.v}</div>
                     </div>
                   ))}
                 </div>
@@ -245,7 +219,7 @@ function SharedMemberBar({ familyName, qc, t }) {
         You're a member of <strong style={{ color:t.text }}>{familyName}</strong>. Everyone here can see each other's finances.
       </div>
       <button onClick={() => { if(confirm('Leave this family? You will no longer see shared data and others won’t see yours.')) leaveMut.mutate(); }}
-        style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 15px', borderRadius:11, border:'1.5px solid rgba(236,72,153,.3)', background:'rgba(236,72,153,.08)', color:DS.pink, fontSize:12.5, fontWeight:700, cursor:'pointer' }}>
+        style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 15px', borderRadius:11, border:'1.5px solid rgba(220,38,38,.3)', background:'rgba(220,38,38,.08)', color:DS.pink, fontSize:12.5, fontWeight:700, cursor:'pointer' }}>
         <LogOut size={13}/> Leave
       </button>
     </motion.div>
@@ -267,21 +241,21 @@ function InviteCodeBar({ code, qc, t }) {
       <div style={{ fontSize:13, color:t.text2 }}>
         <strong style={{ color:t.text }}>Invite code:</strong> share this so family can join
       </div>
-      <div style={{ display:'flex', alignItems:'center', gap:8, background:'rgba(139,92,246,.1)', borderRadius:11, padding:'8px 15px' }}>
-        <span style={{ fontSize:18, fontWeight:800, letterSpacing:3, color:DS.purple, fontFamily:'Space Grotesk, monospace' }}>{code}</span>
+      <div style={{ display:'flex', alignItems:'center', gap:8, background:'rgba(79,70,229,.1)', borderRadius:11, padding:'8px 15px' }}>
+        <span style={{ fontSize:18, fontWeight:800, letterSpacing:3, color:DS.purple, fontFamily:'Inter, monospace' }}>{code}</span>
         <button onClick={copy} style={{ background:'none', border:'none', cursor:'pointer', color:DS.purple, display:'flex' }}>
           {copied ? <Check size={16}/> : <Copy size={16}/>}
         </button>
       </div>
       <button onClick={() => { if(confirm('Disband this family? All members will be removed.')) leaveMut.mutate(); }}
-        style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:6, padding:'8px 15px', borderRadius:11, border:'1.5px solid rgba(236,72,153,.3)', background:'rgba(236,72,153,.08)', color:DS.pink, fontSize:12.5, fontWeight:700, cursor:'pointer' }}>
+        style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:6, padding:'8px 15px', borderRadius:11, border:'1.5px solid rgba(220,38,38,.3)', background:'rgba(220,38,38,.08)', color:DS.pink, fontSize:12.5, fontWeight:700, cursor:'pointer' }}>
         <LogOut size={13}/> Disband
       </button>
     </motion.div>
   );
 }
 
-/* ── Create or Join (premium, no family yet) ── */
+/* ── Create or Join (no family yet) ── */
 function SetupFamily({ qc }) {
   const { t } = usePalette();
   const [mode, setMode] = useState(null); // 'create' | 'join'
@@ -307,14 +281,14 @@ function SetupFamily({ qc }) {
   return (
     <Page t={t} title="Family" subtitle="Start a family as head, or join one with a code">
       {err && (
-        <motion.div variants={cardVar} style={{ background:'rgba(236,72,153,.08)', color:DS.pink, padding:'11px 15px', borderRadius:12, fontSize:13, fontWeight:600, border:'1.5px solid rgba(236,72,153,.25)' }}>⚠️ {err}</motion.div>
+        <motion.div variants={cardVar} style={{ background:'rgba(220,38,38,.08)', color:DS.pink, padding:'11px 15px', borderRadius:12, fontSize:13, fontWeight:600, border:'1.5px solid rgba(220,38,38,.25)' }}>⚠️ {err}</motion.div>
       )}
 
       {!mode && (
         <>
           <motion.button variants={cardVar} onClick={() => { setMode('create'); setErr(''); }} className={styles.card}
             style={{ background:t.card, border:`1px solid ${t.border}`, boxShadow:t.shadow, display:'flex', alignItems:'center', gap:14, cursor:'pointer', textAlign:'left', width:'100%' }}>
-            <div style={{ width:48, height:48, borderRadius:14, background:'rgba(139,92,246,.12)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+            <div style={{ width:48, height:48, borderRadius:14, background:'rgba(79,70,229,.12)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
               <Plus size={22} color={DS.purple}/>
             </div>
             <div style={{ flex:1 }}>
@@ -325,7 +299,7 @@ function SetupFamily({ qc }) {
           </motion.button>
           <motion.button variants={cardVar} onClick={() => { setMode('join'); setErr(''); }} className={styles.card}
             style={{ background:t.card, border:`1px solid ${t.border}`, boxShadow:t.shadow, display:'flex', alignItems:'center', gap:14, cursor:'pointer', textAlign:'left', width:'100%' }}>
-            <div style={{ width:48, height:48, borderRadius:14, background:'rgba(34,197,94,.12)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+            <div style={{ width:48, height:48, borderRadius:14, background:'rgba(5,150,105,.12)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
               <UserPlus size={22} color={DS.green}/>
             </div>
             <div style={{ flex:1 }}>
@@ -352,7 +326,7 @@ function SetupFamily({ qc }) {
               <button key={opt.id} type="button" onClick={() => setShareMode(opt.id)}
                 style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 14px', borderRadius:13, cursor:'pointer', textAlign:'left',
                   border: shareMode===opt.id ? `2px solid ${DS.purple}` : `1.5px solid ${t.border}`,
-                  background: shareMode===opt.id ? 'rgba(139,92,246,.1)' : t.surface }}>
+                  background: shareMode===opt.id ? 'rgba(79,70,229,.1)' : t.surface }}>
                 <span style={{ fontSize:22 }}>{opt.icon}</span>
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:13.5, fontWeight:700, color: shareMode===opt.id ? DS.purple : t.text }}>{opt.title}</div>
@@ -366,7 +340,7 @@ function SetupFamily({ qc }) {
           <div style={{ display:'flex', gap:10 }}>
             <button onClick={()=>{setMode(null);setErr('');}} style={{ flex:1, padding:'12px', borderRadius:12, border:`1.5px solid ${t.border}`, background:t.surface, color:t.text2, fontWeight:600, fontSize:14, cursor:'pointer' }}>Back</button>
             <button onClick={()=>createMut.mutate()} disabled={!name.trim()||createMut.isPending}
-              style={{ flex:2, padding:'12px', borderRadius:12, border:'none', background:'linear-gradient(135deg,#8B5CF6,#3B82F6)', color:'#fff', fontWeight:700, fontSize:14, cursor:'pointer', opacity:(!name.trim())?.6:1 }}>
+              style={{ flex:2, padding:'12px', borderRadius:12, border:'none', background:'#4F46E5', color:'#fff', fontWeight:700, fontSize:14, cursor:'pointer', opacity:(!name.trim())?.6:1 }}>
               {createMut.isPending ? 'Creating…' : 'Create Family'}
             </button>
           </div>
@@ -378,14 +352,14 @@ function SetupFamily({ qc }) {
           <label style={{ fontSize:12, fontWeight:700, color:t.text2, textTransform:'uppercase', letterSpacing:'.05em', display:'block', marginBottom:8 }}>Family Code</label>
           <input autoFocus value={code} onChange={e=>{setCode(e.target.value.toUpperCase());setErr('');}} placeholder="ABC123" maxLength={6}
             onKeyDown={e=>e.key==='Enter'&&code.trim()&&joinMut.mutate()}
-            style={{ ...inputSt, fontSize:20, fontWeight:800, letterSpacing:4, textAlign:'center', marginBottom:12, fontFamily:'Space Grotesk, monospace' }}/>
-          <div style={{ fontSize:12, color:t.text2, background:'rgba(245,158,11,.08)', borderRadius:10, padding:'9px 12px', marginBottom:16 }}>
+            style={{ ...inputSt, fontSize:20, fontWeight:800, letterSpacing:4, textAlign:'center', marginBottom:12, fontFamily:'Inter, monospace' }}/>
+          <div style={{ fontSize:12, color:t.text2, background:'rgba(217,119,6,.08)', borderRadius:10, padding:'9px 12px', marginBottom:16 }}>
             ⚠️ By joining, the family head will be able to see your accounts and spending.
           </div>
           <div style={{ display:'flex', gap:10 }}>
             <button onClick={()=>{setMode(null);setErr('');}} style={{ flex:1, padding:'12px', borderRadius:12, border:`1.5px solid ${t.border}`, background:t.surface, color:t.text2, fontWeight:600, fontSize:14, cursor:'pointer' }}>Back</button>
             <button onClick={()=>joinMut.mutate()} disabled={!code.trim()||joinMut.isPending}
-              style={{ flex:2, padding:'12px', borderRadius:12, border:'none', background:'linear-gradient(135deg,#22C55E,#00b894)', color:'#fff', fontWeight:700, fontSize:14, cursor:'pointer', opacity:(!code.trim())?.6:1 }}>
+              style={{ flex:2, padding:'12px', borderRadius:12, border:'none', background:'#059669', color:'#fff', fontWeight:700, fontSize:14, cursor:'pointer', opacity:(!code.trim())?.6:1 }}>
               {joinMut.isPending ? 'Joining…' : 'Join Family'}
             </button>
           </div>
@@ -422,11 +396,11 @@ function MemberView({ status, qc }) {
         <div style={{ display:'grid', gap:8 }}>
           {status.members?.map(m => (
             <div key={m.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', borderRadius:12, background:t.surface, border:`1px solid ${t.border}` }}>
-              <div style={{ width:34, height:34, borderRadius:'50%', background:'linear-gradient(135deg,#8B5CF6,#a29bfe)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:800, color:'#fff', flexShrink:0 }}>
+              <div style={{ width:34, height:34, borderRadius:'50%', background:'#4F46E5', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:800, color:'#fff', flexShrink:0 }}>
                 {m.name.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase()}
               </div>
               <span style={{ fontSize:13.5, color:t.text, fontWeight:600, flex:1 }}>{m.name}{m.is_me?' (You)':''}</span>
-              <span style={{ fontSize:10.5, fontWeight:700, padding:'2px 8px', borderRadius:20, background: m.family_role==='primary'?'rgba(245,158,11,.15)':'rgba(139,92,246,.12)', color: m.family_role==='primary'?DS.orange:DS.purple }}>
+              <span style={{ fontSize:10.5, fontWeight:700, padding:'2px 8px', borderRadius:14, background: m.family_role==='primary'?'rgba(217,119,6,.15)':'rgba(79,70,229,.12)', color: m.family_role==='primary'?DS.orange:DS.purple }}>
                 {m.family_role==='primary'?'👑 Head':'Member'}
               </span>
             </div>
@@ -435,7 +409,7 @@ function MemberView({ status, qc }) {
       </motion.div>
 
       <motion.button variants={cardVar} onClick={() => { if(confirm('Leave this family? The head will no longer see your data.')) leaveMut.mutate(); }}
-        style={{ alignSelf:'center', display:'inline-flex', alignItems:'center', gap:7, padding:'12px 26px', borderRadius:14, border:'1.5px solid rgba(236,72,153,.3)', background:'rgba(236,72,153,.08)', color:DS.pink, fontWeight:700, fontSize:14, cursor:'pointer' }}>
+        style={{ alignSelf:'center', display:'inline-flex', alignItems:'center', gap:7, padding:'12px 26px', borderRadius:14, border:'1.5px solid rgba(220,38,38,.3)', background:'rgba(220,38,38,.08)', color:DS.pink, fontWeight:700, fontSize:14, cursor:'pointer' }}>
         <LogOut size={15}/> Leave Family
       </motion.button>
     </Page>
@@ -470,7 +444,7 @@ function MemberDetailModal({ memberId, onClose, fmt, qc, canRemove, t }) {
                 return (
                   <div key={w.id} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'11px 14px', borderRadius:11, background:t.surface, border:`1px solid ${t.border}` }}>
                     <span style={{ fontSize:13, fontWeight:600, color:t.text }}>{w.name}{w.last_four?` ••${w.last_four}`:''}</span>
-                    <span style={{ fontSize:13.5, fontWeight:800, color: bal>=0?t.text:DS.danger, fontFamily:'Space Grotesk, Inter, sans-serif' }}>{bal<0&&'−'}{fmt(Math.abs(bal))}</span>
+                    <span style={{ fontSize:13.5, fontWeight:800, color: bal>=0?t.text:DS.danger, fontFamily:'Inter, sans-serif' }}>{bal<0&&'−'}{fmt(Math.abs(bal))}</span>
                   </div>
                 );
               })}
@@ -486,7 +460,7 @@ function MemberDetailModal({ memberId, onClose, fmt, qc, canRemove, t }) {
                     <div style={{ fontSize:12.5, fontWeight:600, color:t.text, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{tx.description || tx.payment_name}</div>
                     <div style={{ fontSize:10.5, color:t.text3 }}>{new Date(tx.transaction_date).toLocaleDateString('en-IN',{day:'numeric',month:'short'})} · {tx.category_name || 'Uncategorized'}</div>
                   </div>
-                  <span style={{ fontSize:13, fontWeight:800, color: tx.type==='income'?DS.green:DS.pink, fontFamily:'Space Grotesk, Inter, sans-serif' }}>
+                  <span style={{ fontSize:13, fontWeight:800, color: tx.type==='income'?DS.green:DS.pink, fontFamily:'Inter, sans-serif' }}>
                     {tx.type==='income'?'+':'−'}{fmt(tx.amount)}
                   </span>
                 </div>
@@ -496,7 +470,7 @@ function MemberDetailModal({ memberId, onClose, fmt, qc, canRemove, t }) {
 
             {canRemove && (
               <button onClick={() => { if(confirm('Remove this member from the family?')) removeMut.mutate(); }}
-                style={{ width:'100%', padding:'12px', borderRadius:12, border:'1.5px solid rgba(236,72,153,.3)', background:'rgba(236,72,153,.08)', color:DS.pink, fontWeight:700, fontSize:13, cursor:'pointer' }}>
+                style={{ width:'100%', padding:'12px', borderRadius:12, border:'1.5px solid rgba(220,38,38,.3)', background:'rgba(220,38,38,.08)', color:DS.pink, fontWeight:700, fontSize:13, cursor:'pointer' }}>
                 Remove from family
               </button>
             )}

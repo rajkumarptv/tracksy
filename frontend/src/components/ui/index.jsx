@@ -33,7 +33,7 @@ export function StatCard({ label, value, change, changeLabel, prefix, accentColo
           color: isPositive ? 'var(--green)' : 'var(--red)',
           display: 'inline-flex', alignItems: 'center', gap: 3,
           background: isPositive ? 'var(--green-light)' : 'var(--red-light)',
-          borderRadius: 20, padding: '3px 9px',
+          borderRadius:14, padding: '3px 9px',
         }}>
           {isPositive ? '↑' : '↓'} {Math.abs(change)}%
           <span style={{ color: 'var(--text3)', fontWeight: 400, fontSize: 10.5, marginLeft: 2 }}>{changeLabel || 'vs last month'}</span>
@@ -105,8 +105,8 @@ export function EmptyState({ icon = '📭', title, description, action }) {
 export function ProgressBar({ value, color = 'var(--accent)', height = 8 }) {
   const pct = Math.min(100, Math.max(0, value || 0));
   return (
-    <div style={{ height, background: 'var(--surface3)', borderRadius: 20, overflow: 'hidden' }}>
-      <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 20, transition: 'width .6s cubic-bezier(.4,0,.2,1)' }} />
+    <div style={{ height, background: 'var(--surface3)', borderRadius:14, overflow: 'hidden' }}>
+      <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius:14, transition: 'width .6s cubic-bezier(.4,0,.2,1)' }} />
     </div>
   );
 }
@@ -149,7 +149,7 @@ export function IconButton({ children, onClick, title, variant = 'default' }) {
 }
 
 /* ─── Topbar ────────────────────────────────────── */
-export function Topbar({ title, subtitle, children }) {
+export function Topbar({ title, subtitle, children, showSearch = true }) {
   const { theme, toggleTheme } = useThemeStore();
   const { user } = useAuthStore();
   const navigate = useNavigate();
@@ -181,7 +181,7 @@ export function Topbar({ title, subtitle, children }) {
       </div>
 
       {/* Search bar — grows to fill space; Enter searches transactions */}
-      <form onSubmit={submitSearch} role="search" style={{
+      {showSearch ? <form onSubmit={submitSearch} role="search" style={{
         flex: 1, maxWidth: 420,
         position: 'relative', display: 'flex', alignItems: 'center',
       }}>
@@ -205,7 +205,7 @@ export function Topbar({ title, subtitle, children }) {
           onFocus={e => { e.target.style.borderColor = 'var(--accent)'; e.target.style.boxShadow = '0 0 0 3px var(--accent-light)'; }}
           onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }}
         />
-      </form>
+      </form> : <div style={{ flex: 1 }} />}
 
       {/* Right side actions */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto', flexShrink: 0 }}>
@@ -228,12 +228,12 @@ export function Topbar({ title, subtitle, children }) {
           padding: '5px 12px 5px 5px',
           background: 'var(--surface)',
           border: '1px solid var(--border)',
-          borderRadius: 24, cursor: 'pointer',
+          borderRadius:14, cursor: 'pointer',
           transition: 'var(--transition)',
         }}>
           <div style={{
             width: 30, height: 30, borderRadius: '50%',
-            background: 'linear-gradient(135deg, var(--accent), #a29bfe)',
+            background: 'linear-gradient(135deg, var(--accent), #818CF8)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: '#fff', fontSize: 11, fontWeight: 700, flexShrink: 0,
           }}>
@@ -244,6 +244,32 @@ export function Topbar({ title, subtitle, children }) {
           </span>
         </button>
       </div>
+    </div>
+  );
+}
+
+/* ─── SubTabs: secondary navigation inside a page (e.g. Debts → Overview | Payoff) ─── */
+export function SubTabs({ tabs, active, onChange }) {
+  return (
+    <div role="tablist" style={{
+      display: 'flex', gap: 4, padding: '10px 28px 0', flexShrink: 0, minHeight: 46,
+      borderBottom: '1px solid var(--border)', background: 'var(--surface)',
+      overflowX: 'auto',
+    }}>
+      {tabs.map(t => {
+        const on = t.key === active;
+        return (
+          <button key={t.key} role="tab" aria-selected={on} onClick={() => onChange(t.key)}
+            style={{
+              padding: '8px 14px 10px', fontSize: 13.5, fontWeight: on ? 600 : 500, cursor: 'pointer',
+              color: on ? 'var(--accent)' : 'var(--text2)', background: 'none', border: 'none',
+              borderBottom: `2px solid ${on ? 'var(--accent)' : 'transparent'}`, marginBottom: -1,
+              whiteSpace: 'nowrap', fontFamily: 'inherit', transition: 'var(--transition)',
+            }}>
+            {t.label}
+          </button>
+        );
+      })}
     </div>
   );
 }

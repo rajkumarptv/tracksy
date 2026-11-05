@@ -42,12 +42,14 @@ const Family       = lazyWithReload(() => import('./pages/Family'));
 const Admin        = lazyWithReload(() => import('./pages/Admin'));
 // OtherPages exports several — wrap each in its own lazy chunk
 const Wallet       = lazyWithReload(() => import('./pages/Accounts'));
-const Analytics    = lazyWithReload(() => import('./pages/OtherPages').then(m => ({ default: m.Analytics })));
 const Settings     = lazyWithReload(() => import('./pages/OtherPages').then(m => ({ default: m.Settings })));
-const Investments   = lazyWithReload(() => import('./pages/Investments'));
-const DebtReduction = lazyWithReload(() => import('./pages/DebtReduction'));
-const Challenges    = lazyWithReload(() => import('./pages/Challenges'));
-const SmartInsights = lazyWithReload(() => import('./pages/SmartInsights'));
+const Insights      = lazyWithReload(() => import('./pages/Insights'));
+
+// Retire browser-only data from the removed Challenges/Investments pages — notably
+// the Dhan broker access token, which must not linger in localStorage.
+try {
+  ['tracksy_challenges', 'tracksy_badges', 'tracksy_investments', 'tracksy_dhan_creds'].forEach((k) => window.localStorage.removeItem(k));
+} catch { /* storage unavailable */ }
 
 // Persist the query cache to localStorage → on app open, last data shows
 // instantly (no spinner), then refreshes quietly in the background.
@@ -93,15 +95,13 @@ export default function App() {
               <Route path="budget" element={<Budget />} />
               <Route path="categories" element={<Categories />} />
               <Route path="debts" element={<Debts />} />
-              <Route path="analytics" element={<Analytics />} />
+              <Route path="insights" element={<Insights />} />
+              <Route path="analytics" element={<Navigate to="/insights" replace />} />
+              <Route path="debt-reduction" element={<Navigate to="/debts?tab=payoff" replace />} />
               <Route path="import" element={<Import />} />
               <Route path="recurring" element={<Recurring />} />
               <Route path="family" element={<Family />} />
               <Route path="settings" element={<Settings />} />
-              <Route path="investments" element={<Investments />} />
-              <Route path="debt-reduction" element={<DebtReduction />} />
-              <Route path="challenges" element={<Challenges />} />
-              <Route path="insights" element={<SmartInsights />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/" replace />} />
