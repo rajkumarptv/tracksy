@@ -1,4 +1,6 @@
-import { Search, Bell, Moon, Sun, SlidersHorizontal } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Search, Moon, Sun } from 'lucide-react';
 import useThemeStore from '../../store/themeStore';
 import useAuthStore from '../../store/authStore';
 import { useFmt } from '../../i18n';
@@ -150,7 +152,14 @@ export function IconButton({ children, onClick, title, variant = 'default' }) {
 export function Topbar({ title, subtitle, children }) {
   const { theme, toggleTheme } = useThemeStore();
   const { user } = useAuthStore();
-  const initials = user ? `${user.first_name?.[0] || ''}${user.last_name?.[0] || ''}`.toUpperCase() : 'AL';
+  const navigate = useNavigate();
+  const [term, setTerm] = useState('');
+  const initials = user ? `${user.first_name?.[0] || ''}${user.last_name?.[0] || ''}`.toUpperCase() : 'U';
+  const submitSearch = (e) => {
+    e.preventDefault();
+    const q = term.trim();
+    if (q) { navigate(`/transactions?search=${encodeURIComponent(q)}`); setTerm(''); }
+  };
 
   return (
     <div className="topbar" style={{
@@ -171,14 +180,17 @@ export function Topbar({ title, subtitle, children }) {
         {subtitle && <div style={{ fontSize: 11.5, color: 'var(--text3)', marginTop: 1 }}>{subtitle}</div>}
       </div>
 
-      {/* Search bar — grows to fill space */}
-      <div style={{
+      {/* Search bar — grows to fill space; Enter searches transactions */}
+      <form onSubmit={submitSearch} role="search" style={{
         flex: 1, maxWidth: 420,
         position: 'relative', display: 'flex', alignItems: 'center',
       }}>
         <Search size={15} color="var(--text3)" style={{ position: 'absolute', left: 13, pointerEvents: 'none' }} />
         <input
-          placeholder="Search for anything..."
+          value={term}
+          onChange={e => setTerm(e.target.value)}
+          placeholder="Search transactions…"
+          aria-label="Search transactions"
           style={{
             width: '100%',
             height: 38, paddingLeft: 38, paddingRight: 12,
@@ -193,16 +205,7 @@ export function Topbar({ title, subtitle, children }) {
           onFocus={e => { e.target.style.borderColor = 'var(--accent)'; e.target.style.boxShadow = '0 0 0 3px var(--accent-light)'; }}
           onBlur={e => { e.target.style.borderColor = 'var(--border)'; e.target.style.boxShadow = 'none'; }}
         />
-        <button style={{
-          position: 'absolute', right: 8,
-          width: 26, height: 26, borderRadius: 7,
-          background: 'var(--surface2)', border: '1px solid var(--border)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', color: 'var(--text3)',
-        }}>
-          <SlidersHorizontal size={13} />
-        </button>
-      </div>
+      </form>
 
       {/* Right side actions */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto', flexShrink: 0 }}>
@@ -219,26 +222,8 @@ export function Topbar({ title, subtitle, children }) {
           {theme === 'light' ? <Moon size={15} /> : <Sun size={15} />}
         </button>
 
-        {/* Notification bell */}
-        <button style={{
-          width: 38, height: 38, borderRadius: 10, border: '1px solid var(--border)',
-          background: 'var(--surface)', color: 'var(--text2)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', transition: 'var(--transition)', position: 'relative',
-        }}>
-          <Bell size={15} />
-          <span style={{
-            position: 'absolute', top: 8, right: 8,
-            width: 8, height: 8,
-            background: 'var(--red)', borderRadius: '50%',
-            border: '1.5px solid var(--surface)',
-            fontSize: 8, color: '#fff',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>3</span>
-        </button>
-
         {/* User avatar with name */}
-        <div style={{
+        <button onClick={() => navigate('/settings')} title="Profile & settings" aria-label="Open settings" style={{
           display: 'flex', alignItems: 'center', gap: 9,
           padding: '5px 12px 5px 5px',
           background: 'var(--surface)',
@@ -257,8 +242,7 @@ export function Topbar({ title, subtitle, children }) {
           <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap' }}>
             Hi, {user?.first_name || 'User'}
           </span>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-        </div>
+        </button>
       </div>
     </div>
   );

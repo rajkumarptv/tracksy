@@ -241,7 +241,7 @@ export default function Recurring() {
 
   return (
     <div style={{ padding: '0 0 32px' }}>
-      <Topbar subtitle="Manage your recurring payments & income">
+      <Topbar title="Recurring" subtitle="Manage your recurring payments & income">
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={handleProcess} disabled={processing}
             className="btn btn-ghost btn-sm" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>

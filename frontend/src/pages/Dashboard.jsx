@@ -407,9 +407,12 @@ export default function Dashboard() {
       let last = balanceHist[0].balance;
       return MONTHS.map((name, i) => { if (byMonth[i] != null) last = byMonth[i]; return { name, value: last }; });
     }
+    // Stop the line at today — days still to come have no balance yet.
+    const t = new Date();
+    const today = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
     return balanceHist.map(p => {
       const d = new Date(p.date);
-      return { name: `${d.getDate()} ${MONTHS[d.getMonth()]}`, value: p.balance };
+      return { name: `${d.getDate()} ${MONTHS[d.getMonth()]}`, value: String(p.date).slice(0, 10) > today ? null : p.balance };
     });
   }, [balanceHist, balanceSeries, unit, DEMO]);
 
@@ -648,7 +651,7 @@ export default function Dashboard() {
                     <ReferenceLine y={0} stroke={c.axis} strokeDasharray="3 3" strokeOpacity={0.5}/>
                     <Tooltip content={<BalTip fmt={fmt} c={c}/>}/>
                     <Area type="monotone" dataKey="value" stroke={c.stroke} strokeWidth={c.strokeW}
-                      fill="url(#balGrad)" dot={{ r:3, fill: isDark?'#061B38':'#FFFFFF', stroke:c.stroke, strokeWidth:2 }}
+                      fill="url(#balGrad)" dot={chartData.length > 14 ? false : { r:3, fill: isDark?'#061B38':'#FFFFFF', stroke:c.stroke, strokeWidth:2 }}
                       activeDot={{ r:6, fill:'#8B5CF6', stroke: isDark?'#061B38':'#fff', strokeWidth:3 }}
                       animationDuration={1200}/>
                   </AreaChart>

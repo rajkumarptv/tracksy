@@ -6,7 +6,10 @@ import { walletsAPI } from '../services/api';
 import { Topbar, PageLoader } from '../components/ui';
 import { useFmt } from '../i18n';
 
-const DEBT_TYPES = ['visa','mastercard','loan','lending'];
+// 'lending' is money owed TO the user, so it's an asset — not a debt to repay.
+const DEBT_TYPES = ['visa','mastercard','loan'];
+// Loans have a fixed EMI; otherwise fall back to a stated minimum, then 2% of the balance.
+const minPayment = (d) => parseFloat(d.emi_amount || d.min_payment || Math.abs(parseFloat(d.balance || 0)) * 0.02);
 
 /* ── Avalanche/Snowball calculator ── */
 function calcPayoff(debts, extraMonthly = 0, method = 'avalanche') {
@@ -15,7 +18,7 @@ function calcPayoff(debts, extraMonthly = 0, method = 'avalanche') {
     ...d,
     bal: Math.abs(parseFloat(d.balance || 0)),
     rate: parseFloat(d.interest_rate || 18) / 100 / 12,
-    minPay: parseFloat(d.min_payment || Math.abs(parseFloat(d.balance || 0)) * 0.02),
+    minPay: minPayment(d),
   })).filter(d => d.bal > 0);
 
   const sorted = [...remaining].sort((a, b) =>
@@ -93,7 +96,7 @@ export default function DebtReduction() {
   const debts = useMemo(() => (wallets || []).filter(w => DEBT_TYPES.includes(w.type) && Math.abs(parseFloat(w.balance || 0)) > 0), [wallets]);
 
   const totalDebt = debts.reduce((s, d) => s + Math.abs(parseFloat(d.balance || 0)), 0);
-  const minMonthly = debts.reduce((s, d) => s + parseFloat(d.min_payment || Math.abs(parseFloat(d.balance || 0)) * 0.02), 0);
+  const minMonthly = debts.reduce((s, d) => s + minPayment(d), 0);
 
   const avalanche = useMemo(() => calcPayoff(debts, extra, 'avalanche'), [debts, extra]);
   const snowball  = useMemo(() => calcPayoff(debts, extra, 'snowball'),  [debts, extra]);

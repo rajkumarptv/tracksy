@@ -36,9 +36,17 @@ async function ensureColumns() {
   }
 }
 
+/* Local yyyy-mm-dd (toISOString would shift the day in non-UTC timezones). */
+const fmtDate = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 /* yyyy-mm-dd for a date N days before today */
-const daysAgo = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().split('T')[0]; };
-const monthsAgoDate = (m, day = 1) => { const d = new Date(); d.setMonth(d.getMonth() - m); d.setDate(day); return d.toISOString().split('T')[0]; };
+const daysAgo = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return fmtDate(d); };
+/* `day` of the month `m` months ago, clamped to that month's length
+   (avoids Feb 31 → Mar 3 style overflow). */
+const monthsAgoDate = (m, day = 1) => {
+  const now = new Date();
+  const last = new Date(now.getFullYear(), now.getMonth() - m + 1, 0).getDate();
+  return fmtDate(new Date(now.getFullYear(), now.getMonth() - m, Math.min(day, last)));
+};
 const rand = (min, max) => Math.round(min + Math.random() * (max - min));
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
@@ -81,12 +89,12 @@ const load = async (req, res) => {
     }
 
     // Map default category names → ids (global defaults, shared by all users).
-    const cats = await client.query(`SELECT id, name, type FROM categories WHERE is_default=true`);
+    const cats = await client.query(`SELECT id, name, type, emoji, color FROM categories WHERE is_default=true`);
     const catId = (name) => (cats.rows.find(c => c.name === name) || {}).id || null;
 
     // ── Accounts (covers bank, cash, credit card, loan, asset, lending) ──
     const wallets = [
-      { name:'HDFC Savings',     type:'bank',   last_four:'6590', balance: 86500,   color:'#004C8F' },
+      { name:'HDFC Savings',     type:'bank',   last_four:'6590', balance: 320000,  color:'#004C8F' },
       { name:'Cash Wallet',      type:'cash',   last_four:null,   balance: 4200,    color:'#16A34A' },
       { name:'HDFC Credit Card', type:'visa',   last_four:'4521', balance: -18450,  color:'#1A1F71', credit_limit:150000, interest_rate:42, statement_day:5, payment_day:22 },
       { name:'Home Loan',        type:'loan',   last_four:null,   balance: -1845000,color:'#DC2626', total_loan_amount:2500000, emi_amount:21500, emi_day:5, interest_rate:8.6, due_date: daysAgo(-5) },
@@ -142,6 +150,10 @@ const load = async (req, res) => {
         tx.push([bank, catId('Freelance'), 'income', rand(5000, 18000), 'Freelance Project', 'Upwork', monthsAgoDate(m, rand(10, 25))]);
     }
 
+    // Demo history must not contain transactions dated in the future.
+    const today = fmtDate(new Date());
+    for (let i = tx.length - 1; i >= 0; i--) if (tx[i][6] > today) tx.splice(i, 1);
+
     // Bulk insert transactions in one round trip (fast, releases locks quickly).
     if (tx.length) {
       const cols = 8;
@@ -162,15 +174,17 @@ const load = async (req, res) => {
     const budgets = [
       ['Food Budget',      'Food & Dining',     8000],
       ['Transport Budget', 'Transport',         3000],
-      ['Shopping Budget',  'Shopping',          5000],
+      ['Shopping Budget',  'Shopping',          12000],
       ['Entertainment',    'Entertainment',     2000],
-      ['Utilities',        'Bills & Utilities', 4000],
+      ['Bills & Utilities','Bills & Utilities', 45000],
     ];
     for (const [name, cat, amount] of budgets) {
       await client.query(
-        `INSERT INTO budgets (user_id, category_id, name, amount, period, start_date, type, is_sample)
-         VALUES ($1,$2,$3,$4,'monthly',$5,'expense',true)`,
-        [uid, catId(cat), name, amount, monthsAgoDate(0, 1)]
+        `INSERT INTO budgets (user_id, category_id, name, amount, period, start_date, type, emoji, color, is_sample)
+         VALUES ($1,$2,$3,$4,'monthly',$5,'expense',$6,$7,true)`,
+        [uid, catId(cat), name, amount, monthsAgoDate(0, 1),
+         (cats.rows.find(c => c.name === cat) || {}).emoji || '📌',
+         (cats.rows.find(c => c.name === cat) || {}).color || '#6c5ce7']
       );
     }
 

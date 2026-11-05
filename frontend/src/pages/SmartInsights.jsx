@@ -113,15 +113,15 @@ export default function SmartInsights() {
 
   const { data: txRaw, isLoading: txLoading } = useQuery({
     queryKey: ['transactions', 'all-insights'],
-    queryFn: () => transactionsAPI.getAll({ limit: 500 }).then(r => r.data?.transactions || r.data || []),
+    queryFn: () => transactionsAPI.getAll({ limit: 500 }).then(r => r.data?.data || []),
   });
   const { data: budgets = [] } = useQuery({
     queryKey: ['budgets'],
-    queryFn: () => budgetsAPI.getAll().then(r => r.data || []),
+    queryFn: () => budgetsAPI.getAll().then(r => r.data?.data || []),
   });
   const { data: wallets = [] } = useQuery({
     queryKey: ['wallets'],
-    queryFn: () => walletsAPI.getAll().then(r => r.data || []),
+    queryFn: () => walletsAPI.getAll().then(r => r.data?.data || []),
   });
 
   const insights = useMemo(() => {
@@ -131,7 +131,9 @@ export default function SmartInsights() {
     const now = new Date();
     const thisMonthStart = startOf(now, 'month');
     const lastMonthStart = new Date(thisMonthStart); lastMonthStart.setMonth(lastMonthStart.getMonth() - 1);
-    const lastMonthEnd   = new Date(thisMonthStart); lastMonthEnd.setMilliseconds(-1);
+    // Compare like with like: this month so far vs the same number of days of last month.
+    const lastMonthDays  = new Date(thisMonthStart.getFullYear(), thisMonthStart.getMonth(), 0).getDate();
+    const lastMonthEnd   = new Date(lastMonthStart); lastMonthEnd.setDate(Math.min(now.getDate(), lastMonthDays)); lastMonthEnd.setHours(23, 59, 59, 999);
 
     const thisTxs = txs.filter(t => new Date(t.transaction_date) >= thisMonthStart && t.type !== 'transfer');
     const lastTxs = txs.filter(t => {
@@ -154,7 +156,7 @@ export default function SmartInsights() {
     thisTxs.filter(t => t.type === 'expense').forEach(t => {
       const cat = t.category_name || 'Other';
       catSpend[cat] = (catSpend[cat] || 0) + parseFloat(t.amount||0);
-      catEmoji[cat] = t.category_icon || '📦';
+      catEmoji[cat] = t.category_emoji || '📦';
     });
     const topCats = Object.entries(catSpend).sort((a,b) => b[1]-a[1]).slice(0, 6);
 
