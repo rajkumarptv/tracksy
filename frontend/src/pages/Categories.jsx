@@ -4,11 +4,9 @@ import { categoriesAPI } from '../services/api';
 import { Topbar, EmptyState, PageLoader } from '../components/ui';
 import { Plus, Tag } from 'lucide-react';
 import useAuthStore from '../store/authStore';
-import usePremiumStore from '../store/premiumStore';
 import { CategoryIcon } from '../components/icons';
 import CategoryIconPicker from '../components/CategoryIconPicker';
 
-const FREE_CATEGORY_LIMIT = 5;
 
 const TYPE_OPTS = [
   { value:'income',  label:'Income',  color:'#22C55E', bg:'rgba(34,197,94,.12)'  },
@@ -25,7 +23,6 @@ const PRESET_COLORS = [
 export default function Categories() {
   const qc = useQueryClient();
   const { user } = useAuthStore();
-  const { openPremium } = usePremiumStore();
   const [showModal, setShowModal] = useState(false);
   const [editCat, setEditCat] = useState(null);
   const [filterType, setFilterType] = useState('all');
@@ -47,8 +44,7 @@ export default function Categories() {
   const defaults  = filtered.filter(c => c.is_default);
   // Count all custom categories regardless of filter for the limit check
   const customAll = (categories||[]).filter(c => !c.is_default);
-  const atCatLimit = !user?.is_premium && customAll.length >= FREE_CATEGORY_LIMIT;
-  const openAddCat = () => atCatLimit ? openPremium() : (setEditCat(null), setShowModal(true));
+  const openAddCat = () => { setEditCat(null); setShowModal(true); };
 
   const totalIncome  = (categories||[]).filter(c=>c.type==='income'||c.type==='both').length;
   const totalExpense = (categories||[]).filter(c=>c.type==='expense'||c.type==='both').length;
@@ -68,9 +64,9 @@ export default function Categories() {
       <div className="mob-hide">
         <Topbar title="Categories" subtitle="Organise your income & expense categories">
           <button className="btn btn-primary btn-sm"
-            style={{ display:'flex', alignItems:'center', gap:6, background: atCatLimit ? 'linear-gradient(135deg,#F59E0B,#FF79A8)' : 'linear-gradient(135deg,#8B5CF6,#3B82F6)', border:'none', boxShadow:'0 4px 14px rgba(139,92,246,.35)' }}
+            style={{ display:'flex', alignItems:'center', gap:6, background: 'linear-gradient(135deg,#8B5CF6,#3B82F6)', border:'none', boxShadow:'0 4px 14px rgba(139,92,246,.35)' }}
             onClick={openAddCat}>
-            {atCatLimit ? '👑 Upgrade' : <><Plus size={13}/> New Category</>}
+            <Plus size={13}/> New Category
           </button>
         </Topbar>
       </div>
@@ -122,32 +118,10 @@ export default function Categories() {
             <div style={{ fontSize:12, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.07em' }}>
               Your Custom Categories
             </div>
-            <span style={{ background: atCatLimit ? 'rgba(245,158,11,.15)' : 'var(--accent-light)', color: atCatLimit ? '#F59E0B' : 'var(--accent)', fontSize:11, fontWeight:700, borderRadius:20, padding:'2px 8px' }}>
-              {customAll.length}{!user?.is_premium ? ` / ${FREE_CATEGORY_LIMIT}` : ''}
+            <span style={{ background: 'var(--accent-light)', color: 'var(--accent)', fontSize:11, fontWeight:700, borderRadius:20, padding:'2px 8px' }}>
+              {customAll.length}
             </span>
           </div>
-
-          {/* Free-tier limit banner */}
-          {!user?.is_premium && (
-            <div style={{
-              display:'flex', alignItems:'center', gap:12, padding:'11px 16px', borderRadius:14, marginBottom:14,
-              background: atCatLimit ? 'rgba(245,158,11,.1)' : 'rgba(139,92,246,.06)',
-              border: atCatLimit ? '1px solid rgba(245,158,11,.35)' : '1px solid rgba(139,92,246,.15)',
-            }}>
-              <span style={{ fontSize:18 }}>{atCatLimit ? '🔒' : '🏷️'}</span>
-              <span style={{ fontSize:13, color:'var(--text2)', flex:1 }}>
-                {atCatLimit
-                  ? <><strong style={{color:'#F59E0B'}}>Limit reached</strong> — Free plan allows {FREE_CATEGORY_LIMIT} custom categories.</>
-                  : <>{customAll.length} / {FREE_CATEGORY_LIMIT} custom categories used on free plan.</>}
-              </span>
-              {atCatLimit && (
-                <button onClick={openPremium}
-                  style={{ fontSize:12, fontWeight:700, padding:'5px 14px', borderRadius:20, background:'linear-gradient(135deg,#F59E0B,#FF79A8)', border:'none', color:'#fff', cursor:'pointer', whiteSpace:'nowrap' }}>
-                  Upgrade →
-                </button>
-              )}
-            </div>
-          )}
 
           {custom.length === 0 ? (
             <div style={{ background:'var(--surface)', borderRadius:20, boxShadow:'0 4px 24px rgba(139,92,246,.08)', border:'1px solid var(--border-light)' }}>
@@ -259,12 +233,10 @@ function CategoryModal({ cat, onClose, onSaved }) {
   });
   const [error, setError] = useState('');
 
-  const { openPremium: openCatPremium } = usePremiumStore();
   const mutation = useMutation({
     mutationFn: (data) => cat ? categoriesAPI.update(cat.id,data) : categoriesAPI.create(data),
     onSuccess: onSaved,
     onError: (e) => {
-      if (e.response?.status === 403) { onClose(); openCatPremium(); return; }
       setError(e.response?.data?.message || 'Error saving category');
     },
   });

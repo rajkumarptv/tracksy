@@ -12,11 +12,9 @@ import { budgetsAPI, categoriesAPI, transactionsAPI, recurringAPI } from '../ser
 import { PageLoader } from '../components/ui';
 import { useFmt } from '../i18n';
 import useAuthStore from '../store/authStore';
-import usePremiumStore from '../store/premiumStore';
 import useThemeStore from '../store/themeStore';
 import styles from './Budget.module.css';
 
-const FREE_BUDGET_LIMIT = 3;
 
 /* ── Palette — derived from the shared dashboard theme ── */
 import { THEME } from '../theme';
@@ -93,7 +91,6 @@ export default function Budget() {
   const qc = useQueryClient();
   const fmt = useFmt();
   const { user } = useAuthStore();
-  const { openPremium } = usePremiumStore();
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
   const t = isDark ? DS.dark : DS.light;
@@ -123,8 +120,7 @@ export default function Budget() {
 
   const budgets = (apiBudgets || []).filter(b => (b.type || 'expense') === activeType);
 
-  const atBudgetLimit = !user?.is_premium && (apiBudgets||[]).length >= FREE_BUDGET_LIMIT;
-  const openAddBudget = () => atBudgetLimit ? openPremium() : (setEditBudget(null), setShowModal(true));
+  const openAddBudget = () => { setEditBudget(null); setShowModal(true); };
 
   /* ── Totals ── */
   const totalBudget = budgets.reduce((s,b) => s + parseFloat(b.amount||0), 0);

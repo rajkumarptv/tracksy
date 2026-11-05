@@ -8,7 +8,6 @@ import api from '../services/api';
 const adminAPI = {
   getStats: ()                      => api.get('/admin/stats'),
   getUsers: (params)                => api.get('/admin/users', { params }),
-  togglePremium: (userId)           => api.patch(`/admin/users/${userId}/premium`),
   listFamilies: ()                  => api.get('/admin/families'),
 };
 
@@ -85,14 +84,6 @@ export default function Admin() {
     enabled: isAdmin,
   });
 
-  const premiumMutation = useMutation({
-    mutationFn: (userId) => adminAPI.togglePremium(userId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['admin-users'] });
-      qc.invalidateQueries({ queryKey: ['admin-stats'] });
-    },
-  });
-
   // ── Family oversight (read-only) ──
   const { data: families = [] } = useQuery({
     queryKey: ['admin-families'],
@@ -153,7 +144,6 @@ export default function Admin() {
         {/* ── Top KPI cards ── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 28 }}>
           <StatBox label="Total Users"      value={s?.users.total    ?? '—'} icon="👥" color="#a29bfe" bg="rgba(162,155,254,.12)" sub="All registered" />
-          <StatBox label="Premium Users"    value={s?.users.premium  ?? '—'} icon="✨" color="#F59E0B" bg="rgba(245,158,11,.12)"  sub={`₹${(s?.revenue.monthly_estimate ?? 0).toLocaleString()}/mo est.`} />
           <StatBox label="Active (7d)"      value={s?.users.active_week  ?? '—'} icon="🟢" color="#22C55E" bg="rgba(34,197,94,.12)" sub="Logged in last week" />
           <StatBox label="Active (30d)"     value={s?.users.active_month ?? '—'} icon="📅" color="#3B82F6" bg="rgba(59,130,246,.12)" sub="Logged in last month" />
           <StatBox label="New Today"        value={s?.users.new_today ?? '—'} icon="🆕" color="#FF79A8" bg="rgba(255,121,168,.12)" sub={`${s?.users.new_week ?? 0} this week`} />
@@ -161,7 +151,7 @@ export default function Admin() {
         </div>
 
         {/* ── Charts row ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16, marginBottom: 28 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16, marginBottom: 28 }}>
 
           {/* Signups chart */}
           <div style={{ background: 'rgba(255,255,255,.03)', borderRadius: 18, padding: '20px 22px', border: '1px solid rgba(255,255,255,.06)' }}>
@@ -171,41 +161,6 @@ export default function Admin() {
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 10.5, color: '#555' }}>
               <span>30 days ago</span><span>Today</span>
             </div>
-          </div>
-
-          {/* Plan split */}
-          <div style={{ background: 'rgba(255,255,255,.03)', borderRadius: 18, padding: '20px 22px', border: '1px solid rgba(255,255,255,.06)' }}>
-            <div style={{ fontWeight: 700, fontSize: 14, color: '#fff', marginBottom: 4 }}>Plan Distribution</div>
-            <div style={{ fontSize: 11.5, color: '#666', marginBottom: 20 }}>Free vs Premium</div>
-            {s && (() => {
-              const total = s.users.total || 1;
-              const freePct = Math.round((s.users.free / total) * 100);
-              const premPct = 100 - freePct;
-              return (
-                <>
-                  <div style={{ height: 10, borderRadius: 20, overflow: 'hidden', background: 'rgba(255,255,255,.06)', marginBottom: 16 }}>
-                    <div style={{ height: '100%', width: `${premPct}%`, background: 'linear-gradient(90deg,#F59E0B,#FF79A8)', transition: 'width .6s ease' }}/>
-                  </div>
-                  {[
-                    { label: 'Premium', count: s.users.premium, pct: premPct, color: '#F59E0B' },
-                    { label: 'Free',    count: s.users.free,    pct: freePct, color: '#8B5CF6' },
-                  ].map(({ label, count, pct, color }) => (
-                    <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: color, flexShrink: 0 }}/>
-                      <span style={{ flex: 1, fontSize: 13, color: '#ccc' }}>{label}</span>
-                      <span style={{ fontWeight: 800, color, fontSize: 15 }}>{count}</span>
-                      <span style={{ fontSize: 11, color: '#666' }}>{pct}%</span>
-                    </div>
-                  ))}
-                  <div style={{ marginTop: 16, padding: '12px 14px', borderRadius: 12, background: 'rgba(245,158,11,.08)', border: '1px solid rgba(245,158,11,.2)' }}>
-                    <div style={{ fontSize: 11, color: '#888' }}>Est. Monthly Revenue</div>
-                    <div style={{ fontSize: 22, fontWeight: 900, color: '#F59E0B', marginTop: 2 }}>
-                      ₹{(s.revenue.monthly_estimate).toLocaleString('en-IN')}
-                    </div>
-                  </div>
-                </>
-              );
-            })()}
           </div>
         </div>
 
@@ -221,7 +176,7 @@ export default function Admin() {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ background: 'rgba(255,255,255,.02)' }}>
-                  {['Name', 'Email', 'Plan', 'Signed Up', 'Last Login'].map(h => (
+                  {['Name', 'Email', 'Signed Up', 'Last Login'].map(h => (
                     <th key={h} style={{ padding: '10px 18px', textAlign: 'left', fontSize: 10.5, fontWeight: 700, color: '#666', textTransform: 'uppercase', letterSpacing: '.07em', whiteSpace: 'nowrap', borderBottom: '1px solid rgba(255,255,255,.04)' }}>{h}</th>
                   ))}
                 </tr>
@@ -235,11 +190,6 @@ export default function Admin() {
                       {u.first_name} {u.last_name}
                     </td>
                     <td style={{ padding: '12px 18px', fontSize: 12.5, color: '#888' }}>{u.email}</td>
-                    <td style={{ padding: '12px 18px' }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: u.is_premium ? 'rgba(245,158,11,.15)' : 'rgba(139,92,246,.12)', color: u.is_premium ? '#F59E0B' : '#a29bfe' }}>
-                        {u.is_premium ? '✨ Premium' : 'Free'}
-                      </span>
-                    </td>
                     <td style={{ padding: '12px 18px', fontSize: 12, color: '#666' }}>
                       {new Date(u.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </td>
@@ -269,7 +219,7 @@ export default function Admin() {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ background: 'rgba(255,255,255,.02)' }}>
-                  {['User', 'Email', 'Plan', 'Transactions', 'Wallets', 'Joined', 'Last Login', 'Action'].map(h => (
+                  {['User', 'Email', 'Transactions', 'Wallets', 'Joined', 'Last Login'].map(h => (
                     <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 10.5, fontWeight: 700, color: '#666', textTransform: 'uppercase', letterSpacing: '.07em', whiteSpace: 'nowrap', borderBottom: '1px solid rgba(255,255,255,.04)' }}>{h}</th>
                   ))}
                 </tr>
@@ -292,11 +242,6 @@ export default function Admin() {
                       </div>
                     </td>
                     <td style={{ padding: '12px 16px', fontSize: 12, color: '#888', whiteSpace: 'nowrap' }}>{u.email}</td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 9px', borderRadius: 20, background: u.is_premium ? 'rgba(245,158,11,.15)' : 'rgba(255,255,255,.06)', color: u.is_premium ? '#F59E0B' : '#666' }}>
-                        {u.is_premium ? '✨ Premium' : 'Free'}
-                      </span>
-                    </td>
                     <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 700, color: '#a29bfe', textAlign: 'center' }}>{u.tx_count}</td>
                     <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 700, color: '#74b9ff', textAlign: 'center' }}>{u.wallet_count}</td>
                     <td style={{ padding: '12px 16px', fontSize: 12, color: '#666', whiteSpace: 'nowrap' }}>
@@ -305,24 +250,10 @@ export default function Admin() {
                     <td style={{ padding: '12px 16px', fontSize: 12, color: '#666', whiteSpace: 'nowrap' }}>
                       {u.last_login_at ? new Date(u.last_login_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : '—'}
                     </td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <button
-                        disabled={premiumMutation.isPending}
-                        onClick={() => premiumMutation.mutate(u.id)}
-                        style={{
-                          fontSize: 11, fontWeight: 700, padding: '5px 12px', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap',
-                          background: u.is_premium ? 'rgba(236,72,153,.12)' : 'rgba(245,158,11,.12)',
-                          border: `1px solid ${u.is_premium ? 'rgba(236,72,153,.3)' : 'rgba(245,158,11,.3)'}`,
-                          color: u.is_premium ? '#EC4899' : '#F59E0B',
-                          transition: 'all .15s',
-                        }}>
-                        {u.is_premium ? 'Revoke Premium' : 'Grant Premium'}
-                      </button>
-                    </td>
                   </tr>
                 ))}
                 {users.length === 0 && (
-                  <tr><td colSpan={8} style={{ textAlign: 'center', padding: '36px', color: '#555', fontSize: 13 }}>No users found</td></tr>
+                  <tr><td colSpan={6} style={{ textAlign: 'center', padding: '36px', color: '#555', fontSize: 13 }}>No users found</td></tr>
                 )}
               </tbody>
             </table>
@@ -353,7 +284,7 @@ export default function Admin() {
 
           <div style={{ padding: '8px 22px 22px' }}>
             {families.length === 0 && (
-              <div style={{ padding: '24px', textAlign: 'center', color: '#555', fontSize: 13 }}>No families yet. Premium users create them from the Family page.</div>
+              <div style={{ padding: '24px', textAlign: 'center', color: '#555', fontSize: 13 }}>No families yet. Users can create them from the Family page.</div>
             )}
             {families.map(fam => (
               <div key={fam.id} style={{ marginTop: 16, padding: '16px 18px', borderRadius: 14, background: 'rgba(255,255,255,.02)', border: '1px solid rgba(255,255,255,.06)' }}>

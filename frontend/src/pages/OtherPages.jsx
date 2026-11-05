@@ -37,17 +37,15 @@ function cardInk(hex) {
 const WALLET_ICONS = { visa:'💳',mastercard:'💳',paypal:'🅿️',bank:'🏦',cash:'💵',crypto:'₿',loan:'📋',asset:'📈',lending:'🤝',other:'👛',paytm:'🟦',phonepe:'💜',gpay:'🟣',irctc:'🚂',amazon_pay:'🛒',mobikwik:'💙',jio_money:'🔴',airtel_money:'❤️' };
 const WALLET_LABELS = { visa:'Visa',mastercard:'Mastercard',paypal:'PayPal',bank:'Bank Account',cash:'Cash',crypto:'Crypto',loan:'Loan',asset:'Asset',lending:'Lending',other:'Other',paytm:'Paytm Wallet',phonepe:'PhonePe',gpay:'Google Pay',irctc:'IRCTC Wallet',amazon_pay:'Amazon Pay',mobikwik:'MobiKwik',jio_money:'Jio Money',airtel_money:'Airtel Money' };
 
-const FREE_WALLET_LIMIT = 3;
 
 export function Wallet() {
   const qc = useQueryClient();
   const [showModal, setShowModal] = useState(false);
   const fmt = useFmtHook();
   const t = useTWallet();
-  // useAuthStore2 and usePremiumStore are imported further down in this module
+  // useAuthStore2 is imported further down in this module
   // but ES module imports are hoisted, so they're available here at call time
   const { user } = useAuthStore2();
-  const { openPremium: openWalletPremium } = usePremiumStore();
   const { currency: walletCurrency } = useCurrencyStoreWallet();
   const currencySymbol = WALLET_CURRENCIES.find(c => c.code === walletCurrency)?.symbol || walletCurrency?.slice(0,2) || '$';
 
@@ -190,8 +188,7 @@ export function Wallet() {
     );
   };
 
-  const atWalletLimit = !user?.is_premium && (wallets||[]).length >= FREE_WALLET_LIMIT;
-  const openAddWallet = () => atWalletLimit ? openWalletPremium() : setShowModal(true);
+  const openAddWallet = () => setShowModal(true);
   const assetWallets     = (wallets||[]).filter(w => !isLiabilityType(w.type));
   const liabilityWallets = (wallets||[]).filter(w => isLiabilityType(w.type));
   const totalAssets  = assetWallets.reduce((s,w) => s + parseFloat(w.balance||0), 0);
@@ -275,28 +272,6 @@ export function Wallet() {
             </div>
           ))}
         </div>
-
-        {/* Free tier limit banner */}
-        {!user?.is_premium && (
-          <div style={{
-            display:'flex', alignItems:'center', gap:12, padding:'11px 16px', borderRadius:14, marginBottom:16,
-            background: atWalletLimit ? 'rgba(245,158,11,.1)' : 'rgba(139,92,246,.06)',
-            border: atWalletLimit ? '1px solid rgba(245,158,11,.35)' : '1px solid rgba(139,92,246,.15)',
-          }}>
-            <span style={{ fontSize:18 }}>{atWalletLimit ? '🔒' : '📊'}</span>
-            <span style={{ fontSize:13, color:'var(--text2)', flex:1 }}>
-              {atWalletLimit
-                ? <><strong style={{color:'#F59E0B'}}>{t('wallet_limit_banner')}</strong> — {t('wallet_free_limit')} {FREE_WALLET_LIMIT} accounts.</>
-                : <>{(wallets||[]).length} / {FREE_WALLET_LIMIT} {t('wallet_free_used')}.</>}
-            </span>
-            {atWalletLimit && (
-              <button onClick={openWalletPremium}
-                style={{ fontSize:12, fontWeight:700, padding:'5px 14px', borderRadius:20, background:'linear-gradient(135deg,#F59E0B,#FF79A8)', border:'none', color:'#fff', cursor:'pointer', whiteSpace:'nowrap' }}>
-                {t('wallet_upgrade_btn')}
-              </button>
-            )}
-          </div>
-        )}
 
         {/* Net Worth hero banner */}
         <div style={{ background:'linear-gradient(135deg,#4C3BC4,#8B5CF6)', borderRadius:20, padding:'20px 24px', marginBottom:20, color:'#fff', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:16 }}>
@@ -600,11 +575,9 @@ function AddWalletModal({ onClose, onSaved }) {
     maturity_date:'', invested_amount:'',
   });
   const [step, setStep] = useState(1);
-  const { openPremium: openModalPremium } = usePremiumStore();
   const mutation = useMutation({
     mutationFn: (data) => walletsAPI.create(data),
     onSuccess: onSaved,
-    onError: (e) => { if (e.response?.status === 403) { onClose(); openModalPremium(); } },
   });
 
   const isCard     = ['visa','mastercard'].includes(form.type);
@@ -1190,7 +1163,7 @@ import useCurrencyStore2, { CURRENCIES as ALL_CURRENCIES } from '../store/curren
 import useLangStore2 from '../store/langStore';
 import { useFmt as useFmtHook } from '../i18n';
 import { useT as useT2 } from '../i18n';
-import { User, Globe, Bell, Shield, ChevronRight as Chevron, Download, Trash2, Crown, Check, AlertTriangle, Eye, EyeOff, Key, Tag, Sparkles } from 'lucide-react';
+import { User, Globe, Bell, Shield, ChevronRight as Chevron, Download, Trash2, Check, AlertTriangle, Eye, EyeOff, Key, Tag, Sparkles } from 'lucide-react';
 import usePrivacyStore from '../store/privacyStore';
 import ThemedSelect from '../components/ThemedSelect';
 
@@ -1269,7 +1242,6 @@ function PrivacySection() {
     </SectionCard>
   );
 }
-import usePremiumStore from '../store/premiumStore';
 import { invalidateFinance } from '../lib/cache';
 
 export function Settings() {
@@ -1287,7 +1259,6 @@ export function Settings() {
   const [saved, setSaved]           = useState2(false);
   const [resetModal, setResetModal] = useState2(false);
   const [exporting, setExporting]   = useState2(false);
-  const { open: showPremium, openPremium, closePremium } = usePremiumStore();
   const [exportDone, setExportDone] = useState2(false);
   const [sampleLoaded, setSampleLoaded] = useState2(false);
   const [sampleBusy, setSampleBusy]     = useState2('');
@@ -1372,19 +1343,6 @@ export function Settings() {
             <div style={{ position:'relative', zIndex:1, flex:1 }}>
               <div style={{ fontSize:20, fontWeight:800, letterSpacing:-0.3 }}>{user?.first_name} {user?.last_name}</div>
               <div style={{ fontSize:13, opacity:.8, marginTop:2 }}>{user?.email}</div>
-              <div style={{ display:'flex', gap:8, marginTop:8, alignItems:'center' }}>
-                {user?.is_premium ? (
-                  <span style={{ fontSize:11, background:'rgba(245,158,11,.25)', border:'1px solid rgba(245,158,11,.4)', borderRadius:20, padding:'3px 12px', fontWeight:700, color:'#F59E0B' }}>✨ Premium</span>
-                ) : (
-                  <>
-                    <span style={{ fontSize:11, background:'rgba(255,255,255,.2)', borderRadius:20, padding:'3px 10px', fontWeight:600 }}>{t('settings_free_plan')}</span>
-                    <button onClick={() => openPremium()}
-                      style={{ fontSize:11, background:'rgba(245,158,11,.25)', border:'1px solid rgba(245,158,11,.5)', borderRadius:20, padding:'3px 10px', fontWeight:700, color:'#FFE4A0', cursor:'pointer' }}>
-                      {t('settings_upgrade_btn')}
-                    </button>
-                  </>
-                )}
-              </div>
             </div>
           </div>
 
@@ -1454,7 +1412,7 @@ export function Settings() {
           <ChangePasswordSection user={user} />
 
           {/* Gmail Auto-Import */}
-          <GmailSection user={user} openPremium={openPremium} />
+          <GmailSection />
 
           {/* Data Backup */}
           <SectionCard icon={<Download size={18} color="#3B82F6"/>} title="Data Backup & Export">
@@ -1552,27 +1510,10 @@ export function Settings() {
             </div>
           )}
 
-          {/* Plan info teaser — only for free users */}
-          {!user?.is_premium && <div onClick={() => openPremium()} style={{ cursor:'pointer', background:'linear-gradient(135deg,#1a1033 0%,#2d2055 100%)', borderRadius:20, padding:'22px 24px', marginBottom:16, display:'flex', alignItems:'center', gap:16, boxShadow:'0 4px 24px rgba(139,92,246,.2)', border:'1px solid rgba(139,92,246,.3)', transition:'transform .2s' }}
-            onMouseEnter={e=>e.currentTarget.style.transform='translateY(-2px)'}
-            onMouseLeave={e=>e.currentTarget.style.transform=''}>
-            <div style={{ width:46, height:46, borderRadius:14, background:'rgba(245,158,11,.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-              <Crown size={22} color="#F59E0B"/>
-            </div>
-            <div style={{ flex:1 }}>
-              <div style={{ fontSize:15, fontWeight:800, color:'#fff', marginBottom:3 }}>Unlock Premium Features</div>
-              <div style={{ fontSize:12.5, color:'rgba(255,255,255,.6)' }}>AI insights, unlimited accounts, priority support & more.</div>
-            </div>
-            <div style={{ background:'linear-gradient(135deg,#F59E0B,#FF79A8)', borderRadius:12, padding:'8px 18px', color:'#fff', fontSize:13, fontWeight:700, flexShrink:0 }}>
-              ₹100/mo →
-            </div>
-          </div>}
-
         </div>
       </div>
 
       {resetModal && <ResetModal scope={resetModal} onClose={() => setResetModal(false)}/>}
-      {showPremium && <PremiumModal onClose={closePremium}/>}
     </div>
   );
 }
@@ -1795,110 +1736,6 @@ function ResetModal({ scope, onClose }) {
   );
 }
 
-/* ── Premium modal ─────────────────────────────────────── */
-const FREE_FEATURES = [
-  '✅ Up to 3 accounts/wallets',
-  '✅ Transaction tracking',
-  '✅ 3 budget categories',
-  '✅ 2 saving goals',
-  '✅ Basic analytics (30 days)',
-  '✅ Debt tracking',
-  '❌ AI spending insights',
-  '❌ Unlimited accounts',
-  '❌ Unlimited budgets & goals',
-  '❌ Full analytics history',
-  '❌ Data export (CSV)',
-  '❌ Priority support',
-  '❌ Custom categories (unlimited)',
-  '❌ Multi-currency support',
-];
-
-const PREMIUM_FEATURES = [
-  '✅ Unlimited accounts/wallets',
-  '✅ Unlimited transactions',
-  '✅ Unlimited budget categories',
-  '✅ Unlimited saving goals',
-  '✅ Full analytics history',
-  '✅ Debt tracking + EMI schedule',
-  '✅ AI spending insights',
-  '✅ Data export (JSON + CSV)',
-  '✅ Priority email support',
-  '✅ Custom categories (unlimited)',
-  '✅ Multi-currency support',
-  '✅ Recurring transactions',
-  '✅ Bill reminders',
-  '✅ Family sharing (up to 5)',
-];
-
-export function PremiumModal({ onClose }) {
-  const [upgrading, setUpgrading] = useState2(false);
-
-  const handleUpgrade = () => {
-    setUpgrading(true);
-    window.open('https://wa.me/918782424920?text=Hi!%20I%20want%20to%20upgrade%20to%20Tracksy%20Premium%20(%E2%82%B9100%2Fmonth)', '_blank');
-    setTimeout(() => setUpgrading(false), 2000);
-  };
-
-  const freeFeatures    = ['Up to 3 accounts/wallets','Transaction tracking','3 budget categories','2 saving goals','Basic analytics (30 days)','Debt tracking'];
-  const lockedFeatures  = ['WhatsApp transaction logging','Unlimited accounts','Unlimited budgets & goals','Full analytics history','Data export (CSV + JSON)','Priority support','Custom categories','Multi-currency'];
-  const premiumFeatures = [...freeFeatures, 'WhatsApp transaction logging','Unlimited accounts/wallets','Unlimited budgets & goals','Full analytics history','Data export (JSON + CSV)','Priority email support','Custom categories (unlimited)','Multi-currency support','Recurring transactions','Bill reminders','AI spending insights'];
-
-  return (
-    <div className="modal-overlay" onClick={e => e.target===e.currentTarget && onClose()}>
-      <div className="modal" style={{ maxWidth:680, padding:0, overflow:'hidden' }}>
-
-        {/* Header */}
-        <div style={{ background:'linear-gradient(135deg,#1a1033 0%,#2d2055 100%)', padding:'28px 32px', position:'relative', overflow:'hidden' }}>
-          <div style={{ position:'absolute', top:-20, right:-20, width:80, height:80, background:'rgba(245,158,11,.1)', borderRadius:'50%' }}/>
-          <div style={{ position:'absolute', bottom:-30, left:40, width:60, height:60, background:'rgba(139,92,246,.15)', borderRadius:'50%' }}/>
-          <button onClick={onClose} style={{ position:'absolute', top:16, right:16, background:'rgba(255,255,255,.1)', border:'none', borderRadius:8, cursor:'pointer', padding:'4px 8px', color:'rgba(255,255,255,.7)', fontSize:16 }}>✕</button>
-          <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:8 }}>
-            <Crown size={28} color="#F59E0B"/>
-            <div style={{ fontSize:22, fontWeight:900, color:'#fff', letterSpacing:-0.5 }}>Tracksy Premium</div>
-          </div>
-          <div style={{ fontSize:14, color:'rgba(255,255,255,.7)' }}>Unlock the full power of your personal finance</div>
-          <div style={{ display:'inline-flex', alignItems:'baseline', gap:4, marginTop:18, background:'rgba(245,158,11,.2)', borderRadius:12, padding:'8px 18px', border:'1px solid rgba(245,158,11,.3)' }}>
-            <span style={{ fontSize:13, color:'#F59E0B', fontWeight:700 }}>₹</span>
-            <span style={{ fontSize:36, fontWeight:900, color:'#F59E0B', letterSpacing:-1 }}>100</span>
-            <span style={{ fontSize:13, color:'rgba(255,255,255,.6)' }}>/month</span>
-          </div>
-        </div>
-
-        {/* Feature comparison */}
-        <div style={{ padding:'24px 32px' }}>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:24 }}>
-            {/* Free */}
-            <div style={{ borderRadius:16, overflow:'hidden', border:'1px solid var(--border)' }}>
-              <div style={{ background:'var(--surface2)', padding:'12px 16px', fontWeight:800, fontSize:14, color:'var(--text3)', borderBottom:'1px solid var(--border-light)' }}>Free Plan</div>
-              <div style={{ padding:'12px 16px', maxHeight:280, overflowY:'auto' }}>
-                {freeFeatures.map(f => <div key={f} style={{ fontSize:12.5, color:'var(--text)', padding:'4px 0', display:'flex', gap:7 }}>✅ {f}</div>)}
-                {lockedFeatures.map(f => <div key={f} style={{ fontSize:12.5, color:'var(--text3)', padding:'4px 0', display:'flex', gap:7 }}>❌ {f}</div>)}
-              </div>
-            </div>
-            {/* Premium */}
-            <div style={{ borderRadius:16, overflow:'hidden', border:'1.5px solid rgba(245,158,11,.35)' }}>
-              <div style={{ background:'rgba(245,158,11,.08)', padding:'12px 16px', fontWeight:800, fontSize:14, color:'#F59E0B', borderBottom:'1px solid var(--border-light)' }}>Premium ✨</div>
-              <div style={{ padding:'12px 16px', maxHeight:280, overflowY:'auto' }}>
-                {premiumFeatures.map(f => <div key={f} style={{ fontSize:12.5, color:'var(--text)', padding:'4px 0', display:'flex', gap:7 }}>✅ {f}</div>)}
-              </div>
-            </div>
-          </div>
-
-          <button onClick={handleUpgrade} disabled={upgrading}
-            style={{ width:'100%', padding:'14px', borderRadius:14, background:'linear-gradient(135deg,#F59E0B,#FF79A8)', border:'none', color:'#fff', fontSize:16, fontWeight:800, cursor:'pointer', boxShadow:'0 6px 20px rgba(245,158,11,.4)', letterSpacing:-0.2, transition:'opacity .15s', opacity:upgrading?.8:1 }}
-            onMouseEnter={e=>e.currentTarget.style.opacity='.9'}
-            onMouseLeave={e=>e.currentTarget.style.opacity='1'}>
-            {upgrading ? 'Opening…' : '✨ Upgrade to Premium — ₹100/month'}
-          </button>
-          <div style={{ textAlign:'center', fontSize:12, color:'var(--text3)', marginTop:10 }}>
-            7-day free trial · Cancel anytime · UPI / Card / Net banking
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function SectionCard({ icon, title, children }) {
   return (
     <div style={{ background:'var(--surface)', borderRadius:20, padding:'22px 24px', boxShadow:'0 4px 24px rgba(139,92,246,.08)', border:'1px solid var(--border-light)', marginBottom:16 }}>
@@ -1914,7 +1751,7 @@ function SectionCard({ icon, title, children }) {
 }
 
 /* ── Gmail Auto-Import section ───────────────────────────── */
-function GmailSection({ user, openPremium }) {
+function GmailSection() {
   const qc = useQueryClient();
   const [syncResult, setSyncResult] = useState2(null);
   const [params] = [new URLSearchParams(window.location.search)];
@@ -1951,20 +1788,7 @@ function GmailSection({ user, openPremium }) {
 
   return (
     <SectionCard icon={SvgGmail} title="Gmail Auto-Import">
-      {/* Premium gate */}
-      {!user?.is_premium ? (
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:16, flexWrap:'wrap' }}>
-          <div style={{ fontSize:13.5, color:'var(--text2)', lineHeight:1.6, flex:1 }}>
-            Connect Gmail and Tracksy will automatically read your bank & UPI transaction
-            emails every night and add them for you — no manual entry.
-            <div style={{ marginTop:6, fontSize:12, color:'var(--text3)' }}>🔒 Read-only access. We only scan transaction alerts.</div>
-          </div>
-          <button onClick={openPremium}
-            style={{ padding:'10px 20px', borderRadius:12, border:'none', background:'linear-gradient(135deg,#F59E0B,#FF79A8)', color:'#fff', fontWeight:700, fontSize:13.5, cursor:'pointer', flexShrink:0 }}>
-            ✨ Upgrade
-          </button>
-        </div>
-      ) : !connected ? (
+      {!connected ? (
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:16, flexWrap:'wrap' }}>
           <div style={{ fontSize:13.5, color:'var(--text2)', lineHeight:1.6, flex:1 }}>
             Auto-add transactions from your bank & UPI email alerts. Runs nightly; you can also sync on demand.

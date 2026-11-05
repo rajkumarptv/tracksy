@@ -8,7 +8,6 @@ import {
 } from '@phosphor-icons/react';
 import useAuthStore from '../../store/authStore';
 import useThemeStore from '../../store/themeStore';
-import usePremiumStore from '../../store/premiumStore';
 import { useT } from '../../i18n';
 import InstallPWA from '../InstallPWA';
 import styles from './Sidebar.module.css';
@@ -85,7 +84,6 @@ function AnimatedNavItem({ path, tKey, label, Icon, color, bg, t, onClose }) {
 export default function Sidebar({ isOpen, onClose }) {
   const { user, logout } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
-  const { openPremium } = usePremiumStore();
   const navigate = useNavigate();
   const t = useT();
 
@@ -164,25 +162,6 @@ export default function Sidebar({ isOpen, onClose }) {
           </button>
 
         </nav>
-
-        {/* ── Upgrade banner ── */}
-        {!user?.is_premium && (
-          <motion.div
-            className={styles.upgradeBanner}
-            onClick={openPremium}
-            whileHover={{ scale: 1.02, y: -2 }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-          >
-            <div className={styles.upgradeBannerGlow} />
-            <Crown size={22} color="#FFD700" weight="fill" style={{ marginBottom: 8, position: 'relative', zIndex: 1 }} />
-            <div className={styles.upgradeTitle}>{t('sidebar_upgrade_title')}</div>
-            <div className={styles.upgradeDesc}>{t('sidebar_upgrade_desc')}</div>
-            <button className={styles.upgradeBtn} onClick={e => { e.stopPropagation(); openPremium(); }}>
-              {t('sidebar_upgrade_btn')}
-            </button>
-          </motion.div>
-        )}
 
         {/* ── Bottom ── */}
         <div className={styles.navBottom}>

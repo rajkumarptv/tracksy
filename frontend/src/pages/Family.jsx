@@ -8,7 +8,6 @@ import { familyAPI } from '../services/api';
 import { PageLoader } from '../components/ui';
 import { useFmt } from '../i18n';
 import useAuthStore from '../store/authStore';
-import usePremiumStore from '../store/premiumStore';
 import useThemeStore from '../store/themeStore';
 import { THEME } from '../theme';
 import styles from './Budget.module.css';
@@ -63,7 +62,6 @@ export default function Family() {
   const fmt = useFmt();
   const { t } = usePalette();
   const { user } = useAuthStore();
-  const { openPremium } = usePremiumStore();
   const qc = useQueryClient();
   const [activeMember, setActiveMember] = useState(null);
 
@@ -73,7 +71,6 @@ export default function Family() {
     retry: false,
   });
 
-  const isPremium  = user?.is_premium || status?.is_premium;
   const inFamily   = status?.in_family;
   const isPrimary  = status?.role === 'primary';
   const sharedMode = status?.share_mode === 'shared';
@@ -82,36 +79,13 @@ export default function Family() {
   const { data: overview, isLoading: ovLoading } = useQuery({
     queryKey: ['family-overview'],
     queryFn: () => familyAPI.overview().then(r => r.data.data),
-    enabled: !!isPremium && canSeeOverview,
+    enabled: !!canSeeOverview,
     retry: false,
   });
 
   if (statusLoading) return <PageLoader />;
 
-  /* ── 1. NOT PREMIUM → upgrade prompt ── */
-  if (!isPremium) {
-    return (
-      <Page t={t} title="Family" subtitle="Shared finances for your whole household">
-        <motion.div variants={cardVar} className={styles.card}
-          style={{ background:t.card, border:`1px solid ${t.border}`, boxShadow:t.shadow, textAlign:'center', padding:'40px 24px' }}>
-          <div style={{ fontSize:52, marginBottom:14 }}>👨‍👩‍👧</div>
-          <div style={{ fontSize:20, fontWeight:800, color:t.text, marginBottom:10 }}>Family Budget</div>
-          <div style={{ fontSize:14, color:t.text2, marginBottom:14, lineHeight:1.6, maxWidth:420, marginInline:'auto' }}>
-            Create a private family space and invite members with a code. See everyone's income, spending and balances in one combined view.
-          </div>
-          <div style={{ fontSize:12.5, color:t.text2, marginBottom:22, background:t.surface, borderRadius:12, padding:'10px 14px', maxWidth:420, marginInline:'auto' }}>
-            🔒 Members join only with your code — nobody's data is shared without consent.
-          </div>
-          <button onClick={openPremium}
-            style={{ padding:'13px 30px', borderRadius:14, border:'none', background:'linear-gradient(135deg,#F59E0B,#FF79A8)', color:'#fff', fontWeight:800, fontSize:15, cursor:'pointer', boxShadow:'0 8px 24px rgba(245,158,11,.4)' }}>
-            ✨ Upgrade to Premium
-          </button>
-        </motion.div>
-      </Page>
-    );
-  }
-
-  /* ── 2. PREMIUM, NOT IN FAMILY → create or join ── */
+  /* ── 1. NOT IN A FAMILY → create or join ── */
   if (!inFamily) return <SetupFamily qc={qc} />;
 
   /* ── 3. head_only MEMBER (not primary, not shared) → own status + leave ── */
@@ -281,7 +255,7 @@ function InviteCodeBar({ code, qc, t }) {
   );
 }
 
-/* ── Create or Join (premium, no family yet) ── */
+/* ── Create or Join (no family yet) ── */
 function SetupFamily({ qc }) {
   const { t } = usePalette();
   const [mode, setMode] = useState(null); // 'create' | 'join'

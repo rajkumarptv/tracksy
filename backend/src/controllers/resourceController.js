@@ -4,20 +4,6 @@ const { encrypt, decryptRow } = require('../utils/crypto');
 const decryptWallet = row => decryptRow(row, ['name']);
 const decryptGoal   = row => decryptRow(row, ['name']);
 
-// ── Free-tier limits ──────────────────────────────────────────────────────────
-const FREE_WALLET_LIMIT   = 3;
-const FREE_CATEGORY_LIMIT = 5;
-const FREE_GOAL_LIMIT     = 3;
-const FREE_BUDGET_LIMIT   = 3;
-
-async function isPremium(userId) {
-  const r = await query('SELECT is_premium, premium_expires_at FROM users WHERE id=$1', [userId]);
-  const u = r.rows[0];
-  if (!u || !u.is_premium) return false;
-  if (u.premium_expires_at && new Date(u.premium_expires_at) < new Date()) return false;
-  return true;
-}
-
 // ===== SAVING GOALS =====
 const getAllGoals = async (req, res) => {
   try {
@@ -36,17 +22,6 @@ const getAllGoals = async (req, res) => {
 
 const createGoal = async (req, res) => {
   try {
-    const premium = await isPremium(req.user.userId);
-    if (!premium) {
-      const cnt = await query('SELECT COUNT(*) FROM saving_goals WHERE user_id=$1', [req.user.userId]);
-      if (parseInt(cnt.rows[0].count) >= FREE_GOAL_LIMIT) {
-        return res.status(403).json({
-          success: false,
-          code: 'FREE_LIMIT_GOALS',
-          message: `Free plan allows up to ${FREE_GOAL_LIMIT} saving goals. Upgrade to Premium for unlimited goals.`,
-        });
-      }
-    }
     const { name, target_amount, current_amount, emoji, color, target_date, monthly_contribution } = req.body;
     const result = await query(`
       INSERT INTO saving_goals (user_id, name, target_amount, current_amount, emoji, color, target_date, monthly_contribution)
@@ -99,17 +74,6 @@ const getAllWallets = async (req, res) => {
 
 const createWallet = async (req, res) => {
   try {
-    const premium = await isPremium(req.user.userId);
-    if (!premium) {
-      const cnt = await query('SELECT COUNT(*) FROM wallets WHERE user_id=$1', [req.user.userId]);
-      if (parseInt(cnt.rows[0].count) >= FREE_WALLET_LIMIT) {
-        return res.status(403).json({
-          success: false,
-          code: 'FREE_LIMIT_WALLETS',
-          message: `Free plan allows up to ${FREE_WALLET_LIMIT} accounts. Upgrade to Premium for unlimited accounts.`,
-        });
-      }
-    }
     const { name, type, last_four, balance, color, credit_limit, interest_rate, total_loan_amount, emi_amount, emi_day, due_date, start_date, statement_day, payment_day } = req.body;
     const result = await query(`
       INSERT INTO wallets (user_id, name, type, last_four, balance, color, credit_limit, interest_rate, total_loan_amount, emi_amount, emi_day, due_date, start_date, statement_day, payment_day)
@@ -162,17 +126,6 @@ const createCategory = async (req, res) => {
   try {
     const { name, type, emoji, color, icon } = req.body;
     if (!name || !type) return res.status(400).json({ success: false, message: 'Name and type are required' });
-    const premium = await isPremium(req.user.userId);
-    if (!premium) {
-      const cnt = await query('SELECT COUNT(*) FROM categories WHERE user_id=$1 AND is_default=false', [req.user.userId]);
-      if (parseInt(cnt.rows[0].count) >= FREE_CATEGORY_LIMIT) {
-        return res.status(403).json({
-          success: false,
-          code: 'FREE_LIMIT_CATEGORIES',
-          message: `Free plan allows up to ${FREE_CATEGORY_LIMIT} custom categories. Upgrade to Premium for unlimited categories.`,
-        });
-      }
-    }
     const result = await query(`
       INSERT INTO categories (user_id, name, type, emoji, color, icon, is_default)
       VALUES ($1,$2,$3,$4,$5,$6,false) RETURNING *

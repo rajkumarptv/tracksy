@@ -9,14 +9,12 @@ import {
   ChevronsUp, Minus, ChevronsDown,
 } from 'lucide-react';
 import useAuthStore from '../store/authStore';
-import usePremiumStore from '../store/premiumStore';
 import useThemeStore from '../store/themeStore';
 import { THEME } from '../theme';
 import styles from './Goals.module.css';
 import { invalidateFinance } from '../lib/cache';
 import ThemedSelect from '../components/ThemedSelect';
 
-const FREE_GOAL_LIMIT = 3;
 
 const BADGE_CFG_DARK = {
   High:      { text:'High Priority',   bg:'rgba(139,92,246,.25)',  color:'#C4B5FD' },
@@ -78,7 +76,6 @@ function DonutChart({ pct, size=160, stroke=14, color='#8B5CF6', track, label, s
 export default function Goals() {
   const qc = useQueryClient();
   const { user } = useAuthStore();
-  const { openPremium } = usePremiumStore();
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
   const t = isDark ? THEME.dark : THEME.light;
@@ -107,8 +104,7 @@ export default function Goals() {
     }));
   }, [apiGoals]);
 
-  const atGoalLimit = !user?.is_premium && rawGoals.length >= FREE_GOAL_LIMIT;
-  const openAddGoal = () => atGoalLimit ? openPremium() : (setEditGoal(null), setShowModal(true));
+  const openAddGoal = () => { setEditGoal(null); setShowModal(true); };
 
   const filteredGoals = useMemo(() => {
     let g = rawGoals;
