@@ -12,10 +12,10 @@ const adminAPI = {
 };
 
 // ── Tiny stat card ─────────────────────────────────────────────────────────────
-function StatBox({ label, value, sub, color = '#8B5CF6', bg = 'rgba(139,92,246,.1)', icon }) {
+function StatBox({ label, value, sub, color = '#4F46E5', bg = 'rgba(79,70,229,.1)', icon }) {
   return (
     <div style={{
-      background: 'var(--surface, #1a1a2e)', borderRadius: 18, padding: '18px 20px',
+      background: 'var(--surface, #1a1a2e)', borderRadius:14, padding: '18px 20px',
       border: '1px solid rgba(255,255,255,.07)', display: 'flex', alignItems: 'center', gap: 14,
     }}>
       <div style={{ width: 46, height: 46, borderRadius: 13, background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>
@@ -42,7 +42,7 @@ function MiniBarChart({ data }) {
           <div style={{
             width: '100%', borderRadius: '3px 3px 0 0',
             height: `${Math.max(4, (parseInt(d.count) / max) * 64)}px`,
-            background: 'linear-gradient(180deg,#8B5CF6,#3B82F6)',
+            background: '#4F46E5',
             transition: 'height .3s ease',
           }}/>
         </div>
@@ -99,7 +99,7 @@ export default function Admin() {
   if (!isAuthenticated) { navigate('/login'); return null; }
   if (!authChecked) {
     return <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f0f1a' }}>
-      <div style={{ color: '#8B5CF6', fontSize: 15, fontWeight: 600 }}>Verifying access…</div>
+      <div style={{ color: '#4F46E5', fontSize: 15, fontWeight: 600 }}>Verifying access…</div>
     </div>;
   }
   if (!user?.is_admin) {
@@ -108,7 +108,7 @@ export default function Admin() {
         <div style={{ fontSize: 48 }}>🚫</div>
         <div style={{ fontSize: 20, fontWeight: 800, color: '#fff' }}>Access Denied</div>
         <div style={{ fontSize: 14, color: '#888' }}>You need admin privileges to view this page.</div>
-        <button onClick={() => navigate('/')} style={{ marginTop: 8, padding: '10px 24px', borderRadius: 12, background: '#8B5CF6', border: 'none', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
+        <button onClick={() => navigate('/')} style={{ marginTop: 8, padding: '10px 24px', borderRadius: 12, background: '#4F46E5', border: 'none', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
           Go Home
         </button>
       </div>
@@ -119,8 +119,8 @@ export default function Admin() {
     <div style={{ minHeight: '100vh', background: '#0f0f1a', color: '#e0e0e0', fontFamily: "'Inter', sans-serif" }}>
 
       {/* ── Header ── */}
-      <div style={{ background: 'linear-gradient(135deg,#1a1033 0%,#0f0f1a 100%)', borderBottom: '1px solid rgba(139,92,246,.2)', padding: '16px 32px', display: 'flex', alignItems: 'center', gap: 16 }}>
-        <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg,#8B5CF6,#a29bfe)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ background: 'linear-gradient(135deg,#1a1033 0%,#0f0f1a 100%)', borderBottom: '1px solid rgba(79,70,229,.2)', padding: '16px 32px', display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ width: 36, height: 36, borderRadius: 10, background: '#4F46E5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff"><path d="M4 4h7v7H4V4zm0 9h7v7H4v-7zm9-9h7v7h-7V4zm0 9h7v7h-7v-7z"/></svg>
         </div>
         <div>
@@ -129,7 +129,7 @@ export default function Admin() {
         </div>
         <div style={{ marginLeft: 'auto', display: 'flex', gap: 10 }}>
           <button onClick={() => qc.invalidateQueries()}
-            style={{ padding: '7px 16px', borderRadius: 10, background: 'rgba(139,92,246,.15)', border: '1px solid rgba(139,92,246,.3)', color: '#a29bfe', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+            style={{ padding: '7px 16px', borderRadius: 10, background: 'rgba(79,70,229,.15)', border: '1px solid rgba(79,70,229,.3)', color: '#818CF8', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
             ↻ Refresh
           </button>
           <button onClick={() => navigate('/')}
@@ -143,18 +143,18 @@ export default function Admin() {
 
         {/* ── Top KPI cards ── */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 28 }}>
-          <StatBox label="Total Users"      value={s?.users.total    ?? '—'} icon="👥" color="#a29bfe" bg="rgba(162,155,254,.12)" sub="All registered" />
-          <StatBox label="Active (7d)"      value={s?.users.active_week  ?? '—'} icon="🟢" color="#22C55E" bg="rgba(34,197,94,.12)" sub="Logged in last week" />
+          <StatBox label="Total Users"      value={s?.users.total    ?? '—'} icon="👥" color="#818CF8" bg="rgba(162,155,254,.12)" sub="All registered" />
+          <StatBox label="Active (7d)"      value={s?.users.active_week  ?? '—'} icon="🟢" color="#059669" bg="rgba(5,150,105,.12)" sub="Logged in last week" />
           <StatBox label="Active (30d)"     value={s?.users.active_month ?? '—'} icon="📅" color="#3B82F6" bg="rgba(59,130,246,.12)" sub="Logged in last month" />
-          <StatBox label="New Today"        value={s?.users.new_today ?? '—'} icon="🆕" color="#FF79A8" bg="rgba(255,121,168,.12)" sub={`${s?.users.new_week ?? 0} this week`} />
-          <StatBox label="Transactions"     value={s?.content.transactions?.toLocaleString() ?? '—'} icon="💸" color="#8B5CF6" bg="rgba(139,92,246,.12)" sub="All time" />
+          <StatBox label="New Today"        value={s?.users.new_today ?? '—'} icon="🆕" color="#F87171" bg="rgba(255,121,168,.12)" sub={`${s?.users.new_week ?? 0} this week`} />
+          <StatBox label="Transactions"     value={s?.content.transactions?.toLocaleString() ?? '—'} icon="💸" color="#4F46E5" bg="rgba(79,70,229,.12)" sub="All time" />
         </div>
 
         {/* ── Charts row ── */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 16, marginBottom: 28 }}>
 
           {/* Signups chart */}
-          <div style={{ background: 'rgba(255,255,255,.03)', borderRadius: 18, padding: '20px 22px', border: '1px solid rgba(255,255,255,.06)' }}>
+          <div style={{ background: 'rgba(255,255,255,.03)', borderRadius:14, padding: '20px 22px', border: '1px solid rgba(255,255,255,.06)' }}>
             <div style={{ fontWeight: 700, fontSize: 14, color: '#fff', marginBottom: 4 }}>New Signups — Last 30 Days</div>
             <div style={{ fontSize: 11.5, color: '#666', marginBottom: 16 }}>Daily new user registrations</div>
             <MiniBarChart data={s?.daily_signups}/>
@@ -165,10 +165,10 @@ export default function Admin() {
         </div>
 
         {/* ── Recent signups ── */}
-        <div style={{ background: 'rgba(255,255,255,.03)', borderRadius: 18, border: '1px solid rgba(255,255,255,.06)', overflow: 'hidden', marginBottom: 28 }}>
+        <div style={{ background: 'rgba(255,255,255,.03)', borderRadius:14, border: '1px solid rgba(255,255,255,.06)', overflow: 'hidden', marginBottom: 28 }}>
           <div style={{ padding: '16px 22px', borderBottom: '1px solid rgba(255,255,255,.05)', fontWeight: 700, fontSize: 14, color: '#fff', display: 'flex', alignItems: 'center', gap: 8 }}>
             🆕 Recent Sign-ups
-            <span style={{ fontSize: 11, fontWeight: 600, color: '#888', background: 'rgba(255,255,255,.05)', borderRadius: 20, padding: '2px 8px' }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#888', background: 'rgba(255,255,255,.05)', borderRadius:14, padding: '2px 8px' }}>
               last 10
             </span>
           </div>
@@ -204,7 +204,7 @@ export default function Admin() {
         </div>
 
         {/* ── User management ── */}
-        <div style={{ background: 'rgba(255,255,255,.03)', borderRadius: 18, border: '1px solid rgba(255,255,255,.06)', overflow: 'hidden' }}>
+        <div style={{ background: 'rgba(255,255,255,.03)', borderRadius:14, border: '1px solid rgba(255,255,255,.06)', overflow: 'hidden' }}>
           <div style={{ padding: '16px 22px', borderBottom: '1px solid rgba(255,255,255,.05)', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <div style={{ fontWeight: 700, fontSize: 14, color: '#fff', flex: 1 }}>👤 User Management</div>
             <input
@@ -231,18 +231,18 @@ export default function Admin() {
                     onMouseLeave={e => e.currentTarget.style.background = ''}>
                     <td style={{ padding: '12px 16px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                        <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg,#8B5CF6,#a29bfe)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: '#fff', flexShrink: 0 }}>
+                        <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#4F46E5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: '#fff', flexShrink: 0 }}>
                           {(u.first_name?.[0] || '') + (u.last_name?.[0] || '')}
                         </div>
                         <div>
                           <div style={{ fontSize: 13, fontWeight: 600, color: '#e0e0e0', whiteSpace: 'nowrap' }}>{u.first_name} {u.last_name}</div>
-                          {u.is_admin && <span style={{ fontSize: 9.5, fontWeight: 700, color: '#FF79A8', background: 'rgba(255,121,168,.12)', borderRadius: 6, padding: '1px 5px' }}>ADMIN</span>}
+                          {u.is_admin && <span style={{ fontSize: 9.5, fontWeight: 700, color: '#F87171', background: 'rgba(255,121,168,.12)', borderRadius: 6, padding: '1px 5px' }}>ADMIN</span>}
                           {u.oauth_provider && <span style={{ fontSize: 9.5, fontWeight: 600, color: '#74b9ff', background: 'rgba(116,185,255,.1)', borderRadius: 6, padding: '1px 5px', marginLeft: 3 }}>{u.oauth_provider}</span>}
                         </div>
                       </div>
                     </td>
                     <td style={{ padding: '12px 16px', fontSize: 12, color: '#888', whiteSpace: 'nowrap' }}>{u.email}</td>
-                    <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 700, color: '#a29bfe', textAlign: 'center' }}>{u.tx_count}</td>
+                    <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 700, color: '#818CF8', textAlign: 'center' }}>{u.tx_count}</td>
                     <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 700, color: '#74b9ff', textAlign: 'center' }}>{u.wallet_count}</td>
                     <td style={{ padding: '12px 16px', fontSize: 12, color: '#666', whiteSpace: 'nowrap' }}>
                       {new Date(u.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: '2-digit' })}
@@ -276,10 +276,10 @@ export default function Admin() {
         </div>
 
         {/* ══ FAMILY OVERSIGHT (read-only) ══ */}
-        <div style={{ background: 'rgba(255,255,255,.03)', borderRadius: 18, border: '1px solid rgba(255,255,255,.06)', overflow: 'hidden', marginTop: 28 }}>
+        <div style={{ background: 'rgba(255,255,255,.03)', borderRadius:14, border: '1px solid rgba(255,255,255,.06)', overflow: 'hidden', marginTop: 28 }}>
           <div style={{ padding: '16px 22px', borderBottom: '1px solid rgba(255,255,255,.05)', fontWeight: 700, fontSize: 14, color: '#fff', display: 'flex', alignItems: 'center', gap: 8 }}>
             👨‍👩‍👧 Families
-            <span style={{ fontSize: 11, fontWeight: 600, color: '#888', background: 'rgba(255,255,255,.05)', borderRadius: 20, padding: '2px 8px' }}>{families.length} total · members join via code</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#888', background: 'rgba(255,255,255,.05)', borderRadius:14, padding: '2px 8px' }}>{families.length} total · members join via code</span>
           </div>
 
           <div style={{ padding: '8px 22px 22px' }}>
@@ -290,14 +290,14 @@ export default function Admin() {
               <div key={fam.id} style={{ marginTop: 16, padding: '16px 18px', borderRadius: 14, background: 'rgba(255,255,255,.02)', border: '1px solid rgba(255,255,255,.06)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, flexWrap:'wrap' }}>
                   <div style={{ fontSize: 15, fontWeight: 800, color: '#fff' }}>{fam.name}</div>
-                  <span style={{ fontSize: 11, fontWeight:700, color: '#a29bfe', background: 'rgba(139,92,246,.12)', borderRadius: 20, padding: '2px 9px', fontFamily:'monospace', letterSpacing:1 }}>{fam.family_code}</span>
-                  <span style={{ fontSize: 11, color: '#888', background: 'rgba(255,255,255,.05)', borderRadius: 20, padding: '2px 9px' }}>{fam.member_count} members</span>
+                  <span style={{ fontSize: 11, fontWeight:700, color: '#818CF8', background: 'rgba(79,70,229,.12)', borderRadius:14, padding: '2px 9px', fontFamily:'monospace', letterSpacing:1 }}>{fam.family_code}</span>
+                  <span style={{ fontSize: 11, color: '#888', background: 'rgba(255,255,255,.05)', borderRadius:14, padding: '2px 9px' }}>{fam.member_count} members</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {fam.members.map(m => (
                     <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 12px', borderRadius: 9, background: 'rgba(255,255,255,.03)' }}>
                       <span style={{ fontSize: 13, color: '#e0e0e0', fontWeight: 600 }}>{m.name}</span>
-                      <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: m.family_role === 'primary' ? 'rgba(245,158,11,.15)' : 'rgba(139,92,246,.15)', color: m.family_role === 'primary' ? '#F59E0B' : '#a29bfe' }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius:14, background: m.family_role === 'primary' ? 'rgba(217,119,6,.15)' : 'rgba(79,70,229,.15)', color: m.family_role === 'primary' ? '#D97706' : '#818CF8' }}>
                         {m.family_role === 'primary' ? '👑 Head' : 'Member'}
                       </span>
                       <span style={{ fontSize: 11.5, color: '#666', flex: 1 }}>{m.email}</span>

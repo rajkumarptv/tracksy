@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip,
@@ -8,7 +8,8 @@ import {
   AreaChart, Area,
 } from 'recharts';
 import { walletsAPI } from '../services/api';
-import { Topbar, PageLoader, EmptyState } from '../components/ui';
+import { Topbar, PageLoader, EmptyState, SubTabs } from '../components/ui';
+import DebtReduction from './DebtReduction';
 import {
   Plus, CreditCard, TrendingDown, X, ChevronRight, ChevronDown, ChevronUp,
   AlertCircle, HandCoins, CalendarClock, Percent, LayoutGrid, Landmark,
@@ -22,27 +23,27 @@ import { invalidateFinance } from '../lib/cache';
 const DEBT_TYPES = ['visa','mastercard','home_loan','vehicle_loan','personal_loan','gold_loan','education_loan','loan','bnpl','family_borrow','emi','lending'];
 
 const TYPE_META = {
-  visa:          { icon: '💳', label: 'Credit Card',    color: '#EC4899', bg: 'rgba(236,72,153,.12)' },
-  mastercard:    { icon: '💳', label: 'Credit Card',    color: '#EC4899', bg: 'rgba(236,72,153,.12)' },
-  home_loan:     { icon: '🏠', label: 'Home Loan',      color: '#F59E0B', bg: 'rgba(245,158,11,.12)' },
-  vehicle_loan:  { icon: '🚗', label: 'Vehicle Loan',   color: '#F59E0B', bg: 'rgba(245,158,11,.12)' },
-  personal_loan: { icon: '💼', label: 'Personal Loan',  color: '#F59E0B', bg: 'rgba(245,158,11,.12)' },
-  gold_loan:     { icon: '🪙', label: 'Gold Loan',      color: '#F59E0B', bg: 'rgba(245,158,11,.12)' },
-  education_loan:{ icon: '🎓', label: 'Education Loan', color: '#F59E0B', bg: 'rgba(245,158,11,.12)' },
-  loan:          { icon: '📋', label: 'Loan',           color: '#F59E0B', bg: 'rgba(245,158,11,.12)' },
-  bnpl:          { icon: '🛍️', label: 'BNPL',           color: '#8B5CF6', bg: 'rgba(139,92,246,.12)' },
-  family_borrow: { icon: '👪', label: 'Borrowed',       color: '#8B5CF6', bg: 'rgba(139,92,246,.12)' },
-  emi:           { icon: '📅', label: 'EMI',            color: '#8B5CF6', bg: 'rgba(139,92,246,.12)' },
+  visa:          { icon: '💳', label: 'Credit Card',    color: '#DC2626', bg: 'rgba(220,38,38,.12)' },
+  mastercard:    { icon: '💳', label: 'Credit Card',    color: '#DC2626', bg: 'rgba(220,38,38,.12)' },
+  home_loan:     { icon: '🏠', label: 'Home Loan',      color: '#D97706', bg: 'rgba(217,119,6,.12)' },
+  vehicle_loan:  { icon: '🚗', label: 'Vehicle Loan',   color: '#D97706', bg: 'rgba(217,119,6,.12)' },
+  personal_loan: { icon: '💼', label: 'Personal Loan',  color: '#D97706', bg: 'rgba(217,119,6,.12)' },
+  gold_loan:     { icon: '🪙', label: 'Gold Loan',      color: '#D97706', bg: 'rgba(217,119,6,.12)' },
+  education_loan:{ icon: '🎓', label: 'Education Loan', color: '#D97706', bg: 'rgba(217,119,6,.12)' },
+  loan:          { icon: '📋', label: 'Loan',           color: '#D97706', bg: 'rgba(217,119,6,.12)' },
+  bnpl:          { icon: '🛍️', label: 'BNPL',           color: '#4F46E5', bg: 'rgba(79,70,229,.12)' },
+  family_borrow: { icon: '👪', label: 'Borrowed',       color: '#4F46E5', bg: 'rgba(79,70,229,.12)' },
+  emi:           { icon: '📅', label: 'EMI',            color: '#4F46E5', bg: 'rgba(79,70,229,.12)' },
   lending:       { icon: '🤝', label: 'Money Lent',     color: '#3B82F6', bg: 'rgba(59,130,246,.12)' },
 };
 
 /* Group definitions for the overview donut + list (validated donut order:
    pink → blue → orange → purple → teal for CVD-safe adjacency) */
 const DEBT_GROUPS = [
-  { key:'cards',   title:'Credit Cards', types:['visa','mastercard'], color:{ light:'#EC4899', dark:'#FF4D8D' }, Icon:CreditCard },
+  { key:'cards',   title:'Credit Cards', types:['visa','mastercard'], color:{ light:'#DC2626', dark:'#F87171' }, Icon:CreditCard },
   { key:'lent',    title:'Money Lent',   types:['lending'],           color:{ light:'#3B82F6', dark:'#4F8DFF' }, Icon:HandCoins  },
-  { key:'loans',   title:'Loans',        types:['home_loan','vehicle_loan','personal_loan','gold_loan','education_loan','loan'], color:{ light:'#F59E0B', dark:'#FF9D00' }, Icon:Landmark },
-  { key:'bnpl',    title:'BNPL & EMI',   types:['bnpl','family_borrow','emi'], color:{ light:'#8B5CF6', dark:'#8B5CF6' }, Icon:CalendarClock },
+  { key:'loans',   title:'Loans',        types:['home_loan','vehicle_loan','personal_loan','gold_loan','education_loan','loan'], color:{ light:'#D97706', dark:'#FF9D00' }, Icon:Landmark },
+  { key:'bnpl',    title:'BNPL & EMI',   types:['bnpl','family_borrow','emi'], color:{ light:'#4F46E5', dark:'#4F46E5' }, Icon:CalendarClock },
 ];
 
 const springD = { type:'spring', stiffness:280, damping:28 };
@@ -79,7 +80,7 @@ function buildSchedule(principal, annualRate, emiAmount, emiDay, months = 12) {
   return rows;
 }
 
-export default function Debts() {
+function DebtsOverview() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const fmt = useFmtHook();
@@ -145,11 +146,11 @@ export default function Debts() {
           </div>
           <div className={styles.headerBtns}>
             <button className={styles.circleBtn} style={{ background:t.cardBg, border:`1px solid ${t.border}` }}
-              onClick={() => navigate('/debt-reduction')}>
+              onClick={() => navigate('/debts?tab=payoff')}>
               <TrendingDown size={19} color={t.text2}/>
             </button>
             <motion.button className={styles.circleBtn} whileTap={{ scale:.9 }}
-              style={{ background:'linear-gradient(180deg,#EC4899,#BE185D)', border:'none', boxShadow:'0 8px 24px rgba(236,72,153,.35)' }}
+              style={{ background:'#DC2626', border:'none', boxShadow:'0 8px 24px rgba(220,38,38,.35)' }}
               onClick={() => { setEditDebt(null); setShowModal(true); }}>
               <Plus size={22} color="#fff"/>
             </motion.button>
@@ -166,12 +167,12 @@ export default function Debts() {
             <div style={{ display:'flex', flexDirection:'column', gap:8, marginTop:12 }}>
               <div>
                 <div style={{ fontSize:10.5, color:t.text3, fontWeight:600, textTransform:'uppercase', letterSpacing:'.04em' }}>Est. Monthly Payments</div>
-                <div style={{ fontSize:16, fontWeight:800, color:t.text, fontFamily:'Space Grotesk, Inter, sans-serif', marginTop:2 }}>{fmt(estMonthly,{noDecimals:true})}</div>
+                <div style={{ fontSize:16, fontWeight:800, color:t.text, fontFamily:'Inter, sans-serif', marginTop:2 }}>{fmt(estMonthly,{noDecimals:true})}</div>
               </div>
               {totalLent > 0 && (
                 <div>
                   <div style={{ fontSize:10.5, color:t.text3, fontWeight:600, textTransform:'uppercase', letterSpacing:'.04em' }}>Money Lent Out</div>
-                  <div style={{ fontSize:16, fontWeight:800, color:t.green, fontFamily:'Space Grotesk, Inter, sans-serif', marginTop:2 }}>{fmt(totalLent,{noDecimals:true})}</div>
+                  <div style={{ fontSize:16, fontWeight:800, color:t.green, fontFamily:'Inter, sans-serif', marginTop:2 }}>{fmt(totalLent,{noDecimals:true})}</div>
                 </div>
               )}
             </div>
@@ -217,9 +218,9 @@ export default function Debts() {
             return (
               <motion.button key={key} whileTap={{ scale:.94 }} className={styles.chip}
                 style={{
-                  background: active ? (isDark?'rgba(236,72,153,.16)':'#FDF2F8') : t.cardBg,
-                  border: `1.5px solid ${active ? '#EC4899' : t.border}`,
-                  color: active ? (isDark?'#F9A8D4':'#EC4899') : t.text2,
+                  background: active ? (isDark?'rgba(220,38,38,.16)':'#FDF2F8') : t.cardBg,
+                  border: `1.5px solid ${active ? '#DC2626' : t.border}`,
+                  color: active ? (isDark?'#F9A8D4':'#DC2626') : t.text2,
                 }}
                 onClick={() => setFilter(key)}>
                 <Icon size={15}/> {label}
@@ -246,7 +247,7 @@ export default function Debts() {
                 </div>
                 <div style={{ display:'flex', alignItems:'center', gap:10 }}>
                   <span style={{ fontSize:13, color:t.text2 }}>{isLent ? 'To Receive' : 'Outstanding'}</span>
-                  <span style={{ fontSize:15, fontWeight:800, color: isLent ? t.green : g.clr, fontFamily:'Space Grotesk, Inter, sans-serif' }}>
+                  <span style={{ fontSize:15, fontWeight:800, color: isLent ? t.green : g.clr, fontFamily:'Inter, sans-serif' }}>
                     {isLent ? '' : '−'}{fmt(g.total,{noDecimals:true})}
                   </span>
                   <div className={styles.collapseBtn} style={{ background:t.surface }}>
@@ -262,7 +263,7 @@ export default function Debts() {
                     transition={{ duration:.25, ease:[.2,.8,.2,1] }}
                     style={{ overflow:'hidden' }}>
                     {g.items.map(w => {
-                      const meta = TYPE_META[w.type] || { icon:'💳', label:'Debt', color:'#EC4899' };
+                      const meta = TYPE_META[w.type] || { icon:'💳', label:'Debt', color:'#DC2626' };
                       const bal = Math.abs(parseFloat(w.balance||0));
                       const emi = parseFloat(w.emi_amount||0);
                       const rate = parseFloat(w.interest_rate||0);
@@ -282,14 +283,14 @@ export default function Debts() {
                           <div style={{ flex:1, minWidth:0 }}>
                             <div style={{ display:'flex', alignItems:'center', gap:8, minWidth:0 }}>
                               <span className={styles.rowName} style={{ color:t.text }}>{w.name}</span>
-                              <span style={{ fontSize:10.5, fontWeight:700, padding:'2px 8px', borderRadius:20, background:`${meta.color}1f`, color:meta.color, whiteSpace:'nowrap', flexShrink:0 }}>{meta.label}</span>
+                              <span style={{ fontSize:10.5, fontWeight:700, padding:'2px 8px', borderRadius:14, background:`${meta.color}1f`, color:meta.color, whiteSpace:'nowrap', flexShrink:0 }}>{meta.label}</span>
                             </div>
                             <div style={{ fontSize:12.5, color:t.text2, marginTop:2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
                               {subBits.join(' · ')}
                             </div>
                           </div>
                           <div style={{ textAlign:'right', flexShrink:0 }}>
-                            <div style={{ fontSize:15, fontWeight:800, color: isLent ? t.green : t.red, fontFamily:'Space Grotesk, Inter, sans-serif' }}>
+                            <div style={{ fontSize:15, fontWeight:800, color: isLent ? t.green : t.red, fontFamily:'Inter, sans-serif' }}>
                               {isLent ? '' : '−'}{fmt(bal,{noDecimals:true})}
                             </div>
                             <div style={{ fontSize:12, color:t.text3, marginTop:2 }}>{isLent ? 'to receive' : 'outstanding'}</div>
@@ -310,7 +311,7 @@ export default function Debts() {
           style={{ background:t.cardBg, border:`1px solid ${t.border}`, boxShadow:t.cardShadow, padding:20 }}>
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
             <span style={{ fontSize:16, fontWeight:700, color:t.text }}>Debt Insights</span>
-            <button onClick={() => navigate('/debt-reduction')}
+            <button onClick={() => navigate('/debts?tab=payoff')}
               style={{ background:'none', border:'none', fontSize:13.5, fontWeight:700, color:t.purple, cursor:'pointer', fontFamily:'inherit' }}>
               Payoff Planner
             </button>
@@ -327,7 +328,7 @@ export default function Debts() {
                 style={{ background:t.surface, border:`1px solid ${t.border}`, borderRadius:16, padding:14, cursor:'pointer', minWidth:0 }}
                 initial={{ opacity:0, y:14 }} animate={{ opacity:1, y:0 }} transition={{ delay:.35+i*.09 }}
                 whileHover={{ y:-3 }}
-                onClick={() => navigate('/debt-reduction')}>
+                onClick={() => navigate('/debts?tab=payoff')}>
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                   <div style={{ width:38, height:38, borderRadius:999, background:color, display:'flex', alignItems:'center', justifyContent:'center' }}>
                     <Icon size={18} color={isDark && color===t.green ? '#04220F' : '#fff'}/>
@@ -343,13 +344,13 @@ export default function Debts() {
 
         {debts.length === 0 && (
           <motion.div variants={cardVarD}
-            style={{ textAlign:'center', padding:'40px 20px', background:t.cardBg, border:`1px solid ${t.border}`, borderRadius:20, boxShadow:t.cardShadow }}>
+            style={{ textAlign:'center', padding:'40px 20px', background:t.cardBg, border:`1px solid ${t.border}`, borderRadius:14, boxShadow:t.cardShadow }}>
             <div style={{ fontSize:38, marginBottom:12 }}>🎉</div>
             <div style={{ fontSize:16, fontWeight:700, color:t.text }}>No debts — you're all clear!</div>
             <div style={{ fontSize:13, color:t.text2, marginTop:4, marginBottom:16 }}>Add a credit card or loan to track repayments here</div>
             <button onClick={() => { setEditDebt(null); setShowModal(true); }}
               style={{ padding:'12px 22px', borderRadius:14, border:'none', cursor:'pointer', fontSize:14, fontWeight:700,
-                background:'linear-gradient(180deg,#EC4899,#BE185D)', color:'#fff', boxShadow:'0 8px 24px rgba(236,72,153,.35)' }}>
+                background:'#DC2626', color:'#fff', boxShadow:'0 8px 24px rgba(220,38,38,.35)' }}>
               + Add Liability
             </button>
           </motion.div>
@@ -402,7 +403,7 @@ function DebtDetailModal({ debt, onClose, onEdit }) {
           <div style={{ width:46, height:46, borderRadius:14, background:meta.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:22 }}>{meta.icon}</div>
           <div style={{ flex:1 }}>
             <div style={{ fontSize:17, fontWeight:800, color:'var(--text)' }}>{debt.name}{debt.last_four ? ` *${debt.last_four}` : ''}</div>
-            <span style={{ fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:20, background:meta.bg, color:meta.color }}>{meta.label}</span>
+            <span style={{ fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:14, background:meta.bg, color:meta.color }}>{meta.label}</span>
           </div>
           <button onClick={onEdit} style={{ background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:9, cursor:'pointer', padding:'6px 14px', fontSize:12.5, fontWeight:600 }}>✏️ Edit</button>
           <button onClick={onClose} style={{ background:'transparent', border:'none', cursor:'pointer', color:'var(--text3)', padding:4 }}><X size={20}/></button>
@@ -421,18 +422,18 @@ function CreditCardDashboard({ bal, limit, utilPct, availPct, debt, utilTrend })
   const pieData = limit > 0
     ? [{ name:'Used', value: bal }, { name:'Available', value: Math.max(0, limit - bal) }]
     : [{ name:'Outstanding', value: bal }];
-  const PIE_COLORS = ['#EC4899','#22C55E'];
+  const PIE_COLORS = ['#DC2626','#059669'];
 
   return (
     <div>
       {/* Key stats */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:20 }}>
         {[
-          { l:'Outstanding',  v:`${fmt(bal)}`,               c:'#EC4899' },
+          { l:'Outstanding',  v:`${fmt(bal)}`,               c:'#DC2626' },
           { l:'Credit Limit', v: limit > 0 ? `${fmt(limit)}` : '—',       c:'var(--text)' },
-          { l:'Available',    v: limit > 0 ? `${fmt(Math.max(0,limit-bal))}` : '—', c:'#22C55E' },
-          { l:'Utilization',  v: limit > 0 ? `${utilPct}%` : '—',           c: utilPct>80?'#EC4899':utilPct>50?'#F59E0B':'#22C55E' },
-          { l:'Min. Payment', v:`${fmt(bal*0.02)}`,           c:'#F59E0B' },
+          { l:'Available',    v: limit > 0 ? `${fmt(Math.max(0,limit-bal))}` : '—', c:'#059669' },
+          { l:'Utilization',  v: limit > 0 ? `${utilPct}%` : '—',           c: utilPct>80?'#DC2626':utilPct>50?'#D97706':'#059669' },
+          { l:'Min. Payment', v:`${fmt(bal*0.02)}`,           c:'#D97706' },
           { l:'Due Date',     v: debt.due_date ? new Date(debt.due_date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—', c:'var(--text)' },
         ].map(({ l, v, c }) => (
           <div key={l} style={{ background:'var(--surface2)', borderRadius:14, padding:'14px 16px' }}>
@@ -459,13 +460,13 @@ function CreditCardDashboard({ bal, limit, utilPct, availPct, debt, utilTrend })
                   </PieChart>
                 </ResponsiveContainer>
                 <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', textAlign:'center' }}>
-                  <div className="mono" style={{ fontSize:20, fontWeight:900, color: utilPct>80?'#EC4899':utilPct>50?'#F59E0B':'#22C55E' }}>{utilPct}%</div>
+                  <div className="mono" style={{ fontSize:20, fontWeight:900, color: utilPct>80?'#DC2626':utilPct>50?'#D97706':'#059669' }}>{utilPct}%</div>
                   <div style={{ fontSize:10, color:'var(--text3)' }}>used</div>
                 </div>
               </div>
               <div style={{ display:'flex', justifyContent:'center', gap:16, fontSize:11, marginTop:8 }}>
-                <span style={{ display:'flex', alignItems:'center', gap:4 }}><span style={{ width:8, height:8, borderRadius:'50%', background:'#EC4899', display:'inline-block' }}/> Used {fmt(bal)}</span>
-                <span style={{ display:'flex', alignItems:'center', gap:4 }}><span style={{ width:8, height:8, borderRadius:'50%', background:'#22C55E', display:'inline-block' }}/> Free {fmt(Math.max(0,limit-bal))}</span>
+                <span style={{ display:'flex', alignItems:'center', gap:4 }}><span style={{ width:8, height:8, borderRadius:'50%', background:'#DC2626', display:'inline-block' }}/> Used {fmt(bal)}</span>
+                <span style={{ display:'flex', alignItems:'center', gap:4 }}><span style={{ width:8, height:8, borderRadius:'50%', background:'#059669', display:'inline-block' }}/> Free {fmt(Math.max(0,limit-bal))}</span>
               </div>
             </>
           ) : (
@@ -480,13 +481,13 @@ function CreditCardDashboard({ bal, limit, utilPct, availPct, debt, utilTrend })
             <AreaChart data={utilTrend} margin={{ top:5, right:5, left:-20, bottom:0 }}>
               <defs>
                 <linearGradient id="utilGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#EC4899" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="#EC4899" stopOpacity={0}/>
+                  <stop offset="5%" stopColor="#DC2626" stopOpacity={0.3}/>
+                  <stop offset="95%" stopColor="#DC2626" stopOpacity={0}/>
                 </linearGradient>
               </defs>
               <XAxis dataKey="month" tick={{ fontSize:10, fill:'var(--text3)' }} axisLine={false} tickLine={false}/>
               <Tooltip formatter={v => [`${v}%`, 'Utilization']} contentStyle={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:10, fontSize:12 }}/>
-              <Area type="monotone" dataKey="util" stroke="#EC4899" strokeWidth={2} fill="url(#utilGrad)" dot={{ r:3, fill:'#EC4899' }}/>
+              <Area type="monotone" dataKey="util" stroke="#DC2626" strokeWidth={2} fill="url(#utilGrad)" dot={{ r:3, fill:'#DC2626' }}/>
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -494,8 +495,8 @@ function CreditCardDashboard({ bal, limit, utilPct, availPct, debt, utilTrend })
 
       {/* Payoff tip */}
       {utilPct > 30 && (
-        <div style={{ background: utilPct>80?'rgba(236,72,153,.08)':utilPct>50?'rgba(245,158,11,.08)':'rgba(34,197,94,.08)', borderRadius:14, padding:'14px 16px', display:'flex', gap:10, alignItems:'flex-start' }}>
-          <AlertCircle size={16} color={utilPct>80?'#EC4899':utilPct>50?'#F59E0B':'#22C55E'} style={{ flexShrink:0, marginTop:1 }}/>
+        <div style={{ background: utilPct>80?'rgba(220,38,38,.08)':utilPct>50?'rgba(217,119,6,.08)':'rgba(5,150,105,.08)', borderRadius:14, padding:'14px 16px', display:'flex', gap:10, alignItems:'flex-start' }}>
+          <AlertCircle size={16} color={utilPct>80?'#DC2626':utilPct>50?'#D97706':'#059669'} style={{ flexShrink:0, marginTop:1 }}/>
           <div style={{ fontSize:12.5, color:'var(--text)', lineHeight:1.5 }}>
             {utilPct > 80
               ? <><b>High utilization!</b> Keeping utilization below 30% helps your credit score. Try to pay down {fmt(bal - limit*0.3)} to reach the 30% threshold.</>
@@ -520,10 +521,10 @@ function LoanDashboard({ bal, debt, schedule, totalInterest, totalPrincipal }) {
       {/* Key stats */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:20 }}>
         {[
-          { l:'Remaining Balance', v:`${fmt(bal)}`,                          c:'#F59E0B' },
+          { l:'Remaining Balance', v:`${fmt(bal)}`,                          c:'#D97706' },
           { l:'Original Loan',     v:`${fmt(totalLoan)}`,                    c:'var(--text)' },
-          { l:'Already Paid',      v:`${fmt(Math.max(0,totalLoan-bal))}`,    c:'#22C55E' },
-          { l:'Interest Rate',     v: debt.interest_rate ? `${debt.interest_rate}% p.a.` : '—', c:'#EC4899' },
+          { l:'Already Paid',      v:`${fmt(Math.max(0,totalLoan-bal))}`,    c:'#059669' },
+          { l:'Interest Rate',     v: debt.interest_rate ? `${debt.interest_rate}% p.a.` : '—', c:'#DC2626' },
           { l:'Monthly EMI',       v: debt.emi_amount ? `${fmt(debt.emi_amount)}` : '—', c:'var(--text)' },
           { l:'EMI Due',           v: debt.emi_day ? `${debt.emi_day}${['st','nd','rd'][debt.emi_day-1]||'th'} of month` : '—', c:'var(--text)' },
         ].map(({ l, v, c }) => (
@@ -538,10 +539,10 @@ function LoanDashboard({ bal, debt, schedule, totalInterest, totalPrincipal }) {
       <div style={{ background:'var(--surface2)', borderRadius:16, padding:'18px', marginBottom:16 }}>
         <div style={{ display:'flex', justifyContent:'space-between', marginBottom:10 }}>
           <span style={{ fontSize:13, fontWeight:700, color:'var(--text)' }}>Repayment Progress</span>
-          <span className="mono" style={{ fontSize:13, fontWeight:700, color:'#22C55E' }}>{paidPct}% paid off</span>
+          <span className="mono" style={{ fontSize:13, fontWeight:700, color:'#059669' }}>{paidPct}% paid off</span>
         </div>
-        <div style={{ height:10, background:'var(--surface3)', borderRadius:20, overflow:'hidden', marginBottom:8 }}>
-          <div style={{ height:'100%', width:`${paidPct}%`, background:'linear-gradient(90deg,#22C55E,#00CEC9)', borderRadius:20, transition:'width .8s ease' }}/>
+        <div style={{ height:10, background:'var(--surface3)', borderRadius:14, overflow:'hidden', marginBottom:8 }}>
+          <div style={{ height:'100%', width:`${paidPct}%`, background:'#059669', borderRadius:14, transition:'width .8s ease' }}/>
         </div>
         <div style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'var(--text3)' }}>
           <span>Paid: {fmt(Math.max(0,totalLoan-bal))}</span>
@@ -555,8 +556,8 @@ function LoanDashboard({ bal, debt, schedule, totalInterest, totalPrincipal }) {
           <div style={{ background:'var(--surface2)', borderRadius:16, padding:'18px', marginBottom:16 }}>
             <div style={{ fontSize:12, fontWeight:700, color:'var(--text3)', marginBottom:12, textTransform:'uppercase', letterSpacing:'.06em' }}>EMI Breakdown — Next {monthsLeft} Months</div>
             <div style={{ display:'flex', gap:16, marginBottom:12 }}>
-              <span style={{ fontSize:12, color:'var(--text3)' }}>Total Interest: <b style={{color:'#EC4899'}}>{fmt(totalInterest)}</b></span>
-              <span style={{ fontSize:12, color:'var(--text3)' }}>Total Principal: <b style={{color:'#22C55E'}}>{fmt(totalPrincipal)}</b></span>
+              <span style={{ fontSize:12, color:'var(--text3)' }}>Total Interest: <b style={{color:'#DC2626'}}>{fmt(totalInterest)}</b></span>
+              <span style={{ fontSize:12, color:'var(--text3)' }}>Total Principal: <b style={{color:'#059669'}}>{fmt(totalPrincipal)}</b></span>
             </div>
             <ResponsiveContainer width="100%" height={180}>
               <BarChart data={schedule.slice(0,12)} margin={{ top:5, right:5, left:-20, bottom:0 }}>
@@ -565,8 +566,8 @@ function LoanDashboard({ bal, debt, schedule, totalInterest, totalPrincipal }) {
                 <YAxis tick={{ fontSize:9, fill:'var(--text3)' }} axisLine={false} tickLine={false}/>
                 <Tooltip contentStyle={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:10, fontSize:12 }} formatter={v => `${fmt(v)}`}/>
                 <Legend iconSize={8} wrapperStyle={{ fontSize:11 }}/>
-                <Bar dataKey="principal" name="Principal" fill="#22C55E" stackId="a" radius={[0,0,4,4]}/>
-                <Bar dataKey="interest"  name="Interest"  fill="#EC4899" stackId="a" radius={[4,4,0,0]}/>
+                <Bar dataKey="principal" name="Principal" fill="#059669" stackId="a" radius={[0,0,4,4]}/>
+                <Bar dataKey="interest"  name="Interest"  fill="#DC2626" stackId="a" radius={[4,4,0,0]}/>
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -587,8 +588,8 @@ function LoanDashboard({ bal, debt, schedule, totalInterest, totalPrincipal }) {
                   <tr key={i} style={{ borderBottom:'1px solid var(--border-light)', background: i%2===0?'transparent':'var(--surface3)' }}>
                     <td style={{ padding:'7px 8px', fontWeight:600, color:'var(--text)' }}>{r.month}</td>
                     <td style={{ padding:'7px 8px' }} className="mono">{fmt(r.emi)}</td>
-                    <td style={{ padding:'7px 8px', color:'#22C55E' }} className="mono">{fmt(r.principal)}</td>
-                    <td style={{ padding:'7px 8px', color:'#EC4899' }} className="mono">{fmt(r.interest)}</td>
+                    <td style={{ padding:'7px 8px', color:'#059669' }} className="mono">{fmt(r.principal)}</td>
+                    <td style={{ padding:'7px 8px', color:'#DC2626' }} className="mono">{fmt(r.interest)}</td>
                     <td style={{ padding:'7px 8px', color:'var(--text)' }} className="mono">{fmt(r.balance)}</td>
                   </tr>
                 ))}
@@ -614,7 +615,7 @@ function LendingDetail({ debt, bal }) {
       <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:12, marginBottom:20 }}>
         {[
           { l:'Amount Lent',  v:`${fmt(bal)}`,  c:'#3B82F6' },
-          { l:'Status',       v:'Outstanding',   c:'#F59E0B' },
+          { l:'Status',       v:'Outstanding',   c:'#D97706' },
         ].map(({ l, v, c }) => (
           <div key={l} style={{ background:'var(--surface2)', borderRadius:14, padding:'18px' }}>
             <div style={{ fontSize:11, color:'var(--text3)', fontWeight:500, marginBottom:4 }}>{l}</div>
@@ -633,9 +634,9 @@ function LendingDetail({ debt, bal }) {
    ADD / EDIT MODAL
 ══════════════════════════════════════════════════════════ */
 const DEBT_TYPE_OPTS = [
-  { value:'visa',       label:'💳 Visa Credit Card',       color:'#EC4899' },
-  { value:'mastercard', label:'💳 Mastercard',              color:'#EC4899' },
-  { value:'loan',       label:'📋 Personal / Bank Loan',   color:'#F59E0B' },
+  { value:'visa',       label:'💳 Visa Credit Card',       color:'#DC2626' },
+  { value:'mastercard', label:'💳 Mastercard',              color:'#DC2626' },
+  { value:'loan',       label:'📋 Personal / Bank Loan',   color:'#D97706' },
   { value:'lending',    label:'🤝 Money Lent to Someone',  color:'#3B82F6' },
 ];
 
@@ -792,17 +793,17 @@ function DebtModal({ debt, onClose, onSaved }) {
 
               {/* Interest accrual projection */}
               {accrual && accrual.months > 0 && (
-                <div className="form-group" style={{ gridColumn:'1/-1', background:'rgba(236,72,153,.06)', border:'1.5px solid rgba(236,72,153,.22)', borderRadius:12, padding:'12px 14px' }}>
+                <div className="form-group" style={{ gridColumn:'1/-1', background:'rgba(220,38,38,.06)', border:'1.5px solid rgba(220,38,38,.22)', borderRadius:12, padding:'12px 14px' }}>
                   <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
                     <span style={{ fontSize:13, fontWeight:700, color:'var(--text)' }}>📈 Interest accrued ({accrual.months} mo unpaid)</span>
-                    <span style={{ fontSize:14, fontWeight:800, color:'#EC4899' }} className="mono">+{fmt(accrual.accrued)}</span>
+                    <span style={{ fontSize:14, fontWeight:800, color:'#DC2626' }} className="mono">+{fmt(accrual.accrued)}</span>
                   </div>
                   <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                     <span style={{ fontSize:12.5, color:'var(--text3)' }}>Outstanding incl. interest</span>
                     <span style={{ fontSize:14, fontWeight:800, color:'var(--text)' }} className="mono">{fmt(accrual.finalOS)}</span>
                   </div>
                   <button type="button" onClick={() => set('balance', accrual.finalOS.toFixed(2))}
-                    style={{ marginTop:10, width:'100%', padding:'8px', borderRadius:9, border:'1.5px solid rgba(236,72,153,.3)', background:'rgba(236,72,153,.1)', color:'#EC4899', fontSize:12.5, fontWeight:700, cursor:'pointer' }}>
+                    style={{ marginTop:10, width:'100%', padding:'8px', borderRadius:9, border:'1.5px solid rgba(220,38,38,.3)', background:'rgba(220,38,38,.1)', color:'#DC2626', fontSize:12.5, fontWeight:700, cursor:'pointer' }}>
                     Add accrued interest to outstanding
                   </button>
                 </div>
@@ -823,10 +824,10 @@ function DebtModal({ debt, onClose, onSaved }) {
         {isCardType && form.credit_limit && parseFloat(form.balance) > 0 && (
           <div style={{ background:'var(--surface2)', borderRadius:14, padding:'14px 16px', marginBottom:16 }}>
             <div style={{ fontSize:11, color:'var(--text3)', fontWeight:600, marginBottom:8 }}>Utilization Preview</div>
-            <div style={{ height:8, background:'var(--surface3)', borderRadius:20, overflow:'hidden', marginBottom:6 }}>
+            <div style={{ height:8, background:'var(--surface3)', borderRadius:14, overflow:'hidden', marginBottom:6 }}>
               {(() => {
                 const pct = Math.min(100, Math.round((parseFloat(form.balance)/parseFloat(form.credit_limit))*100));
-                return <div style={{ height:'100%', width:`${pct}%`, background: pct>80?'#EC4899':pct>50?'#F59E0B':'#22C55E', borderRadius:20, transition:'width .4s' }}/>;
+                return <div style={{ height:'100%', width:`${pct}%`, background: pct>80?'#DC2626':pct>50?'#D97706':'#059669', borderRadius:14, transition:'width .4s' }}/>;
               })()}
             </div>
             <div style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'var(--text3)' }}>
@@ -845,8 +846,8 @@ function DebtModal({ debt, onClose, onSaved }) {
               const principal = parseFloat(form.emi_amount) - interest;
               return (
                 <div style={{ display:'flex', gap:16, fontSize:12 }}>
-                  <span>Interest: <b style={{color:'#EC4899'}}>{fmt(interest)}</b></span>
-                  <span>Principal: <b style={{color:'#22C55E'}}>{fmt(Math.max(0,principal))}</b></span>
+                  <span>Interest: <b style={{color:'#DC2626'}}>{fmt(interest)}</b></span>
+                  <span>Principal: <b style={{color:'#059669'}}>{fmt(Math.max(0,principal))}</b></span>
                   <span>After 1 EMI: <b style={{color:'var(--text)'}}>{fmt(Math.max(0,parseFloat(form.balance)-principal))}</b></span>
                 </div>
               );
@@ -857,11 +858,27 @@ function DebtModal({ debt, onClose, onSaved }) {
         <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
           <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
           <button className="btn btn-primary" disabled={mutation.isPending || !form.name.trim()} onClick={handleSubmit}
-            style={{ background:'linear-gradient(135deg,#EC4899,#FF79A8)', border:'none', boxShadow:'0 4px 14px rgba(236,72,153,.35)' }}>
+            style={{ background:'#DC2626', border:'none', boxShadow:'0 4px 14px rgba(220,38,38,.35)' }}>
             {mutation.isPending ? 'Saving…' : debt ? 'Update Debt' : 'Add Debt'}
           </button>
         </div>
       </div>
     </div>
+  );
+}
+
+/* Debts = list of what you owe + a payoff planner, in one place. */
+export default function Debts() {
+  const [params, setParams] = useSearchParams();
+  const tab = params.get('tab') === 'payoff' ? 'payoff' : 'overview';
+  return (
+    <>
+      <SubTabs
+        tabs={[{ key: 'overview', label: 'Overview' }, { key: 'payoff', label: 'Payoff planner' }]}
+        active={tab}
+        onChange={(k) => setParams(k === 'overview' ? {} : { tab: k }, { replace: true })}
+      />
+      {tab === 'payoff' ? <DebtReduction embedded /> : <DebtsOverview />}
+    </>
   );
 }

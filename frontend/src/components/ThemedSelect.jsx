@@ -18,7 +18,7 @@ import { THEME } from '../theme';
 ═══════════════════════════════════════════════════════════════════════ */
 export default function ThemedSelect({
   value, onChange, options, groups, placeholder = 'Select…',
-  searchable, disabled, accent = '#8B5CF6', compact = false,
+  searchable, disabled, accent = '#4F46E5', compact = false,
 }) {
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
@@ -80,7 +80,7 @@ export default function ThemedSelect({
         style={{
           display:'flex', alignItems:'center', gap:11, width:'100%', textAlign:'left',
           padding:'10px 12px', borderRadius:12, border:'none', cursor:'pointer',
-          background: sel ? (isDark ? 'rgba(139,92,246,.16)' : '#F5F3FF') : 'transparent',
+          background: sel ? (isDark ? 'rgba(79,70,229,.16)' : '#EEF0FF') : 'transparent',
           transition:'background .12s', fontFamily:'inherit',
         }}
         onMouseEnter={e => { if (!sel) e.currentTarget.style.background = isDark ? 'rgba(255,255,255,.05)' : '#F4F5F7'; }}

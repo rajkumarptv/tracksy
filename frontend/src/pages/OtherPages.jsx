@@ -14,7 +14,7 @@ const WALLET_MONTHS = ['January','February','March','April','May','June','July',
 const WALLET_YEARS  = [_now.getFullYear(), _now.getFullYear()-1, _now.getFullYear()-2];
 
 const WALLET_GRADIENTS = [
-  'linear-gradient(135deg,#8B5CF6 0%,#3B82F6 100%)',
+  '#4F46E5',
   'linear-gradient(135deg,#1A1033 0%,#3d3473 100%)',
   'linear-gradient(135deg,#00b894 0%,#55efc4 100%)',
   'linear-gradient(135deg,#e17055 0%,#fd79a8 100%)',
@@ -24,7 +24,7 @@ const WALLET_GRADIENTS = [
 
 // Pick readable ink (dark/light) for a given card background colour
 function cardInk(hex) {
-  let h = (hex || '#8B5CF6').replace('#', '');
+  let h = (hex || '#4F46E5').replace('#', '');
   if (h.length === 3) h = h.split('').map(c => c + c).join('');
   const r = parseInt(h.slice(0,2),16) || 0, g = parseInt(h.slice(2,4),16) || 0, b = parseInt(h.slice(4,6),16) || 0;
   const lum = (0.299*r + 0.587*g + 0.114*b) / 255;   // perceived brightness 0–1
@@ -117,7 +117,7 @@ export function Wallet() {
     return (
       <div key={w.id} style={{
         background: WALLET_GRADIENTS[i % WALLET_GRADIENTS.length],
-        borderRadius:22, padding:'24px 26px', color:'#fff',
+        borderRadius:14, padding:'24px 26px', color:'#fff',
         boxShadow:'0 8px 32px rgba(0,0,0,.15)',
         position:'relative', overflow:'hidden', transition:'all .22s ease',
       }}
@@ -143,7 +143,7 @@ export function Wallet() {
         </div>
 
         {w.last_four && (
-          <div style={{ fontSize:14, letterSpacing:4, opacity:.7, marginBottom:16, fontFamily:'Space Grotesk, Inter, sans-serif', position:'relative', zIndex:1 }}>
+          <div style={{ fontSize:14, letterSpacing:4, opacity:.7, marginBottom:16, fontFamily:'Inter, sans-serif', position:'relative', zIndex:1 }}>
             •••• •••• •••• {w.last_four}
           </div>
         )}
@@ -152,7 +152,7 @@ export function Wallet() {
           {isLiab ? (
             <>
               <div style={{ fontSize:10, opacity:.65, textTransform:'uppercase', letterSpacing:'.07em', marginBottom:4 }}>{t('wallet_outstanding')}</div>
-              <div style={{ fontSize:24, fontWeight:900, fontFamily:'Space Grotesk, Inter, sans-serif', letterSpacing:-0.5 }}>
+              <div style={{ fontSize:24, fontWeight:900, fontFamily:'Inter, sans-serif', letterSpacing:-0.5 }}>
                 {fmt(Math.abs(bal))}
               </div>
               {w.credit_limit && (
@@ -161,8 +161,8 @@ export function Wallet() {
                     <span>Limit: {fmt(parseFloat(w.credit_limit))}</span>
                     <span>{utilPct}% {t('wallet_used')}</span>
                   </div>
-                  <div style={{ height:4, background:'rgba(255,255,255,.25)', borderRadius:20, overflow:'hidden' }}>
-                    <div style={{ height:'100%', borderRadius:20, background:'rgba(255,255,255,.85)', transition:'width .4s', width:`${utilPct}%` }}/>
+                  <div style={{ height:4, background:'rgba(255,255,255,.25)', borderRadius:14, overflow:'hidden' }}>
+                    <div style={{ height:'100%', borderRadius:14, background:'rgba(255,255,255,.85)', transition:'width .4s', width:`${utilPct}%` }}/>
                   </div>
                 </div>
               )}
@@ -173,7 +173,7 @@ export function Wallet() {
           ) : (
             <>
               <div style={{ fontSize:10, opacity:.65, textTransform:'uppercase', letterSpacing:'.07em', marginBottom:4 }}>{t('wallet_balance')}</div>
-              <div style={{ fontSize:24, fontWeight:900, fontFamily:'Space Grotesk, Inter, sans-serif', letterSpacing:-0.5 }}>
+              <div style={{ fontSize:24, fontWeight:900, fontFamily:'Inter, sans-serif', letterSpacing:-0.5 }}>
                 {fmt(bal)}
               </div>
               {w.invested_amount && (
@@ -212,7 +212,7 @@ export function Wallet() {
       <div className="mob-hide">
         <Topbar title={t('wallet_title')} subtitle={t('wallet_sub')}>
           <button className="btn btn-primary btn-sm"
-            style={{ display:'flex', alignItems:'center', gap:6, background: atWalletLimit ? 'linear-gradient(135deg,#F59E0B,#FF79A8)' : 'linear-gradient(135deg,#8B5CF6,#3B82F6)', border:'none', boxShadow:'0 4px 14px rgba(139,92,246,.35)' }}
+            style={{ display:'flex', alignItems:'center', gap:6, background: atWalletLimit ? '#D97706' : '#4F46E5', border:'none', boxShadow:'0 4px 14px rgba(79,70,229,.35)' }}
             onClick={openAddWallet}>
             {atWalletLimit ? t('wallet_upgrade_add') : <><Plus size={13}/> {t('wallet_add')}</>}
           </button>
@@ -252,13 +252,13 @@ export function Wallet() {
         {/* Summary cards */}
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))', gap:14, marginBottom:24 }}>
           {[
-            { label:t('dash_net_worth'),      value: fmt(netWorth),    icon:<span style={{fontSize:22,fontWeight:800,color:'#8B5CF6',lineHeight:1,fontFamily:'Space Grotesk,sans-serif'}}>{currencySymbol}</span>, bg:'rgba(139,92,246,.15)', color: netWorth >= 0 ? '#8B5CF6' : '#EC4899', sub: netWorth >= 0 ? t('wallet_positive') : t('wallet_negative'), border:'rgba(139,92,246,.2)' },
+            { label:t('dash_net_worth'),      value: fmt(netWorth),    icon:<span style={{fontSize:22,fontWeight:800,color:'#4F46E5',lineHeight:1,fontFamily:'Inter,sans-serif'}}>{currencySymbol}</span>, bg:'rgba(79,70,229,.15)', color: netWorth >= 0 ? '#4F46E5' : '#DC2626', sub: netWorth >= 0 ? t('wallet_positive') : t('wallet_negative'), border:'rgba(79,70,229,.2)' },
             { label:t('wallet_total_assets'), value: fmt(totalAssets), icon:<WalletIcon size={22} color="#00C896"/>,  bg:'rgba(0,200,150,.15)', color:'#00C896', sub:t('wallet_all_accounts'), border:'rgba(0,200,150,.2)' },
-            { label:t('wallet_total_debt'),   value: fmt(totalDebt),   icon:<CreditCard size={22} color="#EC4899"/>,  bg:'rgba(236,72,153,.15)',  color:'#EC4899', sub:t('wallet_cards_loans'), border:'rgba(236,72,153,.2)' },
+            { label:t('wallet_total_debt'),   value: fmt(totalDebt),   icon:<CreditCard size={22} color="#DC2626"/>,  bg:'rgba(220,38,38,.15)',  color:'#DC2626', sub:t('wallet_cards_loans'), border:'rgba(220,38,38,.2)' },
           ].map(({ label, value, icon, bg, color, sub, border }) => (
             <div key={label} style={{
-              background:'var(--surface)', borderRadius:18, padding:'18px 20px',
-              boxShadow:'0 2px 16px rgba(139,92,246,.07)', border:`1px solid ${border}`,
+              background:'var(--surface)', borderRadius:14, padding:'18px 20px',
+              boxShadow:'0 2px 16px rgba(79,70,229,.07)', border:`1px solid ${border}`,
               display:'flex', flexDirection:'row', alignItems:'center', gap:16,
             }}>
               <div style={{ width:52, height:52, borderRadius:14, background:bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
@@ -274,10 +274,10 @@ export function Wallet() {
         </div>
 
         {/* Net Worth hero banner */}
-        <div style={{ background:'linear-gradient(135deg,#4C3BC4,#8B5CF6)', borderRadius:20, padding:'20px 24px', marginBottom:20, color:'#fff', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:16 }}>
+        <div style={{ background:'#4F46E5', borderRadius:14, padding:'20px 24px', marginBottom:20, color:'#fff', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:16 }}>
           <div>
             <div style={{ fontSize:11, fontWeight:700, opacity:.7, textTransform:'uppercase', letterSpacing:'.1em', marginBottom:4 }}>Net Worth</div>
-            <div style={{ fontSize:28, fontWeight:900, fontFamily:'Space Grotesk,Inter,sans-serif', letterSpacing:-1 }}>
+            <div style={{ fontSize:28, fontWeight:900, fontFamily:'Inter,sans-serif', letterSpacing:-1 }}>
               {netWorth < 0 ? '-' : ''}{fmt(Math.abs(netWorth))}
             </div>
             <div style={{ fontSize:11, opacity:.65, marginTop:2 }}>Total Assets − Total Liabilities</div>
@@ -285,7 +285,7 @@ export function Wallet() {
           <div style={{ display:'flex', gap:24 }}>
             <div style={{ textAlign:'right' }}>
               <div style={{ fontSize:11, fontWeight:700, opacity:.7, textTransform:'uppercase', letterSpacing:'.07em' }}>Assets</div>
-              <div style={{ fontSize:18, fontWeight:800, color:'#22C55E' }}>{fmt(totalAssets)}</div>
+              <div style={{ fontSize:18, fontWeight:800, color:'#059669' }}>{fmt(totalAssets)}</div>
               <div style={{ fontSize:11, opacity:.55 }}>{assetWallets.length} accounts</div>
             </div>
             <div style={{ width:1, background:'rgba(255,255,255,.2)' }}/>
@@ -303,7 +303,7 @@ export function Wallet() {
           {assetWallets.length > 0 && (
             <>
               <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14 }}>
-                <div style={{ width:8, height:8, borderRadius:'50%', background:'#22C55E' }}/>
+                <div style={{ width:8, height:8, borderRadius:'50%', background:'#059669' }}/>
                 <div style={{ fontSize:12, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.07em' }}>
                   Assets — {fmt(totalAssets)}
                 </div>
@@ -317,7 +317,7 @@ export function Wallet() {
           {liabilityWallets.length > 0 && (
             <>
               <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14 }}>
-                <div style={{ width:8, height:8, borderRadius:'50%', background:'#EC4899' }}/>
+                <div style={{ width:8, height:8, borderRadius:'50%', background:'#DC2626' }}/>
                 <div style={{ fontSize:12, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.07em' }}>
                   Liabilities — {fmt(totalDebt)}
                 </div>
@@ -329,12 +329,12 @@ export function Wallet() {
           )}
 
           {!(wallets||[]).length && (
-            <div style={{ background:'var(--surface)', borderRadius:20, boxShadow:'0 4px 24px rgba(139,92,246,.08)', border:'1px solid var(--border-light)', padding:'48px', textAlign:'center', color:'var(--text3)', fontSize:14 }}>
+            <div style={{ background:'var(--surface)', borderRadius:14, boxShadow:'0 4px 24px rgba(79,70,229,.08)', border:'1px solid var(--border-light)', padding:'48px', textAlign:'center', color:'var(--text3)', fontSize:14 }}>
               <div style={{ fontSize:48, marginBottom:12 }}>💳</div>
               <div style={{ fontWeight:700, fontSize:15, color:'var(--text)', marginBottom:6 }}>{t('wallet_empty')}</div>
               <div style={{ marginBottom:20 }}>{t('wallet_empty_desc')}</div>
               <button className="btn btn-primary" onClick={openAddWallet}
-                style={{ background: atWalletLimit ? 'linear-gradient(135deg,#F59E0B,#FF79A8)' : 'linear-gradient(135deg,#8B5CF6,#3B82F6)', border:'none' }}>
+                style={{ background: atWalletLimit ? '#D97706' : '#4F46E5', border:'none' }}>
                 {atWalletLimit ? '👑 Upgrade to Add More' : t('wallet_add')}
               </button>
             </div>
@@ -342,7 +342,7 @@ export function Wallet() {
         </div>
 
         {/* Recent activity */}
-        <div style={{ background:'var(--surface)', borderRadius:22, boxShadow:'0 4px 24px rgba(139,92,246,.08)', border:'1px solid var(--border-light)', overflow:'hidden' }}>
+        <div style={{ background:'var(--surface)', borderRadius:14, boxShadow:'0 4px 24px rgba(79,70,229,.08)', border:'1px solid var(--border-light)', overflow:'hidden' }}>
           <div style={{ padding:'18px 22px', borderBottom:'1px solid var(--border-light)', fontWeight:700, fontSize:15, color:'var(--text)' }}>
             {t('wallet_recent')}
           </div>
@@ -406,7 +406,7 @@ export function Wallet() {
 const ASSET_TYPES = [
   { group:'Bank & Cash', items:[
     { value:'bank',         icon:'🏦', label:'Bank Account',        color:'#3B82F6', bg:'rgba(59,130,246,.14)'  },
-    { value:'cash',         icon:'💵', label:'Cash',                color:'#22C55E', bg:'rgba(34,197,94,.14)'  },
+    { value:'cash',         icon:'💵', label:'Cash',                color:'#059669', bg:'rgba(5,150,105,.14)'  },
   ]},
   { group:'Digital Wallets & UPI', items:[
     { value:'gpay',         icon:'🟣', label:'Google Pay',          color:'#4285F4', bg:'rgba(66,133,244,.14)'  },
@@ -421,14 +421,14 @@ const ASSET_TYPES = [
   ]},
   { group:'Investments', items:[
     { value:'fd',           icon:'🏛️', label:'Fixed Deposit',       color:'#00C896', bg:'rgba(0,200,150,.14)'  },
-    { value:'mutual_fund',  icon:'📊', label:'Mutual Funds',        color:'#8B5CF6', bg:'rgba(139,92,246,.14)' },
-    { value:'stocks',       icon:'📈', label:'Stocks',              color:'#22C55E', bg:'rgba(34,197,94,.14)'  },
-    { value:'gold',         icon:'🪙', label:'Gold',                color:'#F59E0B', bg:'rgba(245,158,11,.14)'  },
+    { value:'mutual_fund',  icon:'📊', label:'Mutual Funds',        color:'#4F46E5', bg:'rgba(79,70,229,.14)' },
+    { value:'stocks',       icon:'📈', label:'Stocks',              color:'#059669', bg:'rgba(5,150,105,.14)'  },
+    { value:'gold',         icon:'🪙', label:'Gold',                color:'#D97706', bg:'rgba(217,119,6,.14)'  },
     { value:'crypto',       icon:'₿',  label:'Crypto',              color:'#F7931A', bg:'rgba(247,147,26,.14)'  },
-    { value:'epf',          icon:'🛡️', label:'EPF / PPF',           color:'#A29BFE', bg:'rgba(162,155,254,.14)' },
+    { value:'epf',          icon:'🛡️', label:'EPF / PPF',           color:'#818CF8', bg:'rgba(162,155,254,.14)' },
   ]},
   { group:'Other Assets', items:[
-    { value:'real_estate',  icon:'🏠', label:'Real Estate',         color:'#FF79A8', bg:'rgba(255,121,168,.14)' },
+    { value:'real_estate',  icon:'🏠', label:'Real Estate',         color:'#F87171', bg:'rgba(255,121,168,.14)' },
     { value:'lending',      icon:'🤝', label:'Money Lent',          color:'#00CEC9', bg:'rgba(0,206,201,.14)'  },
     { value:'asset',        icon:'💼', label:'Other Asset',         color:'#636E72', bg:'rgba(99,110,114,.14)'  },
   ]},
@@ -436,21 +436,21 @@ const ASSET_TYPES = [
 
 const LIABILITY_TYPES = [
   { group:'Credit Cards', items:[
-    { value:'visa',         icon:'💳', label:'Visa Card',           color:'#EC4899', bg:'rgba(236,72,153,.14)'   },
+    { value:'visa',         icon:'💳', label:'Visa Card',           color:'#DC2626', bg:'rgba(220,38,38,.14)'   },
     { value:'mastercard',   icon:'💳', label:'Mastercard',          color:'#EB001B', bg:'rgba(235,0,27,.14)'    },
   ]},
   { group:'Loans', items:[
-    { value:'home_loan',    icon:'🏠', label:'Home Loan',           color:'#EC4899', bg:'rgba(236,72,153,.14)'   },
-    { value:'vehicle_loan', icon:'🚗', label:'Vehicle Loan',        color:'#F59E0B', bg:'rgba(245,158,11,.14)'  },
-    { value:'personal_loan',icon:'💼', label:'Personal Loan',       color:'#FF79A8', bg:'rgba(255,121,168,.14)' },
-    { value:'gold_loan',    icon:'🪙', label:'Gold Loan',           color:'#F59E0B', bg:'rgba(245,158,11,.14)'  },
+    { value:'home_loan',    icon:'🏠', label:'Home Loan',           color:'#DC2626', bg:'rgba(220,38,38,.14)'   },
+    { value:'vehicle_loan', icon:'🚗', label:'Vehicle Loan',        color:'#D97706', bg:'rgba(217,119,6,.14)'  },
+    { value:'personal_loan',icon:'💼', label:'Personal Loan',       color:'#F87171', bg:'rgba(255,121,168,.14)' },
+    { value:'gold_loan',    icon:'🪙', label:'Gold Loan',           color:'#D97706', bg:'rgba(217,119,6,.14)'  },
     { value:'education_loan',icon:'🎓',label:'Education Loan',      color:'#3B82F6', bg:'rgba(59,130,246,.14)'  },
-    { value:'loan',         icon:'📋', label:'Other Loan',          color:'#A29BFE', bg:'rgba(162,155,254,.14)' },
+    { value:'loan',         icon:'📋', label:'Other Loan',          color:'#818CF8', bg:'rgba(162,155,254,.14)' },
   ]},
   { group:'Buy Now Pay Later & Borrowings', items:[
-    { value:'bnpl',         icon:'🛍️', label:'BNPL',                color:'#FF79A8', bg:'rgba(255,121,168,.14)' },
-    { value:'family_borrow',icon:'👨‍👩‍👧', label:'Family Borrowing',   color:'#F59E0B', bg:'rgba(245,158,11,.14)'  },
-    { value:'emi',          icon:'📅', label:'EMI',                 color:'#8B5CF6', bg:'rgba(139,92,246,.14)'  },
+    { value:'bnpl',         icon:'🛍️', label:'BNPL',                color:'#F87171', bg:'rgba(255,121,168,.14)' },
+    { value:'family_borrow',icon:'👨‍👩‍👧', label:'Family Borrowing',   color:'#D97706', bg:'rgba(217,119,6,.14)'  },
+    { value:'emi',          icon:'📅', label:'EMI',                 color:'#4F46E5', bg:'rgba(79,70,229,.14)'  },
   ]},
 ];
 
@@ -482,25 +482,25 @@ function AccountTypePicker({ value, onChange }) {
           animation:typeCardIn .18s ease both;
           user-select:none; text-align:center;
         }
-        .type-card:hover { transform:translateY(-2px) scale(1.04); box-shadow:0 6px 20px rgba(139,92,246,.15); }
+        .type-card:hover { transform:translateY(-2px) scale(1.04); box-shadow:0 6px 20px rgba(79,70,229,.15); }
       `}</style>
 
       {/* Asset / Liability toggle */}
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:18 }}>
         <button onClick={() => { setTab('asset'); onChange('bank'); }}
-          style={{ padding:'12px 0', borderRadius:14, border: tab==='asset' ? '2px solid #22C55E' : '1.5px solid var(--border)',
-            background: tab==='asset' ? 'rgba(34,197,94,.12)' : 'var(--surface)', cursor:'pointer',
+          style={{ padding:'12px 0', borderRadius:14, border: tab==='asset' ? '2px solid #059669' : '1.5px solid var(--border)',
+            background: tab==='asset' ? 'rgba(5,150,105,.12)' : 'var(--surface)', cursor:'pointer',
             display:'flex', flexDirection:'column', alignItems:'center', gap:4, transition:'all .2s' }}>
           <span style={{ fontSize:22 }}>💰</span>
-          <span style={{ fontSize:13, fontWeight:700, color: tab==='asset' ? '#22C55E' : 'var(--text)' }}>Assets</span>
+          <span style={{ fontSize:13, fontWeight:700, color: tab==='asset' ? '#059669' : 'var(--text)' }}>Assets</span>
           <span style={{ fontSize:10.5, color:'var(--text3)' }}>Bank, FD, Gold, Stocks…</span>
         </button>
         <button onClick={() => { setTab('liability'); onChange('visa'); }}
-          style={{ padding:'12px 0', borderRadius:14, border: tab==='liability' ? '2px solid #EC4899' : '1.5px solid var(--border)',
-            background: tab==='liability' ? 'rgba(236,72,153,.10)' : 'var(--surface)', cursor:'pointer',
+          style={{ padding:'12px 0', borderRadius:14, border: tab==='liability' ? '2px solid #DC2626' : '1.5px solid var(--border)',
+            background: tab==='liability' ? 'rgba(220,38,38,.10)' : 'var(--surface)', cursor:'pointer',
             display:'flex', flexDirection:'column', alignItems:'center', gap:4, transition:'all .2s' }}>
           <span style={{ fontSize:22 }}>💸</span>
-          <span style={{ fontSize:13, fontWeight:700, color: tab==='liability' ? '#EC4899' : 'var(--text)' }}>Liabilities</span>
+          <span style={{ fontSize:13, fontWeight:700, color: tab==='liability' ? '#DC2626' : 'var(--text)' }}>Liabilities</span>
           <span style={{ fontSize:10.5, color:'var(--text3)' }}>Loans, Cards, BNPL…</span>
         </button>
       </div>
@@ -510,9 +510,9 @@ function AccountTypePicker({ value, onChange }) {
         padding:'8px 14px', background:'var(--surface2)', borderRadius:10, border:'1px solid var(--border-light)' }}>
         <span style={{ fontSize:12, color:'var(--text3)', fontWeight:500 }}>Net Worth</span>
         <span style={{ fontSize:12, color:'var(--text3)' }}>=</span>
-        <span style={{ fontSize:12, fontWeight:700, color:'#22C55E' }}>Total Assets</span>
+        <span style={{ fontSize:12, fontWeight:700, color:'#059669' }}>Total Assets</span>
         <span style={{ fontSize:12, color:'var(--text3)' }}>−</span>
-        <span style={{ fontSize:12, fontWeight:700, color:'#EC4899' }}>Total Liabilities</span>
+        <span style={{ fontSize:12, fontWeight:700, color:'#DC2626' }}>Total Liabilities</span>
       </div>
 
       {/* Type grid */}
@@ -552,8 +552,8 @@ function AccountTypePicker({ value, onChange }) {
 }
 
 const PRESET_CARD_COLORS = [
-  '#8B5CF6','#3B82F6','#EC4899','#22C55E','#F59E0B',
-  '#FF79A8','#00CEC9','#A29BFE','#636E72','#2D3436',
+  '#4F46E5','#3B82F6','#DC2626','#059669','#D97706',
+  '#F87171','#00CEC9','#818CF8','#636E72','#2D3436',
 ];
 
 function calcPaymentDue(billDay) {
@@ -607,7 +607,7 @@ function AddWalletModal({ onClose, onSaved }) {
             </div>
           </div>
           {/* Live type chip */}
-          <div style={{ display:'flex', alignItems:'center', gap:7, padding:'6px 12px', borderRadius:20, background:selectedType.bg, border:`1px solid ${selectedType.color}44`, transition:'all .2s' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:7, padding:'6px 12px', borderRadius:14, background:selectedType.bg, border:`1px solid ${selectedType.color}44`, transition:'all .2s' }}>
             <span style={{ fontSize:16 }}>{selectedType.icon}</span>
             <span style={{ fontSize:12, fontWeight:700, color:selectedType.color }}>{selectedType.label}</span>
           </div>
@@ -629,7 +629,7 @@ function AddWalletModal({ onClose, onSaved }) {
             <div style={{ display:'flex', gap:10, marginTop:4, justifyContent:'flex-end' }}>
               <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
               <button className="btn btn-primary" onClick={() => setStep(2)}
-                style={{ background:'linear-gradient(135deg,#8B5CF6,#3B82F6)', border:'none', boxShadow:'0 4px 14px rgba(139,92,246,.35)' }}>
+                style={{ background:'#4F46E5', border:'none', boxShadow:'0 4px 14px rgba(79,70,229,.35)' }}>
                 Continue →
               </button>
             </div>
@@ -654,11 +654,11 @@ function AddWalletModal({ onClose, onSaved }) {
               </div>
 
               {/* ── Category badge ── */}
-              <div style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'5px 12px', borderRadius:20, marginBottom:14,
-                background: isLiability ? 'rgba(236,72,153,.10)' : 'rgba(34,197,94,.10)',
-                border: `1px solid ${isLiability ? 'rgba(236,72,153,.3)' : 'rgba(34,197,94,.3)'}` }}>
+              <div style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'5px 12px', borderRadius:14, marginBottom:14,
+                background: isLiability ? 'rgba(220,38,38,.10)' : 'rgba(5,150,105,.10)',
+                border: `1px solid ${isLiability ? 'rgba(220,38,38,.3)' : 'rgba(5,150,105,.3)'}` }}>
                 <span style={{ fontSize:13 }}>{isLiability ? '💸' : '💰'}</span>
-                <span style={{ fontSize:11.5, fontWeight:700, color: isLiability ? '#EC4899' : '#22C55E' }}>
+                <span style={{ fontSize:11.5, fontWeight:700, color: isLiability ? '#DC2626' : '#059669' }}>
                   {isLiability ? 'Liability — reduces Net Worth' : 'Asset — increases Net Worth'}
                 </span>
               </div>
@@ -694,18 +694,18 @@ function AddWalletModal({ onClose, onSaved }) {
                   </div>
                   {paymentDue && (
                     <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:4 }}>
-                      <div style={{ background:'rgba(34,197,94,.08)', border:'1px solid rgba(34,197,94,.25)', borderRadius:12, padding:'12px 14px' }}>
-                        <div style={{ fontSize:11, fontWeight:600, color:'#22C55E', marginBottom:3 }}>📅 Payment Due</div>
+                      <div style={{ background:'rgba(5,150,105,.08)', border:'1px solid rgba(5,150,105,.25)', borderRadius:12, padding:'12px 14px' }}>
+                        <div style={{ fontSize:11, fontWeight:600, color:'#059669', marginBottom:3 }}>📅 Payment Due</div>
                         <div style={{ fontSize:15, fontWeight:800, color:'var(--text)' }}>
                           {paymentDue.toLocaleDateString('en-IN',{day:'numeric',month:'long'})}
                         </div>
                         <div style={{ fontSize:11, color:'var(--text3)', marginTop:2 }}>Bill date + 20 days</div>
                       </div>
                       {form.credit_limit && form.balance && (
-                        <div style={{ background: utilPct>80?'rgba(236,72,153,.08)':'rgba(34,197,94,.08)', border:`1px solid ${utilPct>80?'rgba(236,72,153,.25)':'rgba(34,197,94,.25)'}`, borderRadius:12, padding:'12px 14px' }}>
-                          <div style={{ fontSize:11, fontWeight:600, color: utilPct>80?'#EC4899':'#22C55E', marginBottom:6 }}>💳 Utilization {utilPct}%</div>
-                          <div style={{ height:6, background:'var(--surface3)', borderRadius:20, overflow:'hidden' }}>
-                            <div style={{ height:'100%', width:`${utilPct}%`, borderRadius:20, background: utilPct>80?'#EC4899':'#22C55E' }}/>
+                        <div style={{ background: utilPct>80?'rgba(220,38,38,.08)':'rgba(5,150,105,.08)', border:`1px solid ${utilPct>80?'rgba(220,38,38,.25)':'rgba(5,150,105,.25)'}`, borderRadius:12, padding:'12px 14px' }}>
+                          <div style={{ fontSize:11, fontWeight:600, color: utilPct>80?'#DC2626':'#059669', marginBottom:6 }}>💳 Utilization {utilPct}%</div>
+                          <div style={{ height:6, background:'var(--surface3)', borderRadius:14, overflow:'hidden' }}>
+                            <div style={{ height:'100%', width:`${utilPct}%`, borderRadius:14, background: utilPct>80?'#DC2626':'#059669' }}/>
                           </div>
                         </div>
                       )}
@@ -859,12 +859,12 @@ function AddWalletModal({ onClose, onSaved }) {
                 const pos  = gain >= 0;
                 return (
                   <div style={{ padding:'10px 14px', borderRadius:12, marginBottom:4,
-                    background: pos ? 'rgba(34,197,94,.08)' : 'rgba(236,72,153,.08)',
-                    border: `1px solid ${pos ? 'rgba(34,197,94,.25)' : 'rgba(236,72,153,.25)'}` }}>
-                    <div style={{ fontSize:11, fontWeight:600, color: pos?'#22C55E':'#EC4899', marginBottom:2 }}>
+                    background: pos ? 'rgba(5,150,105,.08)' : 'rgba(220,38,38,.08)',
+                    border: `1px solid ${pos ? 'rgba(5,150,105,.25)' : 'rgba(220,38,38,.25)'}` }}>
+                    <div style={{ fontSize:11, fontWeight:600, color: pos?'#059669':'#DC2626', marginBottom:2 }}>
                       {pos ? '📈 Unrealised Gain' : '📉 Unrealised Loss'}
                     </div>
-                    <div style={{ fontSize:16, fontWeight:800, color: pos?'#22C55E':'#EC4899' }}>
+                    <div style={{ fontSize:16, fontWeight:800, color: pos?'#059669':'#DC2626' }}>
                       {pos?'+':''}{fmt(gain,{noDecimals:true})} ({pct}%)
                     </div>
                   </div>
@@ -908,8 +908,8 @@ function AddWalletModal({ onClose, onSaved }) {
                 {/* Utilization bar on preview card */}
                 {isCard && form.credit_limit && (
                   <div>
-                    <div style={{ height:4, background:ink.bar, borderRadius:20, overflow:'hidden' }}>
-                      <div style={{ height:'100%', width:`${utilPct}%`, background:ink.barFill, borderRadius:20, transition:'width .4s ease' }}/>
+                    <div style={{ height:4, background:ink.bar, borderRadius:14, overflow:'hidden' }}>
+                      <div style={{ height:'100%', width:`${utilPct}%`, background:ink.barFill, borderRadius:14, transition:'width .4s ease' }}/>
                     </div>
                     <div style={{ display:'flex', justifyContent:'space-between', marginTop:5, fontSize:10.5, color:ink.faint }}>
                       <span>{utilPct}% used</span>
@@ -922,7 +922,7 @@ function AddWalletModal({ onClose, onSaved }) {
             </div>
 
             {mutation.isError && (
-              <div style={{ marginTop:10, padding:'10px 14px', borderRadius:10, background:'rgba(236,72,153,.1)', border:'1px solid rgba(236,72,153,.3)', color:'#EC4899', fontSize:12, fontWeight:500 }}>
+              <div style={{ marginTop:10, padding:'10px 14px', borderRadius:10, background:'rgba(220,38,38,.1)', border:'1px solid rgba(220,38,38,.3)', color:'#DC2626', fontSize:12, fontWeight:500 }}>
                 ⚠️ {mutation.error?.response?.data?.message || mutation.error?.message || 'Failed to add account. Please try again.'}
               </div>
             )}
@@ -938,7 +938,7 @@ function AddWalletModal({ onClose, onSaved }) {
                     emi_day:  form.bill_date ? parseInt(form.bill_date) : undefined,
                   });
                 }}
-                style={{ background:'linear-gradient(135deg,#8B5CF6,#3B82F6)', border:'none', boxShadow:'0 4px 14px rgba(139,92,246,.35)' }}>
+                style={{ background:'#4F46E5', border:'none', boxShadow:'0 4px 14px rgba(79,70,229,.35)' }}>
                 {mutation.isPending ? '⏳ Adding…' : 'Add Account'}
               </button>
             </div>
@@ -979,13 +979,13 @@ function analyticsRange(key) {
 
 const BUCKET_STYLE = {
   commitments:{ color:'#EF4444', bg:'rgba(239,68,68,.12)',  icon:'🏦' },
-  transfers:  { color:'#F59E0B', bg:'rgba(245,158,11,.12)', icon:'👤' },
+  transfers:  { color:'#D97706', bg:'rgba(217,119,6,.12)', icon:'👤' },
   essential:  { color:'#EAB308', bg:'rgba(234,179,8,.14)',  icon:'🏠' },
-  optional:   { color:'#22C55E', bg:'rgba(34,197,94,.12)',  icon:'🎯' },
+  optional:   { color:'#059669', bg:'rgba(5,150,105,.12)',  icon:'🎯' },
 };
-const ACAT_COLORS = ['#2A78D6','#EB6834','#1BAF7A','#EDA100','#E87BA4','#8B5CF6','#008300','#00CEC9','#636E72'];
+const ACAT_COLORS = ['#2A78D6','#EB6834','#1BAF7A','#EDA100','#E87BA4','#4F46E5','#008300','#00CEC9','#636E72'];
 
-export function Analytics() {
+export function Analytics({ embedded = false } = {}) {
   const fmt = useFmtWallet();
   const navigate = useNavAnalytics();
   const [periodKey, setPeriodKey] = useState2('this_month');
@@ -996,10 +996,10 @@ export function Analytics() {
     queryFn:() => analyticsAPI.overview(range).then(r=>r.data.data),
   });
 
-  const card = { background:'var(--surface)', borderRadius:18, padding:'18px 20px', border:'1px solid var(--border-light)', boxShadow:'0 4px 20px rgba(139,92,246,.06)' };
+  const card = { background:'var(--surface)', borderRadius:14, padding:'18px 20px', border:'1px solid var(--border-light)', boxShadow:'0 4px 20px rgba(79,70,229,.06)' };
   const money = (v) => fmt(v, { noDecimals:true });
 
-  if (isLoading || !data) return <div style={{ display:'flex', flexDirection:'column', height:'100%' }}><Topbar2 title="Analytics" subtitle="Your financial intelligence"/><PL2/></div>;
+  if (isLoading || !data) return <div style={{ display:'flex', flexDirection:'column', height:'100%' }}>{!embedded && <Topbar2 title="Analytics" subtitle="Your financial intelligence"/>}<PL2/></div>;
 
   const k = data.kpis;
   const donut = (data.categories||[]).slice(0,8).map((c,i)=>({ name:c.name, value:c.amount, color:ACAT_COLORS[i%ACAT_COLORS.length] }));
@@ -1007,7 +1007,7 @@ export function Analytics() {
 
   return (
     <div style={{ display:'flex', flexDirection:'column', height:'100%' }}>
-      <Topbar2 title="Analytics" subtitle="Where your money goes — and why"/>
+      {!embedded && <Topbar2 title="Analytics" subtitle="Where your money goes — and why"/>}
       <div style={{ padding:'22px 28px 48px', flex:1, overflow:'auto' }}>
 
         {/* Period selector */}
@@ -1017,7 +1017,7 @@ export function Analytics() {
             return (
               <button key={p.key} onClick={()=>setPeriodKey(p.key)}
                 style={{ padding:'8px 15px', borderRadius:999, fontSize:13, fontWeight:700, cursor:'pointer',
-                  border:`1.5px solid ${on?'#8B5CF6':'var(--border)'}`, background:on?'rgba(139,92,246,.12)':'var(--surface)', color:on?'#8B5CF6':'var(--text2)' }}>
+                  border:`1.5px solid ${on?'#4F46E5':'var(--border)'}`, background:on?'rgba(79,70,229,.12)':'var(--surface)', color:on?'#4F46E5':'var(--text2)' }}>
                 {p.label}
               </button>
             );
@@ -1026,9 +1026,9 @@ export function Analytics() {
 
         {/* KPI cards */}
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))', gap:12, marginBottom:22 }}>
-          <div style={card}><div style={{ fontSize:12.5, color:'var(--text3)' }}>Money Out</div><div style={{ fontSize:22, fontWeight:800, color:'#EC4899', marginTop:4 }}>{money(k.moneyOut)}</div><div style={{ fontSize:12, color:'var(--text3)', marginTop:2 }}>{k.outCount} txns</div></div>
-          <div style={card}><div style={{ fontSize:12.5, color:'var(--text3)' }}>Money In</div><div style={{ fontSize:22, fontWeight:800, color:'#22C55E', marginTop:4 }}>{money(k.moneyIn)}</div><div style={{ fontSize:12, color:'var(--text3)', marginTop:2 }}>{k.inCount} txns</div></div>
-          <div style={card}><div style={{ fontSize:12.5, color:'var(--text3)' }}>Net Cash Flow</div><div style={{ fontSize:22, fontWeight:800, color:k.net>=0?'#22C55E':'#EF4444', marginTop:4 }}>{k.net<0?'−':''}{money(Math.abs(k.net))}</div><div style={{ fontSize:12, color:'var(--text3)', marginTop:2 }}>{k.net>=0?'Surplus':'Deficit'}</div></div>
+          <div style={card}><div style={{ fontSize:12.5, color:'var(--text3)' }}>Money Out</div><div style={{ fontSize:22, fontWeight:800, color:'#DC2626', marginTop:4 }}>{money(k.moneyOut)}</div><div style={{ fontSize:12, color:'var(--text3)', marginTop:2 }}>{k.outCount} txns</div></div>
+          <div style={card}><div style={{ fontSize:12.5, color:'var(--text3)' }}>Money In</div><div style={{ fontSize:22, fontWeight:800, color:'#059669', marginTop:4 }}>{money(k.moneyIn)}</div><div style={{ fontSize:12, color:'var(--text3)', marginTop:2 }}>{k.inCount} txns</div></div>
+          <div style={card}><div style={{ fontSize:12.5, color:'var(--text3)' }}>Net Cash Flow</div><div style={{ fontSize:22, fontWeight:800, color:k.net>=0?'#059669':'#EF4444', marginTop:4 }}>{k.net<0?'−':''}{money(Math.abs(k.net))}</div><div style={{ fontSize:12, color:'var(--text3)', marginTop:2 }}>{k.net>=0?'Surplus':'Deficit'}</div></div>
           <div style={card}><div style={{ fontSize:12.5, color:'var(--text3)' }}>Avg Daily Spend</div><div style={{ fontSize:22, fontWeight:800, color:'var(--text)', marginTop:4 }}>{money(k.avgDaily)}</div></div>
           <div style={card}><div style={{ fontSize:12.5, color:'var(--text3)' }}>Transactions</div><div style={{ fontSize:22, fontWeight:800, color:'var(--text)', marginTop:4 }}>{k.txCount}</div><div style={{ fontSize:12, color:'var(--text3)', marginTop:2 }}>{k.outCount} out · {k.inCount} in</div></div>
         </div>
@@ -1089,7 +1089,7 @@ export function Analytics() {
         <div style={{ ...card, marginBottom:24 }}>
           <div style={{ fontSize:14, fontWeight:800, color:'var(--text)', marginBottom:6 }}>Weekly Spending</div>
           {data.topWeek && data.topWeek.amount>0 && (
-            <div style={{ fontSize:12.5, color:'var(--text2)', marginBottom:12 }}>🔥 Highest: <b style={{ color:'#EC4899' }}>{data.topWeek.label}</b> — {money(data.topWeek.amount)}</div>
+            <div style={{ fontSize:12.5, color:'var(--text2)', marginBottom:12 }}>🔥 Highest: <b style={{ color:'#DC2626' }}>{data.topWeek.label}</b> — {money(data.topWeek.amount)}</div>
           )}
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={data.weekly||[]}>
@@ -1097,7 +1097,7 @@ export function Analytics() {
               <YAxis tickLine={false} axisLine={false} width={44} tick={{ fontSize:10.5, fill:'var(--text3)' }} tickFormatter={(v)=>v>=1000?`₹${Math.round(v/1000)}K`:`₹${v}`}/>
               <RTooltip formatter={(v)=>money(v)} contentStyle={{ borderRadius:12, border:'1px solid var(--border)', background:'var(--surface)', fontSize:12 }}/>
               <Bar dataKey="amount" radius={[6,6,0,0]}>
-                {(data.weekly||[]).map((w,i)=><Cell key={i} fill={data.topWeek&&w.week===data.topWeek.week?'#EC4899':'#8B5CF6'}/>)}
+                {(data.weekly||[]).map((w,i)=><Cell key={i} fill={data.topWeek&&w.week===data.topWeek.week?'#DC2626':'#4F46E5'}/>)}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -1108,9 +1108,9 @@ export function Analytics() {
           {data.topDay && (
             <div style={{ ...card }}>
               <div style={{ fontSize:14, fontWeight:800, color:'var(--text)', marginBottom:6 }}>🔥 Highest Spending Day</div>
-              <div style={{ fontSize:22, fontWeight:800, color:'#EC4899' }}>{money(data.topDay.amount)}</div>
+              <div style={{ fontSize:22, fontWeight:800, color:'#DC2626' }}>{money(data.topDay.amount)}</div>
               <div style={{ fontSize:12.5, color:'var(--text3)', marginTop:2 }}>{new Date(data.topDay.date).toLocaleDateString('en-IN',{ day:'numeric', month:'long' })} · {data.topDay.count} txns</div>
-              <button onClick={()=>goTx('')} style={{ marginTop:12, fontSize:12.5, fontWeight:700, color:'#8B5CF6', background:'rgba(139,92,246,.1)', border:'none', borderRadius:9, padding:'7px 14px', cursor:'pointer' }}>View transactions →</button>
+              <button onClick={()=>goTx('')} style={{ marginTop:12, fontSize:12.5, fontWeight:700, color:'#4F46E5', background:'rgba(79,70,229,.1)', border:'none', borderRadius:9, padding:'7px 14px', cursor:'pointer' }}>View transactions →</button>
             </div>
           )}
           <div style={{ ...card }}>
@@ -1196,7 +1196,7 @@ function PrivacySection() {
   };
 
   return (
-    <SectionCard icon={<Shield size={18} color="#22C55E"/>} title="Privacy — Hide Amounts">
+    <SectionCard icon={<Shield size={18} color="#059669"/>} title="Privacy — Hide Amounts">
       <div style={{ fontSize:13, color:'var(--text2)', marginBottom:14, lineHeight:1.6 }}>
         Hide every amount in the app behind <b>••••</b>. Tap the eye icon on the balance card any time — set a password below so only you can reveal them again.
       </div>
@@ -1211,7 +1211,7 @@ function PrivacySection() {
       </div>
 
       {msg && (
-        <div style={{ fontSize:13, fontWeight:600, marginBottom:12, color: msg.includes('✓') ? '#22C55E' : '#EC4899' }}>{msg}</div>
+        <div style={{ fontSize:13, fontWeight:600, marginBottom:12, color: msg.includes('✓') ? '#059669' : '#DC2626' }}>{msg}</div>
       )}
 
       <div style={{ display:'grid', gap:12 }}>
@@ -1234,7 +1234,7 @@ function PrivacySection() {
       </div>
 
       <div style={{ display:'flex', gap:10, marginTop:4 }}>
-        <button className="btn btn-primary" onClick={save} style={{ background:'linear-gradient(135deg,#8B5CF6,#3B82F6)', border:'none', boxShadow:'0 4px 14px rgba(139,92,246,.35)' }}>
+        <button className="btn btn-primary" onClick={save} style={{ background:'#4F46E5', border:'none', boxShadow:'0 4px 14px rgba(79,70,229,.35)' }}>
           {hasPw ? 'Update password' : 'Set password'}
         </button>
         {hasPw && <button className="btn btn-ghost" onClick={remove}>Remove password</button>}
@@ -1265,28 +1265,10 @@ export function Settings() {
 
   useEffect(() => { dataAPI.sampleStatus().then(r => setSampleLoaded(!!r.data.loaded)).catch(()=>{}); }, []);
 
-  // Seed/clear the demo Challenges (they live in localStorage, not the DB).
-  const SAMPLE_CHALLENGES = () => {
-    const today = new Date().toISOString().split('T')[0];
-    const ago = (n) => { const d = new Date(); d.setDate(d.getDate()-n); return d.toISOString().split('T')[0]; };
-    return [
-      { id:'sample-52week', templateId:'52week', title:'52-Week Savings Challenge', emoji:'📅', color:'#8B5CF6', bg:'rgba(139,92,246,.12)',
-        desc:'Save increasing amounts each week.', target:137800, saved:48600, duration:52, unit:'weeks',
-        startDate: ago(120), checkIns:[ago(6),ago(5),ago(4),ago(3),ago(2),ago(1),today], completed:false,
-        milestones:[{at:13,label:'Quarter done! 🌱'},{at:26,label:'Halfway there! 🎯'},{at:39,label:'75% complete! 🔥'},{at:52,label:'Challenge Complete! 🏆'}], category:'savings' },
-      { id:'sample-emergency', templateId:'emergency', title:'Emergency Fund Challenge', emoji:'🛡️', color:'#22C55E', bg:'rgba(34,197,94,.12)',
-        desc:'Build a 3-month emergency fund.', target:150000, saved:92000, duration:90, unit:'days',
-        startDate: ago(60), checkIns:[ago(3),ago(2),ago(1),today], completed:false,
-        milestones:[{at:25,label:'Foundation set! 🏗️'},{at:50,label:'Halfway built! 🔨'},{at:100,label:'Emergency fund ready! 🛡️'}], category:'savings' },
-    ];
-  };
-
   const loadSample = async () => {
     setSampleBusy('load');
     try {
       await dataAPI.sampleLoad();
-      localStorage.setItem('tracksy_challenges', JSON.stringify(SAMPLE_CHALLENGES()));
-      localStorage.setItem('tracksy_badges', JSON.stringify(['first_start','week1','halfway']));
       window.location.href = '/dashboard';
     } catch (e) { setSampleBusy(''); alert(e.response?.data?.message || 'Failed to load sample data'); }
   };
@@ -1294,8 +1276,6 @@ export function Settings() {
     setSampleBusy('remove');
     try {
       await dataAPI.sampleRemove();
-      localStorage.removeItem('tracksy_challenges');
-      localStorage.removeItem('tracksy_badges');
       window.location.href = '/dashboard';
     } catch (e) { setSampleBusy(''); alert(e.response?.data?.message || 'Failed to remove sample data'); }
   };
@@ -1328,13 +1308,13 @@ export function Settings() {
         <div style={{ maxWidth:680 }}>
 
           {saved && (
-            <div style={{ background:'rgba(34,197,94,.12)', color:'#22C55E', padding:'12px 16px', borderRadius:14, marginBottom:20, fontSize:13.5, fontWeight:600, display:'flex', alignItems:'center', gap:8 }}>
+            <div style={{ background:'rgba(5,150,105,.12)', color:'#059669', padding:'12px 16px', borderRadius:14, marginBottom:20, fontSize:13.5, fontWeight:600, display:'flex', alignItems:'center', gap:8 }}>
               {t('settings_saved')}
             </div>
           )}
 
           {/* Profile hero */}
-          <div style={{ background:'linear-gradient(135deg,#8B5CF6 0%,#3B82F6 100%)', borderRadius:22, padding:'28px 32px', marginBottom:20, color:'#fff', display:'flex', alignItems:'center', gap:20, boxShadow:'0 8px 32px rgba(139,92,246,.3)', position:'relative', overflow:'hidden' }}>
+          <div style={{ background:'#4F46E5', borderRadius:14, padding:'28px 32px', marginBottom:20, color:'#fff', display:'flex', alignItems:'center', gap:20, boxShadow:'0 8px 32px rgba(79,70,229,.3)', position:'relative', overflow:'hidden' }}>
             <div style={{ position:'absolute', top:-30, right:-30, width:100, height:100, background:'rgba(255,255,255,.08)', borderRadius:'50%' }}/>
             <div style={{ position:'absolute', bottom:-20, right:80, width:60, height:60, background:'rgba(255,255,255,.05)', borderRadius:'50%' }}/>
             <div style={{ width:64, height:64, borderRadius:'50%', background:'rgba(255,255,255,.2)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:22, fontWeight:700, flexShrink:0, backdropFilter:'blur(10px)', border:'2px solid rgba(255,255,255,.3)' }}>
@@ -1347,7 +1327,7 @@ export function Settings() {
           </div>
 
           {/* Profile form */}
-          <SectionCard icon={<User size={18} color="#8B5CF6"/>} title={t('settings_profile')}>
+          <SectionCard icon={<User size={18} color="#4F46E5"/>} title={t('settings_profile')}>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
               <div className="form-group">
                 <label className="form-label">{t('settings_first_name')}</label>
@@ -1359,7 +1339,7 @@ export function Settings() {
               </div>
             </div>
             <button className="btn btn-primary" disabled={mutation.isPending} onClick={()=>mutation.mutate(form)}
-              style={{ background:'linear-gradient(135deg,#8B5CF6,#3B82F6)', border:'none', boxShadow:'0 4px 14px rgba(139,92,246,.35)' }}>
+              style={{ background:'#4F46E5', border:'none', boxShadow:'0 4px 14px rgba(79,70,229,.35)' }}>
               {mutation.isPending ? t('modal_saving') : t('settings_save')}
             </button>
           </SectionCard>
@@ -1388,14 +1368,14 @@ export function Settings() {
           <PrivacySection />
 
           {/* Categories — moved out of main menu */}
-          <SectionCard icon={<Tag size={18} color="#A78BFA"/>} title="Categories">
+          <SectionCard icon={<Tag size={18} color="#818CF8"/>} title="Categories">
             <div
               onClick={() => navigate3('/categories')}
               style={{ display:'flex', alignItems:'center', gap:14, padding:'14px 16px', borderRadius:14, border:'1px solid var(--border)', background:'var(--surface)', cursor:'pointer', transition:'border-color .15s' }}
-              onMouseEnter={e => e.currentTarget.style.borderColor='#A78BFA'}
+              onMouseEnter={e => e.currentTarget.style.borderColor='#818CF8'}
               onMouseLeave={e => e.currentTarget.style.borderColor='var(--border)'}>
-              <div style={{ width:40, height:40, borderRadius:12, background:'rgba(167,139,250,.14)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                <Tag size={18} color="#A78BFA"/>
+              <div style={{ width:40, height:40, borderRadius:12, background:'rgba(129,140,248,.14)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                <Tag size={18} color="#818CF8"/>
               </div>
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ fontSize:14.5, fontWeight:700, color:'var(--text)' }}>Manage Categories</div>
@@ -1423,41 +1403,41 @@ export function Settings() {
                 </div>
                 <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
                   {['Transactions','Wallets','Budgets','Goals','Categories'].map(t => (
-                    <span key={t} style={{ fontSize:11, fontWeight:600, padding:'3px 9px', borderRadius:20, background:'var(--accent-light)', color:'var(--accent)' }}>{t}</span>
+                    <span key={t} style={{ fontSize:11, fontWeight:600, padding:'3px 9px', borderRadius:14, background:'var(--accent-light)', color:'var(--accent)' }}>{t}</span>
                   ))}
                 </div>
               </div>
               <button onClick={handleExport} disabled={exporting}
-                style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 20px', borderRadius:12, fontWeight:700, fontSize:13.5, cursor:'pointer', flexShrink:0, background: exportDone?'rgba(34,197,94,.15)':'var(--accent-light)', border: exportDone?'1.5px solid #22C55E':'1.5px solid var(--accent)', color: exportDone?'#22C55E':'var(--accent)', transition:'all .2s' }}>
+                style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 20px', borderRadius:12, fontWeight:700, fontSize:13.5, cursor:'pointer', flexShrink:0, background: exportDone?'rgba(5,150,105,.15)':'var(--accent-light)', border: exportDone?'1.5px solid #059669':'1.5px solid var(--accent)', color: exportDone?'#059669':'var(--accent)', transition:'all .2s' }}>
                 <Download size={15}/> {exporting ? 'Exporting…' : exportDone ? '✓ Downloaded!' : 'Export JSON'}
               </button>
             </div>
           </SectionCard>
 
           {/* Sample / Demo Data */}
-          <SectionCard icon={<Sparkles size={18} color="#8B5CF6"/>} title="Sample Data">
+          <SectionCard icon={<Sparkles size={18} color="#4F46E5"/>} title="Sample Data">
             <div style={{ fontSize:13.5, color:'var(--text3)', marginBottom:16, lineHeight:1.6 }}>
-              Load a full year of demo data — accounts, credit card, loan, assets, transactions, budgets, goals & savings challenges — to explore every feature. Your real data is never touched; remove the demo anytime to return to normal.
+              Load a full year of demo data — accounts, credit card, loan, assets, transactions, budgets & goals — to explore every feature. Your real data is never touched; remove the demo anytime to return to normal.
             </div>
             {sampleLoaded ? (
-              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px', borderRadius:14, background:'rgba(34,197,94,.1)', border:'1px solid #22C55E22', gap:12 }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px', borderRadius:14, background:'rgba(5,150,105,.1)', border:'1px solid #05966922', gap:12 }}>
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:13.5, fontWeight:700, color:'var(--text)' }}>✓ Demo data is active</div>
                   <div style={{ fontSize:12, color:'var(--text3)', marginTop:2 }}>Remove it to return to your normal data</div>
                 </div>
                 <button onClick={removeSample} disabled={!!sampleBusy}
-                  style={{ padding:'8px 18px', borderRadius:10, border:'1.5px solid #EC4899', background:'transparent', color:'#EC4899', fontSize:12.5, fontWeight:700, cursor:'pointer', flexShrink:0 }}>
+                  style={{ padding:'8px 18px', borderRadius:10, border:'1.5px solid #DC2626', background:'transparent', color:'#DC2626', fontSize:12.5, fontWeight:700, cursor:'pointer', flexShrink:0 }}>
                   {sampleBusy==='remove' ? 'Removing…' : 'Return to Normal'}
                 </button>
               </div>
             ) : (
-              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px', borderRadius:14, background:'rgba(139,92,246,.1)', border:'1px solid #8B5CF622', gap:12 }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px', borderRadius:14, background:'rgba(79,70,229,.1)', border:'1px solid #4F46E522', gap:12 }}>
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:13.5, fontWeight:700, color:'var(--text)' }}>Load 1 year of demo data</div>
                   <div style={{ fontSize:12, color:'var(--text3)', marginTop:2 }}>See how Tracksy looks fully populated</div>
                 </div>
                 <button onClick={loadSample} disabled={!!sampleBusy}
-                  style={{ padding:'8px 18px', borderRadius:10, border:'none', background:'#8B5CF6', color:'#fff', fontSize:12.5, fontWeight:700, cursor:'pointer', flexShrink:0 }}>
+                  style={{ padding:'8px 18px', borderRadius:10, border:'none', background:'#4F46E5', color:'#fff', fontSize:12.5, fontWeight:700, cursor:'pointer', flexShrink:0 }}>
                   {sampleBusy==='load' ? 'Loading…' : 'Load Sample Data'}
                 </button>
               </div>
@@ -1465,16 +1445,16 @@ export function Settings() {
           </SectionCard>
 
           {/* Reset Data */}
-          <SectionCard icon={<Trash2 size={18} color="#EC4899"/>} title="Reset Data">
+          <SectionCard icon={<Trash2 size={18} color="#DC2626"/>} title="Reset Data">
             <div style={{ fontSize:13.5, color:'var(--text3)', marginBottom:16, lineHeight:1.6 }}>
               Permanently delete selected data. <strong style={{color:'var(--red)'}}>This cannot be undone.</strong> Export a backup first.
             </div>
             <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
               {[
-                { scope:'transactions', label:'Clear All Transactions',      desc:'Remove every income & expense record',       color:'#F59E0B', bg:'rgba(245,158,11,.1)' },
+                { scope:'transactions', label:'Clear All Transactions',      desc:'Remove every income & expense record',       color:'#D97706', bg:'rgba(217,119,6,.1)' },
                 { scope:'budgets',      label:'Delete All Budgets',           desc:'Remove all monthly budget configurations',   color:'#3B82F6', bg:'rgba(59,130,246,.1)'  },
-                { scope:'goals',        label:'Delete All Goals',             desc:'Remove all saving goals and progress',       color:'#22C55E', bg:'rgba(34,197,94,.1)'  },
-                { scope:'all',          label:'⚠️ Reset Everything',           desc:'Wipe all data — wallets, transactions, budgets, goals & categories', color:'#EC4899', bg:'rgba(236,72,153,.1)'   },
+                { scope:'goals',        label:'Delete All Goals',             desc:'Remove all saving goals and progress',       color:'#059669', bg:'rgba(5,150,105,.1)'  },
+                { scope:'all',          label:'⚠️ Reset Everything',           desc:'Wipe all data — wallets, transactions, budgets, goals & categories', color:'#DC2626', bg:'rgba(220,38,38,.1)'   },
               ].map(({ scope, label, desc, color, bg }) => (
                 <div key={scope} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px', borderRadius:14, background:bg, border:`1px solid ${color}22`, gap:12 }}>
                   <div style={{ flex:1 }}>
@@ -1494,17 +1474,17 @@ export function Settings() {
 
           {/* Admin panel button — only for admins */}
           {user?.is_admin && (
-            <div onClick={() => navigate3('/admin')} style={{ cursor:'pointer', background:'linear-gradient(135deg,#1a1a2e 0%,#16213e 100%)', borderRadius:20, padding:'18px 24px', marginBottom:16, display:'flex', alignItems:'center', gap:16, boxShadow:'0 4px 24px rgba(139,92,246,.15)', border:'1px solid rgba(139,92,246,.4)', transition:'transform .2s' }}
+            <div onClick={() => navigate3('/admin')} style={{ cursor:'pointer', background:'linear-gradient(135deg,#1a1a2e 0%,#16213e 100%)', borderRadius:14, padding:'18px 24px', marginBottom:16, display:'flex', alignItems:'center', gap:16, boxShadow:'0 4px 24px rgba(79,70,229,.15)', border:'1px solid rgba(79,70,229,.4)', transition:'transform .2s' }}
               onMouseEnter={e=>e.currentTarget.style.transform='translateY(-2px)'}
               onMouseLeave={e=>e.currentTarget.style.transform=''}>
-              <div style={{ width:46, height:46, borderRadius:14, background:'linear-gradient(135deg,#8B5CF6,#a29bfe)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+              <div style={{ width:46, height:46, borderRadius:14, background:'#4F46E5', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M4 4h7v7H4V4zm0 9h7v7H4v-7zm9-9h7v7h-7V4zm0 9h7v7h-7v-7z"/></svg>
               </div>
               <div style={{ flex:1 }}>
                 <div style={{ fontSize:15, fontWeight:800, color:'#fff', marginBottom:3 }}>Admin Dashboard</div>
                 <div style={{ fontSize:12.5, color:'rgba(255,255,255,.5)' }}>Users, stats, premium management & more</div>
               </div>
-              <div style={{ background:'rgba(139,92,246,.25)', border:'1px solid rgba(139,92,246,.5)', borderRadius:12, padding:'8px 16px', color:'#a29bfe', fontSize:13, fontWeight:700, flexShrink:0 }}>
+              <div style={{ background:'rgba(79,70,229,.25)', border:'1px solid rgba(79,70,229,.5)', borderRadius:12, padding:'8px 16px', color:'#818CF8', fontSize:13, fontWeight:700, flexShrink:0 }}>
                 Open →
               </div>
             </div>
@@ -1560,7 +1540,7 @@ function NotificationPrefsSection() {
   const display = local || {};
 
   return (
-    <SectionCard icon={<Bell size={18} color="#F59E0B"/>} title="Notifications">
+    <SectionCard icon={<Bell size={18} color="#D97706"/>} title="Notifications">
       {isLoading ? (
         <div style={{ fontSize:13, color:'var(--text3)', padding:'12px 0' }}>Loading preferences…</div>
       ) : (
@@ -1577,10 +1557,10 @@ function NotificationPrefsSection() {
           ))}
           <div style={{ display:'flex', alignItems:'center', gap:12, marginTop:14 }}>
             <button onClick={handleSave} disabled={saving}
-              style={{ padding:'9px 20px', borderRadius:11, background:'linear-gradient(135deg,#8B5CF6,#3B82F6)', color:'#fff', border:'none', fontWeight:700, fontSize:13, cursor:'pointer', opacity: saving ? .7 : 1 }}>
+              style={{ padding:'9px 20px', borderRadius:11, background:'#4F46E5', color:'#fff', border:'none', fontWeight:700, fontSize:13, cursor:'pointer', opacity: saving ? .7 : 1 }}>
               {saving ? 'Saving…' : 'Save Preferences'}
             </button>
-            {savedNotif && <span style={{ fontSize:12.5, color:'#22C55E', fontWeight:600 }}>✅ Saved!</span>}
+            {savedNotif && <span style={{ fontSize:12.5, color:'#059669', fontWeight:600 }}>✅ Saved!</span>}
           </div>
         </>
       )}
@@ -1625,7 +1605,7 @@ function ChangePasswordSection({ user }) {
   const eyeBtn = { position:'absolute', right:10, background:'none', border:'none', cursor:'pointer', color:'var(--text3)', display:'flex', padding:4 };
 
   return (
-    <SectionCard icon={<Shield size={18} color="#22C55E"/>} title="Security">
+    <SectionCard icon={<Shield size={18} color="#059669"/>} title="Security">
       {/* Change Password */}
       <div style={{ borderBottom:'1px solid var(--border-light)' }}>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 0', cursor:'pointer' }}
@@ -1641,8 +1621,8 @@ function ChangePasswordSection({ user }) {
 
         {open && !user?.oauth_provider && (
           <div style={{ paddingBottom:16 }}>
-            {error && <div style={{ background:'rgba(236,72,153,.1)', border:'1px solid rgba(236,72,153,.3)', borderRadius:10, padding:'9px 13px', marginBottom:12, color:'#EC4899', fontSize:13 }}>{error}</div>}
-            {success && <div style={{ background:'rgba(34,197,94,.1)', border:'1px solid rgba(34,197,94,.3)', borderRadius:10, padding:'9px 13px', marginBottom:12, color:'#22C55E', fontSize:13 }}>{success}</div>}
+            {error && <div style={{ background:'rgba(220,38,38,.1)', border:'1px solid rgba(220,38,38,.3)', borderRadius:10, padding:'9px 13px', marginBottom:12, color:'#DC2626', fontSize:13 }}>{error}</div>}
+            {success && <div style={{ background:'rgba(5,150,105,.1)', border:'1px solid rgba(5,150,105,.3)', borderRadius:10, padding:'9px 13px', marginBottom:12, color:'#059669', fontSize:13 }}>{success}</div>}
 
             {[
               { key:'current_password', label:'Current Password', show:showCurrent, toggle:()=>setShowCurrent(s=>!s) },
@@ -1663,7 +1643,7 @@ function ChangePasswordSection({ user }) {
             ))}
 
             <button onClick={handleChangePwd} disabled={saving}
-              style={{ marginTop:4, padding:'9px 20px', borderRadius:11, background:'linear-gradient(135deg,#22C55E,#00b894)', color:'#fff', border:'none', fontWeight:700, fontSize:13, cursor:'pointer', opacity: saving ? .7 : 1, display:'flex', alignItems:'center', gap:8 }}>
+              style={{ marginTop:4, padding:'9px 20px', borderRadius:11, background:'#059669', color:'#fff', border:'none', fontWeight:700, fontSize:13, cursor:'pointer', opacity: saving ? .7 : 1, display:'flex', alignItems:'center', gap:8 }}>
               <Key size={14}/> {saving ? 'Changing…' : 'Change Password'}
             </button>
           </div>
@@ -1703,8 +1683,8 @@ function ResetModal({ scope, onClose }) {
     <div className="modal-overlay" onClick={e => e.target===e.currentTarget && onClose()}>
       <div className="modal" style={{ maxWidth:420 }}>
         <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:12, marginBottom:20, textAlign:'center' }}>
-          <div style={{ width:56, height:56, borderRadius:18, background:'rgba(236,72,153,.12)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-            <AlertTriangle size={28} color="#EC4899"/>
+          <div style={{ width:56, height:56, borderRadius:14, background:'rgba(220,38,38,.12)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <AlertTriangle size={28} color="#DC2626"/>
           </div>
           <div style={{ fontSize:18, fontWeight:800, color:'var(--text)' }}>Delete {labels[scope]}?</div>
           <div style={{ fontSize:13.5, color:'var(--text3)', lineHeight:1.6 }}>
@@ -1721,13 +1701,13 @@ function ResetModal({ scope, onClose }) {
             <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
               <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
               <button className="btn" disabled={confirm !== 'DELETE' || mutation.isPending} onClick={() => mutation.mutate()}
-                style={{ background:'linear-gradient(135deg,#EC4899,#FF79A8)', border:'none', boxShadow:'0 4px 14px rgba(236,72,153,.35)', color:'#fff', padding:'8px 20px', borderRadius:10, fontWeight:700, cursor: confirm==='DELETE'?'pointer':'not-allowed', opacity: confirm==='DELETE'?1:.5 }}>
+                style={{ background:'#DC2626', border:'none', boxShadow:'0 4px 14px rgba(220,38,38,.35)', color:'#fff', padding:'8px 20px', borderRadius:10, fontWeight:700, cursor: confirm==='DELETE'?'pointer':'not-allowed', opacity: confirm==='DELETE'?1:.5 }}>
                 {mutation.isPending ? 'Deleting…' : 'Delete Permanently'}
               </button>
             </div>
           </>
         ) : (
-          <div style={{ textAlign:'center', padding:'12px 0', fontSize:15, fontWeight:700, color:'#22C55E' }}>
+          <div style={{ textAlign:'center', padding:'12px 0', fontSize:15, fontWeight:700, color:'#059669' }}>
             ✅ Data deleted. Refreshing…
           </div>
         )}
@@ -1738,7 +1718,7 @@ function ResetModal({ scope, onClose }) {
 
 function SectionCard({ icon, title, children }) {
   return (
-    <div style={{ background:'var(--surface)', borderRadius:20, padding:'22px 24px', boxShadow:'0 4px 24px rgba(139,92,246,.08)', border:'1px solid var(--border-light)', marginBottom:16 }}>
+    <div style={{ background:'var(--surface)', borderRadius:14, padding:'22px 24px', boxShadow:'0 4px 24px rgba(79,70,229,.08)', border:'1px solid var(--border-light)', marginBottom:16 }}>
       <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:20 }}>
         <div style={{ width:34, height:34, borderRadius:10, background:'var(--accent-light)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
           {icon}
@@ -1802,12 +1782,12 @@ function GmailSection() {
       ) : (
         <div>
           {justConnected && (
-            <div style={{ background:'rgba(34,197,94,.12)', color:'#22C55E', padding:'10px 14px', borderRadius:10, marginBottom:14, fontSize:13, fontWeight:600 }}>
+            <div style={{ background:'rgba(5,150,105,.12)', color:'#059669', padding:'10px 14px', borderRadius:10, marginBottom:14, fontSize:13, fontWeight:600 }}>
               ✓ Gmail connected! Run your first sync below.
             </div>
           )}
           <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14 }}>
-            <span style={{ width:9, height:9, borderRadius:'50%', background:'#22C55E', flexShrink:0 }}/>
+            <span style={{ width:9, height:9, borderRadius:'50%', background:'#059669', flexShrink:0 }}/>
             <span style={{ fontSize:13.5, fontWeight:600, color:'var(--text)' }}>Connected</span>
             <span style={{ fontSize:12, color:'var(--text3)' }}>
               · Last sync: {status?.last_sync ? new Date(status.last_sync).toLocaleString('en-IN',{ day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) : 'never'}
@@ -1818,7 +1798,7 @@ function GmailSection() {
           <label style={{ display:'flex', alignItems:'center', gap:10, marginBottom:16, cursor:'pointer' }}>
             <div onClick={() => toggleMut.mutate(!status.sync_enabled)} style={{
               width:40, height:22, borderRadius:11, flexShrink:0, position:'relative', transition:'background .2s',
-              background: status?.sync_enabled ? '#22C55E' : 'var(--surface3)',
+              background: status?.sync_enabled ? '#059669' : 'var(--surface3)',
             }}>
               <div style={{ position:'absolute', top:3, left: status?.sync_enabled ? 21 : 3, width:16, height:16, borderRadius:'50%', background:'#fff', transition:'left .2s', boxShadow:'0 1px 3px rgba(0,0,0,.3)' }}/>
             </div>
@@ -1833,11 +1813,11 @@ function GmailSection() {
 
           <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>
             <button onClick={() => syncMut.mutate()} disabled={syncMut.isPending}
-              style={{ display:'flex', alignItems:'center', gap:7, padding:'10px 18px', borderRadius:12, border:'none', background:'linear-gradient(135deg,#8B5CF6,#3B82F6)', color:'#fff', fontWeight:700, fontSize:13.5, cursor:'pointer' }}>
+              style={{ display:'flex', alignItems:'center', gap:7, padding:'10px 18px', borderRadius:12, border:'none', background:'#4F46E5', color:'#fff', fontWeight:700, fontSize:13.5, cursor:'pointer' }}>
               {syncMut.isPending ? '⟳ Syncing…' : '↻ Sync Now'}
             </button>
             <button onClick={() => { if(confirm('Disconnect Gmail? Nightly auto-import will stop.')) disconnectMut.mutate(); }}
-              style={{ padding:'10px 18px', borderRadius:12, border:'1.5px solid rgba(236,72,153,.3)', background:'var(--red-light)', color:'#EC4899', fontWeight:700, fontSize:13.5, cursor:'pointer' }}>
+              style={{ padding:'10px 18px', borderRadius:12, border:'1.5px solid rgba(220,38,38,.3)', background:'var(--red-light)', color:'#DC2626', fontWeight:700, fontSize:13.5, cursor:'pointer' }}>
               Disconnect
             </button>
           </div>

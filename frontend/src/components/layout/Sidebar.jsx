@@ -1,10 +1,9 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  House, ArrowsLeftRight, Wallet, Target, ChartPie,
-  Users, Tag, CreditCard, ArrowsClockwise, TrendUp,
-  UploadSimple, Gear, Moon, Sun, Crown, SignOut, X,
-  ChartLineUp, Scales, Trophy, Lightbulb
+  House, ArrowsLeftRight, Wallet, Target, ChartPie, Users,
+  CreditCard, ArrowsClockwise, TrendUp, UploadSimple,
+  Gear, Moon, Sun, SignOut, X,
 } from '@phosphor-icons/react';
 import useAuthStore from '../../store/authStore';
 import useThemeStore from '../../store/themeStore';
@@ -13,36 +12,27 @@ import InstallPWA from '../InstallPWA';
 import styles from './Sidebar.module.css';
 
 const NAV_GROUPS = [
-  { label: 'Overview', items: [
-    { path: '/',             tKey: 'nav_dashboard',    Icon: House,           color: '#22C55E', bg: 'rgba(34,197,94,.12)'   },
+  { label: null, items: [
+    { path: '/',             tKey: 'nav_dashboard',    Icon: House           },
   ] },
   { label: 'Money', items: [
-    { path: '/transactions', tKey: 'nav_transactions', Icon: ArrowsLeftRight, color: '#EC4899', bg: 'rgba(236,72,153,.12)'  },
-    { path: '/wallet',       tKey: 'nav_accounts',     Icon: Wallet,          color: '#3B82F6', bg: 'rgba(59,130,246,.12)'  },
-    { path: '/recurring',    tKey: 'nav_recurring',    Icon: ArrowsClockwise, color: '#00CEC9', bg: 'rgba(0,206,201,.12)'   },
-    { path: '/categories',  label: 'Categories',      Icon: Tag,             color: '#3B82F6', bg: 'rgba(59,130,246,.12)'  },
-    { path: '/import',       tKey: 'nav_import',       Icon: UploadSimple,    color: '#A78BFA', bg: 'rgba(167,139,250,.12)' },
+    { path: '/transactions', tKey: 'nav_transactions', Icon: ArrowsLeftRight },
+    { path: '/wallet',       tKey: 'nav_accounts',     Icon: Wallet          },
+    { path: '/recurring',    tKey: 'nav_recurring',    Icon: ArrowsClockwise },
+    { path: '/import',       tKey: 'nav_import',       Icon: UploadSimple    },
   ] },
-  { label: 'Plan', items: [
-    { path: '/budget',       tKey: 'nav_budget',       Icon: ChartPie,        color: '#8B5CF6', bg: 'rgba(139,92,246,.12)'  },
-    { path: '/goals',        tKey: 'nav_goals',        Icon: Target,          color: '#F59E0B', bg: 'rgba(245,158,11,.12)'  },
-    { path: '/challenges',   label: 'Challenges',      Icon: Trophy,          color: '#8B5CF6', bg: 'rgba(139,92,246,.12)'  },
+  { label: 'Plan & analyze', items: [
+    { path: '/budget',       tKey: 'nav_budget',       Icon: ChartPie        },
+    { path: '/goals',        tKey: 'nav_goals',        Icon: Target          },
+    { path: '/debts',        tKey: 'nav_debts',        Icon: CreditCard      },
+    { path: '/insights',     label: 'Insights',        Icon: TrendUp         },
   ] },
-  { label: 'Debt & wealth', items: [
-    { path: '/debts',        tKey: 'nav_debts',        Icon: CreditCard,      color: '#EC4899', bg: 'rgba(236,72,153,.12)'  },
-    { path: '/debt-reduction',label:'Debt Reduction',  Icon: Scales,          color: '#F59E0B', bg: 'rgba(245,158,11,.12)'  },
-    { path: '/investments',   label: 'Investments',     Icon: ChartLineUp,     color: '#22C55E', bg: 'rgba(34,197,94,.12)'   },
-  ] },
-  { label: 'Insights', items: [
-    { path: '/analytics',    tKey: 'nav_analytics',    Icon: TrendUp,         color: '#3B82F6', bg: 'rgba(59,130,246,.12)'  },
-    { path: '/insights',     label: 'Smart Insights',  Icon: Lightbulb,       color: '#F59E0B', bg: 'rgba(245,158,11,.12)'  },
-  ] },
-  { label: 'Together', items: [
-    { path: '/family',       label: 'Family',          Icon: Users,           color: '#EC4899', bg: 'rgba(236,72,153,.12)'  },
+  { label: 'Household', items: [
+    { path: '/family',       label: 'Family',          Icon: Users           },
   ] },
 ];
 
-function AnimatedNavItem({ path, tKey, label, Icon, color, bg, t, onClose }) {
+function AnimatedNavItem({ path, tKey, label, Icon, t, onClose }) {
   return (
     <NavLink
       key={path}
@@ -50,31 +40,13 @@ function AnimatedNavItem({ path, tKey, label, Icon, color, bg, t, onClose }) {
       end={path === '/'}
       onClick={onClose}
       className={({ isActive }) => `${styles.navItem}${isActive ? ' ' + styles.active : ''}`}
-      style={({ isActive }) => isActive ? { background: bg, color } : undefined}
     >
       {({ isActive }) => (
         <>
-          <motion.span
-            className={styles.navIconWrap}
-            style={{ background: 'transparent', '--icon-color': color }}
-            whileHover={{ scale: 1.12, y: -1 }}
-            whileTap={{ scale: 0.92 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-          >
-            <Icon
-              size={18}
-              weight={isActive ? 'fill' : 'regular'}
-              color={isActive ? color : 'var(--text3)'}
-            />
-          </motion.span>
+          <span className={styles.navIconWrap}>
+            <Icon size={18} weight={isActive ? 'fill' : 'regular'} color={isActive ? 'var(--accent)' : 'var(--text3)'} />
+          </span>
           <span className={styles.navLabel}>{label || t(tKey)}</span>
-          {isActive && (
-            <motion.span
-              className={styles.activeBar}
-              layoutId="activeBar"
-              transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-            />
-          )}
         </>
       )}
     </NavLink>
@@ -118,7 +90,7 @@ export default function Sidebar({ isOpen, onClose }) {
         <nav className={styles.nav}>
           {NAV_GROUPS.map((group, gi) => (
             <div key={group.label}>
-              <div className={styles.navSection} style={gi ? { marginTop: 6 } : undefined}>{group.label}</div>
+              {group.label && <div className={styles.navSection} style={gi ? { marginTop: 10 } : undefined}>{group.label}</div>}
               {group.items.map((item) => (
                 <AnimatedNavItem key={item.path} {...item} t={t} onClose={onClose} />
               ))}
@@ -133,12 +105,12 @@ export default function Sidebar({ isOpen, onClose }) {
               <>
                 <motion.span
                   className={styles.navIconWrap}
-                  style={{ background: isActive ? 'rgba(139,92,246,.12)' : 'transparent' }}
+                  style={{ background: isActive ? 'rgba(79,70,229,.12)' : 'transparent' }}
                   whileHover={{ scale: 1.12, y: -1 }}
                   whileTap={{ scale: 0.92 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                 >
-                  <Gear size={18} weight={isActive ? 'fill' : 'regular'} color={isActive ? '#8B5CF6' : 'var(--text3)'} />
+                  <Gear size={18} weight={isActive ? 'fill' : 'regular'} color={isActive ? '#4F46E5' : 'var(--text3)'} />
                 </motion.span>
                 <span className={styles.navLabel}>{t('nav_settings')}</span>
               </>

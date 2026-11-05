@@ -157,10 +157,6 @@ router.post('/gmail/sync',        auth, gmailCtrl.syncNow);
 router.post('/gmail/toggle',      auth, gmailCtrl.toggleSync);
 router.post('/gmail/disconnect',  auth, gmailCtrl.disconnect);
 
-// Broker integrations (Dhan)
-const brokerCtrl = require('../controllers/brokerController');
-router.post('/broker/dhan/holdings', auth, brokerCtrl.getDhanHoldings);
-
 // Family — consent-based: create, join by code, leave, overview
 const familyCtrl = require('../controllers/familyController');
 router.get('/family/status',          auth, familyCtrl.getStatus);
