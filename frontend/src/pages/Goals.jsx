@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { goalsAPI } from '../services/api';
+import { track } from '../lib/analytics';
 import { PageLoader } from '../components/ui';
 import {
   Plus, ChevronRight, ChevronDown, SlidersHorizontal, BarChart2,
@@ -134,7 +135,7 @@ export default function Goals() {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => goalsAPI.delete(id),
-    onSuccess: () => invalidateFinance(qc),
+    onSuccess: () => { track('goal_deleted'); invalidateFinance(qc); },
   });
 
   if (isLoading) return <PageLoader />;
@@ -384,7 +385,7 @@ function GoalModal({ goal, onClose, onSaved }) {
   const [error, setError] = useState('');
   const mutation = useMutation({
     mutationFn: (data) => goal ? goalsAPI.update(goal.id, data) : goalsAPI.create(data),
-    onSuccess: onSaved,
+    onSuccess: (...a) => { if (!goal) track('goal_created'); onSaved?.(...a); },
     onError: (e) => setError(e.response?.data?.message || 'Error saving goal'),
   });
   const submit = () => {
@@ -463,7 +464,7 @@ function AddFundsModal({ goal, onClose, onSaved }) {
   const [amount, setAmount] = useState('');
   const mutation = useMutation({
     mutationFn: () => goalsAPI.addFunds(goal.id, parseFloat(amount)),
-    onSuccess: onSaved,
+    onSuccess: (...a) => { track('goal_funded'); onSaved?.(...a); },
   });
   const pct = Math.min(100, Math.round((parseFloat(goal.current_amount)||0)/(parseFloat(goal.target_amount)||1)*100));
   const clr = goal.color || '#1D4ED8';

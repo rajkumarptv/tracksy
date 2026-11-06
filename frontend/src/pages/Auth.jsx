@@ -4,6 +4,7 @@ import { Eye, EyeOff, AlertCircle, CheckCircle2, Lock, Moon, Sun, Loader2, Walle
 import { authAPI } from '../services/api';
 import useAuthStore from '../store/authStore';
 import useThemeStore from '../store/themeStore';
+import { track } from '../lib/analytics';
 import styles from './Auth.module.css';
 
 /* ── Small building blocks ────────────────────────────────────────────────── */
@@ -180,6 +181,7 @@ export function Login() {
     try {
       const res = await authAPI.login({ email: form.email.trim(), password: form.password });
       setAuth(res.data.user, res.data.token);
+      track('login', { method: 'password' });
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
@@ -231,6 +233,7 @@ export function Register() {
     try {
       const res = await authAPI.register({ first_name: form.first_name.trim(), last_name: form.last_name.trim(), email: form.email.trim(), password: form.password });
       setAuth(res.data.user, res.data.token);
+      track('sign_up', { method: 'password' });
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed');
@@ -374,6 +377,7 @@ export function OAuthCallback() {
       api.get('/auth/me', { headers: { Authorization: `Bearer ${token}` } })
         .then(res => {
           setAuth(res.data.user, token);
+          track('login', { method: 'oauth' });
           navigate('/', { replace: true });
         })
         .catch(() => setError('Failed to fetch account details. Please try again.'));

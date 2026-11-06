@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { trackApiError } from '../lib/analytics';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
@@ -23,6 +24,7 @@ api.interceptors.response.use(
       localStorage.removeItem('tracksy-cache');
       window.location.href = '/login';
     }
+    try { trackApiError({ status: error.response?.status || 0, url: error.config?.url, cancelled: axios.isCancel(error) }); } catch { /* analytics must never break a request */ }
     return Promise.reject(error);
   }
 );

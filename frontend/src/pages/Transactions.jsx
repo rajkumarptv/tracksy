@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { transactionsAPI, categoriesAPI, walletsAPI } from '../services/api';
+import { track } from '../lib/analytics';
 import { Topbar, AmountText, StatusChip, PageLoader, EmptyState } from '../components/ui';
 import { Plus, Upload, TrendingUp, TrendingDown, ArrowLeftRight, Search, SlidersHorizontal, Calendar, ChevronDown, Info, Paperclip } from 'lucide-react';
 import BillAttachment, { BillBadge } from '../components/BillAttachment';
@@ -463,7 +464,7 @@ export default function Transactions() {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => transactionsAPI.delete(id),
-    onSuccess:  () => invalidateFinance(qc),
+    onSuccess:  () => { track('transaction_deleted'); invalidateFinance(qc); },
   });
 
   // Bulk select state
@@ -491,7 +492,7 @@ export default function Transactions() {
 
   const patchCatMutation = useMutation({
     mutationFn: ({ txId, catId }) => transactionsAPI.update(txId, { category_id: catId || null }),
-    onSuccess:  () => invalidateFinance(qc),
+    onSuccess:  () => { track('transaction_category_changed'); invalidateFinance(qc); },
   });
 
   const { data: categories } = useQuery({
@@ -546,6 +547,7 @@ export default function Transactions() {
       a.download = `tracksy-transactions-${new Date().toISOString().split('T')[0]}.csv`;
       a.click();
       URL.revokeObjectURL(url);
+      track('transactions_exported');
     } catch(e) {
       alert('Export failed. Please try again.');
     }
@@ -1083,6 +1085,7 @@ function NewCategoryInline({ txType, onCreated, onCancel }) {
         emoji: emoji || '📌',
         color,
       });
+      track('category_created');
       onCreated(res.data.data);
     } catch (e) {
       setErr(e.response?.data?.message || 'Failed to create');
@@ -1269,12 +1272,14 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
           from_wallet_id: fromWalletId, to_wallet_id: toWalletId,
           status, transaction_date: date,
         });
+        track('transaction_added', { tx_type: 'transfer', tx_source: 'manual' });
       } else if (isEdit) {
         await transactionsAPI.update(tx.id, {
           type: txType, amount, description: note, payment_name: payName,
           wallet_id: walletId || null, category_id: catId || null,
           status, transaction_date: date,
         });
+        track('transaction_edited', { tx_type: txType });
       } else {
         // New transaction
         const mainPayName = fullPayName || (txType === 'income' ? 'Income' : 'Expense');
@@ -1283,6 +1288,7 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
           wallet_id: walletId || null, category_id: catId || null,
           status, transaction_date: date,
         });
+        track('transaction_added', { tx_type: txType, tx_source: 'manual' });
         const newTxId = newTx.data?.data?.id || newTx.data?.id;
 
         // Credit card interest transaction

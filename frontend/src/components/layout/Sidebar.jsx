@@ -6,6 +6,7 @@ import {
   Gear, Moon, Sun, SignOut, X,
 } from '@phosphor-icons/react';
 import useAuthStore from '../../store/authStore';
+import { track } from '../../lib/analytics';
 import useThemeStore from '../../store/themeStore';
 import { useT } from '../../i18n';
 import InstallPWA from '../InstallPWA';
@@ -60,7 +61,7 @@ export default function Sidebar({ isOpen, onClose }) {
   const navigate = useNavigate();
   const t = useT();
 
-  const handleLogout = () => { logout(); navigate('/login'); };
+  const handleLogout = () => { track('logout'); logout(); navigate('/login'); };
   const initials = user
     ? `${user.first_name?.[0] || ''}${user.last_name?.[0] || ''}`.toUpperCase()
     : 'U';

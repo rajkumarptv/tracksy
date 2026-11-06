@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine, ReferenceDot } from 'recharts';
 import { AlertTriangle, CheckCircle, Wallet, TrendingDown, CalendarDays, Info } from 'lucide-react';
 import { forecastAPI } from '../services/api';
+import { track } from '../lib/analytics';
 import { Topbar, PageLoader } from '../components/ui';
 import { useFmt } from '../i18n';
 
@@ -117,7 +118,7 @@ export default function Forecast() {
         {/* Range */}
         <div style={{ display:'flex', gap:8 }}>
           {RANGES.map(r => (
-            <button key={r} onClick={() => setDays(r)}
+            <button key={r} onClick={() => { setDays(r); track('forecast_range_changed', { forecast_days: r }); }}
               style={{ border:`1.5px solid ${days === r ? 'var(--accent)' : 'var(--border)'}`, background: days === r ? 'var(--accent-light)' : 'var(--surface)', color: days === r ? 'var(--accent)' : 'var(--text2)', borderRadius:10, padding:'7px 16px', fontSize:13, fontWeight:700, cursor:'pointer' }}>
               {r} days
             </button>

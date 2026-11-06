@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { importAPI, walletsAPI, categoriesAPI, receiptAPI, transactionsAPI } from '../services/api';
+import { track, bucket } from '../lib/analytics';
 import { Topbar } from '../components/ui';
 import { Upload, FileText, CheckCircle, AlertCircle, X, Check, GitMerge, ScanSearch, Camera, Wallet, Ban } from 'lucide-react';
 import { useT, useFmt } from '../i18n';
@@ -77,8 +78,10 @@ export default function Import() {
     setScanning(true); setScanErr('');
     try {
       const res = await receiptAPI.scan(file);
+      track('receipt_scanned', { success: true });
       setScanned(res.data.data);
     } catch (e) {
+      track('receipt_scanned', { success: false });
       setScanErr(e.response?.data?.message || 'Could not read the screenshot. Try a clearer image.');
     }
     setScanning(false);
@@ -114,6 +117,7 @@ export default function Import() {
         return;
       }
       setPwNeeded(false); setPwValue(''); setParseErr(null);
+      track('import_previewed');
       setPreview(data.data);
       setRows(data.data.transactions.map((t, i) => ({ ...t, _id: i, skip: false, status: 'new' })));
       setStep(2);
@@ -139,6 +143,7 @@ export default function Import() {
   const confirmMut = useMutation({
     mutationFn: () => importAPI.confirm(rows, walletId).then(r => r.data),
     onSuccess: (data) => {
+      track('import_completed', { count_bucket: bucket(rows.filter(r => !r.skip).length) });
       setResult(data.data);
       setStep(4);
       invalidateFinance(qc);
@@ -812,6 +817,7 @@ function ReceiptReviewModal({ data, wallets, categories, fmt, onClose, onSaved }
         status: 'completed',
         transaction_date: date,
       });
+      track('transaction_added', { tx_type: type, tx_source: 'scan' });
       onSaved();
     } catch (e) {
       setErr(e.response?.data?.message || 'Failed to save'); setSaving(false);

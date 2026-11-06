@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Edit2, Trash2, ToggleLeft, ToggleRight, RefreshCw, Calendar, CalendarDays, CalendarRange, Sun, Repeat, Wallet, Ban } from 'lucide-react';
 import { recurringAPI, walletsAPI, categoriesAPI } from '../services/api';
+import { track, bucket } from '../lib/analytics';
 import { Topbar } from '../components/ui';
 import ThemedSelect from '../components/ThemedSelect';
 import { CategoryGlyph } from '../components/icons';
@@ -197,7 +198,7 @@ export default function Recurring() {
 
   const createMut = useMutation({
     mutationFn: (data) => recurringAPI.create(data),
-    onSuccess: () => invalidateFinance(qc),
+    onSuccess: (_res, vars) => { track('recurring_created', { tx_type: vars?.type, frequency: vars?.frequency }); invalidateFinance(qc); },
   });
   const updateMut = useMutation({
     mutationFn: ({ id, data }) => recurringAPI.update(id, data),
@@ -205,7 +206,7 @@ export default function Recurring() {
   });
   const deleteMut = useMutation({
     mutationFn: (id) => recurringAPI.delete(id),
-    onSuccess: () => invalidateFinance(qc),
+    onSuccess: () => { track('recurring_deleted'); invalidateFinance(qc); },
   });
 
   const handleSave = (form) => {
@@ -227,6 +228,7 @@ export default function Recurring() {
     try {
       const res = await recurringAPI.process();
       const cnt = res.data.processed;
+      track('recurring_run', { count_bucket: bucket(cnt) });
       alert(`Processed ${cnt} recurring transaction${cnt !== 1 ? 's' : ''}`);
       invalidateFinance(qc);
       invalidateFinance(qc);

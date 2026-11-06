@@ -9,6 +9,7 @@ import {
   TrendingUp, CalendarClock, CalendarDays, CalendarRange, Ban, Target, MoreVertical,
 } from 'lucide-react';
 import { budgetsAPI, categoriesAPI, transactionsAPI, recurringAPI } from '../services/api';
+import { track } from '../lib/analytics';
 import { PageLoader } from '../components/ui';
 import { useFmt } from '../i18n';
 import useAuthStore from '../store/authStore';
@@ -442,7 +443,7 @@ function BudgetModal({ budget, initialType='expense', onClose, onSaved }) {
 
   const mutation = useMutation({
     mutationFn: (data) => budget ? budgetsAPI.update(budget.id,data) : budgetsAPI.create(data),
-    onSuccess: onSaved,
+    onSuccess: (...a) => { track(budget ? 'budget_updated' : 'budget_created', { budget_type: form.type }); onSaved?.(...a); },
     onError: (e) => setError(e.response?.data?.message || 'Error saving budget'),
   });
 

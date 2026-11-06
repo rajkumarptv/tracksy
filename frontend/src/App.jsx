@@ -1,11 +1,13 @@
-import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { lazy, Suspense, useEffect, useRef } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
 import { PageLoader } from './components/ui';
 import ErrorBoundary from './components/ErrorBoundary';
 import useAuthStore from './store/authStore';
+import useThemeStore from './store/themeStore';
 import queryClient from './lib/queryClient';
+import { pageView, setUserContext, clearUserContext } from './lib/analytics';
 
 // Auth pages load eagerly (tiny, needed first)
 import { Login, Register, OAuthCallback, ForgotPassword, ResetPassword } from './pages/Auth';
@@ -59,6 +61,29 @@ const persister = createSyncStoragePersister({
   key: 'tracksy-cache',
 });
 
+/* Analytics: one page_view per route change (public pages included) and the pseudonymous user context.
+   Only the id/currency/language/theme are passed on, never the whole user object. */
+function PageViewTracker() {
+  const { pathname, search } = useLocation();
+  const user = useAuthStore((s) => s.user);
+  const theme = useThemeStore((s) => s.theme);
+  const hadUser = useRef(false);
+
+  useEffect(() => { pageView(pathname, search); }, [pathname, search]);
+
+  useEffect(() => {
+    if (user?.id) {
+      hadUser.current = true;
+      setUserContext({ id: user.id, currency: user.currency, language: user.language, theme });
+    } else if (hadUser.current) {
+      hadUser.current = false;
+      clearUserContext();
+    }
+  }, [user?.id, user?.currency, user?.language, theme]);
+
+  return null;
+}
+
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuthStore();
   return isAuthenticated ? children : <Navigate to="/login" replace />;
@@ -76,6 +101,7 @@ export default function App() {
       persistOptions={{ persister, maxAge: 24 * 60 * 60_000, buster: 'v2' }}
     >
       <BrowserRouter>
+        <PageViewTracker />
         <ErrorBoundary>
         <Suspense fallback={<PageLoader />}>
           <Routes>

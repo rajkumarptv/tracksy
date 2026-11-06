@@ -5,6 +5,7 @@ import {
   Users, ChevronRight, X, Copy, Check, LogOut, UserPlus, Plus,
 } from 'lucide-react';
 import { familyAPI } from '../services/api';
+import { track } from '../lib/analytics';
 import { PageLoader } from '../components/ui';
 import { useFmt } from '../i18n';
 import useAuthStore from '../store/authStore';
@@ -209,7 +210,7 @@ export default function Family() {
 /* ── Bar shown to a shared-mode member (no code, just leave) ── */
 function SharedMemberBar({ familyName, qc, t }) {
   const leaveMut = useMutation({
-    mutationFn: () => familyAPI.leave(),
+    mutationFn: () => familyAPI.leave().then(r => { track('family_left'); return r; }),
     onSuccess: () => { qc.invalidateQueries({ queryKey:['family-status'] }); qc.invalidateQueries({ queryKey:['family-overview'] }); },
   });
   return (
@@ -230,7 +231,7 @@ function SharedMemberBar({ familyName, qc, t }) {
 function InviteCodeBar({ code, qc, t }) {
   const [copied, setCopied] = useState(false);
   const leaveMut = useMutation({
-    mutationFn: () => familyAPI.leave(),
+    mutationFn: () => familyAPI.leave().then(r => { track('family_left'); return r; }),
     onSuccess: () => { qc.invalidateQueries({ queryKey:['family-status'] }); qc.invalidateQueries({ queryKey:['family-overview'] }); },
   });
   const copy = () => { navigator.clipboard?.writeText(code); setCopied(true); setTimeout(()=>setCopied(false), 1500); };
@@ -266,12 +267,12 @@ function SetupFamily({ qc }) {
 
   const refresh = () => { qc.invalidateQueries({ queryKey:['family-status'] }); qc.invalidateQueries({ queryKey:['family-overview'] }); };
   const createMut = useMutation({
-    mutationFn: () => familyAPI.create(name, shareMode),
+    mutationFn: () => familyAPI.create(name, shareMode).then(r => { track('family_created'); return r; }),
     onSuccess: refresh,
     onError: e => setErr(e.response?.data?.message || 'Failed to create family'),
   });
   const joinMut = useMutation({
-    mutationFn: () => familyAPI.join(code),
+    mutationFn: () => familyAPI.join(code).then(r => { track('family_joined'); return r; }),
     onSuccess: refresh,
     onError: e => setErr(e.response?.data?.message || 'Failed to join family'),
   });
@@ -373,7 +374,7 @@ function SetupFamily({ qc }) {
 function MemberView({ status, qc }) {
   const { t } = usePalette();
   const leaveMut = useMutation({
-    mutationFn: () => familyAPI.leave(),
+    mutationFn: () => familyAPI.leave().then(r => { track('family_left'); return r; }),
     onSuccess: () => qc.invalidateQueries({ queryKey:['family-status'] }),
   });
   const head = status.members?.find(m => m.family_role === 'primary');
