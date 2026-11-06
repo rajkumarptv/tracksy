@@ -55,6 +55,10 @@ export const analyticsAPI = {
   overview: (params) => api.get('/analytics/overview', { params }),
 };
 
+export const insightsAPI = {
+  smart: (params) => api.get('/insights/smart', { params }),
+};
+
 export const forecastAPI = {
   cashflow: (params) => api.get('/forecast/cashflow', { params }),
 };
