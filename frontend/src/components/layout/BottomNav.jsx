@@ -17,9 +17,9 @@ const RIGHT_TABS = [
 ];
 
 const ACTION_OPTIONS = [
-  { key: 'income',   icon: ArrowUp,          label: 'Income',   color: 'var(--green)', bg: 'var(--green-soft)',   route: '/transactions?add=income'   },
-  { key: 'expense',  icon: ArrowDown,        label: 'Expense',  color: 'var(--red)', bg: 'var(--red-soft)',  route: '/transactions?add=expense'  },
-  { key: 'transfer', icon: ArrowsClockwise,  label: 'Transfer', color: 'var(--accent)', bg: 'var(--accent-light)',  route: '/transactions?add=transfer' },
+  { key: 'income',   icon: ArrowUp,          label: 'Income',   hint: 'Money you received', color: 'var(--green)', bg: 'var(--green-soft)',   route: '/transactions?add=income'   },
+  { key: 'expense',  icon: ArrowDown,        label: 'Expense',  hint: 'Money you spent', color: 'var(--red)', bg: 'var(--red-soft)',  route: '/transactions?add=expense'  },
+  { key: 'transfer', icon: ArrowsClockwise,  label: 'Transfer', hint: 'Move money between accounts', color: 'var(--accent)', bg: 'var(--accent-light)',  route: '/transactions?add=transfer' },
 ];
 
 function Tab({ path, Icon, label, color }) {
@@ -56,12 +56,14 @@ export default function BottomNav() {
   // blurred backdrop stays stuck over the new page until a manual refresh.
   useEffect(() => { setOpen(false); }, [location.pathname, location.search]);
 
-  // Close on back gesture / escape
+  // Close on back gesture / escape, and keep the page behind from scrolling while the sheet is up
   useEffect(() => {
     if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     const handler = (e) => { if (e.key === 'Escape') setOpen(false); };
     window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    return () => { window.removeEventListener('keydown', handler); document.body.style.overflow = prev; };
   }, [open]);
 
   const handleAction = (route) => {
@@ -81,25 +83,29 @@ export default function BottomNav() {
               onClick={() => setOpen(false)} />
 
             <motion.div className={styles.actionSheetOuter}
-              initial={{ y: 12, opacity: 0, scale: 0.94 }}
-              animate={{ y: 0, opacity: 1, scale: 1 }}
-              exit={{ y: 12, opacity: 0, scale: 0.94 }}
-              transition={{ type: 'spring', stiffness: 480, damping: 34 }}>
+              role="dialog" aria-label="Add transaction"
+              initial={{ y: 40, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 40, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 36 }}>
 
               <div className={styles.actionSheet}>
-                <div className={styles.sheetLabel}>Add Transaction</div>
-                <div className={styles.actionRow}>
-                  {ACTION_OPTIONS.map(({ key, icon: Icon, label, color, route }, i) => (
-                    <motion.button key={key} className={styles.actionItem}
+                <div className={styles.sheetLabel}>Add transaction</div>
+                <div className={styles.actionList}>
+                  {ACTION_OPTIONS.map(({ key, icon: Icon, label, hint, color, route }, i) => (
+                    <motion.button key={key} type="button" className={styles.actionItem}
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.04 }}
-                      whileTap={{ scale: 0.9 }}
+                      transition={{ delay: 0.03 + i * 0.04 }}
+                      whileTap={{ scale: 0.98 }}
                       onClick={() => handleAction(route)}>
-                      <div className={styles.actionIconWrap} style={{ background: `${color}18`, border: `1.5px solid ${color}30` }}>
-                        <Icon size={20} color={color} weight="bold" />
+                      <div className={styles.actionIconWrap} style={{ background: `color-mix(in srgb, ${color} 12%, transparent)`, border: `1.5px solid color-mix(in srgb, ${color} 25%, transparent)` }}>
+                        <Icon size={22} color={color} weight="bold" />
                       </div>
-                      <span className={styles.actionLabel} style={{ color }}>{label}</span>
+                      <span className={styles.actionText}>
+                        <span className={styles.actionLabel}>{label}</span>
+                        <span className={styles.actionHint}>{hint}</span>
+                      </span>
                     </motion.button>
                   ))}
                 </div>
