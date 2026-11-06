@@ -1,0 +1,12 @@
+.overlay { position:fixed; inset:0; z-index:2700; background:rgba(15,23,42,.5); display:flex; justify-content:center; align-items:flex-start; padding:12vh 16px 16px; }
+.panel { width:100%; max-width:560px; max-height:70vh; display:flex; flex-direction:column; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg); overflow:hidden; }
+.inputRow { display:flex; align-items:center; gap:10px; padding:0 16px; height:54px; border-bottom:1px solid var(--border); color:var(--text3); flex-shrink:0; }
+.inputRow input { flex:1; border:none; outline:none; background:transparent; color:var(--text); font:inherit; font-size:16px; min-width:0; }
+.kbd { font:inherit; font-size:11px; padding:2px 6px; border:1px solid var(--border); border-radius:5px; color:var(--text3); }
+.list { list-style:none; margin:0; padding:6px; overflow-y:auto; }
+.item { display:flex; align-items:center; gap:12px; width:100%; min-height:44px; padding:0 12px; border:none; border-radius:var(--radius-sm); background:transparent; color:var(--text); font:inherit; font-size:14px; cursor:pointer; text-align:left; }
+.active { background:var(--accent-light); color:var(--accent); }
+.label { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.kind { font-size:12px; color:var(--text3); }
+.empty { padding:24px; text-align:center; color:var(--text3); font-size:14px; }
+@media (max-width:768px) { .kbd { display:none; } .overlay { padding-top:8vh; } }

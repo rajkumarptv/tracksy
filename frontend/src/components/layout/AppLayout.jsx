@@ -1,9 +1,10 @@
 import { useEffect, useState, Suspense } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { List } from '@phosphor-icons/react';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { MagnifyingGlass } from '@phosphor-icons/react';
 import Sidebar from './Sidebar';
 import BottomNav from './BottomNav';
+import CommandPalette from './CommandPalette';
+import { pageTitle } from './nav';
 import { PageLoader } from '../ui';
 import useThemeStore from '../../store/themeStore';
 import useAuthStore from '../../store/authStore';
@@ -12,13 +13,19 @@ import styles from './AppLayout.module.css';
 
 export default function AppLayout() {
   const { initTheme } = useThemeStore();
-  const { updateUser } = useAuthStore();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { updateUser, user } = useAuthStore();
+  const navigate = useNavigate();
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const location = useLocation();
 
-  // Always close the mobile sidebar drawer (and its blurred overlay) on any
-  // route change — otherwise navigating via the bottom nav leaves it stuck.
-  useEffect(() => { setSidebarOpen(false); }, [location.pathname]);
+  // Cmd/Ctrl+K opens the command palette from anywhere
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setPaletteOpen(o => !o); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   useEffect(() => {
     initTheme();
@@ -41,36 +48,20 @@ export default function AppLayout() {
 
   return (
     <div className={styles.layout}>
-      {/* Mobile overlay */}
-      <AnimatePresence>
-        {sidebarOpen && (
-          <motion.div
-            className="sidebar-overlay visible"
-            onClick={() => setSidebarOpen(false)}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          />
-        )}
-      </AnimatePresence>
-
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <Sidebar isOpen={false} onClose={() => {}} />
 
       <main className={styles.main}>
-        {/* Mobile top bar */}
+        {/* Mobile top bar: current screen, search, profile */}
         <div className={styles.mobileBar}>
-          <motion.button
-            className={styles.hamburger}
-            onClick={() => setSidebarOpen(true)}
-            aria-label="Open menu"
-            whileTap={{ scale: 0.88 }}
-            transition={{ type: 'spring', stiffness: 400 }}
-          >
-            <List size={22} weight="bold" />
-          </motion.button>
-          <span className={styles.mobileLogo}>Tracksy</span>
-          <div style={{ width: 34 }} />
+          <h1 className={styles.mobileTitle}>{pageTitle(location.pathname)}</h1>
+          <div className={styles.mobileActions}>
+            <button type="button" className={styles.iconBtn} onClick={() => setPaletteOpen(true)} aria-label="Search">
+              <MagnifyingGlass size={20} />
+            </button>
+            <button type="button" className={styles.avatarBtn} onClick={() => navigate('/settings')} aria-label="Settings and profile">
+              {`${user?.first_name?.[0] || ''}${user?.last_name?.[0] || ''}`.toUpperCase() || 'U'}
+            </button>
+          </div>
         </div>
 
         <Suspense fallback={<PageLoader />}>
@@ -80,6 +71,7 @@ export default function AppLayout() {
 
       {/* Mobile bottom nav */}
       <BottomNav />
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </div>
   );
 }

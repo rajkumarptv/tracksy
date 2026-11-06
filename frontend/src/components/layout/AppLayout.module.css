@@ -18,7 +18,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 6px 8px 6px 16px;
   background: var(--sidebar-bg);
   border-bottom: 1px solid var(--border-light);
   position: sticky;
@@ -28,27 +28,11 @@
   -webkit-backdrop-filter: blur(20px);
 }
 
-.hamburger {
-  background: var(--surface2);
-  border: 1px solid var(--border-light);
-  color: var(--text2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  width: 36px; height: 36px;
-  transition: background .15s;
-}
-.hamburger:hover { background: var(--surface3); color: var(--text); }
-
-.mobileLogo {
-  font-size: 18px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  color: var(--text);
-}
+.mobileTitle { margin:0; font-size:18px; font-weight:600; letter-spacing:-0.01em; color:var(--text); }
+.mobileActions { display:flex; align-items:center; gap:8px; }
+.iconBtn { width:44px; height:44px; display:flex; align-items:center; justify-content:center; background:none; border:none; border-radius:var(--radius-sm); color:var(--text2); cursor:pointer; }
+.iconBtn:active { background:var(--surface2); }
+.avatarBtn { width:36px; height:36px; border-radius:50%; border:none; background:var(--accent-btn); color:#fff; font:inherit; font-size:12px; font-weight:600; cursor:pointer; }
 
 @media (max-width: 768px) {
   .main {

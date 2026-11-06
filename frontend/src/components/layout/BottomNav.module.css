@@ -24,6 +24,10 @@
   }
 
   .tabItem {
+    border: none;
+    background: none;
+    font: inherit;
+    cursor: pointer;
     flex: 1;
     display: flex;
     align-items: center;
