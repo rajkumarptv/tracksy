@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   track, trackThen, sanitize, sanitizeUserProps, normalizePath, pageView, resetPageViewDedupe,
   setUserContext, isEnabled, setOptOut, bucket, extraBucket, accountType, debtType,
+  trackApiError, resetApiErrorState,
 } from './analytics.js';
 import { EVENTS, PARAMS, USER_PROPS, FORBIDDEN_PARAM_NAMES } from './analyticsEvents.js';
 
@@ -14,7 +15,7 @@ Object.defineProperty(globalThis, 'localStorage', {
 });
 const setGPC = v => Object.defineProperty(globalThis.navigator, 'globalPrivacyControl', { configurable: true, value: v });
 
-beforeEach(() => { globalThis.dataLayer = []; store.clear(); setGPC(undefined); resetPageViewDedupe(); });
+beforeEach(() => { globalThis.dataLayer = []; store.clear(); setGPC(undefined); resetPageViewDedupe(); resetApiErrorState(); });
 
 test('known events pass through with valid params only', () => {
   track('transaction_added', { tx_type: 'expense', tx_source: 'manual' });
@@ -136,4 +137,28 @@ test('helpers: buckets and coarse account/debt types', () => {
   assert.equal(debtType('mastercard'), 'card');
   assert.equal(debtType('gold_loan'), 'loan');
   assert.equal(debtType('bank'), 'other');
+});
+
+test('api_error: only 5xx and network failures, area + status only, never 4xx or cancelled', () => {
+  trackApiError({ status: 400, url: '/transactions' });
+  trackApiError({ status: 401, url: '/auth/me' });
+  trackApiError({ status: 404, url: '/goals/123' });
+  trackApiError({ status: 500, url: '/transactions', cancelled: true });
+  assert.deepEqual(globalThis.dataLayer, []);
+
+  trackApiError({ status: 503, url: '/transactions/3f2b8c1e-1234-4abc-9def-0123456789ab?search=salary' });
+  trackApiError({ status: 0, url: '/forecast/cashflow' });          // network failure or timeout
+  assert.deepEqual(globalThis.dataLayer, [
+    { event: 'api_error', error_area: 'transactions', error_status: 503 },
+    { event: 'api_error', error_area: 'forecast', error_status: 0 },
+  ]);
+  assert.ok(!JSON.stringify(globalThis.dataLayer).includes('salary'));
+});
+
+test('api_error is rate-limited: once per area+status per minute, ten per session', () => {
+  trackApiError({ status: 500, url: '/goals' });
+  trackApiError({ status: 500, url: '/goals' });
+  assert.equal(globalThis.dataLayer.length, 1);
+  for (let i = 0; i < 20; i++) trackApiError({ status: 500, url: `/area${String.fromCharCode(97 + i)}` });
+  assert.equal(globalThis.dataLayer.length, 10);
 });

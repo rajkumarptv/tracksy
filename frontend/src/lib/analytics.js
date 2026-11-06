@@ -161,6 +161,28 @@ export function clearUserContext() {
   push({ event: 'user_context', user_id: undefined, user_currency: undefined, user_language: undefined });
 }
 
+/* ── Reliability: API failures ───────────────────────────────────────────── */
+const reportedErrors = new Map();
+let reportedCount = 0;
+export function resetApiErrorState() { reportedErrors.clear(); reportedCount = 0; }
+
+/**
+ * Report a failed API call: server errors (5xx) and network failures (status 0) only, never 4xx validation
+ * errors. Sends just the API area (first path segment) and the status. Rate-limited so an outage can't
+ * flood analytics: one per area+status per minute, ten per session.
+ */
+export function trackApiError({ status = 0, url = '', cancelled = false } = {}) {
+  if (cancelled) return;
+  if (status && status < 500) return;
+  const area = (String(url).split('?')[0].split('/').filter(Boolean)[0] || 'unknown').toLowerCase();
+  const key = `${area}:${status}`;
+  const now = Date.now();
+  if (now - (reportedErrors.get(key) || 0) < 60000 || reportedCount >= 10) return;
+  reportedErrors.set(key, now);
+  reportedCount += 1;
+  track('api_error', { error_area: area, error_status: status });
+}
+
 /* ── Small helpers shared by call sites ──────────────────────────────────── */
 export function bucket(n) {
   const v = Number(n) || 0;

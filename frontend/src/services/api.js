@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { track } from '../lib/analytics';
+import { trackApiError } from '../lib/analytics';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
@@ -14,25 +14,6 @@ api.interceptors.request.use((config) => {
   return config;
 }, (error) => Promise.reject(error));
 
-// Reliability metric: report server errors and network failures (never 4xx validation errors) with only
-// the API area (first path segment) and status. Rate-limited so an outage can't flood analytics.
-const reportedErrors = new Map();
-let reportedCount = 0;
-function reportApiError(error) {
-  try {
-    if (axios.isCancel(error)) return;
-    const status = error.response?.status || 0;      // 0 = network error or timeout
-    if (status && status < 500) return;
-    const area = (String(error.config?.url || '').split('?')[0].split('/').filter(Boolean)[0] || 'unknown').toLowerCase();
-    const key = `${area}:${status}`;
-    const now = Date.now();
-    if (now - (reportedErrors.get(key) || 0) < 60000 || reportedCount >= 10) return;
-    reportedErrors.set(key, now);
-    reportedCount += 1;
-    track('api_error', { error_area: area, error_status: status });
-  } catch { /* analytics must never break a request */ }
-}
-
 // Handle 401 globally
 api.interceptors.response.use(
   (res) => res,
@@ -43,7 +24,7 @@ api.interceptors.response.use(
       localStorage.removeItem('tracksy-cache');
       window.location.href = '/login';
     }
-    reportApiError(error);
+    try { trackApiError({ status: error.response?.status || 0, url: error.config?.url, cancelled: axios.isCancel(error) }); } catch { /* analytics must never break a request */ }
     return Promise.reject(error);
   }
 );
