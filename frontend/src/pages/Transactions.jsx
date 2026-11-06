@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
 import { transactionsAPI, categoriesAPI, walletsAPI } from '../services/api';
 import { track } from '../lib/analytics';
-import { Topbar, AmountText, StatusChip, PageLoader, EmptyState } from '../components/ui';
+import { Topbar, AmountText, StatusChip, PageLoader, EmptyState, Sheet, Button, Tabs, Field } from '../components/ui';
 import { Plus, Upload, TrendingUp, TrendingDown, ArrowLeftRight, Search, SlidersHorizontal, Calendar, ChevronDown, Info, Paperclip } from 'lucide-react';
 import BillAttachment, { BillBadge } from '../components/BillAttachment';
 import { useFmt, useT } from '../i18n';
@@ -408,6 +408,8 @@ export default function Transactions() {
   const [editTx, setEditTx]   = useState(null);
   const [addType, setAddType] = useState(null); // pre-selected type from FAB
   const [showSearch, setShowSearch] = useState(false);
+  const [showPeriod, setShowPeriod] = useState(false);   // phone: period picker sheet
+  const [selectMode, setSelectMode] = useState(false);   // phone: checkboxes only while selecting
   const [billModalTx, setBillModalTx] = useState(null); // { id, description }
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -607,7 +609,7 @@ export default function Transactions() {
         display:'flex', alignItems:'center', gap:10, padding:'9px 28px',
         background:'var(--surface)', borderBottom:'1px solid var(--border-light)',
         flexWrap:'wrap', rowGap:8,
-      }} className={styles.txDateBar}>
+      }} className={`${styles.txDateBar} ${styles.desktopOnly}`}>
         <Calendar size={14} color="var(--text3)" style={{ flexShrink:0 }}/>
 
         {/* Monthly / Weekly mode toggle */}
@@ -663,23 +665,35 @@ export default function Transactions() {
 
       {/* ── Mobile Header ── */}
       <div className={styles.mobileHeader}>
-        <div className={styles.mobileHeaderRow}>
-          <h1 className={styles.mobileTitle}>{t('tx_title')}</h1>
-          <button className={styles.mobileDownload} onClick={openAdd}>
-            <Plus size={20} color="#1D4ED8"/>
-          </button>
-        </div>
-
         {/* Search */}
-        <div className={styles.mobileSearch}>
+        <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:12 }}>
+        <div className={styles.mobileSearch} style={{ flex:1, marginBottom:0 }}>
           <Search size={16} color="var(--text3)" style={{ flexShrink:0 }}/>
           <input
             placeholder={t('tx_search')}
             value={filters.search}
             onChange={e => { setFilters(f => ({...f, search: e.target.value})); setPage(1); }}
             className={styles.mobileSearchInput}
+            aria-label="Search transactions"
           />
-          <SlidersHorizontal size={16} color="var(--text3)" style={{ flexShrink:0 }}/>
+        </div>
+        <Button variant="primary" iconOnly onClick={openAdd} aria-label="Add transaction" icon={<Plus size={20}/>} />
+        </div>
+
+        {/* Period + select */}
+        <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+          <button type="button" onClick={() => setShowPeriod(true)} aria-haspopup="dialog"
+            style={{ flex:1, minHeight:44, display:'flex', alignItems:'center', gap:8, padding:'0 12px', borderRadius:10, border:'1px solid var(--border)', background:'var(--surface)', color:'var(--text)', font:'inherit', fontSize:14, fontWeight:500, cursor:'pointer', textAlign:'left' }}>
+            <Calendar size={16} color="var(--text3)"/>
+            <span style={{ flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{periodLabel}</span>
+            <SlidersHorizontal size={16} color="var(--text3)"/>
+          </button>
+          {txList.length > 0 && (
+            <button type="button" onClick={() => { setSelectMode(m => !m); setSelectedIds(new Set()); }}
+              style={{ minHeight:44, padding:'0 14px', borderRadius:10, border:'1px solid var(--border)', background: selectMode ? 'var(--accent-light)' : 'var(--surface)', color: selectMode ? 'var(--accent)' : 'var(--text2)', font:'inherit', fontSize:14, fontWeight:600, cursor:'pointer' }}>
+              {selectMode ? 'Done' : 'Select'}
+            </button>
+          )}
         </div>
 
         {/* Filter chips */}
@@ -694,9 +708,13 @@ export default function Transactions() {
         </div>
       </div>
 
-      {/* ── Mobile spend summary (reference design) ── */}
+      {/* ── Mobile summary: one line, so the list starts above the fold ── */}
       <div className="show-mobile-only">
-        <TxSummaryCard txList={txList} fmt={fmt} isDark={isDark} periodLabel={periodLabel}/>
+        <div style={{ display:'flex', gap:16, padding:'10px 16px', borderBottom:'1px solid var(--border-light)', background:'var(--surface)', fontVariantNumeric:'tabular-nums' }}>
+          <span style={{ fontSize:13, color:'var(--text3)' }}>In <b style={{ color:'var(--green)', fontWeight:600 }}>+{fmt(totalIncome,{noDecimals:true})}</b></span>
+          <span style={{ fontSize:13, color:'var(--text3)' }}>Out <b style={{ color:'var(--red-text)', fontWeight:600 }}>−{fmt(totalExpense,{noDecimals:true})}</b></span>
+          <span style={{ fontSize:13, color:'var(--text3)', marginLeft:'auto' }}>{pagination.total ?? txList.length} {(pagination.total ?? txList.length) === 1 ? t('tx_count') : t('tx_count_pl')}</span>
+        </div>
       </div>
 
       <div className={styles.content}>
@@ -901,7 +919,7 @@ export default function Transactions() {
             {/* ── MOBILE: grouped list view ── */}
             <div className={styles.mobileList}>
               {/* Mobile bulk bar */}
-              {txList.length > 0 && (
+              {selectMode && txList.length > 0 && (
                 <div style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 16px', background:'var(--surface)', borderBottom:'1px solid var(--border-light)', position:'sticky', top:0, zIndex:5 }}>
                   <input type="checkbox"
                     checked={txList.every(tx => selectedIds.has(tx.id))}
@@ -962,13 +980,14 @@ export default function Transactions() {
                         <div key={tx.id} style={{ borderBottom: isLast ? 'none' : '1px solid var(--border-light)' }}>
                           {/* Main row */}
                           <div className={styles.txRow} style={{ borderBottom:'none', background: selectedIds.has(tx.id) ? 'rgba(29,78,216,.06)' : '' }}
-                            onClick={() => { if (isConfirming) { setDeleteConfirmId(null); return; } if (!isTransfer) openEdit(tx); }}>
+                            onClick={() => { if (selectMode) { toggleSelect(tx.id); return; } if (isConfirming) { setDeleteConfirmId(null); return; } if (!isTransfer) openEdit(tx); }}>
                             {/* Select checkbox */}
-                            <input type="checkbox" checked={selectedIds.has(tx.id)}
+                            {selectMode && <input type="checkbox" checked={selectedIds.has(tx.id)}
                               onChange={() => toggleSelect(tx.id)}
                               onClick={e => e.stopPropagation()}
-                              style={{ width:15, height:15, cursor:'pointer', accentColor:'#1D4ED8', flexShrink:0, marginRight:4 }}
-                            />
+                              aria-label={`Select ${tx.description || 'transaction'}`}
+                              style={{ width:20, height:20, cursor:'pointer', accentColor:'var(--accent)', flexShrink:0, marginRight:4 }}
+                            />}
                             {/* Icon — merchant logo for named tx, category icon otherwise */}
                             {isTransfer ? (
                               <div className={styles.txCircle} style={{ background:'rgba(59,130,246,.13)' }}>
@@ -984,22 +1003,15 @@ export default function Transactions() {
                             <div className={styles.txInfo}>
                               <div className={styles.txName}>{tx.description || tx.payment_name || '—'}</div>
                               <div className={styles.txMeta}>
-                                <span>{dayLabel}</span>
+                                {isTransfer ? (
+                                  <span style={{ color:'var(--blue-text)', fontWeight:600 }}>{isOut ? t('tx_sent') : t('tx_received')}</span>
+                                ) : tx.category_name ? (
+                                  <span>{tx.category_emoji} {tx.category_name}</span>
+                                ) : null}
                                 {tx.wallet_name && (
                                   <>
-                                    <span className={styles.txDot}>·</span>
-                                    <span>{tx.wallet_name}{tx.last_four ? ` *${tx.last_four}` : ''}</span>
-                                  </>
-                                )}
-                                {isTransfer ? (
-                                  <>
-                                    <span className={styles.txDot}>·</span>
-                                    <span style={{ color:'#3B82F6', fontWeight:600 }}>{isOut ? t('tx_sent') : t('tx_received')}</span>
-                                  </>
-                                ) : tx.category_name && (
-                                  <>
-                                    <span className={styles.txDot}>·</span>
-                                    <span style={{ color: catColor.color }}>{tx.category_emoji} {tx.category_name}</span>
+                                    {(isTransfer || tx.category_name) && <span className={styles.txDot}>·</span>}
+                                    <span>{tx.wallet_name}{tx.last_four ? ` ••${tx.last_four}` : ''}</span>
                                   </>
                                 )}
                               </div>
@@ -1009,20 +1021,6 @@ export default function Transactions() {
                             <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end', gap:4, flexShrink:0 }}>
                               <div className={styles.txAmount} style={{ color: amtColor }}>
                                 {amtPrefix}{fmt(parseFloat(tx.amount))}
-                              </div>
-                              <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-                                <button onClick={e => { e.stopPropagation(); setBillModalTx(tx); }}
-                                  style={{ background:'none', border:'none', padding:'2px 4px', cursor:'pointer', fontSize:13, opacity:0.55, lineHeight:1, borderRadius:6, transition:'opacity .15s', display:'flex', alignItems:'center', gap:2, color:'#1D4ED8' }}
-                                  onMouseEnter={e => e.currentTarget.style.opacity='1'}
-                                  onMouseLeave={e => e.currentTarget.style.opacity='0.55'}
-                                  title="Attach Bill">
-                                  <Paperclip size={13}/>
-                                </button>
-                                <button onClick={e => { e.stopPropagation(); setDeleteConfirmId(isConfirming ? null : tx.id); }}
-                                  style={{ background:'none', border:'none', padding:'2px 4px', cursor:'pointer', fontSize:13, opacity:0.45, lineHeight:1, borderRadius:6, transition:'opacity .15s' }}
-                                  onMouseEnter={e => e.currentTarget.style.opacity='1'}
-                                  onMouseLeave={e => e.currentTarget.style.opacity='0.45'}
-                                  title="Delete">🗑️</button>
                               </div>
                               <BillBadge txId={tx.id} onClick={() => setBillModalTx(tx)}/>
                             </div>
@@ -1059,6 +1057,28 @@ export default function Transactions() {
           </>
         )}
       </div>
+
+      <Sheet open={showPeriod} onClose={() => setShowPeriod(false)} title="Period"
+        footer={<Button variant="primary" block onClick={() => setShowPeriod(false)}>Show {periodLabel}</Button>}>
+        <Tabs label="Period type" value={dateMode} onChange={(k) => { setDateMode(k); setPage(1); }}
+          tabs={[{ key:'monthly', label:t('tx_monthly') }, { key:'weekly', label:t('tx_weekly') }]} />
+        <div style={{ height:16 }} />
+        {dateMode === 'monthly' ? (
+          <>
+            <Field label="Year">
+              <ThemedSelect value={selYear} onChange={v => { setSelYear(Number(v)); setPage(1); }} options={YEARS.map(y => ({ value:y, label:String(y) }))}/>
+            </Field>
+            <Field label="Month">
+              <ThemedSelect value={selMonth} onChange={v => { setSelMonth(Number(v)); setPage(1); }}
+                options={[{ value:0, label:t('tx_all_months') }, ...MONTHS_FULL.map((m, i) => ({ value:i+1, label:m }))]}/>
+            </Field>
+          </>
+        ) : (
+          <Field label="Week">
+            <input type="week" className="ds-input" value={selWeek} onChange={e => { setSelWeek(e.target.value); setPage(1); }} />
+          </Field>
+        )}
+      </Sheet>
 
       {billModalTx && (
         <BillAttachment
