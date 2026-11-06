@@ -259,7 +259,7 @@ function CustomSelect({ value, onChange, options = [], placeholder = 'Select…'
           display:'flex', flexDirection:'column', maxHeight:pos.maxH,
           background:'var(--surface)', border:'1.5px solid var(--border)',
           borderRadius:14, boxShadow:'0 16px 48px rgba(0,0,0,.18), 0 4px 12px rgba(0,0,0,.08)',
-          zIndex:2001, overflow:'hidden',
+          zIndex:2601, overflow:'hidden',
           animation:'dropFade .14s ease',
         }}>
           {options.length > 5 && (

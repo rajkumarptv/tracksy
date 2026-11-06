@@ -30,6 +30,14 @@ Tracksy is a money app, so the interface should feel calm, precise and trustwort
 - Elevation: a 1 px border does the work and shadows stay faint (`--shadow-xs`, `--shadow-sm`). No glows, no coloured shadows.
 
 ## Components
+**Build with the primitives in `src/components/ui/`** (`Button`, `Card`/`CardHeader`/`Stat`, `Field`/`Input`/`Select`, `Sheet`, `Table`, `Tabs`, `Badge`, `Skeleton`). Run `npm run dev` and open `/design` to see them. Don't add new local modals, dropdowns or hard-coded colours. `npm test` fails if a page gains hex colours (`src/lib/design-guard.test.mjs`; lower the numbers in `design-baseline.json` as pages are migrated).
+
+- **Sheet** is the only modal: a bottom sheet on phones, a centred dialog on desktop, with a pinned footer for the main action. Confirmations use it through `confirmAsync` (`lib/confirm.js`).
+- **Table** is dense on desktop and becomes stacked rows on phones (mark one column `primary`).
+- On phones inputs are 16 px and 44 px tall, and touch targets are at least 44 px.
+
+Legacy classes below still work and are being replaced page by page.
+
 - Buttons are 40 px tall (32 small, 44 large): `.btn-primary` for the one main action per screen, `.btn-ghost` for secondary, `.btn-danger` for destructive. Never put two primary buttons side by side.
 - Inputs are 40 px with a visible label above. Errors appear next to the field and in a top-level message, with an icon and text.
 - Use icons from the icon libraries (Phosphor in the shell, Lucide in pages) for interface chrome. Emoji is only for user-chosen content such as categories and goals.

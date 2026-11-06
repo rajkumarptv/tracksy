@@ -34,6 +34,7 @@ const lazyWithReload = (factory) => lazy(() =>
 );
 
 // Everything else is code-split → only downloaded when first visited
+const DesignPreview = import.meta.env.DEV ? lazy(() => import('./pages/DesignPreview')) : null;
 const AppLayout    = lazyWithReload(() => import('./components/layout/AppLayout'));
 const Dashboard    = lazyWithReload(() => import('./pages/Dashboard'));
 const Transactions = lazyWithReload(() => import('./pages/Transactions'));
@@ -144,6 +145,7 @@ export default function App() {
               <Route path="settings" element={<Settings />} />
             </Route>
 
+            {import.meta.env.DEV && <Route path="/design" element={<DesignPreview />} />}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>

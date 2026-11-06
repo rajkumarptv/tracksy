@@ -292,3 +292,13 @@ export function PageHeader({ title, subtitle, actions }) {
     </div>
   );
 }
+
+/* ── Design-system primitives (see DESIGN.md). New code should use these, not the legacy CSS classes. ── */
+export { default as Button } from './Button';
+export { Card, CardHeader, Stat } from './Card';
+export { Field, Input, Textarea, Select } from './Field';
+export { default as Sheet } from './Sheet';
+export { default as Table } from './Table';
+export { default as Tabs } from './Tabs';
+export { default as Badge } from './Badge';
+export { default as Skeleton, SkeletonLines } from './Skeleton';
