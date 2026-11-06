@@ -7,6 +7,7 @@ import {
 } from '@phosphor-icons/react';
 import useAuthStore from '../../store/authStore';
 import { track } from '../../lib/analytics';
+import { FEATURES } from '../../config/features';
 import useThemeStore from '../../store/themeStore';
 import { useT } from '../../i18n';
 import InstallPWA from '../InstallPWA';
@@ -20,7 +21,7 @@ const NAV_GROUPS = [
     { path: '/transactions', tKey: 'nav_transactions', Icon: ArrowsLeftRight },
     { path: '/wallet',       tKey: 'nav_accounts',     Icon: Wallet          },
     { path: '/recurring',    tKey: 'nav_recurring',    Icon: ArrowsClockwise },
-    { path: '/import',       tKey: 'nav_import',       Icon: UploadSimple    },
+    { path: '/import',       tKey: 'nav_import',       Icon: UploadSimple, soon: !FEATURES.import },
   ] },
   { label: 'Plan & analyze', items: [
     { path: '/budget',       tKey: 'nav_budget',       Icon: ChartPie        },
@@ -30,11 +31,11 @@ const NAV_GROUPS = [
     { path: '/insights',     label: 'Insights',        Icon: TrendUp         },
   ] },
   { label: 'Household', items: [
-    { path: '/family',       label: 'Family',          Icon: Users           },
+    { path: '/family',       label: 'Family',          Icon: Users, soon: !FEATURES.family },
   ] },
 ];
 
-function AnimatedNavItem({ path, tKey, label, Icon, t, onClose }) {
+function AnimatedNavItem({ path, tKey, label, Icon, soon, t, onClose }) {
   return (
     <NavLink
       key={path}
@@ -49,6 +50,7 @@ function AnimatedNavItem({ path, tKey, label, Icon, t, onClose }) {
             <Icon size={18} weight={isActive ? 'fill' : 'regular'} color={isActive ? 'var(--accent)' : 'var(--text3)'} />
           </span>
           <span className={styles.navLabel}>{label || t(tKey)}</span>
+          {soon && <span className={styles.soon}>Soon</span>}
         </>
       )}
     </NavLink>
