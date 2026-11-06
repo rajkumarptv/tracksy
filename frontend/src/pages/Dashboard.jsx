@@ -872,7 +872,9 @@ export default function Dashboard() {
                   </div>
                 )}
                 {recentList.map((tx,i)=>{
-                  const isInc = tx.type === 'income';
+                  const isTransfer = tx.type === 'transfer';
+                  // A transfer in is money arriving, a transfer out is money leaving
+                  const isInc = tx.type === 'income' || (isTransfer && tx.transfer_direction === 'in');
                   return (
                     <motion.div key={tx.id} className={styles.recentRow}
                       style={{ borderBottom: i<recentList.length-1 ? `1px solid ${c.divider}` : 'none' }}
@@ -886,7 +888,7 @@ export default function Dashboard() {
                         <div style={{ fontSize:14, fontWeight:700, color:c.text, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
                           {tx.description || tx.payment_name || '—'}
                         </div>
-                        <div style={{ fontSize:12, color:c.text2, marginTop:2 }}>{tx.category_name || (isInc?'Income':'Expense')}</div>
+                        <div style={{ fontSize:12, color:c.text2, marginTop:2 }}>{tx.category_name || (isTransfer ? 'Transfer' : isInc?'Income':'Expense')}</div>
                       </div>
                       <div style={{ textAlign:'right', flexShrink:0 }}>
                         <div className={styles.numXs} style={{ color: isInc?c.green:c.red }}>

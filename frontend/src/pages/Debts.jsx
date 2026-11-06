@@ -163,7 +163,7 @@ function DebtsOverview() {
           style={{ background:t.flowBg, border:t.flowBorder, boxShadow:t.glowShadow }}>
           <div className={styles.overviewLeft}>
             <div style={{ fontSize:14, color:t.text2, fontWeight:500 }}>Total Outstanding</div>
-            <div className={styles.bigAmount} style={{ color:t.red }}>−{fmt(totalDebt,{noDecimals:true})}</div>
+            <div className={styles.bigAmount} style={{ color:t.red }}>{totalDebt > 0 ? '−' : ''}{fmt(totalDebt,{noDecimals:true})}</div>
             <div style={{ fontSize:14, color:t.text2 }}>Across {debts.filter(d => d.type !== 'lending').length} account{debts.filter(d => d.type !== 'lending').length!==1?'s':''}</div>
             <div style={{ display:'flex', flexDirection:'column', gap:8, marginTop:12 }}>
               <div>
@@ -249,7 +249,7 @@ function DebtsOverview() {
                 <div style={{ display:'flex', alignItems:'center', gap:10 }}>
                   <span style={{ fontSize:13, color:t.text2 }}>{isLent ? 'To Receive' : 'Outstanding'}</span>
                   <span style={{ fontSize:15, fontWeight:800, color: isLent ? t.green : g.clr, fontFamily:'Inter, sans-serif' }}>
-                    {isLent ? '' : '−'}{fmt(g.total,{noDecimals:true})}
+                    {isLent || !g.total ? '' : '−'}{fmt(g.total,{noDecimals:true})}
                   </span>
                   <div className={styles.collapseBtn} style={{ background:t.surface }}>
                     {isCollapsed ? <ChevronDown size={15} color={t.text2}/> : <ChevronUp size={15} color={t.text2}/>}
@@ -292,7 +292,7 @@ function DebtsOverview() {
                           </div>
                           <div style={{ textAlign:'right', flexShrink:0 }}>
                             <div style={{ fontSize:15, fontWeight:800, color: isLent ? t.green : t.red, fontFamily:'Inter, sans-serif' }}>
-                              {isLent ? '' : '−'}{fmt(bal,{noDecimals:true})}
+                              {isLent || !bal ? '' : '−'}{fmt(bal,{noDecimals:true})}
                             </div>
                             <div style={{ fontSize:12, color:t.text3, marginTop:2 }}>{isLent ? 'to receive' : 'outstanding'}</div>
                           </div>

@@ -8,6 +8,7 @@ import ThemedSelect from '../components/ThemedSelect';
 import { CategoryGlyph } from '../components/icons';
 import { useFmt, useT } from '../i18n';
 import { invalidateFinance } from '../lib/cache';
+import { confirmAsync } from '../lib/confirm';
 
 const FREQ_COLORS = {
   daily:   { bg: 'rgba(59,130,246,.12)',  color: '#3B82F6' },
@@ -387,7 +388,7 @@ export default function Recurring() {
                 }} title="Edit">
                   <Edit2 size={15} />
                 </button>
-                <button onClick={() => { if (confirm('Delete this recurring rule?')) deleteMut.mutate(item.id); }} style={{
+                <button onClick={() => { confirmAsync('Delete this recurring rule?').then(ok => ok && deleteMut.mutate(item.id)); }} style={{
                   background: 'none', border: 'none', cursor: 'pointer', color: '#DC2626', padding: 4,
                 }} title="Delete">
                   <Trash2 size={15} />

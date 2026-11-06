@@ -16,6 +16,7 @@ import ThemedSelect from '../components/ThemedSelect';
 import styles from './Accounts.module.css';
 import { invalidateFinance } from '../lib/cache';
 import AmountToggle from '../components/AmountToggle';
+import { confirmAsync } from '../lib/confirm';
 
 /* ── Palette — derived from the shared dashboard theme ─────────────────── */
 const DS = {
@@ -467,7 +468,7 @@ function AccountModal({ mode, wallet, t, isDark, onClose, onSaved, onPay }) {
   };
 
   const del = async () => {
-    if (!window.confirm('Delete this account?')) return;
+    if (!(await confirmAsync('Delete this account?'))) return;
     setBusy(true);
     try { await walletsAPI.delete(wallet.id); onSaved(); }
     catch(e) { setErr('Failed to delete'); setBusy(false); }

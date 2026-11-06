@@ -45,8 +45,11 @@ export default function ThemedSelect({
     const r = el.getBoundingClientRect();
     const belowSpace = window.innerHeight - r.bottom;
     const openUp = belowSpace < 260 && r.top > belowSpace;
+    // Narrow triggers (two dropdowns side by side) get a wider panel so labels aren't cut off, kept on screen
+    const width = Math.min(Math.max(r.width, 220), window.innerWidth - 24);
+    const left = Math.max(12, Math.min(r.left, window.innerWidth - width - 12));
     setCoords({
-      left: r.left, width: r.width,
+      left, width,
       top: openUp ? undefined : r.bottom + 6,
       bottom: openUp ? window.innerHeight - r.top + 6 : undefined,
       maxH: Math.min(320, (openUp ? r.top : belowSpace) - 16),
@@ -61,12 +64,14 @@ export default function ThemedSelect({
     window.addEventListener('resize', onScroll);
     window.addEventListener('scroll', onScroll, true);
     window.addEventListener('keydown', onKey);
-    const tm = setTimeout(() => searchRef.current?.focus(), 60);
+    // On touch screens focusing the search box raises the keyboard over the list, so only do it with a pointer
+    const touch = window.matchMedia?.('(pointer: coarse)').matches;
+    const tm = touch ? null : setTimeout(() => searchRef.current?.focus(), 60);
     return () => {
       window.removeEventListener('resize', onScroll);
       window.removeEventListener('scroll', onScroll, true);
       window.removeEventListener('keydown', onKey);
-      clearTimeout(tm);
+      if (tm) clearTimeout(tm);
     };
   }, [open]);
 
@@ -79,7 +84,7 @@ export default function ThemedSelect({
         onClick={() => { onChange(o.value); setOpen(false); setQ(''); }}
         style={{
           display:'flex', alignItems:'center', gap:11, width:'100%', textAlign:'left',
-          padding:'10px 12px', borderRadius:12, border:'none', cursor:'pointer',
+          padding:'12px 12px', minHeight:44, borderRadius:12, border:'none', cursor:'pointer',
           background: sel ? (isDark ? 'rgba(29,78,216,.16)' : '#EFF6FF') : 'transparent',
           transition:'background .12s', fontFamily:'inherit',
         }}
@@ -152,7 +157,7 @@ export default function ThemedSelect({
                     <div style={{ display:'flex', alignItems:'center', gap:8, background:t.surface, borderRadius:10, padding:'0 12px', height:40 }}>
                       <Search size={15} color={t.text3}/>
                       <input ref={searchRef} value={q} onChange={e => setQ(e.target.value)} placeholder="Search…"
-                        style={{ flex:1, border:'none', outline:'none', background:'transparent', color:t.text, fontSize:14, fontFamily:'inherit' }}/>
+                        style={{ flex:1, border:'none', outline:'none', background:'transparent', color:t.text, fontSize:16, fontFamily:'inherit' }}/>
                     </div>
                   </div>
                 )}

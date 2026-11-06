@@ -373,7 +373,7 @@ input, select, textarea { font-family: 'Inter', sans-serif; }
   padding: 9px 12px;
   border: 1px solid var(--input-border);
   border-radius: var(--radius-sm);
-  font-size: 14px;
+  font-size: 14px;   /* 16px on phones, see below: iOS zooms the page when a smaller field is focused */
   background: var(--input-bg);
   color: var(--text);
   transition: var(--transition);
@@ -590,6 +590,12 @@ input, select, textarea { font-family: 'Inter', sans-serif; }
   [style*="gridTemplateColumns: 1fr 1fr"] {
     grid-template-columns: 1fr !important;
   }
+
+  /* React renders inline styles in kebab-case, so the rules above never matched. Keep two columns but let
+     them shrink: plain 1fr columns refuse to go below their content and push the page sideways. */
+  [style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+  }
 }
 
 /* ─── Mobile page header (shown only on mobile) ──── */
@@ -726,4 +732,8 @@ input, select, textarea { font-family: 'Inter', sans-serif; }
 
   /* Page-level outer wrapper: hide desktop topbar wrapper */
   .mob-hide { display: none !important; }
+}
+
+@media (max-width: 768px) {
+  .form-input, input, select, textarea { font-size: 16px; }
 }

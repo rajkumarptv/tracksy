@@ -5,7 +5,7 @@ import {
   BarChart, Bar, XAxis, YAxis, ResponsiveContainer, CartesianGrid, Tooltip,
 } from 'recharts';
 import {
-  Plus, Calendar, ChevronRight, ChevronDown, Lightbulb,
+  Plus, Calendar, ChevronRight, Lightbulb,
   TrendingUp, CalendarClock, CalendarDays, CalendarRange, Ban, Target, MoreVertical,
 } from 'lucide-react';
 import { budgetsAPI, categoriesAPI, transactionsAPI, recurringAPI } from '../services/api';
@@ -221,9 +221,9 @@ export default function Budget() {
         <motion.div className={styles.overview} variants={cardVar}
           style={{ background:t.overviewBg, border:t.overviewBorder, boxShadow:t.glowShadow }}>
           <div className={styles.overviewHead}>
-            <button className={styles.monthPill} style={{ color:t.text }}>
-              This Month <ChevronDown size={15} color={t.text3}/>
-            </button>
+            <span className={styles.monthPill} style={{ color:t.text, cursor:'default' }}>
+              This Month
+            </span>
             <ChevronRight size={17} color={t.text3}/>
           </div>
 
@@ -270,9 +270,9 @@ export default function Budget() {
           <div className={styles.cardHead}>
             <span className={styles.cardTitle} style={{ color:t.text }}>Budget vs Actual</span>
             <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-              <button className={styles.monthChip} style={{ background:t.surface, border:`1px solid ${t.border}`, color:t.text2 }}>
-                This Month <ChevronDown size={13}/>
-              </button>
+              <span className={styles.monthChip} style={{ background:t.surface, border:`1px solid ${t.border}`, color:t.text2, cursor:'default' }}>
+                This Month
+              </span>
               <MoreVertical size={16} color={t.text3}/>
             </div>
           </div>

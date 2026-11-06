@@ -289,12 +289,12 @@ export default function SmartInsights({ embedded = false }) {
       <div style={{ flex:1, overflowY:'auto', padding:'20px 24px', display:'flex', flexDirection:'column', gap:20 }}>
 
         {/* Tab bar */}
-        <div style={{ display:'flex', gap:8, background:'var(--surface2)', borderRadius:16, padding:4 }}>
+        <div style={{ display:'flex', gap:8, background:'var(--surface2)', borderRadius:16, padding:4, overflowX:'auto', scrollbarWidth:'none' }}>
           {TABS.map(({ key, label, icon: Icon }) => (
             <button key={key} onClick={() => { setActiveTab(key); track('insights_tab_viewed', { ui_tab: key }); }}
               style={{
-                flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:6,
-                padding:'9px 6px', borderRadius:12, border:'none', cursor:'pointer',
+                flex:'1 0 auto', whiteSpace:'nowrap', display:'flex', alignItems:'center', justifyContent:'center', gap:6,
+                padding:'9px 12px', minHeight:40, borderRadius:12, border:'none', cursor:'pointer',
                 fontWeight: activeTab===key ? 700 : 500,
                 fontSize: 12.5,
                 background: activeTab===key ? 'var(--surface)' : 'transparent',
