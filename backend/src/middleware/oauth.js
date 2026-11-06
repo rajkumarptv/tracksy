@@ -1,5 +1,4 @@
 const passport     = require('passport');
-const GoogleStrategy   = require('passport-google-oauth20').Strategy;
 const FacebookStrategy = require('passport-facebook').Strategy;
 const jwt  = require('jsonwebtoken');
 const { query } = require('../db');
@@ -42,27 +41,6 @@ async function findOrCreate({ provider, id, email, firstName, lastName, avatar }
   await query('INSERT INTO notification_preferences (user_id) VALUES ($1)', [newUser.rows[0].id]);
 
   return newUser.rows[0];
-}
-
-// ── Google Strategy ───────────────────────────────────────────────────────────
-if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-  passport.use(new GoogleStrategy({
-    clientID:     process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL:  `${API_URL}/api/auth/google/callback`,
-  }, async (accessToken, refreshToken, profile, done) => {
-    try {
-      const user = await findOrCreate({
-        provider:  'google',
-        id:        profile.id,
-        email:     profile.emails?.[0]?.value,
-        firstName: profile.name?.givenName  || profile.displayName?.split(' ')[0] || '',
-        lastName:  profile.name?.familyName || profile.displayName?.split(' ')[1] || '',
-        avatar:    profile.photos?.[0]?.value,
-      });
-      done(null, user);
-    } catch (err) { done(err); }
-  }));
 }
 
 // ── Facebook Strategy ─────────────────────────────────────────────────────────
