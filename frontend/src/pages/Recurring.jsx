@@ -33,8 +33,16 @@ function RecurringModal({ item, wallets, categories, onClose, onSave }) {
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
   const handleSave = async () => {
-    if (!form.payment_name || !form.amount || !form.frequency || !form.start_date) {
+    if (!form.payment_name.trim() || !form.amount || !form.frequency || !form.start_date) {
       setError('Please fill in all required fields');
+      return;
+    }
+    if (!(parseFloat(form.amount) > 0)) {
+      setError('Please enter an amount greater than 0');
+      return;
+    }
+    if (form.end_date && form.end_date < form.start_date) {
+      setError('End date must be on or after the start date');
       return;
     }
     setSaving(true);
@@ -241,6 +249,23 @@ export default function Recurring() {
 
   return (
     <div style={{ padding: '0 0 32px' }}>
+      {/* Mobile: the desktop Topbar is hidden, so surface the actions here */}
+      <div className="mob-header">
+        <div>
+          <div className="mob-header-title">Recurring</div>
+          <div className="mob-header-sub">Payments & income on repeat</div>
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={handleProcess} disabled={processing} aria-label="Run now"
+            className="btn btn-ghost btn-sm" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <RefreshCw size={14} style={{ animation: processing ? 'spin 1s linear infinite' : 'none' }} />
+          </button>
+          <button onClick={openAdd} className="btn btn-primary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Plus size={14} /> Add
+          </button>
+        </div>
+      </div>
+
       <Topbar title="Recurring" subtitle="Manage your recurring payments & income">
         <div style={{ display: 'flex', gap: 8 }}>
           <button onClick={handleProcess} disabled={processing}
@@ -343,7 +368,7 @@ export default function Recurring() {
                 <div style={{ fontSize: 15, fontWeight: 800, color: typ.color, fontFamily: 'Inter, sans-serif' }}>
                   {item.type === 'expense' ? '−' : '+'}{fmt(item.amount)}
                 </div>
-                <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 2 }}>per {item.frequency}</div>
+                <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 2 }}>{{ daily: 'every day', weekly: 'every week', monthly: 'every month', yearly: 'every year' }[item.frequency] || item.frequency}</div>
               </div>
 
               {/* Actions */}

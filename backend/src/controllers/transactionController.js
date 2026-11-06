@@ -87,7 +87,7 @@ const create = async (req, res) => {
             from_wallet_id, to_wallet_id } = req.body;
 
     if (!['income', 'expense', 'transfer'].includes(type) || parseAmount(amount) === null) {
-      return res.status(400).json({ success: false, message: 'A valid type and a positive amount are required' });
+      return res.status(400).json({ success: false, message: 'A valid type and an amount between ₹0.01 and ₹99,99,99,999 are required' });
     }
 
     // ── TRANSFER ──────────────────────────────────────────────────────────────
@@ -186,7 +186,7 @@ const update = async (req, res) => {
     const userId = req.user.userId;
     const { wallet_id, category_id, type, amount, description, payment_name, status, transaction_date } = req.body;
     if (parseAmount(amount) === null) {
-      return res.status(400).json({ success: false, message: 'A valid positive amount is required' });
+      return res.status(400).json({ success: false, message: 'Amount must be between ₹0.01 and ₹99,99,99,999' });
     }
 
     // Don't allow editing transfer type via regular update

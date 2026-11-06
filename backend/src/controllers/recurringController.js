@@ -1,5 +1,6 @@
 const { query } = require('../db');
 const { encrypt, decryptRow } = require('../utils/crypto');
+const { parseAmount } = require('../utils/validate');
 
 const decrypt = row => decryptRow(row, ['payment_name', 'description']);
 
@@ -14,6 +15,17 @@ function calcNextRun(from, frequency) {
   }
   return d.toISOString().split('T')[0];
 }
+
+const FREQUENCIES = ['daily', 'weekly', 'monthly', 'yearly'];
+const validateRecurring = ({ type, amount, payment_name, frequency, start_date, end_date }) => {
+  if (!['income', 'expense'].includes(type)) return 'Type must be income or expense';
+  if (!payment_name || !String(payment_name).trim()) return 'Please enter a name';
+  if (parseAmount(amount) === null) return 'Please enter a valid amount greater than 0';
+  if (!FREQUENCIES.includes(frequency)) return 'Invalid frequency';
+  if (!start_date) return 'Please choose a start date';
+  if (end_date && end_date < start_date) return 'End date must be on or after the start date';
+  return null;
+};
 
 // GET /recurring
 const getAll = async (req, res) => {
@@ -37,9 +49,8 @@ const getAll = async (req, res) => {
 const create = async (req, res) => {
   try {
     const { wallet_id, category_id, type, amount, payment_name, description, frequency, start_date, end_date } = req.body;
-    if (!type || !amount || !payment_name || !frequency || !start_date) {
-      return res.status(400).json({ success: false, message: 'type, amount, payment_name, frequency, start_date required' });
-    }
+    const invalid = validateRecurring(req.body);
+    if (invalid) return res.status(400).json({ success: false, message: invalid });
     const result = await query(`
       INSERT INTO recurring_transactions
         (user_id, wallet_id, category_id, type, amount, payment_name, description, frequency, start_date, end_date, next_run)
@@ -60,6 +71,8 @@ const create = async (req, res) => {
 const update = async (req, res) => {
   try {
     const { wallet_id, category_id, type, amount, payment_name, description, frequency, start_date, end_date, is_active, next_run } = req.body;
+    const invalid = validateRecurring(req.body);
+    if (invalid) return res.status(400).json({ success: false, message: invalid });
     const result = await query(`
       UPDATE recurring_transactions
       SET wallet_id=$1, category_id=$2, type=$3, amount=$4, payment_name=$5,

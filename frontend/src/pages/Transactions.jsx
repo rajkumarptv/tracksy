@@ -1253,6 +1253,9 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
     if (isTransfer) {
       if (!fromWalletId || !toWalletId) { setError('Please select both source and destination accounts'); return; }
       if (fromWalletId === toWalletId)  { setError('Source and destination must be different'); return; }
+    } else if (!walletId && (wallets||[]).length > 0 && (!isEdit || tx?.wallet_id)) {
+      setError('Please select the account this was paid from / received in');
+      return;
     }
 
     setSaving(true);
