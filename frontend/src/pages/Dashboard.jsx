@@ -9,7 +9,7 @@ import {
 import {
   Landmark, ChevronRight, ChevronDown, Bell, Search, Eye,
   ArrowDown, ArrowUp, Activity, ArrowLeftRight, Wallet,
-  ListChecks, Percent, Sparkles, PiggyBank, CalendarDays, Check,
+  ListChecks, Percent, Sparkles, PiggyBank, CalendarDays, Check, TrendingUp, AlertTriangle,
 } from 'lucide-react';
 import { dashboardAPI, walletsAPI, goalsAPI, recurringAPI, forecastAPI } from '../services/api';
 import useAuthStore from '../store/authStore';
@@ -66,7 +66,7 @@ function CountUp({ value, fmt }) {
 function BalTip({ active, payload, label, fmt, c }) {
   if (!active || !payload?.length) return null;
   return (
-    <div style={{ background: c.cardBg, border:`1px solid ${c.grid}`, borderRadius:12, padding:'8px 12px', boxShadow:'0 8px 24px rgba(0,0,0,.15)' }}>
+    <div style={{ background: c.cardBg, border:`1px solid ${c.grid}`, borderRadius:12, padding:'8px 12px', boxShadow:'0 8px 24px rgba(15,23,42,.14)' }}>
       <div style={{ fontSize:11, color:c.text3, marginBottom:2 }}>{label}</div>
       <div style={{ fontSize:13, fontWeight:700, color:c.green }}>{fmt(payload[0].value||0,{noDecimals:true})}</div>
     </div>
@@ -110,8 +110,8 @@ function PeriodPill({ period, setPeriod, c, isDark }) {
   return (
     <div style={{ position:'relative' }}>
       <button className={styles.periodPill} onClick={()=>setOpen(o=>!o)} style={{
-        background: isDark ? 'rgba(255,255,255,0.06)' : '#FFFFFF',
-        border: `1.5px solid ${open ? c.purple : (isDark ? 'rgba(255,255,255,0.1)' : '#E4E6F0')}`,
+        background: c.cardBg,
+        border: `1.5px solid ${open ? c.purple : c.border}`,
         color: c.text2,
       }}>
         {PERIOD_LABEL[period]} <ChevronDown size={13} style={{ transform: open?'rotate(180deg)':'none', transition:'transform .15s' }}/>
@@ -125,7 +125,7 @@ function PeriodPill({ period, setPeriod, c, isDark }) {
               transition={{ duration:.14 }}
               style={{ position:'absolute', top:'calc(100% + 6px)', right:0, zIndex:91, minWidth:140,
                 background:c.cardBg, border:`1px solid ${c.border||'rgba(255,255,255,.1)'}`, borderRadius:12,
-                boxShadow:'0 16px 44px rgba(0,0,0,.3)', overflow:'hidden', padding:5 }}>
+                boxShadow:'0 12px 32px rgba(15,23,42,.18)', overflow:'hidden', padding:5 }}>
               {PERIOD_KEYS.map((p, i) => {
                 const sel = p === period;
                 return (
@@ -521,7 +521,7 @@ export default function Dashboard() {
 
   /* ═════════════════ RENDER ═════════════════ */
   return (
-    <div className={styles.page} style={{ background: isDark ? '#020617' : '#FEFEFE' }}>
+    <div className={styles.page} style={{ background: 'var(--bg)' }}>
       <motion.div className={styles.inner} variants={containerVar} initial="hidden" animate="show">
 
         {/* ── Header ─────────────────────────────────────────────── */}
@@ -533,7 +533,7 @@ export default function Dashboard() {
                   ? <img src={user.avatar_url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', borderRadius:'50%' }}/>
                   : <span style={{ fontSize:24 }}>{(firstName[0]||'U').toUpperCase()}</span>}
               </div>
-              <span className={styles.onlineDot} style={{ background:c.green, borderColor: isDark?'#020617':'#FEFEFE' }}/>
+              <span className={styles.onlineDot} style={{ background:c.green, borderColor:'var(--bg)' }}/>
             </div>
             <div className={styles.greetText}>
               <div className={styles.greetTitle} style={{ color:c.text }}>{greeting}, {firstName} 👋</div>
@@ -541,7 +541,7 @@ export default function Dashboard() {
             </div>
           </div>
           <div className={styles.headerRight}>
-            <div className={styles.searchBox} style={{ background: isDark?'rgba(255,255,255,0.07)':'#FFFFFF', border:`1px solid ${isDark?'rgba(255,255,255,0.08)':'#E4E6F0'}` }}>
+            <div className={styles.searchBox} style={{ background: c.cardBg, border:`1px solid ${c.border}` }}>
               <Search size={16} color={c.text3}/>
               <input placeholder="Search transactions…" style={{ color:c.text }}
                 value={searchTerm}
@@ -549,7 +549,7 @@ export default function Dashboard() {
                 onKeyDown={e=>{ if (e.key === 'Enter') runSearch(); }}/>
             </div>
             <button className={`${styles.iconBtn} ${styles.mobileSearchBtn}`}
-              style={{ background: isDark?'rgba(255,255,255,0.07)':'#FFFFFF', border:`1px solid ${isDark?'rgba(255,255,255,0.08)':'#E4E6F0'}` }}
+              style={{ background: c.cardBg, border:`1px solid ${c.border}` }}
               onClick={runSearch} aria-label="Search">
               <Search size={18} color={c.text2}/>
             </button>
@@ -557,7 +557,7 @@ export default function Dashboard() {
             {/* Notifications — real, data-derived */}
             <div style={{ position:'relative' }}>
               <button className={styles.iconBtn} onClick={()=>setNotifOpen(o=>{ const next=!o; if(next) markNotifSeen(); return next; })} aria-label="Notifications"
-                style={{ background: isDark?'rgba(255,255,255,0.07)':'#FFFFFF', border:`1px solid ${isDark?'rgba(255,255,255,0.08)':'#E4E6F0'}` }}>
+                style={{ background: c.cardBg, border:`1px solid ${c.border}` }}>
                 <Bell size={18} color={c.text2}/>
                 {hasUnseen && <span className={styles.bellBadge}>{notifications.length}</span>}
               </button>
@@ -569,9 +569,9 @@ export default function Dashboard() {
                       initial={{ opacity:0, y:-8, scale:.98 }} animate={{ opacity:1, y:0, scale:1 }} exit={{ opacity:0, y:-8, scale:.98 }}
                       transition={{ duration:.16 }}
                       style={{ position:'absolute', top:'calc(100% + 10px)', right:0, zIndex:81, width:'min(320px, calc(100vw - 32px))',
-                        background:c.cardBg, border:`1px solid ${c.border||'rgba(255,255,255,.1)'}`, borderRadius:16,
-                        boxShadow:'0 20px 60px rgba(0,0,0,.35)', overflow:'hidden' }}>
-                      <div style={{ padding:'14px 16px', borderBottom:`1px solid ${c.divider||'rgba(255,255,255,.06)'}`, fontSize:14, fontWeight:800, color:c.text }}>
+                        background:c.cardBg, border:`1px solid ${c.border||'rgba(255,255,255,.1)'}`, borderRadius:12,
+                        boxShadow:'0 12px 32px rgba(15,23,42,.18)', overflow:'hidden' }}>
+                      <div style={{ padding:'14px 16px', borderBottom:`1px solid ${c.divider||'rgba(255,255,255,.06)'}`, fontSize:14, fontWeight:600, color:c.text }}>
                         Notifications
                       </div>
                       {notifications.length === 0 ? (
@@ -594,23 +594,36 @@ export default function Dashboard() {
           </div>
         </motion.div>
 
-        {/* ── Cash-flow warning ───────────────────────────────────── */}
-        {forecast?.summary?.shortfallDate && forecast.summary.daysUntilShortfall <= 30 && (
-          <motion.div variants={cardVar}
-            onClick={() => navigate('/forecast')}
-            style={{ cursor:'pointer', display:'flex', alignItems:'center', gap:12, padding:'14px 18px', borderRadius:16, marginBottom:16,
-              background: isDark ? 'rgba(220,38,38,.14)' : 'rgba(220,38,38,.08)', border:'1px solid rgba(220,38,38,.3)' }}>
-            <span style={{ fontSize:22 }}>🚨</span>
-            <div style={{ flex:1, minWidth:0 }}>
-              <div style={{ fontSize:14, fontWeight:800, color:c.text }}>
-                Balance may go below zero on {new Date(forecast.summary.shortfallDate+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'})}
+        {/* ── Cash-flow outlook: warning when a shortfall is coming, calm status otherwise ── */}
+        {forecast?.summary && (() => {
+          const f = forecast.summary;
+          const warn = f.shortfallDate && f.daysUntilShortfall <= 30;
+          const d = (x) => new Date(x+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+          const signed = (n) => `${n < 0 ? '−' : ''}${fmt(Math.abs(n),{noDecimals:true})}`;
+          return (
+            <motion.div variants={cardVar} onClick={() => navigate('/forecast')} role="link" tabIndex={0}
+              onKeyDown={e => { if (e.key === 'Enter') navigate('/forecast'); }}
+              style={{ cursor:'pointer', display:'flex', alignItems:'center', gap:12, padding:'12px 16px', borderRadius:12, marginBottom:16,
+                background: warn ? 'var(--red-light)' : c.cardBg,
+                border: `1px solid ${warn ? 'var(--red)' : c.border.replace('1px solid ','')}` }}>
+              <span style={{ display:'inline-flex', width:32, height:32, borderRadius:8, alignItems:'center', justifyContent:'center', flexShrink:0,
+                background: warn ? 'var(--red-soft)' : 'var(--accent-light)', color: warn ? 'var(--red-text)' : 'var(--accent)' }}>
+                {warn ? <AlertTriangle size={18}/> : <TrendingUp size={18}/>}
+              </span>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontSize:14, fontWeight:600, color: warn ? 'var(--red-text)' : c.text }}>
+                  {warn ? `Balance may go below zero on ${d(f.shortfallDate)}` : 'Cash-flow outlook: no shortfall expected'}
+                </div>
+                <div style={{ fontSize:13, color:c.text2, marginTop:2 }}>
+                  {warn
+                    ? `You could be short by ${fmt(f.shortfallAmount,{noDecimals:true})}. See what is driving it.`
+                    : `Lowest balance in the next ${forecast.days} days: ${signed(f.lowestBalance)} on ${d(f.lowestDate)}.`}
+                </div>
               </div>
-              <div style={{ fontSize:12.5, color:c.text3, marginTop:2 }}>
-                You could be short by {fmt(forecast.summary.shortfallAmount,{noDecimals:true})} · tap to see the forecast
-              </div>
-            </div>
-          </motion.div>
-        )}
+              <ChevronRight size={18} color={c.text3} style={{ flexShrink:0 }}/>
+            </motion.div>
+          );
+        })()}
 
         {/* ── Grid (areas keep both columns row-aligned) ─────────── */}
         <div className={styles.grid}>
@@ -646,7 +659,7 @@ export default function Dashboard() {
                           border:`1px solid ${on ? c.purple : c.border}`,
                           background: on ? (isDark?'rgba(96,165,250,.16)':'#EFF6FF') : 'transparent',
                           opacity: on ? 1 : 0.6, transition:'all .15s' }}>
-                        <span style={{ width:24, height:24, borderRadius:'50%', background: on ? c.purple : c.text3, color: '#fff', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:800, flexShrink:0 }}>{initial}</span>
+                        <span style={{ width:24, height:24, borderRadius:'50%', background: on ? c.purple : c.text3, color: '#fff', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:600, flexShrink:0 }}>{initial}</span>
                         <span style={{ fontSize:12.5, fontWeight:700, color: on ? c.text : c.text2, whiteSpace:'nowrap', maxWidth:90, overflow:'hidden', textOverflow:'ellipsis' }}>{acc.name}</span>
                       </button>
                     );
@@ -759,7 +772,7 @@ export default function Dashboard() {
             {/* Money Flow card */}
             <motion.div variants={cardVar} className={styles.flowCard}
               style={{ background:c.flowBg, border:c.flowBorder,
-                boxShadow: isDark ? `${c.cardShadow}, 0 0 40px rgba(29,78,216,0.1)` : c.cardShadow }}>
+                boxShadow:c.cardShadow }}>
               <div className={styles.cardHeadRow}>
                 <div style={{ display:'flex', alignItems:'center', gap:10 }}>
                   <div className={styles.flowHeadIcon} style={{ background:'rgba(29,78,216,0.15)' }}>
@@ -809,7 +822,7 @@ export default function Dashboard() {
 
                   <div className={styles.netRow}>
                     <div>
-                      <div style={{ fontSize:12.5, color:c.text2, borderTop:`1px dashed ${isDark?'rgba(255,255,255,0.12)':'#E4E6F0'}`, paddingTop:12 }}>Net Cash Flow</div>
+                      <div style={{ fontSize:12.5, color:c.text2, borderTop:`1px dashed ${c.border}`, paddingTop:12 }}>Net Cash Flow</div>
                       <div className={styles.numMd} style={{ color: net>=0?c.green:c.red }}>
                         {net>=0?'+':'−'}{fmt(Math.abs(net),{noDecimals:true})}
                       </div>
@@ -841,7 +854,7 @@ export default function Dashboard() {
 
             {/* Recent Transactions card */}
             <motion.div variants={cardVar} className={styles.recentCard}
-              style={{ background:c.cardBg, border: isDark?'1px solid rgba(255,255,255,0.08)':'1px solid transparent', boxShadow:c.cardShadow }}>
+              style={{ background:c.cardBg, border:c.balanceBorder, boxShadow:c.cardShadow }}>
               <div className={styles.cardHeadRow}>
                 <span className={styles.cardTitle} style={{ color:c.text }}>Recent Transactions</span>
                 <button className={styles.linkBtn} style={{ color:c.purple, fontSize:13 }} onClick={()=>navigate('/transactions')}>
@@ -860,7 +873,7 @@ export default function Dashboard() {
                   const isInc = tx.type === 'income';
                   return (
                     <motion.div key={tx.id} className={styles.recentRow}
-                      style={{ borderBottom: i<recentList.length-1 ? `1px solid ${isDark?'rgba(255,255,255,0.05)':'#F2F4F7'}` : 'none' }}
+                      style={{ borderBottom: i<recentList.length-1 ? `1px solid ${c.divider}` : 'none' }}
                       initial={{ opacity:0, y:12 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.5+i*0.09 }}>
                       {isInc
                         ? <div className={styles.recentIconInc} style={{ background: isDark?'rgba(52,211,153,0.15)':'#D1FAE5' }}>
@@ -889,7 +902,7 @@ export default function Dashboard() {
 
             {/* ── Accounts widget (NEW) ── */}
             <motion.div variants={cardVar} className={styles.accountsCard}
-              style={{ background:c.cardBg, border: isDark?'1px solid rgba(255,255,255,0.08)':'1px solid transparent', boxShadow:c.cardShadow }}>
+              style={{ background:c.cardBg, border:c.balanceBorder, boxShadow:c.cardShadow }}>
               <div className={styles.cardHeadRow}>
                 <span className={styles.cardTitle} style={{ color:c.text }}>Accounts</span>
                 <button className={styles.linkBtn} style={{ color:c.purple, fontSize:13 }} onClick={()=>navigate('/wallet')}>View All</button>
@@ -908,7 +921,7 @@ export default function Dashboard() {
                   return (
                     <motion.div key={w.id} initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.45+i*0.07 }}
                       style={{ display:'flex', alignItems:'center', gap:12, padding:'11px 0',
-                        borderBottom: i<arr.length-1 ? `1px solid ${isDark?'rgba(255,255,255,0.05)':'#F2F4F7'}` : 'none' }}>
+                        borderBottom: i<arr.length-1 ? `1px solid ${c.divider}` : 'none' }}>
                       <div style={{ width:38, height:38, borderRadius:11, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center',
                         background: isDark?'rgba(29,78,216,.14)':'#EFF6FF' }}>
                         <Wallet size={18} color={c.purple}/>
@@ -928,7 +941,7 @@ export default function Dashboard() {
 
             {/* ── Savings Goals widget (NEW) ── */}
             <motion.div variants={cardVar} className={styles.goalsCard}
-              style={{ background:c.cardBg, border: isDark?'1px solid rgba(255,255,255,0.08)':'1px solid transparent', boxShadow:c.cardShadow }}>
+              style={{ background:c.cardBg, border:c.balanceBorder, boxShadow:c.cardShadow }}>
               <div className={styles.cardHeadRow}>
                 <span className={styles.cardTitle} style={{ color:c.text }}>Savings Goals</span>
                 <button className={styles.linkBtn} style={{ color:c.purple, fontSize:13 }} onClick={()=>navigate('/goals')}>View All</button>
@@ -950,11 +963,11 @@ export default function Dashboard() {
                         <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:9 }}>
                           <span style={{ fontSize:18 }}>{g.emoji || '🎯'}</span>
                           <span style={{ fontSize:13.5, fontWeight:700, color:c.text, flex:1, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{g.name}</span>
-                          <span style={{ fontSize:13, fontWeight:800, color:c.green }}>{pct}%</span>
+                          <span style={{ fontSize:13, fontWeight:600, color:c.green }}>{pct}%</span>
                         </div>
                         <div style={{ height:8, borderRadius:99, background:c.track, overflow:'hidden' }}>
                           <motion.div initial={{ width:0 }} animate={{ width:`${pct}%` }} transition={{ duration:.8, delay:.3+i*.08, ease:[.2,.8,.2,1] }}
-                            style={{ height:'100%', borderRadius:99, background: g.color ? `linear-gradient(90deg,${g.color},${c.green})` : '#1D4ED8' }}/>
+                            style={{ height:'100%', borderRadius:99, background: g.color || c.stroke }}/>
                         </div>
                         <div style={{ fontSize:12, color:c.text2, marginTop:7 }}>
                           {fmt(saved,{noDecimals:true})} <span style={{ color:c.text3 }}>of {fmt(target,{noDecimals:true})}</span>
@@ -968,7 +981,7 @@ export default function Dashboard() {
 
             {/* ── Upcoming Payments widget (NEW) ── */}
             <motion.div variants={cardVar} className={styles.upcomingCard}
-              style={{ background:c.cardBg, border: isDark?'1px solid rgba(255,255,255,0.08)':'1px solid transparent', boxShadow:c.cardShadow }}>
+              style={{ background:c.cardBg, border:c.balanceBorder, boxShadow:c.cardShadow }}>
               <div className={styles.cardHeadRow}>
                 <span className={styles.cardTitle} style={{ color:c.text }}>Upcoming Payments</span>
                 <button className={styles.linkBtn} style={{ color:c.purple, fontSize:13 }} onClick={()=>navigate('/recurring')}>View All</button>
@@ -990,7 +1003,7 @@ export default function Dashboard() {
                     return (
                       <motion.div key={e.id} initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.45+i*0.07 }}
                         style={{ display:'flex', alignItems:'center', gap:12, padding:'11px 0',
-                          borderBottom: i<arr.length-1 ? `1px solid ${isDark?'rgba(255,255,255,0.05)':'#F2F4F7'}` : 'none' }}>
+                          borderBottom: i<arr.length-1 ? `1px solid ${c.divider}` : 'none' }}>
                         <div style={{ width:38, height:38, borderRadius:11, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', background:`${kindColor}1f` }}>
                           <CalendarDays size={18} color={kindColor}/>
                         </div>

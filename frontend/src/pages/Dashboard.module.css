@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════
-   Dashboard — FinMate reference design
+   Dashboard layout (colours come from tokens / theme.js)
    Light + dark theme colors are inline (JS); this file = layout
 ═══════════════════════════════════════════════════════════ */
 
@@ -92,7 +92,7 @@
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  border-radius: 14px;
+  border-radius: var(--radius);
   width: 230px;
 }
 
@@ -109,7 +109,7 @@
   position: relative;
   width: 44px;
   height: 44px;
-  border-radius: 14px;
+  border-radius: var(--radius);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -164,19 +164,19 @@
 .accountsCard {
   grid-area: accounts;
   padding: 24px 26px;
-  border-radius: 14px;
+  border-radius: var(--radius);
   display: flex;
   flex-direction: column;
 }
 .goalsCard {
   grid-area: goals;
   padding: 24px 26px;
-  border-radius: 14px;
+  border-radius: var(--radius);
 }
 .upcomingCard {
   grid-area: upcoming;
   padding: 24px 26px;
-  border-radius: 14px;
+  border-radius: var(--radius);
   display: flex;
   flex-direction: column;
 }
@@ -241,7 +241,7 @@
   align-items: center;
   gap: 16px;
   padding: 20px 24px;
-  border-radius: 14px;
+  border-radius: var(--radius);
   transition: box-shadow .2s ease;
 }
 
@@ -259,7 +259,7 @@
 .balanceCard {
   position: relative;
   padding: 26px 28px 24px;
-  border-radius: 14px;
+  border-radius: var(--radius);
 }
 
 .balanceBig {
@@ -278,7 +278,7 @@
   align-items: center;
   gap: 4px;
   padding: 11px 20px;
-  border-radius: 14px;
+  border-radius: var(--radius);
   font-size: 13.5px;
   font-weight: 700;
   cursor: pointer;
@@ -303,7 +303,7 @@
   align-items: center;
   gap: 14px;
   padding: 18px 20px;
-  border-radius: 14px;
+  border-radius: var(--radius);
   min-height: 96px;
   box-sizing: border-box;
 }
@@ -311,20 +311,18 @@
 .insightIcon {
   width: 48px;
   height: 48px;
-  border-radius: 16px;
+  border-radius: var(--radius);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 6px 18px rgba(29,78,216,.4);
-  animation: insightGlow 2.6s ease-in-out infinite;
+  box-shadow: var(--shadow-sm);
 }
 
 .insightPulse {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  animation: pulseDot 1.6s ease-in-out infinite;
 }
 
 @keyframes insightGlow {
@@ -353,7 +351,7 @@
 /* ── Money Flow card ───────────────────────────────────── */
 .flowCard {
   padding: 24px 26px;
-  border-radius: 14px;
+  border-radius: var(--radius);
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -398,7 +396,7 @@
 
 .flowBar {
   height: 7px;
-  border-radius: 14px;
+  border-radius: var(--radius);
   overflow: hidden;
 }
 
@@ -424,14 +422,14 @@
   align-items: center;
   gap: 12px;
   padding: 14px 14px;
-  border-radius: 14px;
+  border-radius: var(--radius);
   cursor: pointer;
 }
 
 .flowTileIcon {
   width: 40px;
   height: 40px;
-  border-radius: 13px;
+  border-radius: var(--radius);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -441,7 +439,7 @@
 /* ── Top Spending card ─────────────────────────────────── */
 .spendCard {
   padding: 26px 28px 22px;
-  border-radius: 14px;
+  border-radius: var(--radius);
 }
 
 .spendBody {
@@ -533,8 +531,6 @@
 .walletArt {
   position: relative;
   font-size: 34px;
-  filter: drop-shadow(0 6px 12px rgba(29,78,216,.35));
-  animation: floaty 3.4s ease-in-out infinite;
 }
 
 .walletSpark {
@@ -543,7 +539,6 @@
   right: -12px;
   font-size: 13px;
   color: #60A5FA;
-  animation: sparkle 2.2s ease-in-out infinite;
 }
 
 @keyframes floaty {
@@ -559,7 +554,7 @@
 /* ── Recent Transactions card ──────────────────────────── */
 .recentCard {
   padding: 24px 26px;
-  border-radius: 14px;
+  border-radius: var(--radius);
 }
 
 .recentList {
@@ -614,18 +609,18 @@
 
   .cardTitle { font-size: 14px; }
 
-  .salaryCard  { padding: 12px 14px; border-radius: 14px; gap: 10px; }
+  .salaryCard  { padding: 12px 14px; border-radius: var(--radius); gap: 10px; }
   .salaryIcon  { width: 40px; height: 40px; }
 
-  .balanceCard { padding: 15px 14px; border-radius: 14px; }
+  .balanceCard { padding: 15px 14px; border-radius: var(--radius); }
   .balanceBig  { font-size: 23px; margin-top: 8px; letter-spacing: -0.8px; }
 
-  .flowCard    { padding: 16px 15px; border-radius: 14px; }
-  .spendCard   { padding: 16px 15px; border-radius: 14px; }
-  .recentCard  { padding: 15px 15px; border-radius: 14px; }
-  .accountsCard{ padding: 15px 15px; border-radius: 14px; }
-  .goalsCard   { padding: 16px 15px; border-radius: 14px; }
-  .upcomingCard{ padding: 15px 15px; border-radius: 14px; }
+  .flowCard    { padding: 16px 15px; border-radius: var(--radius); }
+  .spendCard   { padding: 16px 15px; border-radius: var(--radius); }
+  .recentCard  { padding: 15px 15px; border-radius: var(--radius); }
+  .accountsCard{ padding: 15px 15px; border-radius: var(--radius); }
+  .goalsCard   { padding: 16px 15px; border-radius: var(--radius); }
+  .upcomingCard{ padding: 15px 15px; border-radius: var(--radius); }
 
   .recentRow  { padding: 10px 0; }
   .chartWrap  { margin-top: 2px; }
