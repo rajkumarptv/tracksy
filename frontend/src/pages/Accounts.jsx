@@ -126,7 +126,7 @@ export default function Accounts() {
         <motion.div className={styles.header} variants={cardVar}>
           <div>
             <h1 className={styles.h1} style={{ color:t.text }}>Accounts</h1>
-            <div className={styles.sub} style={{ color:t.text2 }}>Manage all your accounts in one place</div>
+            <div className={styles.sub} style={{ color:t.text2 }}>Banks, cards, wallets and loans in one place</div>
           </div>
           <div className={styles.headerBtns}>
             <button className={styles.circleBtn}
@@ -135,8 +135,8 @@ export default function Accounts() {
               <Search size={20} color={t.text2}/>
             </button>
             <motion.button className={styles.circleBtn} whileTap={{ scale:.9 }}
-              style={{ background:'#1D4ED8', border:'none', boxShadow:'0 8px 24px rgba(124,58,237,.35)' }}
-              onClick={()=>setModal({ mode:'add' })}>
+              style={{ background:'#1D4ED8', border:'none', boxShadow:'var(--shadow-md)' }}
+              onClick={()=>setModal({ mode:'add' })} aria-label="Add account">
               <Plus size={22} color="#fff"/>
             </motion.button>
           </div>
@@ -270,7 +270,7 @@ export default function Accounts() {
                             <span style={{ fontSize:18 }}>{meta.e}</span>
                           </div>
                           <div style={{ flex:1, minWidth:0 }}>
-                            <div style={{ display:'flex', alignItems:'center', gap:8, minWidth:0 }}>
+                            <div style={{ display:'flex', alignItems:'center', flexWrap:'wrap', gap:'2px 8px', minWidth:0 }}>
                               <span className={styles.rowName} style={{ color:t.text }}>{w.name}</span>
                               {isPrimary && (
                                 <span className={styles.primaryBadge}>Primary</span>
@@ -495,7 +495,7 @@ function AccountModal({ mode, wallet, t, isDark, onClose, onSaved, onPay }) {
 
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
           <span style={{ fontSize:18, fontWeight:800, color:t.text }}>{isEdit ? 'Edit Account' : 'Add Account'}</span>
-          <button onClick={onClose} style={{ width:34, height:34, borderRadius:12, background:t.surface, border:`1px solid ${t.border}`, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+          <button onClick={onClose} aria-label="Close" style={{ width:44, height:44, borderRadius:12, background:t.surface, border:`1px solid ${t.border}`, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
             <X size={16} color={t.text2}/>
           </button>
         </div>
@@ -752,7 +752,7 @@ function PaymentModal({ wallet, t, isDark, accounts, onClose, onSaved }) {
             <div style={{ fontSize:18, fontWeight:800, color:t.text }}>Record Payment</div>
             <div style={{ fontSize:13, color:t.text2, marginTop:2 }}>{wallet.name} · Outstanding {fmt(outstanding,{noDecimals:true})}</div>
           </div>
-          <button onClick={onClose} style={{ width:34, height:34, borderRadius:12, background:t.surface, border:`1px solid ${t.border}`, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+          <button onClick={onClose} aria-label="Close" style={{ width:44, height:44, borderRadius:12, background:t.surface, border:`1px solid ${t.border}`, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
             <X size={16} color={t.text2}/>
           </button>
         </div>

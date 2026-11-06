@@ -184,15 +184,12 @@ export default function Budget() {
         <motion.div className={styles.header} variants={cardVar}>
           <div>
             <h1 className={styles.h1} style={{ color:t.text }}>Budget</h1>
-            <div className={styles.sub} style={{ color:t.text2 }}>Plan smart. Spend wise. Achieve more.</div>
+            <div className={styles.sub} style={{ color:t.text2 }}>Set monthly limits and track what you spend</div>
           </div>
           <div className={styles.headerBtns}>
-            <button className={styles.circleBtn} style={{ background:t.card, border:`1px solid ${t.border}` }}>
-              <Calendar size={19} color={t.text2}/>
-            </button>
             <motion.button className={styles.circleBtn} whileTap={{ scale:.9 }}
-              style={{ background:'#1D4ED8', border:'none', boxShadow:'0 8px 24px rgba(124,58,237,.35)' }}
-              onClick={openAddBudget}>
+              style={{ background:'#1D4ED8', border:'none', boxShadow:'var(--shadow-md)' }}
+              onClick={openAddBudget} aria-label="Add budget">
               <Plus size={22} color="#fff"/>
             </motion.button>
           </div>
