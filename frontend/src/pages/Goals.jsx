@@ -450,7 +450,7 @@ function GoalModal({ goal, onClose, onSaved }) {
             </div>
           </div>
         </div>
-        <div style={{ display:'flex', gap:10, marginTop:16, justifyContent:'flex-end' }}>
+        <div className="modal-actions" style={{ display:'flex', gap:10, marginTop:16, justifyContent:'flex-end' }}>
           <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
           <button className="btn btn-primary" disabled={mutation.isPending} onClick={submit} style={{ background:'#1D4ED8', border:'none' }}>
             {mutation.isPending ? 'Saving' : goal ? 'Update Goal' : 'Create Goal'}
@@ -489,7 +489,7 @@ function AddFundsModal({ goal, onClose, onSaved }) {
           <label className="form-label">Amount to Add</label>
           <input className="form-input" type="number" value={amount} onChange={e=>setAmount(e.target.value)} placeholder="5000" autoFocus style={{ fontSize:18, fontWeight:700 }}/>
         </div>
-        <div style={{ display:'flex', gap:10, marginTop:8, justifyContent:'flex-end' }}>
+        <div className="modal-actions" style={{ display:'flex', gap:10, marginTop:8, justifyContent:'flex-end' }}>
           <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
           <button className="btn btn-primary" disabled={mutation.isPending||!amount} onClick={()=>mutation.mutate()} style={{ background:`linear-gradient(135deg,${clr},${clr}dd)`, border:'none' }}>
             {mutation.isPending ? 'Adding' : 'Add Funds'}

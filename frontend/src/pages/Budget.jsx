@@ -519,7 +519,7 @@ function BudgetModal({ budget, initialType='expense', onClose, onSaved }) {
           </div>
         </div>
 
-        <div style={{ display:'flex', gap:10, marginTop:8, justifyContent:'flex-end' }}>
+        <div className="modal-actions" style={{ display:'flex', gap:10, marginTop:8, justifyContent:'flex-end' }}>
           <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
           <button className="btn btn-primary" disabled={mutation.isPending} onClick={submit}
             style={{ background:'#1D4ED8', border:'none', boxShadow:'0 4px 14px rgba(29,78,216,.35)' }}>

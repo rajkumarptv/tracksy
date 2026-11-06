@@ -69,19 +69,13 @@ function RecurringModal({ item, wallets, categories, onClose, onSave }) {
   const labelStyle = { fontSize: 12, fontWeight: 600, color: 'var(--text3)', marginBottom: 5, display: 'block' };
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 1000,
-      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
-    }} onClick={e => e.target === e.currentTarget && onClose()}>
-      <div style={{
-        background: 'var(--surface)', borderRadius:14, padding: 28, width: '100%', maxWidth: 480,
-        maxHeight: '90vh', overflowY: 'auto',
-      }}>
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
           <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700 }}>
             {item ? 'Edit Recurring' : 'Add Recurring'}
           </h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'var(--text3)' }}>×</button>
+          <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 24, color: 'var(--text3)', minWidth: 44, minHeight: 44 }}>×</button>
         </div>
 
         {error && (
@@ -164,7 +158,7 @@ function RecurringModal({ item, wallets, categories, onClose, onSave }) {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
+        <div className="modal-actions" style={{ display: 'flex', gap: 10, marginTop: 22 }}>
           <button onClick={onClose} style={{
             flex: 1, padding: '12px 0', borderRadius: 12, border: '1.5px solid var(--border)',
             background: 'transparent', color: 'var(--text)', fontWeight: 600, cursor: 'pointer',
