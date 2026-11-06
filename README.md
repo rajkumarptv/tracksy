@@ -1,4 +1,4 @@
-# 💰 Tracksy — Personal Finance Dashboard
+# 💰 Tracksy — Personal Finance Dashboard.
 
 A full-stack personal finance management web app built with **React**, **Node.js**, and **PostgreSQL**.
 
