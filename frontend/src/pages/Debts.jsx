@@ -163,7 +163,7 @@ function DebtsOverview() {
           <div className={styles.overviewLeft}>
             <div style={{ fontSize:14, color:t.text2, fontWeight:500 }}>Total Outstanding</div>
             <div className={styles.bigAmount} style={{ color:t.red }}>−{fmt(totalDebt,{noDecimals:true})}</div>
-            <div style={{ fontSize:14, color:t.text2 }}>Across {debts.length} account{debts.length!==1?'s':''}</div>
+            <div style={{ fontSize:14, color:t.text2 }}>Across {debts.filter(d => d.type !== 'lending').length} account{debts.filter(d => d.type !== 'lending').length!==1?'s':''}</div>
             <div style={{ display:'flex', flexDirection:'column', gap:8, marginTop:12 }}>
               <div>
                 <div style={{ fontSize:10.5, color:t.text3, fontWeight:600, textTransform:'uppercase', letterSpacing:'.04em' }}>Est. Monthly Payments</div>

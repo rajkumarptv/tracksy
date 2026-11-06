@@ -351,6 +351,8 @@ export default function SmartInsights({ embedded = false }) {
                       ? `No spending last month to compare against yet.`
                       : insights.expensePct > 20
                       ? `Your expenses are ${insights.expensePct}% higher than last month. That's ${fmt2(insights.thisExpense - insights.lastExpense)} more than usual.`
+                      : insights.expensePct > 5
+                      ? `Your expenses are ${insights.expensePct}% higher than last month (${fmt2(insights.thisExpense - insights.lastExpense)} more).`
                       : insights.expensePct < 0
                       ? `Great job! You spent ${fmt2(insights.lastExpense - insights.thisExpense)} less than last month.`
                       : `Your spending is on par with last month.`}
