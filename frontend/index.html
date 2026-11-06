@@ -8,8 +8,29 @@
   <title>Tracksy – Personal Finance</title>
   <meta name="description" content="Tracksy – Your personal finance management dashboard" />
 
-  <!-- Google Tag Manager. The container id comes from VITE_GTM_ID (set in .env.production), so local
-       dev never loads it and never pollutes production data. The app pushes events to window.dataLayer. -->
+  <!-- Google Analytics 4 (gtag.js). analytics/vite-analytics-plugin.mjs fills %VITE_GA_MEASUREMENT_ID% at build time
+       and injects the async gtag.js loader above: production builds use G-TNP5J4QCZL, dev loads nothing, so local
+       use never pollutes real data. The app sends events through window.gtag (src/lib/analytics.js).
+       The default page_location drops the query string, which can hold tokens or search text. -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    (function () {
+      var id = '%VITE_GA_MEASUREMENT_ID%';
+      if (!/^G-[A-Z0-9]+$/.test(id)) return;
+      window.gtag = gtag;
+      window.__TRACKSY_GA__ = id;
+      var off = false;
+      try { off = localStorage.getItem('tracksy-analytics-optout') === '1' || navigator.globalPrivacyControl === true; } catch (e) {}
+      if (off) window['ga-disable-' + id] = true;   // Google's documented opt-out flag
+      gtag('js', new Date());
+      // page views are sent by the app on every route change, with ids and queries stripped
+      gtag('config', id, { send_page_view: false, page_location: location.origin + location.pathname });
+    })();
+  </script>
+
+  <!-- Google Tag Manager: OFF by default. Only loads if VITE_GTM_ID is set at build time (and then direct GA4
+       above is switched off so nothing is double-sent). See analytics/README.md. -->
   <script>
     window.dataLayer = window.dataLayer || [];
     (function () {
@@ -41,8 +62,6 @@
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
 </head>
 <body>
-  <!-- Google Tag Manager (noscript) -->
-  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=%VITE_GTM_ID%" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
   <script>

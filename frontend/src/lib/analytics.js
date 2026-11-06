@@ -1,6 +1,7 @@
 // Single entry point for analytics. Everything goes through the allow-list in analyticsEvents.js,
-// so nothing outside the catalogue (no PII, names, amounts or free text) can reach the data layer.
-// GTM reads window.dataLayer; the tags themselves live in the GTM container (see /analytics).
+// so nothing outside the catalogue (no PII, names, amounts or free text) can reach Google.
+// Transport: direct GA4 (window.gtag, set up in index.html) by default. Every event is also pushed to
+// window.dataLayer as a plain object, which only Google Tag Manager reads (its optional mode, see /analytics).
 import { EVENTS, PARAMS, USER_PROPS } from './analyticsEvents.js';
 
 const OPT_KEY = 'tracksy-analytics-optout';
@@ -16,6 +17,8 @@ export function isEnabled() {
 }
 
 export function setOptOut(optedOut) {
+  const id = root().__TRACKSY_GA__;
+  if (id) root()[`ga-disable-${id}`] = !!optedOut;      // Google's documented switch: stops gtag.js itself
   try {
     if (!globalThis.localStorage) return;
     if (optedOut) globalThis.localStorage.setItem(OPT_KEY, '1');
@@ -64,12 +67,23 @@ const push = (obj) => {
   r.dataLayer.push(obj);
 };
 
+/* Direct GA4 is active when index.html found a valid measurement id and defined window.gtag. */
+const direct = () => !!root().__TRACKSY_GA__ && typeof root().gtag === 'function';
+const gtag = (...args) => root().gtag(...args);
+const ga4Event = (event) => EVENTS[event].ga4Name || event;
+
+/** Hand one already-sanitised event to every active transport. */
+function send(event, clean, gtagExtra = {}, dataLayerExtra = {}) {
+  push({ event, ...clean, ...dataLayerExtra });
+  if (direct()) gtag('event', ga4Event(event), { ...clean, ...gtagExtra });
+}
+
 /* ── Public API ──────────────────────────────────────────────────────────── */
 export function track(event, params = {}) {
   if (!isEnabled()) return;
   const clean = sanitize(event, params);
   if (!clean) return;
-  push({ event, ...clean });
+  send(event, clean);
 }
 
 /**
@@ -82,7 +96,8 @@ export function trackThen(event, params, next, timeout = 800) {
   if (!isEnabled()) { go(); return; }
   const clean = sanitize(event, params);
   if (!clean) { go(); return; }
-  push({ event, ...clean, eventCallback: go, eventTimeout: timeout });
+  // gtag uses event_callback, Tag Manager uses eventCallback; `go` is idempotent, so both are safe
+  send(event, clean, { event_callback: go, event_timeout: timeout }, { eventCallback: go, eventTimeout: timeout });
   setTimeout(go, timeout);
 }
 
@@ -125,7 +140,12 @@ export function pageView(pathname, search = '', origin = '') {
   if (lastView.key === path && now - lastView.at < 750) return;
   lastView = { key: path, at: now };
   const o = origin || (typeof location !== 'undefined' ? location.origin : '');
-  track('virtual_page_view', { page_location: `${o}${path}`, page_title: pageTitle(path) });
+  const page_location = `${o}${path}`;
+  const page_title = pageTitle(path);
+  // Make the sanitised location the default for every later hit too (including any automatic ones), so a raw
+  // URL with a query string can never be what GA sees.
+  if (direct() && sanitize('virtual_page_view', { page_location, page_title }).page_location) gtag('set', { page_location, page_title });
+  track('virtual_page_view', { page_location, page_title });
 }
 
 /* ── User context (pseudonymous) ─────────────────────────────────────────── */
@@ -152,6 +172,11 @@ export async function setUserContext({ id, currency, language, theme } = {}) {
     lastUserId = user_id;
     const props = sanitizeUserProps({ user_id, user_currency: currency, user_language: language, platform: detectPlatform(), ui_theme: theme });
     push({ event: 'user_context', ...props });
+    if (direct()) {
+      gtag('set', { user_id: props.user_id });
+      const { user_id: _omit, ...userProperties } = props;
+      gtag('set', 'user_properties', userProperties);
+    }
   } catch { /* crypto unavailable: skip silently */ }
 }
 
@@ -159,6 +184,10 @@ export function clearUserContext() {
   lastUserId = '';
   if (!isEnabled()) return;
   push({ event: 'user_context', user_id: undefined, user_currency: undefined, user_language: undefined });
+  if (direct()) {
+    gtag('set', { user_id: null });
+    gtag('set', 'user_properties', { user_currency: null, user_language: null });
+  }
 }
 
 /* ── Reliability: API failures ───────────────────────────────────────────── */
