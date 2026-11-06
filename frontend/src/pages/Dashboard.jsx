@@ -520,6 +520,9 @@ export default function Dashboard() {
   const inPct  = income  > 0 ? Math.min(100, (income  / Math.max(income, expense)) * 100) : 0;
   const outPct = expense > 0 ? Math.min(100, (expense / Math.max(income, expense)) * 100) : 0;
 
+  // Shorter chart on phones so the numbers below it start higher on the screen
+  const compactChart = typeof window !== 'undefined' && window.matchMedia?.('(max-width: 768px)').matches;
+
   /* ═════════════════ RENDER ═════════════════ */
   return (
     <div className={styles.page} style={{ background: 'var(--bg)' }}>
@@ -537,8 +540,8 @@ export default function Dashboard() {
               <span className={styles.onlineDot} style={{ background:c.green, borderColor:'var(--bg)' }}/>
             </div>
             <div className={styles.greetText}>
-              <div className={styles.greetTitle} style={{ color:c.text }}>{greeting}, {firstName} 👋</div>
-              <div className={styles.greetSub} style={{ color:c.text2 }}>Let's make today financially amazing!</div>
+              <div className={styles.greetTitle} style={{ color:c.text }}>{greeting}, {firstName}</div>
+              <div className={styles.greetSub} style={{ color:c.text2 }}>{now.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long' })}</div>
             </div>
           </div>
           <div className={styles.headerRight}>
@@ -685,7 +688,7 @@ export default function Dashboard() {
               </div>
 
               <div className={styles.chartWrap}>
-                <ResponsiveContainer width="100%" height={210}>
+                <ResponsiveContainer width="100%" height={compactChart ? 150 : 210}>
                   <AreaChart data={chartData} margin={{ top:10, right:8, left:0, bottom:0 }}>
                     <defs>
                       <linearGradient id="balGrad" x1="0" y1="0" x2="0" y2="1">
