@@ -130,4 +130,4 @@ const getOverview = async (req, res) => {
   }
 };
 
-module.exports = { getOverview };
+module.exports = { getOverview, COMMITMENT };

@@ -11,7 +11,7 @@ import {
   ArrowDown, ArrowUp, Activity, ArrowLeftRight, Wallet,
   ListChecks, Percent, Sparkles, PiggyBank, CalendarDays, Check,
 } from 'lucide-react';
-import { dashboardAPI, walletsAPI, goalsAPI, recurringAPI } from '../services/api';
+import { dashboardAPI, walletsAPI, goalsAPI, recurringAPI, forecastAPI } from '../services/api';
 import useAuthStore from '../store/authStore';
 import useThemeStore from '../store/themeStore';
 import { useFmt } from '../i18n';
@@ -255,6 +255,12 @@ export default function Dashboard() {
     queryFn: () => goalsAPI.getAll().then(r=>r.data.data),
     staleTime: 5 * 60 * 1000,
   });
+  // 60-day cash-flow forecast: powers the shortfall warning and the exact upcoming-payment dates
+  const { data: forecast } = useQuery({
+    queryKey:['forecast', 60],
+    queryFn: () => forecastAPI.cashflow({ days: 60 }).then(r=>r.data.data),
+    staleTime: 5 * 60 * 1000,
+  });
   const { data: recurringRaw } = useQuery({
     queryKey:['recurring'],
     queryFn: () => recurringAPI.getAll().then(r=>r.data.data),
@@ -446,12 +452,15 @@ export default function Dashboard() {
       list.push({ emoji:'⚠️', text:`You spent ${fmt(Math.abs(net),{noDecimals:true})} more than you earned this month.`, to:'/transactions' });
     if (totalDebt > 0)
       list.push({ emoji:'💳', text:`${fmt(totalDebt,{noDecimals:true})} outstanding across your debts.`, to:'/debts' });
+    const fc = forecast?.summary;
+    if (fc?.shortfallDate && fc.daysUntilShortfall <= 30)
+      list.unshift({ emoji:'🚨', text:`Your bank and cash balance may go below zero on ${new Date(fc.shortfallDate+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'})} (short by ${fmt(fc.shortfallAmount,{noDecimals:true})}).`, to:'/forecast' });
     if (savingsRate >= 20)
       list.push({ emoji:'🎉', text:`Great job — you saved ${savingsRate}% of your income this month.`, to:'/goals' });
     if (spendCats[0])
       list.push({ emoji:'📊', text:`${spendCats[0].name} is your top spend at ${fmt(spendCats[0].value,{noDecimals:true})}.`, to:'/budget' });
     return list;
-  }, [wallets, net, savingsRate, spendCats]);
+  }, [wallets, net, savingsRate, spendCats, forecast]);
 
   /* Notification "seen" state — the badge clears once you open the panel and
      only reappears when the set of alerts actually changes. */
@@ -487,14 +496,22 @@ export default function Dashboard() {
         if (d) events.push({ id:'emi'+w.id, name:`${w.name} EMI`, amount:parseFloat(w.emi_amount), date:d, kind:'loan' });
       }
     });
-    (recurring||[]).forEach(r => {
-      if (r.is_active === false || r.type !== 'expense') return;
-      const day = new Date(r.start_date).getDate();
-      const d = nextByDay(day);
-      if (d) events.push({ id:'rc'+r.id, name:r.payment_name || 'Recurring', amount:parseFloat(r.amount||0), date:d, kind:'recurring' });
-    });
+    if (forecast) {
+      // Exact dates from the forecast (handles weekly / yearly rules and month ends)
+      forecast.events.forEach((e, i) => {
+        if (e.kind !== 'recurring' || e.amount >= 0) return;
+        events.push({ id:'fc'+i, name:e.label, amount:Math.abs(e.amount), date:new Date(e.date+'T00:00:00'), kind:'recurring' });
+      });
+    } else {
+      (recurring||[]).forEach(r => {
+        if (r.is_active === false || r.type !== 'expense') return;
+        const day = new Date(r.start_date).getDate();
+        const d = nextByDay(day);
+        if (d) events.push({ id:'rc'+r.id, name:r.payment_name || 'Recurring', amount:parseFloat(r.amount||0), date:d, kind:'recurring' });
+      });
+    }
     return events.filter(e => e.date >= today && e.date <= horizon).sort((a,b) => a.date - b.date);
-  }, [wallets, recurring]);
+  }, [wallets, recurring, forecast]);
 
   const greetingHour = now.getHours();
   const greeting = greetingHour < 12 ? 'Good Morning' : greetingHour < 17 ? 'Good Afternoon' : 'Good Evening';
@@ -576,6 +593,24 @@ export default function Dashboard() {
             </div>
           </div>
         </motion.div>
+
+        {/* ── Cash-flow warning ───────────────────────────────────── */}
+        {forecast?.summary?.shortfallDate && forecast.summary.daysUntilShortfall <= 30 && (
+          <motion.div variants={cardVar}
+            onClick={() => navigate('/forecast')}
+            style={{ cursor:'pointer', display:'flex', alignItems:'center', gap:12, padding:'14px 18px', borderRadius:16, marginBottom:16,
+              background: isDark ? 'rgba(220,38,38,.14)' : 'rgba(220,38,38,.08)', border:'1px solid rgba(220,38,38,.3)' }}>
+            <span style={{ fontSize:22 }}>🚨</span>
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ fontSize:14, fontWeight:800, color:c.text }}>
+                Balance may go below zero on {new Date(forecast.summary.shortfallDate+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'})}
+              </div>
+              <div style={{ fontSize:12.5, color:c.text3, marginTop:2 }}>
+                You could be short by {fmt(forecast.summary.shortfallAmount,{noDecimals:true})} · tap to see the forecast
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* ── Grid (areas keep both columns row-aligned) ─────────── */}
         <div className={styles.grid}>

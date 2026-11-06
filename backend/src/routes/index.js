@@ -9,6 +9,8 @@ const budgetCtrl = require('../controllers/budgetController');
 const res0 = require('../controllers/resourceController');
 const importCtrl = require('../controllers/importController');
 const analyticsCtrl = require('../controllers/analyticsController');
+const forecastCtrl = require('../controllers/forecastController');
+const insightsCtrl = require('../controllers/insightsController');
 
 // multer: store uploaded files in memory (max 20 MB)
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
@@ -55,6 +57,8 @@ router.get('/dashboard/category-breakdown', auth, dashCtrl.getCategoryBreakdown)
 router.get('/dashboard/analytics-stats', auth, dashCtrl.getAnalyticsStats);
 router.get('/dashboard/balance-history', auth, dashCtrl.getBalanceHistory);
 router.get('/analytics/overview', auth, analyticsCtrl.getOverview);
+router.get('/forecast/cashflow', auth, forecastCtrl.getCashflow);
+router.get('/insights/smart', auth, insightsCtrl.getSmart);
 
 // Transactions
 router.get('/transactions', auth, txCtrl.getAll);

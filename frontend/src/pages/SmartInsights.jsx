@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { transactionsAPI, budgetsAPI, walletsAPI } from '../services/api';
+import { Link } from 'react-router-dom';
+import { transactionsAPI, budgetsAPI, walletsAPI, insightsAPI } from '../services/api';
 import { PageLoader, Topbar } from '../components/ui';
 import { useFmt, useT } from '../i18n';
 import {
@@ -122,6 +123,12 @@ export default function SmartInsights({ embedded = false }) {
   const { data: wallets = [] } = useQuery({
     queryKey: ['wallets'],
     queryFn: () => walletsAPI.getAll().then(r => r.data?.data || []),
+  });
+  // Server-side analysis over six months of history: highlights, anomalies, recurring charges
+  const { data: smart } = useQuery({
+    queryKey: ['smart-insights'],
+    queryFn: () => insightsAPI.smart().then(r => r.data?.data),
+    staleTime: 5 * 60 * 1000,
   });
 
   const insights = useMemo(() => {
@@ -254,8 +261,11 @@ export default function SmartInsights({ embedded = false }) {
     { key:'overview',  label:'Overview',  icon: BarChart2 },
     { key:'spending',  label:'Spending',  icon: ShoppingBag },
     { key:'trends',    label:'Trends',    icon: TrendingUp },
+    { key:'subs',      label:'Recurring', icon: Repeat },
     { key:'tips',      label:'Tips',      icon: Lightbulb },
   ];
+
+  const anomalyCount = smart ? smart.anomalies.categorySpikes.length + smart.anomalies.outliers.length + smart.anomalies.duplicates.length : 0;
 
   const noData = !insights;
 
@@ -309,6 +319,22 @@ export default function SmartInsights({ embedded = false }) {
             {activeTab === 'overview' && (
               <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
 
+                {/* Highlights (rule-based monthly summary) */}
+                {smart && smart.headline && (
+                  <div style={{ background:'var(--surface)', border:'1.5px solid var(--border-light)', borderRadius:18, padding:'18px 20px' }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
+                      <Zap size={16} color="#8B5CF6" />
+                      <div style={{ fontSize:12, fontWeight:800, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.08em' }}>{smart.monthLabel} at a glance</div>
+                    </div>
+                    <div style={{ fontSize:15.5, fontWeight:800, color:'var(--text)', lineHeight:1.4 }}>{smart.headline}</div>
+                    {smart.bullets.length > 0 && (
+                      <ul style={{ margin:'10px 0 0', paddingLeft:18, fontSize:13, color:'var(--text2)', lineHeight:1.65 }}>
+                        {smart.bullets.map((b, i) => <li key={i}>{b}</li>)}
+                      </ul>
+                    )}
+                  </div>
+                )}
+
                 {/* Score card */}
                 <div style={{ background:'#4F46E5', borderRadius:14, padding:'22px 24px', color:'#fff' }}>
                   <div style={{ fontSize:11, fontWeight:700, opacity:.7, textTransform:'uppercase', letterSpacing:'.1em', marginBottom:6 }}>Financial Health Score</div>
@@ -317,7 +343,7 @@ export default function SmartInsights({ embedded = false }) {
                       {insights.thisIncome <= 0 ? '—' : Math.min(100, Math.max(0,
                         40 +
                         Math.min(30, insights.savingsRate) +
-                        (insights.unusualSpends.length === 0 ? 15 : 0) +
+                        ((smart ? smart.anomalies.categorySpikes.length : insights.unusualSpends.length) === 0 ? 15 : 0) +
                         (insights.budgetHealth.every(b=>b.pct<=100) ? 15 : 0)
                       ))}
                     </div>
@@ -371,12 +397,22 @@ export default function SmartInsights({ embedded = false }) {
                      : `You're spending more than you earn this month by ${fmt2(Math.abs(insights.savings))}. Review your expenses.`}
                   </InsightCard>
 
-                  {insights.unusualSpends.length > 0 && (
+                  {anomalyCount > 0 && (
                     <InsightCard icon={Flame} color="#DC2626" bg="rgba(220,38,38,.12)"
-                      title="Unusual Spending Detected" badge="Alert" priority="high">
-                      {insights.unusualSpends.map(u => (
-                        <div key={u.cat} style={{ marginBottom:4 }}>
-                          <strong>{u.cat}</strong> — {fmt2(u.amt)} this month vs avg {fmt2(u.avg)}/mo ({u.pct}% higher)
+                      title="Worth a look" badge="Alert" priority="high">
+                      {smart.anomalies.categorySpikes.map(u => (
+                        <div key={u.category} style={{ marginBottom:4 }}>
+                          <strong>{u.category}</strong> — {fmt2(u.amount)} this month vs usual {fmt2(u.average)}/mo ({u.pct}% higher)
+                        </div>
+                      ))}
+                      {smart.anomalies.outliers.map(o => (
+                        <div key={o.merchant + o.date} style={{ marginBottom:4 }}>
+                          <strong>{o.merchant}</strong> — {fmt2(o.amount)} on {o.date}, much more than the usual {fmt2(o.typical)} for {o.category}
+                        </div>
+                      ))}
+                      {smart.anomalies.duplicates.map(d => (
+                        <div key={d.merchant + d.dates[0]} style={{ marginBottom:4 }}>
+                          Possible duplicate: <strong>{d.merchant}</strong> {fmt2(d.amount)} on {d.dates.join(' and ')}
                         </div>
                       ))}
                     </InsightCard>
@@ -407,29 +443,6 @@ export default function SmartInsights({ embedded = false }) {
                         color={['#4F46E5','#DC2626','#D97706','#059669','#3B82F6','#F87171'][i % 6]} />
                     ))}
                 </div>
-
-                {/* Recurring merchants */}
-                {insights.recurringMerchants.length > 0 && (
-                  <div style={{ background:'var(--surface)', border:'1.5px solid var(--border-light)', borderRadius:14, padding:'18px 20px' }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:16 }}>
-                      <Repeat size={16} color="#4F46E5" />
-                      <div style={{ fontSize:14, fontWeight:800, color:'var(--text)' }}>Recurring Payments</div>
-                    </div>
-                    {insights.recurringMerchants.map(m => (
-                      <div key={m.name} style={{ display:'flex', justifyContent:'space-between', alignItems:'center',
-                        padding:'10px 0', borderBottom:'1px solid var(--border-light)' }}>
-                        <div>
-                          <div style={{ fontSize:13, fontWeight:600, color:'var(--text)', textTransform:'capitalize' }}>{m.name}</div>
-                          <div style={{ fontSize:11, color:'var(--text3)', marginTop:2 }}>{m.count}× in 3 months</div>
-                        </div>
-                        <div style={{ textAlign:'right' }}>
-                          <div style={{ fontSize:14, fontWeight:800, color:'#DC2626' }}>{fmt2(m.avg)}/mo</div>
-                          <div style={{ fontSize:11, color:'var(--text3)' }}>{fmt2(m.total)} total</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
 
                 {/* Budget health */}
                 {insights.budgetHealth.length > 0 && (
@@ -495,6 +508,63 @@ export default function SmartInsights({ embedded = false }) {
             )}
 
             {/* ── TIPS ── */}
+            {/* ── RECURRING CHARGES ── */}
+            {activeTab === 'subs' && (
+              <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+                {!smart || smart.subscriptions.items.length === 0 ? (
+                  <div style={{ textAlign:'center', padding:'50px 20px', color:'var(--text3)' }}>
+                    <div style={{ fontSize:40, marginBottom:10 }}>🔁</div>
+                    <div style={{ fontSize:15, fontWeight:700, color:'var(--text)', marginBottom:6 }}>No recurring charges found yet</div>
+                    <div style={{ fontSize:13 }}>We look for payments to the same merchant at a steady amount, at least three times.</div>
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ background:'linear-gradient(135deg,#4C3BC4,#8B5CF6)', borderRadius:20, padding:'20px 22px', color:'#fff' }}>
+                      <div style={{ fontSize:11, fontWeight:700, opacity:.75, textTransform:'uppercase', letterSpacing:'.1em' }}>Recurring charges</div>
+                      <div style={{ display:'flex', gap:28, marginTop:8, flexWrap:'wrap' }}>
+                        <div><div style={{ fontSize:26, fontWeight:900 }}>{fmt2(smart.subscriptions.monthlyTotal)}</div><div style={{ fontSize:11, opacity:.7 }}>per month</div></div>
+                        <div><div style={{ fontSize:26, fontWeight:900 }}>{fmt2(smart.subscriptions.annualTotal)}</div><div style={{ fontSize:11, opacity:.7 }}>per year</div></div>
+                      </div>
+                    </div>
+                    <div style={{ background:'var(--surface)', border:'1.5px solid var(--border-light)', borderRadius:14, padding:'6px 20px' }}>
+                      {smart.subscriptions.items.map(i => (
+                        <div key={i.merchant} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:12, padding:'14px 0', borderBottom:'1px solid var(--border-light)' }}>
+                          <div style={{ minWidth:0 }}>
+                            <div style={{ fontSize:14, fontWeight:700, color:'var(--text)' }}>{i.merchant}</div>
+                            <div style={{ fontSize:11.5, color:'var(--text3)', marginTop:2 }}>
+                              {i.cadence} · {i.charges} charges · last {i.lastDate}
+                            </div>
+                            <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginTop:6 }}>
+                              {i.priceChange && (
+                                <span style={{ fontSize:10.5, fontWeight:700, padding:'2px 8px', borderRadius:8,
+                                  color: i.priceChange.pct > 0 ? '#DC2626' : '#059669', background: i.priceChange.pct > 0 ? 'rgba(220,38,38,.1)' : 'rgba(5,150,105,.1)' }}>
+                                  Price {i.priceChange.pct > 0 ? 'up' : 'down'} {Math.abs(i.priceChange.pct)}% ({fmt2(i.priceChange.from)} to {fmt2(i.priceChange.to)})
+                                </span>
+                              )}
+                              {i.status === 'missing' && (
+                                <span style={{ fontSize:10.5, fontWeight:700, padding:'2px 8px', borderRadius:8, color:'#D97706', background:'rgba(217,119,6,.12)' }}>
+                                  Not charged since {i.lastDate}. Cancelled?
+                                </span>
+                              )}
+                              {!i.tracked && i.status === 'active' && (
+                                <Link to="/recurring" style={{ fontSize:10.5, fontWeight:700, padding:'2px 8px', borderRadius:8, color:'#4F46E5', background:'rgba(79,70,229,.1)', textDecoration:'none' }}>
+                                  Not in Recurring · add it
+                                </Link>
+                              )}
+                            </div>
+                          </div>
+                          <div style={{ textAlign:'right', flexShrink:0, opacity: i.status === 'missing' ? .55 : 1 }}>
+                            <div style={{ fontSize:15, fontWeight:800, color:'#DC2626' }}>{fmt2(i.amount)}</div>
+                            <div style={{ fontSize:11, color:'var(--text3)' }}>{fmt2(i.annualCost)}/yr</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
             {activeTab === 'tips' && (
               <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
                 <div style={{ fontSize:13, color:'var(--text3)', marginBottom:4 }}>

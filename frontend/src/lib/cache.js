@@ -27,7 +27,7 @@ export const FINANCE_KEYS = new Set([
   'dash-summary-cur', 'dash-summary-prev', 'dashboard-summary',
   'cat-breakdown', 'money-flow', 'analytics-stats',
   // planning
-  'budgets', 'budget-trend', 'goals', 'recurring',
+  'budgets', 'budget-trend', 'goals', 'recurring', 'forecast', 'smart-insights',
   // net worth
   'nw-history',
 ]);
