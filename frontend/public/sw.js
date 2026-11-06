@@ -1,4 +1,4 @@
-const CACHE = 'tracksy-v7';
+const CACHE = 'tracksy-v8';
 const PRECACHE = ['/', '/index.html'];
 const SHARE_CACHE = 'tracksy-shared';
 
@@ -36,6 +36,10 @@ self.addEventListener('fetch', e => {
     })());
     return;
   }
+
+  // Third-party requests (Google Tag Manager, Analytics, fonts) go straight to the network:
+  // never cache them, so a stale gtm.js can't be served.
+  if (url.origin !== self.location.origin) return;
 
   // API calls — never cache
   if (url.pathname.startsWith('/api/')) return;
