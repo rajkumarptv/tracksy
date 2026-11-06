@@ -46,12 +46,12 @@ const THIS_YEAR = new Date().getFullYear();
 const YEARS = [THIS_YEAR, THIS_YEAR - 1, THIS_YEAR - 2];
 
 const CAT_COLORS = {
-  Food:      { bg:'#e8f9f0', color:'#059669' },
+  Food:      { bg:'#e8f9f0', color:'#047857' },
   Income:    { bg:'#eef3ff', color:'#3B82F6' },
   Transport: { bg:'#eef3ff', color:'#3B82F6' },
   Shopping:  { bg:'#fff8ea', color:'#f5a623' },
   Health:    { bg:'#ffe8f0', color:'#e0457b' },
-  Bills:     { bg:'#f0edff', color:'#4F46E5' },
+  Bills:     { bg:'#f0edff', color:'#1D4ED8' },
 };
 
 /* Group transactions by day — "Today", "Yesterday", then "28 May 2026" */
@@ -79,7 +79,7 @@ function groupByMonth(txList) {
 const CREDIT_WALLET_TYPES = ['visa', 'mastercard'];
 
 /* ── Multi-segment mini donut (SVG, dashboard pie palette) ────────────── */
-const DONUT_COLORS = ['#4F46E5','#3B82F6','#DC2626','#D97706','#059669','#00CEC9'];
+const DONUT_COLORS = ['#1D4ED8','#3B82F6','#DC2626','#D97706','#047857','#0D9488'];
 function MiniDonut({ segments, size = 110, stroke = 14 }) {
   const r = (size - stroke) / 2;
   const circ = 2 * Math.PI * r;
@@ -119,7 +119,7 @@ function TxSummaryCard({ txList, fmt, isDark, periodLabel }) {
   });
   const segs = Object.values(catMap).sort((a,b)=>b-a).slice(0,6);
 
-  const green = isDark ? '#34D399' : '#059669';
+  const green = isDark ? '#34D399' : '#047857';
   const pink  = isDark ? '#F87171' : '#DC2626';
   const blue  = isDark ? '#4F8DFF' : '#3B82F6';
 
@@ -127,9 +127,9 @@ function TxSummaryCard({ txList, fmt, isDark, periodLabel }) {
     <div style={{
       margin:'0 16px 4px', padding:'18px 18px', borderRadius:14,
       background: isDark ? 'linear-gradient(135deg, #0B1136 0%, #09152B 100%)' : '#FFFFFF',
-      border: `1px solid ${isDark ? 'rgba(79,70,229,0.25)' : '#C7CCFA'}`,
+      border: `1px solid ${isDark ? 'rgba(29,78,216,0.25)' : '#C7CCFA'}`,
       boxShadow: isDark
-        ? '0 20px 40px rgba(0,0,0,0.45), 0 0 40px rgba(79,70,229,0.1)'
+        ? '0 20px 40px rgba(0,0,0,0.45), 0 0 40px rgba(29,78,216,0.1)'
         : '0 10px 40px rgba(16,24,40,0.06)',
       display:'flex', alignItems:'center', gap:14,
     }}>
@@ -149,8 +149,8 @@ function TxSummaryCard({ txList, fmt, isDark, periodLabel }) {
         <div style={{ position:'relative', flexShrink:0 }}>
           <MiniDonut segments={segs}/>
           <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center' }}>
-            <div style={{ width:38, height:38, borderRadius:'50%', border:`1.5px solid ${isDark?'rgba(79,70,229,.5)':'#C7CCFA'}`, display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <TrendingUp size={15} color="#4F46E5"/>
+            <div style={{ width:38, height:38, borderRadius:'50%', border:`1.5px solid ${isDark?'rgba(29,78,216,.5)':'#C7CCFA'}`, display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <TrendingUp size={15} color="#1D4ED8"/>
             </div>
           </div>
         </div>
@@ -351,7 +351,7 @@ function InlineCategoryCell({ tx, categories, onSave, catColor }) {
                   }}
                   onMouseEnter={e => { if (!isSel) e.currentTarget.style.background='var(--surface2)'; }}
                   onMouseLeave={e => { if (!isSel) e.currentTarget.style.background='transparent'; }}>
-                  <span style={{ width:22, height:22, borderRadius:6, background:`${c.color||'#4F46E5'}22`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, flexShrink:0 }}>{c.emoji}</span>
+                  <span style={{ width:22, height:22, borderRadius:6, background:`${c.color||'#1D4ED8'}22`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, flexShrink:0 }}>{c.emoji}</span>
                   <span style={{ fontWeight:600, flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{c.name}</span>
                   {isSel && <span style={{ color:'var(--accent)', fontSize:13, flexShrink:0 }}>✓</span>}
                 </button>
@@ -562,7 +562,7 @@ export default function Transactions() {
             <Upload size={13}/> {exporting ? 'Exporting…' : t('tx_export')}
           </button>
           <button className="btn btn-primary btn-sm"
-            style={{ display:'flex', alignItems:'center', gap:6, background:'#4F46E5', border:'none', boxShadow:'0 4px 14px rgba(79,70,229,.35)' }}
+            style={{ display:'flex', alignItems:'center', gap:6, background:'#1D4ED8', border:'none', boxShadow:'0 4px 14px rgba(29,78,216,.35)' }}
             onClick={openAdd}>
             <Plus size={13}/> {t('tx_add')}
           </button>
@@ -633,7 +633,7 @@ export default function Transactions() {
         <div className={styles.mobileHeaderRow}>
           <h1 className={styles.mobileTitle}>{t('tx_title')}</h1>
           <button className={styles.mobileDownload} onClick={openAdd}>
-            <Plus size={20} color="#4F46E5"/>
+            <Plus size={20} color="#1D4ED8"/>
           </button>
         </div>
 
@@ -729,7 +729,7 @@ export default function Transactions() {
                         <input type="checkbox"
                           checked={txList.length > 0 && txList.every(tx => selectedIds.has(tx.id))}
                           onChange={e => setSelectedIds(e.target.checked ? new Set(txList.map(t => t.id)) : new Set())}
-                          style={{ width:15, height:15, cursor:'pointer', accentColor:'#4F46E5' }}
+                          style={{ width:15, height:15, cursor:'pointer', accentColor:'#1D4ED8' }}
                         />
                       </th>
                       {[t('tx_col_date'),t('tx_col_amount'),t('tx_col_name'),t('tx_col_wallet'),t('tx_col_category'),t('tx_col_status'),''].map(h => (
@@ -745,18 +745,18 @@ export default function Transactions() {
                         ? { bg:'rgba(59,130,246,.1)', color:'#3B82F6' }
                         : (CAT_COLORS[tx.category_name] || { bg:'var(--accent-light)', color:'var(--accent)' });
                       const amtColor = isTransfer
-                        ? (isOut ? '#DC2626' : '#059669')
-                        : tx.type === 'income' ? '#059669' : '#DC2626';
+                        ? (isOut ? '#DC2626' : '#047857')
+                        : tx.type === 'income' ? '#047857' : '#DC2626';
                       const amtPrefix = isTransfer ? (isOut ? '−' : '+') : tx.type === 'income' ? '+' : '−';
                       return (
                         <tr key={tx.id}
                           onMouseEnter={e => e.currentTarget.style.background='var(--surface2)'}
-                          onMouseLeave={e => e.currentTarget.style.background=selectedIds.has(tx.id)?'rgba(79,70,229,.06)':''}
-                          style={{ transition:'background .1s', cursor:'default', background: selectedIds.has(tx.id) ? 'rgba(79,70,229,.06)' : '' }}>
+                          onMouseLeave={e => e.currentTarget.style.background=selectedIds.has(tx.id)?'rgba(29,78,216,.06)':''}
+                          style={{ transition:'background .1s', cursor:'default', background: selectedIds.has(tx.id) ? 'rgba(29,78,216,.06)' : '' }}>
                           <td style={{ padding:'13px 10px 13px 18px', borderBottom:'1px solid var(--border-light)', width:36 }}>
                             <input type="checkbox" checked={selectedIds.has(tx.id)}
                               onChange={() => toggleSelect(tx.id)}
-                              style={{ width:15, height:15, cursor:'pointer', accentColor:'#4F46E5' }}
+                              style={{ width:15, height:15, cursor:'pointer', accentColor:'#1D4ED8' }}
                             />
                           </td>
                           <td style={{ padding:'13px 18px', borderBottom:'1px solid var(--border-light)', fontSize:12.5, color:'var(--text3)', whiteSpace:'nowrap' }}>
@@ -827,7 +827,7 @@ export default function Transactions() {
                                     title="Edit">✏️</button>
                                 )}
                                 <button onClick={() => setBillModalTx(tx)}
-                                  style={{ background:'rgba(79,70,229,.1)', border:'1px solid rgba(79,70,229,.2)', borderRadius:8, cursor:'pointer', padding:'5px 8px', fontSize:12, color:'#4F46E5', display:'flex', alignItems:'center', gap:3 }}
+                                  style={{ background:'rgba(29,78,216,.1)', border:'1px solid rgba(29,78,216,.2)', borderRadius:8, cursor:'pointer', padding:'5px 8px', fontSize:12, color:'#1D4ED8', display:'flex', alignItems:'center', gap:3 }}
                                   title="Attach Bill">
                                   <Paperclip size={12}/>
                                 </button>
@@ -873,7 +873,7 @@ export default function Transactions() {
                   <input type="checkbox"
                     checked={txList.every(tx => selectedIds.has(tx.id))}
                     onChange={e => setSelectedIds(e.target.checked ? new Set(txList.map(t => t.id)) : new Set())}
-                    style={{ width:16, height:16, cursor:'pointer', accentColor:'#4F46E5' }}
+                    style={{ width:16, height:16, cursor:'pointer', accentColor:'#1D4ED8' }}
                   />
                   <span style={{ fontSize:12.5, fontWeight:600, color:'var(--text3)' }}>
                     {selectedIds.size > 0 ? `${selectedIds.size} selected` : 'Select all'}
@@ -916,9 +916,9 @@ export default function Transactions() {
                       const isIncome   = tx.type === 'income';
                       const catColor   = isTransfer
                         ? { bg:'rgba(59,130,246,.13)', color:'#3B82F6' }
-                        : (CAT_COLORS[tx.category_name] || { bg:'rgba(79,70,229,.1)', color:'var(--accent)' });
-                      const circleColor = isTransfer ? 'rgba(59,130,246,.13)' : isIncome ? 'rgba(5,150,105,.15)' : 'rgba(79,70,229,.13)';
-                      const iconColor   = isTransfer ? '#3B82F6' : isIncome ? '#059669' : '#4F46E5';
+                        : (CAT_COLORS[tx.category_name] || { bg:'rgba(29,78,216,.1)', color:'var(--accent)' });
+                      const circleColor = isTransfer ? 'rgba(59,130,246,.13)' : isIncome ? 'rgba(4,120,87,.15)' : 'rgba(29,78,216,.13)';
+                      const iconColor   = isTransfer ? '#3B82F6' : isIncome ? '#047857' : '#1D4ED8';
                       const amtColor    = isTransfer ? (isOut ? 'var(--red)' : 'var(--green)') : isIncome ? 'var(--green)' : 'var(--red)';
                       const amtPrefix   = isTransfer ? (isOut ? '−' : '+') : isIncome ? '+' : '−';
                       const d = new Date(tx.transaction_date);
@@ -928,13 +928,13 @@ export default function Transactions() {
                       return (
                         <div key={tx.id} style={{ borderBottom: isLast ? 'none' : '1px solid var(--border-light)' }}>
                           {/* Main row */}
-                          <div className={styles.txRow} style={{ borderBottom:'none', background: selectedIds.has(tx.id) ? 'rgba(79,70,229,.06)' : '' }}
+                          <div className={styles.txRow} style={{ borderBottom:'none', background: selectedIds.has(tx.id) ? 'rgba(29,78,216,.06)' : '' }}
                             onClick={() => { if (isConfirming) { setDeleteConfirmId(null); return; } if (!isTransfer) openEdit(tx); }}>
                             {/* Select checkbox */}
                             <input type="checkbox" checked={selectedIds.has(tx.id)}
                               onChange={() => toggleSelect(tx.id)}
                               onClick={e => e.stopPropagation()}
-                              style={{ width:15, height:15, cursor:'pointer', accentColor:'#4F46E5', flexShrink:0, marginRight:4 }}
+                              style={{ width:15, height:15, cursor:'pointer', accentColor:'#1D4ED8', flexShrink:0, marginRight:4 }}
                             />
                             {/* Icon — merchant logo for named tx, category icon otherwise */}
                             {isTransfer ? (
@@ -979,7 +979,7 @@ export default function Transactions() {
                               </div>
                               <div style={{ display:'flex', alignItems:'center', gap:4 }}>
                                 <button onClick={e => { e.stopPropagation(); setBillModalTx(tx); }}
-                                  style={{ background:'none', border:'none', padding:'2px 4px', cursor:'pointer', fontSize:13, opacity:0.55, lineHeight:1, borderRadius:6, transition:'opacity .15s', display:'flex', alignItems:'center', gap:2, color:'#4F46E5' }}
+                                  style={{ background:'none', border:'none', padding:'2px 4px', cursor:'pointer', fontSize:13, opacity:0.55, lineHeight:1, borderRadius:6, transition:'opacity .15s', display:'flex', alignItems:'center', gap:2, color:'#1D4ED8' }}
                                   onMouseEnter={e => e.currentTarget.style.opacity='1'}
                                   onMouseLeave={e => e.currentTarget.style.opacity='0.55'}
                                   title="Attach Bill">
@@ -1062,12 +1062,12 @@ export default function Transactions() {
 ───────────────────────────────────────────────────────────────────────── */
 const QUICK_EMOJIS_EXPENSE = ['🍔','🚗','🏠','🎭','💊','📚','✈️','🛍️','⚡','📱','🎮','☕','🐾','🧴','💇','🎵'];
 const QUICK_EMOJIS_INCOME  = ['💰','💼','🎁','📈','🏆','💵','🎯','💳','🤝','🧑‍💻','🏗️','📦'];
-const QUICK_COLORS = ['#4F46E5','#DC2626','#059669','#D97706','#3B82F6','#00CEC9','#fd79a8','#818CF8','#e17055','#00b894'];
+const QUICK_COLORS = ['#1D4ED8','#DC2626','#047857','#D97706','#3B82F6','#0D9488','#fd79a8','#60A5FA','#D97706','#047857'];
 
 function NewCategoryInline({ txType, onCreated, onCancel }) {
   const [name,   setName]   = useState('');
   const [emoji,  setEmoji]  = useState('');
-  const [color,  setColor]  = useState('#4F46E5');
+  const [color,  setColor]  = useState('#1D4ED8');
   const [saving, setSaving] = useState(false);
   const [err,    setErr]    = useState('');
 
@@ -1243,7 +1243,7 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
   /* filtered cats for main tx */
   const filteredCats = (categories||[]).filter(c => c.type === txType || c.type === 'both');
 
-  const typeColor = isTransfer ? '#3B82F6' : txType === 'income' ? '#059669' : '#DC2626';
+  const typeColor = isTransfer ? '#3B82F6' : txType === 'income' ? '#047857' : '#DC2626';
 
   /* ── Submit ───────────────────────────────────────────── */
   const handleSubmit = async () => {
@@ -1334,13 +1334,13 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
 
   const TAB_OPTS = [
     { key:'expense',  label:`📤 ${t('tx_expense')}`,  color:'var(--red)',   activeColor:'rgba(220,38,38,.1)'   },
-    { key:'income',   label:`📥 ${t('tx_income')}`,   color:'var(--green)', activeColor:'rgba(5,150,105,.1)'  },
+    { key:'income',   label:`📥 ${t('tx_income')}`,   color:'var(--green)', activeColor:'rgba(4,120,87,.1)'  },
     { key:'transfer', label:`🔄 ${t('tx_transfer')}`, color:'#3B82F6',      activeColor:'rgba(59,130,246,.1)'  },
   ];
 
   const headerBg = isTransfer
     ? 'rgba(59,130,246,.12)'
-    : txType === 'income' ? 'rgba(5,150,105,.12)' : 'rgba(220,38,38,.12)';
+    : txType === 'income' ? 'rgba(4,120,87,.12)' : 'rgba(220,38,38,.12)';
 
   /* Payment-method grid removed — transactions use the user's real accounts directly. */
   const showMethodPicker = false;
@@ -1352,7 +1352,7 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
   /* ── Premium type config ── */
   const TYPE_CFG = {
     expense:  { color:'#DC2626', bg:'rgba(220,38,38,.14)',  border:'rgba(220,38,38,.3)',  gradient:'#DC2626', icon:'📤', label:'Expense'  },
-    income:   { color:'#059669', bg:'rgba(5,150,105,.14)',   border:'rgba(5,150,105,.3)',   gradient:'#059669',  icon:'📥', label:'Income'   },
+    income:   { color:'#047857', bg:'rgba(4,120,87,.14)',   border:'rgba(4,120,87,.3)',   gradient:'#047857',  icon:'📥', label:'Income'   },
     transfer: { color:'#3B82F6', bg:'rgba(59,130,246,.14)',  border:'rgba(59,130,246,.3)',  gradient:'linear-gradient(135deg,#3B82F6,#60A5FA)',  icon:'🔄', label:'Transfer' },
   };
   const tc = TYPE_CFG[txType] || TYPE_CFG.expense;
@@ -1526,7 +1526,7 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
                     )}
                     {filteredCats.map(c => {
                       const sel = catId === c.id;
-                      const col = c.color || '#4F46E5';
+                      const col = c.color || '#1D4ED8';
                       return (
                         <button key={c.id} onClick={() => setCatId(sel ? '' : c.id)}
                           style={{ display:'flex', flexDirection:'column', alignItems:'center', padding:'10px 6px', borderRadius:14, border:`1.5px solid ${sel ? col+'60' : 'var(--border-light)'}`, background: sel ? col+'18' : 'var(--surface2)', cursor:'pointer', transition:'all .15s', gap:5 }}>
@@ -1606,7 +1606,7 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
             {/* Attach Bill — edit mode */}
             {isEdit && !confirmDelete && (
               <button onClick={() => setShowBills(true)}
-                style={{ padding:'12px', borderRadius:14, border:'1.5px solid rgba(79,70,229,.3)', background:'rgba(79,70,229,.08)', color:'#4F46E5', fontSize:13, fontWeight:700, cursor:'pointer', width:'100%', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+                style={{ padding:'12px', borderRadius:14, border:'1.5px solid rgba(29,78,216,.3)', background:'rgba(29,78,216,.08)', color:'#1D4ED8', fontSize:13, fontWeight:700, cursor:'pointer', width:'100%', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
                 <Paperclip size={15}/> Attach Bill / Receipt
               </button>
             )}

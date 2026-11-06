@@ -106,12 +106,12 @@ export default function Sidebar({ isOpen, onClose }) {
               <>
                 <motion.span
                   className={styles.navIconWrap}
-                  style={{ background: isActive ? 'rgba(79,70,229,.12)' : 'transparent' }}
+                  style={{ background: isActive ? 'rgba(29,78,216,.12)' : 'transparent' }}
                   whileHover={{ scale: 1.12, y: -1 }}
                   whileTap={{ scale: 0.92 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 20 }}
                 >
-                  <Gear size={18} weight={isActive ? 'fill' : 'regular'} color={isActive ? '#4F46E5' : 'var(--text3)'} />
+                  <Gear size={18} weight={isActive ? 'fill' : 'regular'} color={isActive ? '#1D4ED8' : 'var(--text3)'} />
                 </motion.span>
                 <span className={styles.navLabel}>{t('nav_settings')}</span>
               </>

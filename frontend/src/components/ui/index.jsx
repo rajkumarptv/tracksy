@@ -233,7 +233,7 @@ export function Topbar({ title, subtitle, children, showSearch = true }) {
         }}>
           <div style={{
             width: 30, height: 30, borderRadius: '50%',
-            background: 'linear-gradient(135deg, var(--accent), #818CF8)',
+            background: 'linear-gradient(135deg, var(--accent), #60A5FA)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: '#fff', fontSize: 11, fontWeight: 700, flexShrink: 0,
           }}>

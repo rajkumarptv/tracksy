@@ -26,7 +26,7 @@ const DS = {
     card: THEME.dark.cardBg, shadow: THEME.dark.cardShadow,
     overviewBg: THEME.dark.flowBg, overviewBorder: THEME.dark.flowBorder,
   },
-  purple:'#4F46E5', green:'#059669', pink:'#DC2626', orange:'#D97706', blue:'#3B82F6', danger:'#EF4444',
+  purple:'#1D4ED8', green:'#047857', pink:'#DC2626', orange:'#D97706', blue:'#3B82F6', danger:'#EF4444',
 };
 
 const spring = { type:'spring', stiffness:280, damping:28 };
@@ -104,7 +104,7 @@ export default function Family() {
       {/* Mode badge */}
       <motion.div variants={cardVar}
         style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'6px 13px', borderRadius:14, fontSize:12, fontWeight:700, width:'fit-content',
-          background: sharedMode ? 'rgba(5,150,105,.12)' : 'rgba(217,119,6,.12)', color: sharedMode ? DS.green : DS.orange }}>
+          background: sharedMode ? 'rgba(4,120,87,.12)' : 'rgba(217,119,6,.12)', color: sharedMode ? DS.green : DS.orange }}>
         {sharedMode ? '🤝 Shared — everyone sees everyone' : '👑 Head-only — only you see members'}
       </motion.div>
 
@@ -166,7 +166,7 @@ export default function Family() {
                 whileHover={m.is_me ? {} : { y:-2 }}
                 style={{ background:t.surface, borderRadius:16, padding:'16px', border:`1px solid ${t.border}`, cursor: m.is_me ? 'default':'pointer' }}>
                 <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:12 }}>
-                  <div style={{ width:44, height:44, borderRadius:'50%', background:'#4F46E5', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontWeight:800, color:'#fff', flexShrink:0 }}>
+                  <div style={{ width:44, height:44, borderRadius:'50%', background:'#1D4ED8', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, fontWeight:800, color:'#fff', flexShrink:0 }}>
                     {m.name.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase()}
                   </div>
                   <div style={{ flex:1, minWidth:0 }}>
@@ -174,7 +174,7 @@ export default function Family() {
                       {m.name}{m.is_me ? ' (You)' : ''}
                     </div>
                     <span style={{ fontSize:10.5, fontWeight:700, padding:'2px 8px', borderRadius:14, display:'inline-block', marginTop:3,
-                      background: m.role==='primary' ? 'rgba(217,119,6,.15)' : 'rgba(79,70,229,.12)', color: m.role==='primary' ? DS.orange : DS.purple }}>
+                      background: m.role==='primary' ? 'rgba(217,119,6,.15)' : 'rgba(29,78,216,.12)', color: m.role==='primary' ? DS.orange : DS.purple }}>
                       {m.role === 'primary' ? '👑 Head' : 'Member'}
                     </span>
                   </div>
@@ -241,7 +241,7 @@ function InviteCodeBar({ code, qc, t }) {
       <div style={{ fontSize:13, color:t.text2 }}>
         <strong style={{ color:t.text }}>Invite code:</strong> share this so family can join
       </div>
-      <div style={{ display:'flex', alignItems:'center', gap:8, background:'rgba(79,70,229,.1)', borderRadius:11, padding:'8px 15px' }}>
+      <div style={{ display:'flex', alignItems:'center', gap:8, background:'rgba(29,78,216,.1)', borderRadius:11, padding:'8px 15px' }}>
         <span style={{ fontSize:18, fontWeight:800, letterSpacing:3, color:DS.purple, fontFamily:'Inter, monospace' }}>{code}</span>
         <button onClick={copy} style={{ background:'none', border:'none', cursor:'pointer', color:DS.purple, display:'flex' }}>
           {copied ? <Check size={16}/> : <Copy size={16}/>}
@@ -288,7 +288,7 @@ function SetupFamily({ qc }) {
         <>
           <motion.button variants={cardVar} onClick={() => { setMode('create'); setErr(''); }} className={styles.card}
             style={{ background:t.card, border:`1px solid ${t.border}`, boxShadow:t.shadow, display:'flex', alignItems:'center', gap:14, cursor:'pointer', textAlign:'left', width:'100%' }}>
-            <div style={{ width:48, height:48, borderRadius:14, background:'rgba(79,70,229,.12)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+            <div style={{ width:48, height:48, borderRadius:14, background:'rgba(29,78,216,.12)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
               <Plus size={22} color={DS.purple}/>
             </div>
             <div style={{ flex:1 }}>
@@ -299,7 +299,7 @@ function SetupFamily({ qc }) {
           </motion.button>
           <motion.button variants={cardVar} onClick={() => { setMode('join'); setErr(''); }} className={styles.card}
             style={{ background:t.card, border:`1px solid ${t.border}`, boxShadow:t.shadow, display:'flex', alignItems:'center', gap:14, cursor:'pointer', textAlign:'left', width:'100%' }}>
-            <div style={{ width:48, height:48, borderRadius:14, background:'rgba(5,150,105,.12)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+            <div style={{ width:48, height:48, borderRadius:14, background:'rgba(4,120,87,.12)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
               <UserPlus size={22} color={DS.green}/>
             </div>
             <div style={{ flex:1 }}>
@@ -326,7 +326,7 @@ function SetupFamily({ qc }) {
               <button key={opt.id} type="button" onClick={() => setShareMode(opt.id)}
                 style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 14px', borderRadius:13, cursor:'pointer', textAlign:'left',
                   border: shareMode===opt.id ? `2px solid ${DS.purple}` : `1.5px solid ${t.border}`,
-                  background: shareMode===opt.id ? 'rgba(79,70,229,.1)' : t.surface }}>
+                  background: shareMode===opt.id ? 'rgba(29,78,216,.1)' : t.surface }}>
                 <span style={{ fontSize:22 }}>{opt.icon}</span>
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:13.5, fontWeight:700, color: shareMode===opt.id ? DS.purple : t.text }}>{opt.title}</div>
@@ -340,7 +340,7 @@ function SetupFamily({ qc }) {
           <div style={{ display:'flex', gap:10 }}>
             <button onClick={()=>{setMode(null);setErr('');}} style={{ flex:1, padding:'12px', borderRadius:12, border:`1.5px solid ${t.border}`, background:t.surface, color:t.text2, fontWeight:600, fontSize:14, cursor:'pointer' }}>Back</button>
             <button onClick={()=>createMut.mutate()} disabled={!name.trim()||createMut.isPending}
-              style={{ flex:2, padding:'12px', borderRadius:12, border:'none', background:'#4F46E5', color:'#fff', fontWeight:700, fontSize:14, cursor:'pointer', opacity:(!name.trim())?.6:1 }}>
+              style={{ flex:2, padding:'12px', borderRadius:12, border:'none', background:'#1D4ED8', color:'#fff', fontWeight:700, fontSize:14, cursor:'pointer', opacity:(!name.trim())?.6:1 }}>
               {createMut.isPending ? 'Creating…' : 'Create Family'}
             </button>
           </div>
@@ -359,7 +359,7 @@ function SetupFamily({ qc }) {
           <div style={{ display:'flex', gap:10 }}>
             <button onClick={()=>{setMode(null);setErr('');}} style={{ flex:1, padding:'12px', borderRadius:12, border:`1.5px solid ${t.border}`, background:t.surface, color:t.text2, fontWeight:600, fontSize:14, cursor:'pointer' }}>Back</button>
             <button onClick={()=>joinMut.mutate()} disabled={!code.trim()||joinMut.isPending}
-              style={{ flex:2, padding:'12px', borderRadius:12, border:'none', background:'#059669', color:'#fff', fontWeight:700, fontSize:14, cursor:'pointer', opacity:(!code.trim())?.6:1 }}>
+              style={{ flex:2, padding:'12px', borderRadius:12, border:'none', background:'#047857', color:'#fff', fontWeight:700, fontSize:14, cursor:'pointer', opacity:(!code.trim())?.6:1 }}>
               {joinMut.isPending ? 'Joining…' : 'Join Family'}
             </button>
           </div>
@@ -396,11 +396,11 @@ function MemberView({ status, qc }) {
         <div style={{ display:'grid', gap:8 }}>
           {status.members?.map(m => (
             <div key={m.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', borderRadius:12, background:t.surface, border:`1px solid ${t.border}` }}>
-              <div style={{ width:34, height:34, borderRadius:'50%', background:'#4F46E5', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:800, color:'#fff', flexShrink:0 }}>
+              <div style={{ width:34, height:34, borderRadius:'50%', background:'#1D4ED8', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:800, color:'#fff', flexShrink:0 }}>
                 {m.name.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase()}
               </div>
               <span style={{ fontSize:13.5, color:t.text, fontWeight:600, flex:1 }}>{m.name}{m.is_me?' (You)':''}</span>
-              <span style={{ fontSize:10.5, fontWeight:700, padding:'2px 8px', borderRadius:14, background: m.family_role==='primary'?'rgba(217,119,6,.15)':'rgba(79,70,229,.12)', color: m.family_role==='primary'?DS.orange:DS.purple }}>
+              <span style={{ fontSize:10.5, fontWeight:700, padding:'2px 8px', borderRadius:14, background: m.family_role==='primary'?'rgba(217,119,6,.15)':'rgba(29,78,216,.12)', color: m.family_role==='primary'?DS.orange:DS.purple }}>
                 {m.family_role==='primary'?'👑 Head':'Member'}
               </span>
             </div>

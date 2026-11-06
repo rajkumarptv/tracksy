@@ -107,7 +107,7 @@
     transition: all .15s; white-space: nowrap;
   }
   .chipActive {
-    background: var(--accent); color: #fff; border-color: var(--accent);
+    background: var(--accent-btn); color: #fff; border-color: var(--accent-btn);
     box-shadow: 0 4px 12px var(--accent-glow);
   }
 
@@ -202,9 +202,9 @@
     display: flex; align-items: center; justify-content: center;
     position: fixed; bottom: 28px; right: 22px;
     width: 58px; height: 58px; border-radius: 50%;
-    background: #4F46E5;
+    background: #1D4ED8;
     border: none; cursor: pointer; z-index: 50;
-    box-shadow: 0 6px 24px rgba(79,70,229,.5);
+    box-shadow: 0 6px 24px rgba(29,78,216,.5);
     transition: transform .2s, box-shadow .2s;
   }
   .fab:active { transform: scale(.94); }

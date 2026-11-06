@@ -43,7 +43,7 @@
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: #4F46E5;
+  background: #1D4ED8;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -123,7 +123,7 @@
   min-width: 19px;
   height: 19px;
   border-radius: 10px;
-  background: #4F46E5;
+  background: #1D4ED8;
   color: #fff;
   font-size: 11px;
   font-weight: 800;
@@ -316,7 +316,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 6px 18px rgba(79,70,229,.4);
+  box-shadow: 0 6px 18px rgba(29,78,216,.4);
   animation: insightGlow 2.6s ease-in-out infinite;
 }
 
@@ -328,8 +328,8 @@
 }
 
 @keyframes insightGlow {
-  0%, 100% { box-shadow: 0 6px 18px rgba(79,70,229,.4); }
-  50%      { box-shadow: 0 6px 26px rgba(79,70,229,.7); }
+  0%, 100% { box-shadow: 0 6px 18px rgba(29,78,216,.4); }
+  50%      { box-shadow: 0 6px 26px rgba(29,78,216,.7); }
 }
 
 @keyframes pulseDot {
@@ -533,7 +533,7 @@
 .walletArt {
   position: relative;
   font-size: 34px;
-  filter: drop-shadow(0 6px 12px rgba(79,70,229,.35));
+  filter: drop-shadow(0 6px 12px rgba(29,78,216,.35));
   animation: floaty 3.4s ease-in-out infinite;
 }
 
@@ -542,7 +542,7 @@
   top: -8px;
   right: -12px;
   font-size: 13px;
-  color: #818CF8;
+  color: #60A5FA;
   animation: sparkle 2.2s ease-in-out infinite;
 }
 

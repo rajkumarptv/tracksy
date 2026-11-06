@@ -8,18 +8,18 @@ import {
 import styles from './BottomNav.module.css';
 
 const LEFT_TABS = [
-  { path: '/',       Icon: House,  label: 'Dashboard', color: '#4F46E5' },
-  { path: '/wallet', Icon: Wallet, label: 'Accounts',  color: '#4F46E5' },
+  { path: '/',       Icon: House,  label: 'Dashboard', color: '#1D4ED8' },
+  { path: '/wallet', Icon: Wallet, label: 'Accounts',  color: '#1D4ED8' },
 ];
 const RIGHT_TABS = [
-  { path: '/budget', Icon: ChartPie, label: 'Budget', color: '#4F46E5' },
-  { path: '/goals',  Icon: Target,   label: 'Goals',  color: '#4F46E5' },
+  { path: '/budget', Icon: ChartPie, label: 'Budget', color: '#1D4ED8' },
+  { path: '/goals',  Icon: Target,   label: 'Goals',  color: '#1D4ED8' },
 ];
 
 const ACTION_OPTIONS = [
-  { key: 'income',   icon: ArrowUp,          label: 'Income',   color: '#059669', bg: 'rgba(5,150,105,.13)',   route: '/transactions?add=income'   },
+  { key: 'income',   icon: ArrowUp,          label: 'Income',   color: '#047857', bg: 'rgba(4,120,87,.13)',   route: '/transactions?add=income'   },
   { key: 'expense',  icon: ArrowDown,        label: 'Expense',  color: '#DC2626', bg: 'rgba(220,38,38,.13)',  route: '/transactions?add=expense'  },
-  { key: 'transfer', icon: ArrowsClockwise,  label: 'Transfer', color: '#4F46E5', bg: 'rgba(79,70,229,.13)',  route: '/transactions?add=transfer' },
+  { key: 'transfer', icon: ArrowsClockwise,  label: 'Transfer', color: '#1D4ED8', bg: 'rgba(29,78,216,.13)',  route: '/transactions?add=transfer' },
 ];
 
 function Tab({ path, Icon, label, color }) {

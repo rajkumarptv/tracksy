@@ -55,8 +55,8 @@ function InsightCard({ icon: Icon, color, bg, title, children, badge, priority }
             <div style={{ fontSize:13.5, fontWeight:700, color:'var(--text)', lineHeight:1.3 }}>{title}</div>
             {badge && (
               <span style={{ fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:14,
-                background: priority==='high'?'rgba(220,38,38,.12)':priority==='medium'?'rgba(217,119,6,.12)':'rgba(79,70,229,.12)',
-                color: priority==='high'?'#DC2626':priority==='medium'?'#D97706':'#4F46E5' }}>
+                background: priority==='high'?'rgba(220,38,38,.12)':priority==='medium'?'rgba(217,119,6,.12)':'rgba(29,78,216,.12)',
+                color: priority==='high'?'#DC2626':priority==='medium'?'#D97706':'#1D4ED8' }}>
                 {badge}
               </span>
             )}
@@ -234,10 +234,10 @@ export default function SmartInsights({ embedded = false }) {
 
     // Tips
     const tips = [];
-    if (savingsRate < 20) tips.push({ icon: PiggyBank, color:'#4F46E5', bg:'rgba(79,70,229,.1)', text: `Your savings rate is ${savingsRate}%. Aim for 20%+ by trimming your top spending category: ${topCats[0]?.[0] || 'expenses'}.` });
+    if (savingsRate < 20) tips.push({ icon: PiggyBank, color:'#1D4ED8', bg:'rgba(29,78,216,.1)', text: `Your savings rate is ${savingsRate}%. Aim for 20%+ by trimming your top spending category: ${topCats[0]?.[0] || 'expenses'}.` });
     if (unusualSpends.length) tips.push({ icon: AlertTriangle, color:'#D97706', bg:'rgba(217,119,6,.1)', text: `Unusual spend detected in ${unusualSpends[0].cat} — ${unusualSpends[0].pct}% above your 3-month average. Review if needed.` });
     if (recurringMerchants.length > 3) tips.push({ icon: Repeat, color:'#DC2626', bg:'rgba(220,38,38,.1)', text: `You have ${recurringMerchants.length} recurring payments totalling ${fmt2(recurringMerchants.reduce((s,m)=>s+m.avg,0))}/mo. Audit subscriptions you no longer use.` });
-    if (savingsRate >= 30) tips.push({ icon: Award, color:'#059669', bg:'rgba(5,150,105,.1)', text: `Excellent! ${savingsRate}% savings rate this month. Consider moving the surplus into your investment or goal accounts.` });
+    if (savingsRate >= 30) tips.push({ icon: Award, color:'#047857', bg:'rgba(4,120,87,.1)', text: `Excellent! ${savingsRate}% savings rate this month. Consider moving the surplus into your investment or goal accounts.` });
 
     return {
       thisIncome, thisExpense, lastIncome, lastExpense,
@@ -297,7 +297,7 @@ export default function SmartInsights({ embedded = false }) {
                 fontWeight: activeTab===key ? 700 : 500,
                 fontSize: 12.5,
                 background: activeTab===key ? 'var(--surface)' : 'transparent',
-                color: activeTab===key ? '#4F46E5' : 'var(--text3)',
+                color: activeTab===key ? '#1D4ED8' : 'var(--text3)',
                 boxShadow: activeTab===key ? '0 2px 8px rgba(0,0,0,.08)' : 'none',
                 transition: 'all .18s',
               }}>
@@ -336,7 +336,7 @@ export default function SmartInsights({ embedded = false }) {
                 )}
 
                 {/* Score card */}
-                <div style={{ background:'#4F46E5', borderRadius:14, padding:'22px 24px', color:'#fff' }}>
+                <div style={{ background:'#1D4ED8', borderRadius:14, padding:'22px 24px', color:'#fff' }}>
                   <div style={{ fontSize:11, fontWeight:700, opacity:.7, textTransform:'uppercase', letterSpacing:'.1em', marginBottom:6 }}>Financial Health Score</div>
                   <div style={{ display:'flex', alignItems:'flex-end', gap:12, marginBottom:16 }}>
                     <div style={{ fontSize:52, fontWeight:900, lineHeight:1 }}>
@@ -368,8 +368,8 @@ export default function SmartInsights({ embedded = false }) {
                 {/* Quick insights */}
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(min(300px,100%),1fr))', gap:12 }}>
                   <InsightCard icon={insights.expensePct > 20 ? AlertTriangle : CheckCircle}
-                    color={insights.expensePct > 20 ? '#D97706' : '#059669'}
-                    bg={insights.expensePct > 20 ? 'rgba(217,119,6,.12)' : 'rgba(5,150,105,.12)'}
+                    color={insights.expensePct > 20 ? '#D97706' : '#047857'}
+                    bg={insights.expensePct > 20 ? 'rgba(217,119,6,.12)' : 'rgba(4,120,87,.12)'}
                     title="Spending vs Last Month"
                     badge={insights.expensePct === null ? 'New' : insights.expensePct > 0 ? `+${insights.expensePct}%` : `${insights.expensePct}%`}
                     priority={insights.expensePct > 20 ? 'medium' : 'low'}>
@@ -385,8 +385,8 @@ export default function SmartInsights({ embedded = false }) {
                   </InsightCard>
 
                   <InsightCard icon={PiggyBank}
-                    color={insights.savingsRate >= 20 ? '#059669' : '#DC2626'}
-                    bg={insights.savingsRate >= 20 ? 'rgba(5,150,105,.12)' : 'rgba(220,38,38,.12)'}
+                    color={insights.savingsRate >= 20 ? '#047857' : '#DC2626'}
+                    bg={insights.savingsRate >= 20 ? 'rgba(4,120,87,.12)' : 'rgba(220,38,38,.12)'}
                     title="Savings Rate"
                     badge={`${insights.savingsRate}%`}
                     priority={insights.savingsRate < 10 ? 'high' : insights.savingsRate < 20 ? 'medium' : 'low'}>
@@ -440,7 +440,7 @@ export default function SmartInsights({ embedded = false }) {
                       <SpendBar key={cat} label={cat} amount={amt}
                         max={insights.topCats[0][1]}
                         emoji={insights.catEmoji[cat]}
-                        color={['#4F46E5','#DC2626','#D97706','#059669','#3B82F6','#F87171'][i % 6]} />
+                        color={['#1D4ED8','#DC2626','#D97706','#047857','#3B82F6','#F87171'][i % 6]} />
                     ))}
                 </div>
 
@@ -454,7 +454,7 @@ export default function SmartInsights({ embedded = false }) {
                     {insights.budgetHealth.map(b => {
                       const over = b.pct > 100;
                       const warn = b.pct > 80;
-                      const color = over ? '#DC2626' : warn ? '#D97706' : '#059669';
+                      const color = over ? '#DC2626' : warn ? '#D97706' : '#047857';
                       return (
                         <div key={b.id} style={{ marginBottom:14 }}>
                           <div style={{ display:'flex', justifyContent:'space-between', marginBottom:5 }}>
@@ -481,7 +481,7 @@ export default function SmartInsights({ embedded = false }) {
 
                 {/* 6-month chart */}
                 {['income','expense','savings'].map(type => {
-                  const colors = { income:'#059669', expense:'#DC2626', savings:'#4F46E5' };
+                  const colors = { income:'#047857', expense:'#DC2626', savings:'#1D4ED8' };
                   const labels = { income:'Monthly Income', expense:'Monthly Expense', savings:'Monthly Savings' };
                   const data = insights.monthTrend.map(m => ({ label:m.label, value: Math.max(0, m[type]) }));
                   const total = data.reduce((s,d) => s+d.value, 0);
@@ -519,7 +519,7 @@ export default function SmartInsights({ embedded = false }) {
                   </div>
                 ) : (
                   <>
-                    <div style={{ background:'linear-gradient(135deg,#4C3BC4,#8B5CF6)', borderRadius:20, padding:'20px 22px', color:'#fff' }}>
+                    <div style={{ background:'linear-gradient(135deg,#1E40AF,#8B5CF6)', borderRadius:20, padding:'20px 22px', color:'#fff' }}>
                       <div style={{ fontSize:11, fontWeight:700, opacity:.75, textTransform:'uppercase', letterSpacing:'.1em' }}>Recurring charges</div>
                       <div style={{ display:'flex', gap:28, marginTop:8, flexWrap:'wrap' }}>
                         <div><div style={{ fontSize:26, fontWeight:900 }}>{fmt2(smart.subscriptions.monthlyTotal)}</div><div style={{ fontSize:11, opacity:.7 }}>per month</div></div>
@@ -537,7 +537,7 @@ export default function SmartInsights({ embedded = false }) {
                             <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginTop:6 }}>
                               {i.priceChange && (
                                 <span style={{ fontSize:10.5, fontWeight:700, padding:'2px 8px', borderRadius:8,
-                                  color: i.priceChange.pct > 0 ? '#DC2626' : '#059669', background: i.priceChange.pct > 0 ? 'rgba(220,38,38,.1)' : 'rgba(5,150,105,.1)' }}>
+                                  color: i.priceChange.pct > 0 ? '#DC2626' : '#047857', background: i.priceChange.pct > 0 ? 'rgba(220,38,38,.1)' : 'rgba(4,120,87,.1)' }}>
                                   Price {i.priceChange.pct > 0 ? 'up' : 'down'} {Math.abs(i.priceChange.pct)}% ({fmt2(i.priceChange.from)} to {fmt2(i.priceChange.to)})
                                 </span>
                               )}
@@ -547,7 +547,7 @@ export default function SmartInsights({ embedded = false }) {
                                 </span>
                               )}
                               {!i.tracked && i.status === 'active' && (
-                                <Link to="/recurring" style={{ fontSize:10.5, fontWeight:700, padding:'2px 8px', borderRadius:8, color:'#4F46E5', background:'rgba(79,70,229,.1)', textDecoration:'none' }}>
+                                <Link to="/recurring" style={{ fontSize:10.5, fontWeight:700, padding:'2px 8px', borderRadius:8, color:'#1D4ED8', background:'rgba(29,78,216,.1)', textDecoration:'none' }}>
                                   Not in Recurring · add it
                                 </Link>
                               )}
@@ -572,7 +572,7 @@ export default function SmartInsights({ embedded = false }) {
                 </div>
 
                 {insights.tips.length === 0 && (
-                  <InsightCard icon={CheckCircle} color="#059669" bg="rgba(5,150,105,.12)" title="All good!" priority="low">
+                  <InsightCard icon={CheckCircle} color="#047857" bg="rgba(4,120,87,.12)" title="All good!" priority="low">
                     Your finances look healthy. Keep up the great work!
                   </InsightCard>
                 )}
@@ -587,7 +587,7 @@ export default function SmartInsights({ embedded = false }) {
                 {/* General always-on tips */}
                 {[
                   { icon:Zap,      color:'#D97706', bg:'rgba(217,119,6,.1)',   text:'Set up recurring transactions for fixed expenses (rent, EMI, subscriptions) so your expense tracking stays accurate automatically.' },
-                  { icon:Target,   color:'#4F46E5', bg:'rgba(79,70,229,.1)',   text:'Create a Savings Goal for your next big purchase. Even ₹500/week adds up to ₹26,000 a year.' },
+                  { icon:Target,   color:'#1D4ED8', bg:'rgba(29,78,216,.1)',   text:'Create a Savings Goal for your next big purchase. Even ₹500/week adds up to ₹26,000 a year.' },
                   { icon:BarChart2, color:'#3B82F6', bg:'rgba(59,130,246,.1)', text:'Review your budget categories every month. Adjust limits as your lifestyle changes rather than ignoring overages.' },
                 ].map((tip, i) => (
                   <InsightCard key={`gen-${i}`} icon={tip.icon} color={tip.color} bg={tip.bg}

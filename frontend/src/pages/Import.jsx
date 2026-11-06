@@ -14,20 +14,20 @@ const SOURCE_OPTIONS = [
   { id:'paytm',   label:'Paytm',       logo:'paytm',   color:'#00B9F1', hint:'Paytm App → Passbook → Download Statement → Excel (.xlsx) ⭐ Best! or PDF/CSV' },
   { id:'phonepe', label:'PhonePe',     logo:'phonepe', color:'#5f259f', hint:'PhonePe → Profile → Account Statement → Export CSV' },
   { id:'gpay',    label:'GPay',        logo:'gpay',    color:'#4285F4', hint:'Google Takeout → Google Pay → transactions.csv' },
-  { id:'auto',    label:'Auto Detect', logo:null,      color:'#4F46E5', hint:'Let Tracksy figure out the format automatically' },
+  { id:'auto',    label:'Auto Detect', logo:null,      color:'#1D4ED8', hint:'Let Tracksy figure out the format automatically' },
 ];
 
-const TYPE_COLOR = { income:'#059669', expense:'#DC2626' };
-const TYPE_BG    = { income:'rgba(5,150,105,.12)', expense:'rgba(220,38,38,.1)' };
+const TYPE_COLOR = { income:'#047857', expense:'#DC2626' };
+const TYPE_BG    = { income:'rgba(4,120,87,.12)', expense:'rgba(220,38,38,.1)' };
 
 const WALLET_ICONS   = { visa:'💳', mastercard:'💳', paypal:'🅿️', bank:'🏦', cash:'💵', crypto:'₿', loan:'📋', asset:'📈', lending:'🤝', other:'👛' };
 const WALLET_GRADIENTS = [
-  '#4F46E5',
-  'linear-gradient(135deg,#00b894,#55efc4)',
-  'linear-gradient(135deg,#e17055,#fd79a8)',
-  'linear-gradient(135deg,#0984e3,#74b9ff)',
+  '#1D4ED8',
+  'linear-gradient(135deg,#047857,#34D399)',
+  'linear-gradient(135deg,#D97706,#fd79a8)',
+  'linear-gradient(135deg,#0984e3,#60A5FA)',
   'linear-gradient(135deg,#6ab04c,#badc58)',
-  'linear-gradient(135deg,#1A1033,#3d3473)',
+  'linear-gradient(135deg,#0B1F4B,#3d3473)',
 ];
 
 // Steps: 1=Upload  2=Pick Account  3=Review  4=Done
@@ -209,7 +209,7 @@ export default function Import() {
               <textarea readOnly value={parseErr.sample} onFocus={e=>e.target.select()}
                 style={{ width:'100%', height:90, fontSize:11, fontFamily:'monospace', padding:'8px 10px', borderRadius:10, border:'1px solid var(--border)', background:'var(--surface2)', color:'var(--text2)', resize:'vertical', boxSizing:'border-box' }}/>
               <button onClick={()=>{ navigator.clipboard?.writeText(parseErr.sample); }}
-                style={{ marginTop:8, fontSize:12.5, fontWeight:700, color:'#4F46E5', background:'rgba(79,70,229,.1)', border:'none', borderRadius:9, padding:'6px 14px', cursor:'pointer' }}>Copy sample</button>
+                style={{ marginTop:8, fontSize:12.5, fontWeight:700, color:'#1D4ED8', background:'rgba(29,78,216,.1)', border:'none', borderRadius:9, padding:'6px 14px', cursor:'pointer' }}>Copy sample</button>
             </>
           )}
           <button onClick={()=>setParseErr(null)} style={{ marginLeft:8, marginTop:8, fontSize:12.5, color:'var(--text3)', background:'none', border:'none', cursor:'pointer' }}>Dismiss</button>
@@ -232,7 +232,7 @@ export default function Import() {
             <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
               <button className="btn btn-ghost" onClick={() => { setPwNeeded(false); setPwValue(''); }}>Cancel</button>
               <button className="btn btn-primary" disabled={!pwValue.trim() || previewMut.isPending} onClick={submitPassword}
-                style={{ background:'#4F46E5', border:'none' }}>
+                style={{ background:'#1D4ED8', border:'none' }}>
                 {previewMut.isPending ? 'Unlocking…' : 'Unlock PDF'}
               </button>
             </div>
@@ -253,9 +253,9 @@ export default function Import() {
                   <div style={{
                     width:34, height:34, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center',
                     fontWeight:700, fontSize:13, transition:'all .3s',
-                    background: done ? '#059669' : active ? '#4F46E5' : 'var(--surface3)',
+                    background: done ? '#047857' : active ? '#1D4ED8' : 'var(--surface3)',
                     color: done||active ? '#fff' : 'var(--text3)',
-                    boxShadow: active ? '0 4px 14px rgba(79,70,229,.45)' : 'none',
+                    boxShadow: active ? '0 4px 14px rgba(29,78,216,.45)' : 'none',
                   }}>
                     {done ? <Check size={15}/> : s}
                   </div>
@@ -263,7 +263,7 @@ export default function Import() {
                 </div>
                 {i < STEPS.length-1 && (
                   <div style={{ flex:1, height:2, margin:'0 6px 18px', transition:'background .3s',
-                    background: done ? '#059669' : 'var(--surface3)' }}/>
+                    background: done ? '#047857' : 'var(--surface3)' }}/>
                 )}
               </div>
             );
@@ -279,7 +279,7 @@ export default function Import() {
             {/* ── Scan a payment screenshot ── */}
             <div style={{ marginBottom:22, padding:'16px 18px', borderRadius:16, border:'1.5px solid var(--accent)', background:'var(--accent-light)' }}>
               <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
-                <div style={{ width:42, height:42, borderRadius:12, background:'var(--accent)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                <div style={{ width:42, height:42, borderRadius:12, background:'var(--accent-btn)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                   <Camera size={22} color="#fff"/>
                 </div>
                 <div style={{ flex:1, minWidth:160 }}>
@@ -289,7 +289,7 @@ export default function Import() {
                 <input ref={receiptRef} type="file" accept="image/*" style={{ display:'none' }}
                   onChange={e => runScan(e.target.files[0])}/>
                 <button onClick={() => receiptRef.current?.click()} disabled={scanning}
-                  style={{ padding:'10px 18px', borderRadius:11, border:'none', background:'var(--accent)', color:'#fff', fontWeight:700, fontSize:13, cursor:'pointer', whiteSpace:'nowrap' }}>
+                  style={{ padding:'10px 18px', borderRadius:11, border:'none', background:'var(--accent-btn)', color:'#fff', fontWeight:700, fontSize:13, cursor:'pointer', whiteSpace:'nowrap' }}>
                   {scanning ? '⟳ Reading…' : '📷 Upload Screenshot'}
                 </button>
               </div>
@@ -352,15 +352,15 @@ export default function Import() {
               onDrop={handleDrop}
               onClick={() => fileRef.current?.click()}
               style={{
-                border:`2px dashed ${dragOver?'#4F46E5':'var(--border)'}`,
+                border:`2px dashed ${dragOver?'#1D4ED8':'var(--border)'}`,
                 borderRadius:14, padding:'48px 32px', textAlign:'center', cursor:'pointer',
-                background: dragOver?'rgba(79,70,229,.06)':'var(--surface)',
+                background: dragOver?'rgba(29,78,216,.06)':'var(--surface)',
                 transition:'all .2s', marginBottom:16,
               }}>
               <input ref={fileRef} type="file" accept=".txt,.csv,.pdf,.xlsx,.xls" style={{display:'none'}}
                 onChange={e => handleFile(e.target.files[0])}/>
-              <div style={{ width:64, height:64, borderRadius:14, background:'rgba(79,70,229,.1)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px' }}>
-                <Upload size={28} color="#4F46E5"/>
+              <div style={{ width:64, height:64, borderRadius:14, background:'rgba(29,78,216,.1)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px' }}>
+                <Upload size={28} color="#1D4ED8"/>
               </div>
               <div style={{ fontSize:17, fontWeight:800, color:'var(--text)', marginBottom:6 }}>
                 {dragOver ? 'Drop it here!' : 'Drop your statement here'}
@@ -369,15 +369,15 @@ export default function Import() {
                 Supports <strong>Excel .xlsx</strong> ⭐ · PDF · CSV · TXT
               </div>
               <div style={{ display:'inline-flex', alignItems:'center', gap:7, padding:'10px 22px', borderRadius:14,
-                background:'#4F46E5', color:'#fff', fontWeight:700, fontSize:13,
-                boxShadow:'0 4px 14px rgba(79,70,229,.35)' }}>
+                background:'#1D4ED8', color:'#fff', fontWeight:700, fontSize:13,
+                boxShadow:'0 4px 14px rgba(29,78,216,.35)' }}>
                 <FileText size={15}/> Choose File
               </div>
             </div>
 
             {previewMut.isPending && (
               <div style={{ display:'flex', alignItems:'center', gap:10, color:'var(--text3)', fontSize:13, padding:'12px 0' }}>
-                <div style={{ width:18, height:18, border:'2px solid #4F46E5', borderTopColor:'transparent', borderRadius:'50%', animation:'spin 1s linear infinite' }}/>
+                <div style={{ width:18, height:18, border:'2px solid #1D4ED8', borderTopColor:'transparent', borderRadius:'50%', animation:'spin 1s linear infinite' }}/>
                 Parsing statement...
               </div>
             )}
@@ -400,8 +400,8 @@ export default function Import() {
                   {l:'🔜 ICICI / SBI'},
                 ].map(b => (
                   <span key={b.l} style={{ padding:'4px 11px', borderRadius:14,
-                    background: b.l.startsWith('✅') ? 'rgba(5,150,105,.1)' : 'var(--surface2)',
-                    color: b.l.startsWith('✅') ? '#059669' : 'var(--text3)',
+                    background: b.l.startsWith('✅') ? 'rgba(4,120,87,.1)' : 'var(--surface2)',
+                    color: b.l.startsWith('✅') ? '#047857' : 'var(--text3)',
                     fontSize:11.5, fontWeight:600 }}>{b.l}</span>
                 ))}
               </div>
@@ -415,9 +415,9 @@ export default function Import() {
         {step === 2 && (
           <div style={{ maxWidth:620 }}>
             {/* Summary of parsed file */}
-            <div style={{ background:'rgba(79,70,229,.07)', border:'1px solid rgba(79,70,229,.2)', borderRadius:16, padding:'14px 18px', marginBottom:24, display:'flex', alignItems:'center', gap:12 }}>
-              <div style={{ width:38, height:38, borderRadius:10, background:'rgba(79,70,229,.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                <FileText size={18} color="#4F46E5"/>
+            <div style={{ background:'rgba(29,78,216,.07)', border:'1px solid rgba(29,78,216,.2)', borderRadius:16, padding:'14px 18px', marginBottom:24, display:'flex', alignItems:'center', gap:12 }}>
+              <div style={{ width:38, height:38, borderRadius:10, background:'rgba(29,78,216,.15)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                <FileText size={18} color="#1D4ED8"/>
               </div>
               <div>
                 <div style={{ fontWeight:700, fontSize:13, color:'var(--text)' }}>{preview?.filename || 'Statement'}</div>
@@ -441,13 +441,13 @@ export default function Import() {
               <div onClick={() => setWalletId(null)}
                 style={{
                   borderRadius:14, padding:'18px 16px', cursor:'pointer', transition:'all .2s',
-                  border: walletId===null ? '2px solid #4F46E5' : '2px solid var(--border)',
-                  background: walletId===null ? 'rgba(79,70,229,.08)' : 'var(--surface)',
-                  boxShadow: walletId===null ? '0 4px 16px rgba(79,70,229,.2)' : 'none',
+                  border: walletId===null ? '2px solid #1D4ED8' : '2px solid var(--border)',
+                  background: walletId===null ? 'rgba(29,78,216,.08)' : 'var(--surface)',
+                  boxShadow: walletId===null ? '0 4px 16px rgba(29,78,216,.2)' : 'none',
                   position:'relative',
                 }}>
                 {walletId===null && (
-                  <div style={{ position:'absolute', top:10, right:10, width:20, height:20, borderRadius:'50%', background:'#4F46E5', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                  <div style={{ position:'absolute', top:10, right:10, width:20, height:20, borderRadius:'50%', background:'#1D4ED8', display:'flex', alignItems:'center', justifyContent:'center' }}>
                     <Check size={12} color="#fff"/>
                   </div>
                 )}
@@ -464,16 +464,16 @@ export default function Import() {
                   <div key={w.id} onClick={() => setWalletId(w.id)}
                     style={{
                       borderRadius:14, padding:'18px 16px', cursor:'pointer', transition:'all .2s',
-                      border: selected ? '2px solid #4F46E5' : '2px solid transparent',
+                      border: selected ? '2px solid #1D4ED8' : '2px solid transparent',
                       background: selected
-                        ? 'rgba(79,70,229,.08)'
+                        ? 'rgba(29,78,216,.08)'
                         : WALLET_GRADIENTS[i % WALLET_GRADIENTS.length],
-                      boxShadow: selected ? '0 4px 20px rgba(79,70,229,.25)' : '0 4px 16px rgba(0,0,0,.12)',
+                      boxShadow: selected ? '0 4px 20px rgba(29,78,216,.25)' : '0 4px 16px rgba(0,0,0,.12)',
                       position:'relative', color: selected ? 'var(--text)' : '#fff',
                       transform: selected ? 'translateY(-3px)' : 'none',
                     }}>
                     {selected && (
-                      <div style={{ position:'absolute', top:10, right:10, width:22, height:22, borderRadius:'50%', background:'#4F46E5', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 2px 8px rgba(79,70,229,.5)' }}>
+                      <div style={{ position:'absolute', top:10, right:10, width:22, height:22, borderRadius:'50%', background:'#1D4ED8', display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 2px 8px rgba(29,78,216,.5)' }}>
                         <Check size={13} color="#fff"/>
                       </div>
                     )}
@@ -516,7 +516,7 @@ export default function Import() {
                 {t('common_back')}
               </button>
               <button onClick={() => { reconcileMut.mutate(rows); setStep(3); }}
-                style={{ padding:'11px 28px', borderRadius:12, border:'none', background:'#4F46E5', color:'#fff', fontWeight:700, fontSize:14, cursor:'pointer', boxShadow:'0 4px 14px rgba(79,70,229,.35)', display:'flex', alignItems:'center', gap:8 }}>
+                style={{ padding:'11px 28px', borderRadius:12, border:'none', background:'#1D4ED8', color:'#fff', fontWeight:700, fontSize:14, cursor:'pointer', boxShadow:'0 4px 14px rgba(29,78,216,.35)', display:'flex', alignItems:'center', gap:8 }}>
                 <GitMerge size={15}/> Reconcile & Review
               </button>
             </div>
@@ -530,10 +530,10 @@ export default function Import() {
           <div>
             {/* ── Sticky top action bar ── */}
             <div style={{ position:'sticky', top:0, zIndex:10, background:'var(--bg)', borderBottom:'1px solid var(--border-light)', marginBottom:16, padding:'12px 0', display:'flex', alignItems:'center', gap:10, flexWrap:'wrap' }}>
-              <div style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'7px 14px', borderRadius:14, background:'rgba(79,70,229,.1)', border:'1px solid rgba(79,70,229,.25)', cursor:'pointer', flexShrink:0 }}
+              <div style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'7px 14px', borderRadius:14, background:'rgba(29,78,216,.1)', border:'1px solid rgba(29,78,216,.25)', cursor:'pointer', flexShrink:0 }}
                 onClick={() => setStep(2)}>
                 <span style={{ fontSize:16 }}>{selectedWallet ? WALLET_ICONS[selectedWallet.type]||'👛' : '🚫'}</span>
-                <span style={{ fontSize:12, fontWeight:700, color:'#4F46E5' }}>{selectedWallet ? selectedWallet.name : 'No account'}</span>
+                <span style={{ fontSize:12, fontWeight:700, color:'#1D4ED8' }}>{selectedWallet ? selectedWallet.name : 'No account'}</span>
                 <span style={{ fontSize:11, color:'var(--text3)' }}>· change</span>
               </div>
               <div style={{ flex:1 }}/>
@@ -543,9 +543,9 @@ export default function Import() {
               </button>
               <button onClick={() => confirmMut.mutate()} disabled={confirmMut.isPending || activeCount===0}
                 style={{ padding:'9px 22px', borderRadius:12, border:'none', fontWeight:700, fontSize:13, cursor:activeCount===0?'not-allowed':'pointer',
-                  background: activeCount===0 ? 'var(--surface3)' : '#4F46E5',
+                  background: activeCount===0 ? 'var(--surface3)' : '#1D4ED8',
                   color: activeCount===0 ? 'var(--text3)' : '#fff',
-                  boxShadow: activeCount>0 ? '0 4px 14px rgba(79,70,229,.35)' : 'none' }}>
+                  boxShadow: activeCount>0 ? '0 4px 14px rgba(29,78,216,.35)' : 'none' }}>
                 {confirmMut.isPending ? '⏳ Importing…' : `Import ${activeCount} transactions`}
               </button>
             </div>
@@ -554,8 +554,8 @@ export default function Import() {
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))', gap:12, marginBottom:18 }}>
               {[
                 { label:'Total Found',      value:preview.total,            color:'var(--text)',  mono:false },
-                { label:'To Import',        value:activeCount,              color:'#4F46E5',      mono:false },
-                { label:'Credits',          value: fmt(incomeTotal),         color:'#059669',      mono:true  },
+                { label:'To Import',        value:activeCount,              color:'#1D4ED8',      mono:false },
+                { label:'Credits',          value: fmt(incomeTotal),         color:'#047857',      mono:true  },
                 { label:'Debits',           value: fmt(expenseTotal),        color:'#DC2626',      mono:true  },
               ].map(({label,value,color,mono}) => (
                 <div key={label} style={{ background:'var(--surface)', borderRadius:14, padding:'12px 16px', border:'1px solid var(--border-light)' }}>
@@ -572,7 +572,7 @@ export default function Import() {
                   <button key={f} onClick={() => setFilter(f)}
                     style={{ padding:'6px 13px', borderRadius:8, border:'none', cursor:'pointer', fontSize:12, fontWeight:700, transition:'all .18s',
                       background: filter===f ? 'var(--surface)' : 'transparent',
-                      color: filter===f ? (f==='income'?'#059669':f==='expense'?'#DC2626':'var(--accent)') : 'var(--text3)',
+                      color: filter===f ? (f==='income'?'#047857':f==='expense'?'#DC2626':'var(--accent)') : 'var(--text3)',
                       boxShadow: filter===f ? '0 2px 6px rgba(0,0,0,.08)' : 'none' }}>
                     {f[0].toUpperCase()+f.slice(1)}
                   </button>
@@ -588,8 +588,8 @@ export default function Import() {
             {reconciled && (
               <div style={{ display:'flex', gap:10, marginBottom:14, flexWrap:'wrap' }}>
                 {[
-                  { label:'✅ Already in App', count: rows.filter(r=>r.status==='matched').length,            bg:'rgba(5,150,105,.1)',  color:'#059669' },
-                  { label:'🆕 New — needs approval', count: rows.filter(r=>r.status==='new').length,         bg:'rgba(79,70,229,.1)', color:'var(--accent)' },
+                  { label:'✅ Already in App', count: rows.filter(r=>r.status==='matched').length,            bg:'rgba(4,120,87,.1)',  color:'#047857' },
+                  { label:'🆕 New — needs approval', count: rows.filter(r=>r.status==='new').length,         bg:'rgba(29,78,216,.1)', color:'var(--accent)' },
                   { label:'⚠️ Possible duplicate', count: rows.filter(r=>r.status==='possible_duplicate').length, bg:'rgba(217,119,6,.1)', color:'#D97706' },
                 ].map(s => (
                   <div key={s.label} style={{ display:'flex', alignItems:'center', gap:8, padding:'8px 14px', borderRadius:12, background:s.bg }}>
@@ -626,8 +626,8 @@ export default function Import() {
                         {/* Checkbox */}
                         <td style={{ padding:'9px 8px 9px 13px', width:30 }}>
                           <div onClick={() => toggleSkip(tx._id)} style={{ width:18, height:18, borderRadius:5, cursor:'pointer',
-                            border: tx.skip?'1.5px solid var(--border)':'1.5px solid #4F46E5',
-                            background: tx.skip?'transparent':'#4F46E5',
+                            border: tx.skip?'1.5px solid var(--border)':'1.5px solid #1D4ED8',
+                            background: tx.skip?'transparent':'#1D4ED8',
                             display:'flex', alignItems:'center', justifyContent:'center' }}>
                             {!tx.skip && <Check size={10} color="#fff"/>}
                           </div>
@@ -662,11 +662,11 @@ export default function Import() {
                         {/* Status badge */}
                         <td style={{ padding:'7px 13px', whiteSpace:'nowrap' }}>
                           {tx.status === 'matched' ? (
-                            <span style={{ padding:'3px 9px', borderRadius:14, fontSize:10.5, fontWeight:700, background:'rgba(5,150,105,.12)', color:'#059669' }}>✅ Matched</span>
+                            <span style={{ padding:'3px 9px', borderRadius:14, fontSize:10.5, fontWeight:700, background:'rgba(4,120,87,.12)', color:'#047857' }}>✅ Matched</span>
                           ) : tx.status === 'possible_duplicate' ? (
                             <span style={{ padding:'3px 9px', borderRadius:14, fontSize:10.5, fontWeight:700, background:'rgba(217,119,6,.12)', color:'#D97706' }}>⚠️ Duplicate?</span>
                           ) : (
-                            <span style={{ padding:'3px 9px', borderRadius:14, fontSize:10.5, fontWeight:700, background:'rgba(79,70,229,.1)', color:'var(--accent)' }}>🆕 New</span>
+                            <span style={{ padding:'3px 9px', borderRadius:14, fontSize:10.5, fontWeight:700, background:'rgba(29,78,216,.1)', color:'var(--accent)' }}>🆕 New</span>
                           )}
                         </td>
                         {/* Approve toggle */}
@@ -675,9 +675,9 @@ export default function Import() {
                             <button onClick={() => toggleSkip(tx._id)}
                               title={tx.skip ? 'Click to approve' : 'Click to skip'}
                               style={{ padding:'4px 10px', borderRadius:8, border:'1.5px solid', fontSize:11, fontWeight:700, cursor:'pointer', transition:'all .15s',
-                                borderColor: tx.skip ? 'var(--border)' : '#059669',
-                                background: tx.skip ? 'var(--surface2)' : 'rgba(5,150,105,.1)',
-                                color: tx.skip ? 'var(--text3)' : '#059669',
+                                borderColor: tx.skip ? 'var(--border)' : '#047857',
+                                background: tx.skip ? 'var(--surface2)' : 'rgba(4,120,87,.1)',
+                                color: tx.skip ? 'var(--text3)' : '#047857',
                               }}>
                               {tx.skip ? 'Skip' : 'Add'}
                             </button>
@@ -700,9 +700,9 @@ export default function Import() {
               </button>
               <button onClick={() => confirmMut.mutate()} disabled={confirmMut.isPending || activeCount===0}
                 style={{ padding:'11px 28px', borderRadius:12, border:'none', fontWeight:700, fontSize:14, cursor:activeCount===0?'not-allowed':'pointer', transition:'all .2s',
-                  background: activeCount===0 ? 'var(--surface3)' : '#4F46E5',
+                  background: activeCount===0 ? 'var(--surface3)' : '#1D4ED8',
                   color: activeCount===0 ? 'var(--text3)' : '#fff',
-                  boxShadow: activeCount>0 ? '0 4px 14px rgba(79,70,229,.35)' : 'none' }}>
+                  boxShadow: activeCount>0 ? '0 4px 14px rgba(29,78,216,.35)' : 'none' }}>
                 {confirmMut.isPending ? `⏳ ${t('common_loading')}` : `${t('import_import_btn')} (${activeCount})`}
               </button>
             </div>
@@ -717,8 +717,8 @@ export default function Import() {
         ══════════════════════════════════════════ */}
         {step === 4 && result && (
           <div style={{ maxWidth:460, textAlign:'center', margin:'0 auto', padding:'48px 0' }}>
-            <div style={{ width:84, height:84, borderRadius:'50%', background:'rgba(5,150,105,.12)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 22px', boxShadow:'0 0 0 14px rgba(5,150,105,.06)' }}>
-              <CheckCircle size={42} color="#059669"/>
+            <div style={{ width:84, height:84, borderRadius:'50%', background:'rgba(4,120,87,.12)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 22px', boxShadow:'0 0 0 14px rgba(4,120,87,.06)' }}>
+              <CheckCircle size={42} color="#047857"/>
             </div>
             <div style={{ fontSize:24, fontWeight:900, color:'var(--text)', marginBottom:6 }}>{t('import_done')}</div>
             {selectedWallet && (
@@ -729,7 +729,7 @@ export default function Import() {
             <div style={{ fontSize:13, color:'var(--text3)', marginBottom:28 }}>Your transactions have been added to Tracksy</div>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:12, marginBottom:32 }}>
               {[
-                { label:'Imported', value:result.imported, color:'#059669' },
+                { label:'Imported', value:result.imported, color:'#047857' },
                 { label:'Skipped',  value:result.skipped,  color:'#D97706' },
                 { label:'Total',    value:result.total,    color:'var(--text)' },
               ].map(({label,value,color}) => (
@@ -743,7 +743,7 @@ export default function Import() {
               <button onClick={reset} style={{ padding:'11px 24px', borderRadius:12, border:'1px solid var(--border)', background:'var(--surface)', color:'var(--text)', fontWeight:700, fontSize:13, cursor:'pointer' }}>
                 Import Another
               </button>
-              <a href="/transactions" style={{ padding:'11px 24px', borderRadius:12, background:'#4F46E5', color:'#fff', fontWeight:700, fontSize:13, textDecoration:'none', boxShadow:'0 4px 14px rgba(79,70,229,.35)' }}>
+              <a href="/transactions" style={{ padding:'11px 24px', borderRadius:12, background:'#1D4ED8', color:'#fff', fontWeight:700, fontSize:13, textDecoration:'none', boxShadow:'0 4px 14px rgba(29,78,216,.35)' }}>
                 View Transactions →
               </a>
             </div>
@@ -818,7 +818,7 @@ function ReceiptReviewModal({ data, wallets, categories, fmt, onClose, onSaved }
     }
   };
 
-  const typeColor = type === 'income' ? '#059669' : '#DC2626';
+  const typeColor = type === 'income' ? '#047857' : '#DC2626';
 
   return (
     <div className="modal-overlay" onClick={e => e.target===e.currentTarget && onClose()}>
@@ -836,7 +836,7 @@ function ReceiptReviewModal({ data, wallets, categories, fmt, onClose, onSaved }
 
         {/* Type toggle */}
         <div style={{ display:'flex', background:'var(--surface2)', borderRadius:12, padding:4, marginBottom:14, gap:4 }}>
-          {[['expense','📤 Expense','#DC2626'],['income','📥 Income','#059669']].map(([v,l,c]) => (
+          {[['expense','📤 Expense','#DC2626'],['income','📥 Income','#047857']].map(([v,l,c]) => (
             <button key={v} onClick={() => { setType(v); setCatId(''); }}
               style={{ flex:1, padding:'8px', borderRadius:9, border:'none', cursor:'pointer', fontSize:13, fontWeight:700,
                 background: type===v ? `${c}1f` : 'transparent', color: type===v ? c : 'var(--text3)' }}>{l}</button>
@@ -856,7 +856,7 @@ function ReceiptReviewModal({ data, wallets, categories, fmt, onClose, onSaved }
             <div>
               <label style={labelSt}>Category</label>
               <ThemedSelect value={catId} onChange={setCatId} placeholder="No category"
-                options={[{ value:'', label:'No category', icon:<Ban size={16} color="#9896B2"/> }, ...catOpts.map(c => ({ value:c.id, label:c.name, icon:<CategoryGlyph name={c.name} emoji={c.emoji} icon={c.icon} size={16}/> }))]}/>
+                options={[{ value:'', label:'No category', icon:<Ban size={16} color="#5B6B7F"/> }, ...catOpts.map(c => ({ value:c.id, label:c.name, icon:<CategoryGlyph name={c.name} emoji={c.emoji} icon={c.icon} size={16}/> }))]}/>
             </div>
             <div>
               <label style={labelSt}>Date</label>
@@ -866,7 +866,7 @@ function ReceiptReviewModal({ data, wallets, categories, fmt, onClose, onSaved }
           <div>
             <label style={labelSt}>Account</label>
             <ThemedSelect value={walletId} onChange={setWalletId} placeholder="No account"
-              options={[{ value:'', label:'No account', icon:<Ban size={16} color="#9896B2"/> }, ...(wallets||[]).map(w => ({ value:w.id, label:`${w.name}${w.last_four?` *${w.last_four}`:''}`, icon:<Wallet size={16} color="#3B82F6"/> }))]}/>
+              options={[{ value:'', label:'No account', icon:<Ban size={16} color="#5B6B7F"/> }, ...(wallets||[]).map(w => ({ value:w.id, label:`${w.name}${w.last_four?` *${w.last_four}`:''}`, icon:<Wallet size={16} color="#3B82F6"/> }))]}/>
           </div>
         </div>
 
@@ -874,7 +874,7 @@ function ReceiptReviewModal({ data, wallets, categories, fmt, onClose, onSaved }
           <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
           <button onClick={save} disabled={saving}
             style={{ padding:'10px 24px', borderRadius:12, border:'none', fontWeight:700, fontSize:14, cursor:'pointer', color:'#fff',
-              background:'#4F46E5', boxShadow:'0 4px 14px rgba(79,70,229,.3)' }}>
+              background:'#1D4ED8', boxShadow:'0 4px 14px rgba(29,78,216,.3)' }}>
             {saving ? 'Saving…' : '✓ Save Transaction'}
           </button>
         </div>

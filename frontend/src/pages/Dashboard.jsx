@@ -134,8 +134,8 @@ function PeriodPill({ period, setPeriod, c, isDark }) {
                       marginTop: i%2===0 && i>0 ? 4 : 0,
                       borderTop: i%2===0 && i>0 ? `1px solid ${c.divider||'rgba(255,255,255,.06)'}` : 'none',
                       paddingTop: i%2===0 && i>0 ? 11 : 9,
-                      background: sel ? (isDark?'rgba(79,70,229,.16)':'#EEF0FF') : 'transparent',
-                      color: sel ? (isDark?'#C4B5FD':c.purple) : c.text, fontSize:13, fontWeight: sel?700:500, fontFamily:'inherit' }}>
+                      background: sel ? (isDark?'rgba(29,78,216,.16)':'#EFF6FF') : 'transparent',
+                      color: sel ? (isDark?'#93C5FD':c.purple) : c.text, fontSize:13, fontWeight: sel?700:500, fontFamily:'inherit' }}>
                     {PERIOD_LABEL[p]} {sel && <Check size={14}/>}
                   </button>
                 );
@@ -437,7 +437,7 @@ export default function Dashboard() {
     const top = raw.slice(0,4);
     const restVal = raw.slice(4).reduce((s,x)=>s+x.value,0);
     const list = restVal > 0 ? [...top, { name:'Others', value:restVal, emoji:'🎯' }] : top;
-    const PALETTE = ['#2A78D6','#EB6834','#1BAF7A','#EDA100','#E87BA4','#4F46E5','#008300','#00CEC9'];
+    const PALETTE = ['#2A78D6','#EB6834','#1BAF7A','#EDA100','#E87BA4','#1D4ED8','#008300','#0D9488'];
     return list.map((x,i)=>({ ...x, color: PALETTE[i % PALETTE.length] }));
   }, [catBreakdown, c]);
   const spendTotal = spendCats.reduce((s,x)=>s+x.value,0);
@@ -633,7 +633,7 @@ export default function Dashboard() {
                   <button onClick={selectAll} title="All accounts"
                     style={{ flexShrink:0, display:'flex', alignItems:'center', gap:6, height:34, padding:'0 12px', borderRadius:8, cursor:'pointer',
                       border:`1px solid ${!isFiltered ? c.purple : c.border}`,
-                      background: !isFiltered ? (isDark?'rgba(129,140,248,.16)':'#EEF0FF') : 'transparent',
+                      background: !isFiltered ? (isDark?'rgba(96,165,250,.16)':'#EFF6FF') : 'transparent',
                       color: !isFiltered ? c.purple : c.text2, fontSize:12.5, fontWeight:700 }}>
                     <Wallet size={14}/> All
                   </button>
@@ -644,7 +644,7 @@ export default function Dashboard() {
                       <button key={acc.id} onClick={()=>toggleAcc(acc.id)} title={acc.name}
                         style={{ flexShrink:0, display:'flex', alignItems:'center', gap:7, height:34, padding:'0 12px 0 6px', borderRadius:8, cursor:'pointer',
                           border:`1px solid ${on ? c.purple : c.border}`,
-                          background: on ? (isDark?'rgba(129,140,248,.16)':'#EEF0FF') : 'transparent',
+                          background: on ? (isDark?'rgba(96,165,250,.16)':'#EFF6FF') : 'transparent',
                           opacity: on ? 1 : 0.6, transition:'all .15s' }}>
                         <span style={{ width:24, height:24, borderRadius:'50%', background: on ? c.purple : c.text3, color: '#fff', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:800, flexShrink:0 }}>{initial}</span>
                         <span style={{ fontSize:12.5, fontWeight:700, color: on ? c.text : c.text2, whiteSpace:'nowrap', maxWidth:90, overflow:'hidden', textOverflow:'ellipsis' }}>{acc.name}</span>
@@ -687,7 +687,7 @@ export default function Dashboard() {
                     <Tooltip content={<BalTip fmt={fmt} c={c}/>}/>
                     <Area type="monotone" dataKey="value" stroke={c.stroke} strokeWidth={c.strokeW}
                       fill="url(#balGrad)" dot={chartData.length > 14 ? false : { r:3, fill: isDark?'#061B38':'#FFFFFF', stroke:c.stroke, strokeWidth:2 }}
-                      activeDot={{ r:6, fill:'#4F46E5', stroke: isDark?'#061B38':'#fff', strokeWidth:3 }}
+                      activeDot={{ r:6, fill:'#1D4ED8', stroke: isDark?'#061B38':'#fff', strokeWidth:3 }}
                       animationDuration={1200}/>
                   </AreaChart>
                 </ResponsiveContainer>
@@ -759,15 +759,15 @@ export default function Dashboard() {
             {/* Money Flow card */}
             <motion.div variants={cardVar} className={styles.flowCard}
               style={{ background:c.flowBg, border:c.flowBorder,
-                boxShadow: isDark ? `${c.cardShadow}, 0 0 40px rgba(79,70,229,0.1)` : c.cardShadow }}>
+                boxShadow: isDark ? `${c.cardShadow}, 0 0 40px rgba(29,78,216,0.1)` : c.cardShadow }}>
               <div className={styles.cardHeadRow}>
                 <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                  <div className={styles.flowHeadIcon} style={{ background:'rgba(79,70,229,0.15)' }}>
+                  <div className={styles.flowHeadIcon} style={{ background:'rgba(29,78,216,0.15)' }}>
                     <Activity size={17} color={c.purple}/>
                   </div>
                   <span className={styles.cardTitle} style={{ color:c.text }}>Money Flow</span>
                 </div>
-                <button className={styles.iconBtnSm} style={{ background:'rgba(79,70,229,0.12)' }}>
+                <button className={styles.iconBtnSm} style={{ background:'rgba(29,78,216,0.12)' }}>
                   <ArrowLeftRight size={15} color={c.purple}/>
                 </button>
               </div>
@@ -910,7 +910,7 @@ export default function Dashboard() {
                       style={{ display:'flex', alignItems:'center', gap:12, padding:'11px 0',
                         borderBottom: i<arr.length-1 ? `1px solid ${isDark?'rgba(255,255,255,0.05)':'#F2F4F7'}` : 'none' }}>
                       <div style={{ width:38, height:38, borderRadius:11, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center',
-                        background: isDark?'rgba(79,70,229,.14)':'#EEF0FF' }}>
+                        background: isDark?'rgba(29,78,216,.14)':'#EFF6FF' }}>
                         <Wallet size={18} color={c.purple}/>
                       </div>
                       <div style={{ flex:1, minWidth:0 }}>
@@ -954,7 +954,7 @@ export default function Dashboard() {
                         </div>
                         <div style={{ height:8, borderRadius:99, background:c.track, overflow:'hidden' }}>
                           <motion.div initial={{ width:0 }} animate={{ width:`${pct}%` }} transition={{ duration:.8, delay:.3+i*.08, ease:[.2,.8,.2,1] }}
-                            style={{ height:'100%', borderRadius:99, background: g.color ? `linear-gradient(90deg,${g.color},${c.green})` : '#4F46E5' }}/>
+                            style={{ height:'100%', borderRadius:99, background: g.color ? `linear-gradient(90deg,${g.color},${c.green})` : '#1D4ED8' }}/>
                         </div>
                         <div style={{ fontSize:12, color:c.text2, marginTop:7 }}>
                           {fmt(saved,{noDecimals:true})} <span style={{ color:c.text3 }}>of {fmt(target,{noDecimals:true})}</span>

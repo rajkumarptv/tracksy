@@ -14,7 +14,7 @@ function AuthShell({ children }) {
       {/* Left brand panel */}
       <div className="hide-mobile" style={{
         width:'42%', flexShrink:0,
-        background:'linear-gradient(180deg,#1E1B4B 0%,#312E81 100%)',
+        background:'linear-gradient(180deg,#0B1F4B 0%,#12306B 100%)',
         display:'flex', flexDirection:'column', justifyContent:'center',
         position:'relative', overflow:'hidden', padding:'64px 56px',
       }}>
@@ -65,8 +65,8 @@ function TrustBadges() {
       {/* Trust / feature icons — visible on mobile too (left panel is hidden there) */}
       <div style={{ display:'flex', justifyContent:'center', gap:22, marginTop:26 }}>
         {[
-          { c:'#059669', label:'Bank-grade\nencryption', icon:(
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+          { c:'#047857', label:'Bank-grade\nencryption', icon:(
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#047857" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
           )},
           { c:'#3B82F6', label:'Real-time\ninsights', icon:(
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
@@ -340,9 +340,9 @@ export function ResetPassword() {
       )}
 
       {success ? (
-        <div style={{ background:'rgba(5,150,105,.1)', border:'1.5px solid rgba(5,150,105,.3)', borderRadius:14, padding:'20px', textAlign:'center' }}>
+        <div style={{ background:'rgba(4,120,87,.1)', border:'1.5px solid rgba(4,120,87,.3)', borderRadius:14, padding:'20px', textAlign:'center' }}>
           <div style={{ fontSize:32, marginBottom:10 }}>✅</div>
-          <div style={{ fontSize:15, fontWeight:700, color:'#059669', marginBottom:6 }}>Password reset successfully!</div>
+          <div style={{ fontSize:15, fontWeight:700, color:'#047857', marginBottom:6 }}>Password reset successfully!</div>
           <div style={{ fontSize:13, color:'var(--text3)' }}>Redirecting to login in 3 seconds…</div>
         </div>
       ) : (

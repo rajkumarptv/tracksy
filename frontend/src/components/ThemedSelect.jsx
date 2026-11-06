@@ -18,7 +18,7 @@ import { THEME } from '../theme';
 ═══════════════════════════════════════════════════════════════════════ */
 export default function ThemedSelect({
   value, onChange, options, groups, placeholder = 'Select…',
-  searchable, disabled, accent = '#4F46E5', compact = false,
+  searchable, disabled, accent = '#1D4ED8', compact = false,
 }) {
   const { theme } = useThemeStore();
   const isDark = theme === 'dark';
@@ -80,7 +80,7 @@ export default function ThemedSelect({
         style={{
           display:'flex', alignItems:'center', gap:11, width:'100%', textAlign:'left',
           padding:'10px 12px', borderRadius:12, border:'none', cursor:'pointer',
-          background: sel ? (isDark ? 'rgba(79,70,229,.16)' : '#EEF0FF') : 'transparent',
+          background: sel ? (isDark ? 'rgba(29,78,216,.16)' : '#EFF6FF') : 'transparent',
           transition:'background .12s', fontFamily:'inherit',
         }}
         onMouseEnter={e => { if (!sel) e.currentTarget.style.background = isDark ? 'rgba(255,255,255,.05)' : '#F4F5F7'; }}
@@ -91,7 +91,7 @@ export default function ThemedSelect({
           </span>
         )}
         <div style={{ flex:1, minWidth:0 }}>
-          <div style={{ fontSize:14, fontWeight: sel ? 700 : 500, color: sel ? (isDark ? '#C4B5FD' : accent) : t.text, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{o.label}</div>
+          <div style={{ fontSize:14, fontWeight: sel ? 700 : 500, color: sel ? (isDark ? '#93C5FD' : accent) : t.text, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{o.label}</div>
           {o.sub && <div style={{ fontSize:11.5, color:t.text3, marginTop:1 }}>{o.sub}</div>}
         </div>
         {sel && <Check size={16} color={accent} style={{ flexShrink:0 }}/>}

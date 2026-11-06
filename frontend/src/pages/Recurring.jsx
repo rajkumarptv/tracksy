@@ -10,13 +10,13 @@ import { invalidateFinance } from '../lib/cache';
 
 const FREQ_COLORS = {
   daily:   { bg: 'rgba(59,130,246,.12)',  color: '#3B82F6' },
-  weekly:  { bg: 'rgba(5,150,105,.12)', color: '#059669' },
-  monthly: { bg: 'rgba(79,70,229,.12)', color: '#4F46E5' },
+  weekly:  { bg: 'rgba(4,120,87,.12)', color: '#047857' },
+  monthly: { bg: 'rgba(29,78,216,.12)', color: '#1D4ED8' },
   yearly:  { bg: 'rgba(217,119,6,.12)', color: '#D97706' },
 };
 
 const TYPE_CFG = {
-  income:  { label: 'Income',  color: '#059669', bg: 'rgba(5,150,105,.1)' },
+  income:  { label: 'Income',  color: '#047857', bg: 'rgba(4,120,87,.1)' },
   expense: { label: 'Expense', color: '#DC2626', bg: 'rgba(220,38,38,.1)' },
 };
 
@@ -117,10 +117,10 @@ function RecurringModal({ item, wallets, categories, onClose, onSave }) {
               <label style={labelStyle}>Frequency *</label>
               <ThemedSelect value={form.frequency} onChange={v => set('frequency', v)}
                 options={[
-                  { value:'daily',   label:'Daily',   icon:<Sun size={16} color="#4F46E5"/> },
-                  { value:'weekly',  label:'Weekly',  icon:<CalendarRange size={16} color="#4F46E5"/> },
-                  { value:'monthly', label:'Monthly', icon:<CalendarDays size={16} color="#4F46E5"/> },
-                  { value:'yearly',  label:'Yearly',  icon:<Calendar size={16} color="#4F46E5"/> },
+                  { value:'daily',   label:'Daily',   icon:<Sun size={16} color="#1D4ED8"/> },
+                  { value:'weekly',  label:'Weekly',  icon:<CalendarRange size={16} color="#1D4ED8"/> },
+                  { value:'monthly', label:'Monthly', icon:<CalendarDays size={16} color="#1D4ED8"/> },
+                  { value:'yearly',  label:'Yearly',  icon:<Calendar size={16} color="#1D4ED8"/> },
                 ]}/>
             </div>
           </div>
@@ -141,7 +141,7 @@ function RecurringModal({ item, wallets, categories, onClose, onSave }) {
             <ThemedSelect value={form.wallet_id || ''} onChange={v => set('wallet_id', v)}
               placeholder="No account"
               options={[
-                { value:'', label:'No account', icon:<Ban size={16} color="#9896B2"/> },
+                { value:'', label:'No account', icon:<Ban size={16} color="#5B6B7F"/> },
                 ...(wallets || []).map(w => ({ value:w.id, label:w.name, icon:<Wallet size={16} color="#3B82F6"/> })),
               ]}/>
           </div>
@@ -151,7 +151,7 @@ function RecurringModal({ item, wallets, categories, onClose, onSave }) {
             <ThemedSelect value={form.category_id || ''} onChange={v => set('category_id', v)}
               placeholder="No category"
               options={[
-                { value:'', label:'No category', icon:<Ban size={16} color="#9896B2"/> },
+                { value:'', label:'No category', icon:<Ban size={16} color="#5B6B7F"/> },
                 ...(categories || []).filter(c => c.type === form.type || c.type === 'both').map(c => ({ value:c.id, label:c.name, icon:<CategoryGlyph name={c.name} emoji={c.emoji} icon={c.icon} size={16}/> })),
               ]}/>
           </div>
@@ -169,7 +169,7 @@ function RecurringModal({ item, wallets, categories, onClose, onSave }) {
           }}>Cancel</button>
           <button onClick={handleSave} disabled={saving} style={{
             flex: 2, padding: '12px 0', borderRadius: 12, border: 'none',
-            background: '#4F46E5', color: '#fff',
+            background: '#1D4ED8', color: '#fff',
             fontWeight: 700, cursor: 'pointer', opacity: saving ? .7 : 1,
           }}>
             {saving ? 'Saving...' : item ? 'Save Changes' : 'Add Recurring'}
@@ -284,7 +284,7 @@ export default function Recurring() {
       <div style={{ padding: '0 20px' }}>
         {/* Summary card */}
         <div style={{
-          background: '#4F46E5', borderRadius: 16, padding: '20px 24px',
+          background: '#1D4ED8', borderRadius: 16, padding: '20px 24px',
           marginBottom: 24, color: '#fff',
         }}>
           <div style={{ fontSize: 12, fontWeight: 600, opacity: .8, marginBottom: 6 }}>MONTHLY NET RECURRING</div>
@@ -376,7 +376,7 @@ export default function Recurring() {
               {/* Actions */}
               <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                 <button onClick={() => handleToggle(item)} style={{
-                  background: 'none', border: 'none', cursor: 'pointer', color: item.is_active ? '#059669' : 'var(--text3)', padding: 4,
+                  background: 'none', border: 'none', cursor: 'pointer', color: item.is_active ? '#047857' : 'var(--text3)', padding: 4,
                 }} title={item.is_active ? 'Deactivate' : 'Activate'}>
                   {item.is_active ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
                 </button>

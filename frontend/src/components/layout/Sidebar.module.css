@@ -126,7 +126,7 @@
 .upgradeBanner {
   margin: 6px 10px 10px;
   padding: 16px;
-  background: #4F46E5;
+  background: #1D4ED8;
   border-radius: 14px;
   position: relative; overflow: hidden; cursor: pointer;
   flex-shrink: 0;
@@ -157,7 +157,7 @@
 }
 .upgradeBtn {
   display: inline-flex; align-items: center; gap: 5px;
-  background: rgba(255,255,255,.95); color: #4F46E5;
+  background: rgba(255,255,255,.95); color: #1D4ED8;
   font-size: 12px; font-weight: 800;
   padding: 6px 14px; border-radius: 14px;
   border: none; cursor: pointer;
@@ -186,10 +186,10 @@
 }
 .avatar {
   width: 34px; height: 34px; border-radius: 50%;
-  background: linear-gradient(135deg, #818CF8, var(--accent));
+  background: linear-gradient(135deg, #60A5FA, var(--accent));
   display: flex; align-items: center; justify-content: center;
   color: #fff; font-size: 12px; font-weight: 800; flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(79,70,229,.3);
+  box-shadow: 0 2px 8px rgba(29,78,216,.3);
 }
 .avatarInfo   { flex: 1; min-width: 0; }
 .avatarName   { font-size: 12.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

@@ -26,7 +26,7 @@ export function BillBadge({ txId, onClick }) {
     <button onClick={e => { e.stopPropagation(); onClick(); }} title="View bills" style={{
       display:'inline-flex', alignItems:'center', gap:3,
       padding:'2px 7px', borderRadius:14, fontSize:11, fontWeight:700,
-      background:'rgba(79,70,229,.15)', color:'#4F46E5', border:'1px solid rgba(79,70,229,.25)',
+      background:'rgba(29,78,216,.15)', color:'#1D4ED8', border:'1px solid rgba(29,78,216,.25)',
       cursor:'pointer',
     }}>
       <Paperclip size={10}/> {count}
@@ -99,7 +99,7 @@ export default function BillAttachment({ txId, txName, onClose, skipLabel }) {
           <div style={{ padding:'20px 20px 0', display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 }}>
             <div>
               <div style={{ fontSize:17, fontWeight:700, color:txt, display:'flex', alignItems:'center', gap:8 }}>
-                <Paperclip size={18} color="#4F46E5"/> Bill Attachments
+                <Paperclip size={18} color="#1D4ED8"/> Bill Attachments
               </div>
               <div style={{ fontSize:12, color:txt2, marginTop:2 }}>{txName}</div>
             </div>
@@ -122,14 +122,14 @@ export default function BillAttachment({ txId, txName, onClose, skipLabel }) {
               onDrop={onDrop}
               onClick={()=>fileRef.current?.click()}
               style={{
-                border:`2px dashed ${dragging ? '#4F46E5' : bord}`,
+                border:`2px dashed ${dragging ? '#1D4ED8' : bord}`,
                 borderRadius:16, padding:'20px 16px', textAlign:'center', cursor:'pointer',
-                background: dragging ? 'rgba(79,70,229,.08)' : surf2,
+                background: dragging ? 'rgba(29,78,216,.08)' : surf2,
                 transition:'all .15s',
               }}
             >
-              <Upload size={28} color={dragging ? '#4F46E5' : txt2} style={{ marginBottom:8 }}/>
-              <div style={{ fontSize:14, fontWeight:600, color:dragging ? '#4F46E5' : txt, marginBottom:4 }}>
+              <Upload size={28} color={dragging ? '#1D4ED8' : txt2} style={{ marginBottom:8 }}/>
+              <div style={{ fontSize:14, fontWeight:600, color:dragging ? '#1D4ED8' : txt, marginBottom:4 }}>
                 {uploadMut.isPending ? 'Uploading…' : 'Drop bill here or click to browse'}
               </div>
               <div style={{ fontSize:12, color:txt2 }}>JPG · PNG · PDF · Max 20MB</div>
@@ -153,10 +153,10 @@ export default function BillAttachment({ txId, txName, onClose, skipLabel }) {
             {bills.map(bill => (
               <div key={bill.id} style={{ display:'flex', alignItems:'center', gap:12, background:surf2, borderRadius:14, padding:'12px 14px', border:`1px solid ${bord}` }}>
                 {/* Thumb / icon */}
-                <div style={{ width:44, height:44, borderRadius:10, background:isImage(bill.mime_type)?'transparent':'rgba(79,70,229,.12)', overflow:'hidden', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', border:`1px solid ${bord}` }}>
+                <div style={{ width:44, height:44, borderRadius:10, background:isImage(bill.mime_type)?'transparent':'rgba(29,78,216,.12)', overflow:'hidden', flexShrink:0, display:'flex', alignItems:'center', justifyContent:'center', border:`1px solid ${bord}` }}>
                   {isImage(bill.mime_type)
                     ? <img src={`${fileUrl(bill)}`} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }}/>
-                    : <FileText size={22} color="#4F46E5"/>
+                    : <FileText size={22} color="#1D4ED8"/>
                   }
                 </div>
                 {/* Info */}
@@ -169,8 +169,8 @@ export default function BillAttachment({ txId, txName, onClose, skipLabel }) {
                 {/* Actions */}
                 <div style={{ display:'flex', gap:6, flexShrink:0 }}>
                   <a href={fileUrl(bill)} target="_blank" rel="noopener noreferrer" title="View"
-                    style={{ width:30, height:30, borderRadius:8, background:'rgba(79,70,229,.12)', border:'1px solid rgba(79,70,229,.2)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', textDecoration:'none' }}>
-                    <Eye size={14} color="#4F46E5"/>
+                    style={{ width:30, height:30, borderRadius:8, background:'rgba(29,78,216,.12)', border:'1px solid rgba(29,78,216,.2)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', textDecoration:'none' }}>
+                    <Eye size={14} color="#1D4ED8"/>
                   </a>
                   <button onClick={()=>{ if(window.confirm('Delete this bill?')) deleteMut.mutate(bill.id); }} title="Delete"
                     style={{ width:30, height:30, borderRadius:8, background:'rgba(239,68,68,.1)', border:'1px solid rgba(239,68,68,.2)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
@@ -185,7 +185,7 @@ export default function BillAttachment({ txId, txName, onClose, skipLabel }) {
           <div style={{ padding:'12px 20px 16px', borderTop:`1px solid ${bord}`, flexShrink:0, display:'flex', alignItems:'center', justifyContent:'space-between', gap:8 }}>
             <span style={{ fontSize:12, color:txt2 }}>{bills.length} bill{bills.length !== 1 ? 's' : ''} attached</span>
             <div style={{ display:'flex', gap:8 }}>
-              <button onClick={()=>fileRef.current?.click()} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:10, border:'none', background:'#4F46E5', color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>
+              <button onClick={()=>fileRef.current?.click()} style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 16px', borderRadius:10, border:'none', background:'#1D4ED8', color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>
                 <Plus size={14}/> Add Bill
               </button>
               {skipLabel && (

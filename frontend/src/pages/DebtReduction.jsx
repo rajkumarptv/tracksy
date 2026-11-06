@@ -69,8 +69,8 @@ export default function DebtReduction({ embedded = false }) {
 
   const TIP_STYLE = {
     warn: { icon:<AlertTriangle size={16} color="#D97706"/>, bg:'rgba(217,119,6,.10)', border:'rgba(217,119,6,.28)' },
-    good: { icon:<CheckCircle size={16} color="#059669"/>,   bg:'rgba(5,150,105,.10)', border:'rgba(5,150,105,.28)' },
-    info: { icon:<Lightbulb size={16} color="#4F46E5"/>,     bg:'rgba(79,70,229,.08)', border:'rgba(79,70,229,.22)' },
+    good: { icon:<CheckCircle size={16} color="#047857"/>,   bg:'rgba(4,120,87,.10)', border:'rgba(4,120,87,.28)' },
+    info: { icon:<Lightbulb size={16} color="#1D4ED8"/>,     bg:'rgba(29,78,216,.08)', border:'rgba(29,78,216,.22)' },
   };
 
   return (
@@ -90,9 +90,9 @@ export default function DebtReduction({ embedded = false }) {
             {/* KPI Cards */}
             <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:14, marginBottom:24 }}>
               <KpiCard icon={<TrendingDown size={22} color="#DC2626"/>} iconBg="rgba(220,38,38,.14)" label="Total Debt"      value={fmt(totalDebt,{noDecimals:true})} sub={`${debts.length} debt${debts.length===1?'':'s'}`}/>
-              <KpiCard icon={<Target size={22} color="#4F46E5"/>}       iconBg="rgba(79,70,229,.14)" label="Min Monthly"    value={fmt(minMonthly,{noDecimals:true})} sub="minimum payments"/>
-              <KpiCard icon={<Zap size={22} color="#059669"/>}          iconBg="rgba(5,150,105,.14)" label="Interest Saved" value={fmt(interestSaved > 0 ? interestSaved : 0,{noDecimals:true})} sub={extra > 0 ? `with ₹${extra.toLocaleString('en-IN')} extra/mo` : 'add extra payment'} subColor={interestSaved>0?'#059669':'var(--text3)'}/>
-              <KpiCard icon={<Trophy size={22} color="#D97706"/>}       iconBg="rgba(217,119,6,.14)" label="Debt-Free In"   value={monthsToLabel(active.months)} sub={active.neverPaysOff ? 'payments too low' : monthsSaved > 0 ? `${monthsSaved}mo faster than baseline` : 'add extra to save time'} subColor={active.neverPaysOff ? '#DC2626' : monthsSaved>0?'#059669':'var(--text3)'}/>
+              <KpiCard icon={<Target size={22} color="#1D4ED8"/>}       iconBg="rgba(29,78,216,.14)" label="Min Monthly"    value={fmt(minMonthly,{noDecimals:true})} sub="minimum payments"/>
+              <KpiCard icon={<Zap size={22} color="#047857"/>}          iconBg="rgba(4,120,87,.14)" label="Interest Saved" value={fmt(interestSaved > 0 ? interestSaved : 0,{noDecimals:true})} sub={extra > 0 ? `with ₹${extra.toLocaleString('en-IN')} extra/mo` : 'add extra payment'} subColor={interestSaved>0?'#047857':'var(--text3)'}/>
+              <KpiCard icon={<Trophy size={22} color="#D97706"/>}       iconBg="rgba(217,119,6,.14)" label="Debt-Free In"   value={monthsToLabel(active.months)} sub={active.neverPaysOff ? 'payments too low' : monthsSaved > 0 ? `${monthsSaved}mo faster than baseline` : 'add extra to save time'} subColor={active.neverPaysOff ? '#DC2626' : monthsSaved>0?'#047857':'var(--text3)'}/>
             </div>
 
             {/* Coach */}
@@ -146,7 +146,7 @@ export default function DebtReduction({ embedded = false }) {
                     <button key={r.extra} onClick={() => setExtra(r.extra)}
                       style={{ border:`1.5px solid ${extra===r.extra?'var(--accent)':'var(--border)'}`, background: extra===r.extra?'var(--accent-light)':'var(--surface2)', color:'var(--text)', borderRadius:10, padding:'7px 12px', fontSize:12, cursor:'pointer', textAlign:'left' }}>
                       <div style={{ fontWeight:700 }}>+{fmt(r.extra,{noDecimals:true})}/mo</div>
-                      <div style={{ color:'#059669', fontWeight:600 }}>
+                      <div style={{ color:'#047857', fontWeight:600 }}>
                         {r.monthsSaved > 0 ? `${r.monthsSaved}mo sooner · saves ${fmt(r.interestSaved,{noDecimals:true})}` : 'no change'}
                       </div>
                     </button>
@@ -158,13 +158,13 @@ export default function DebtReduction({ embedded = false }) {
             {/* Strategy Comparison */}
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:20 }}>
               {[
-                { id:'avalanche', label:'Debt Avalanche', emoji:'❄️', desc:'Highest interest rate first', color:'#4F46E5', bg:'rgba(79,70,229,.08)', borderColor:'rgba(79,70,229,.3)', result: avalanche },
+                { id:'avalanche', label:'Debt Avalanche', emoji:'❄️', desc:'Highest interest rate first', color:'#1D4ED8', bg:'rgba(29,78,216,.08)', borderColor:'rgba(29,78,216,.3)', result: avalanche },
                 { id:'snowball',  label:'Debt Snowball',  emoji:'⛄', desc:'Smallest balance first',      color:'#3B82F6', bg:'rgba(59,130,246,.08)', borderColor:'rgba(59,130,246,.3)',  result: snowball  },
               ].map(s=>(
                 <div key={s.id} onClick={()=>setMethod(s.id)}
                   style={{ background: method===s.id ? s.bg : 'var(--surface)', borderRadius:14, padding:'20px 22px', border:`2px solid ${method===s.id ? s.color : 'var(--border-light)'}`, cursor:'pointer', transition:'all .18s', position:'relative', overflow:'hidden' }}>
                   {recommended === s.id && (
-                    <div style={{ position:'absolute', top:12, right:12, fontSize:10.5, fontWeight:700, color:'#059669', background:'rgba(5,150,105,.12)', borderRadius:8, padding:'2px 8px', border:'1px solid rgba(5,150,105,.25)' }}>✦ Recommended</div>
+                    <div style={{ position:'absolute', top:12, right:12, fontSize:10.5, fontWeight:700, color:'#047857', background:'rgba(4,120,87,.12)', borderRadius:8, padding:'2px 8px', border:'1px solid rgba(4,120,87,.25)' }}>✦ Recommended</div>
                   )}
                   <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14 }}>
                     <span style={{ fontSize:26 }}>{s.emoji}</span>
@@ -233,7 +233,7 @@ export default function DebtReduction({ embedded = false }) {
                     : 'not paid off';
                   return (
                     <div key={d.id} style={{ display:'flex', alignItems:'center', gap:14, padding:'12px 14px', background:'var(--surface2)', borderRadius:13 }}>
-                      <div style={{ width:28, height:28, borderRadius:8, background: i===0?'rgba(79,70,229,.2)':'var(--surface3)', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:800, fontSize:13, color: i===0?'var(--accent)':'var(--text3)', flexShrink:0 }}>{i+1}</div>
+                      <div style={{ width:28, height:28, borderRadius:8, background: i===0?'rgba(29,78,216,.2)':'var(--surface3)', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:800, fontSize:13, color: i===0?'var(--accent)':'var(--text3)', flexShrink:0 }}>{i+1}</div>
                       <span style={{ fontSize:18, flexShrink:0 }}>{d.isCard ? '💳' : '📋'}</span>
                       <div style={{ flex:1, minWidth:0 }}>
                         <div style={{ display:'flex', justifyContent:'space-between', marginBottom:5, gap:8 }}>
