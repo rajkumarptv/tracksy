@@ -7,6 +7,8 @@ import ErrorBoundary from './components/ErrorBoundary';
 import useAuthStore from './store/authStore';
 import useThemeStore from './store/themeStore';
 import queryClient from './lib/queryClient';
+import ComingSoon from './components/ComingSoon';
+import { FEATURES } from './config/features';
 import { pageView, setUserContext, clearUserContext } from './lib/analytics';
 
 // Auth pages load eagerly (tiny, needed first)
@@ -126,9 +128,17 @@ export default function App() {
               <Route path="forecast" element={<Forecast />} />
               <Route path="analytics" element={<Navigate to="/insights" replace />} />
               <Route path="debt-reduction" element={<Navigate to="/debts?tab=payoff" replace />} />
-              <Route path="import" element={<Import />} />
+              <Route path="import" element={FEATURES.import ? <Import /> : (
+                <ComingSoon title="Import" subtitle="Bring in transactions from statements and receipts"
+                  description="Importing bank statements and scanning receipts is coming soon. Until then you can add transactions yourself in a few taps."
+                  actions={[{ to: '/transactions?add=expense', label: 'Add a transaction' }, { to: '/', label: 'Back to dashboard' }]} />
+              )} />
               <Route path="recurring" element={<Recurring />} />
-              <Route path="family" element={<Family />} />
+              <Route path="family" element={FEATURES.family ? <Family /> : (
+                <ComingSoon title="Family" subtitle="Manage money together with your household"
+                  description="Shared budgets and household spending are coming soon. Your personal data and everything else in Tracksy keeps working as usual."
+                  actions={[{ to: '/', label: 'Back to dashboard' }]} />
+              )} />
               <Route path="settings" element={<Settings />} />
             </Route>
 

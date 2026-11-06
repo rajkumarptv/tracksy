@@ -141,3 +141,10 @@
     box-shadow: var(--shadow-lg);
   }
 }
+
+/* "Soon" tag next to pages that aren't released yet */
+.soon {
+  margin-left: auto; padding: 1px 8px; border-radius: var(--radius-pill);
+  font-size: 11px; font-weight: 600; letter-spacing: .02em;
+  background: var(--surface3); color: var(--text3);
+}
