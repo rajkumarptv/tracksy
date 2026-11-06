@@ -94,11 +94,9 @@ app.use((err, _req, res, _next) => {
    ───────────────────────────
    On Vercel the platform imports this module and invokes `app` per request —
    there is no port to listen on and no always-on process, so `app.listen()`
-   and `node-cron` must NOT run. We detect that via VERCEL and only start a
+   and background timers must NOT run. We detect that via VERCEL and only start a
    real server when this file is executed directly (local / VPS / Render).
 
-   The Gmail sync still runs in serverless: it is exposed as a token-protected
-   endpoint (POST /api/cron/gmail-sync) that an external scheduler calls.
 ═══════════════════════════════════════════════════════════════════════ */
 const isServerless = !!process.env.VERCEL;
 
@@ -112,13 +110,6 @@ if (!isServerless) {
     console.log(`🗄️  DB: ${process.env.DATABASE_URL ? 'Cloud (DATABASE_URL)' : `${process.env.DB_NAME}@${process.env.DB_HOST}`}\n`);
   });
 
-  /* ── Nightly Gmail auto-import (02:00 every day) — long-running only ──── */
-  const cron = require('node-cron');
-  const { runGmailSyncForAllUsers } = require('./jobs/gmailSync');
-
-  cron.schedule('0 2 * * *', () => {
-    runGmailSyncForAllUsers().catch(e => console.error('[gmail-cron] error:', e.message));
-  }, { timezone: 'Asia/Kolkata' });
 }
 
 module.exports = app;

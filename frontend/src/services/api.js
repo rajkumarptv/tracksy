@@ -139,20 +139,6 @@ export const dataAPI = {
   sampleRemove: () => api.delete('/data/sample'),
 };
 
-// Gmail auto-import
-export const gmailAPI = {
-  status:     () => api.get('/gmail/status'),
-  sync:       () => api.post('/gmail/sync'),
-  toggle:     (enabled) => api.post('/gmail/toggle', { enabled }),
-  disconnect: () => api.post('/gmail/disconnect'),
-  // connect is a full-page redirect, not an axios call
-  connectUrl: () => {
-    const token = localStorage.getItem('tracksy_token');
-    const base  = import.meta.env.VITE_API_URL || '/api';
-    return `${base}/gmail/connect?token=${token}`;
-  },
-};
-
 // Family budget
 export const familyAPI = {
   status:       () => api.get('/family/status'),

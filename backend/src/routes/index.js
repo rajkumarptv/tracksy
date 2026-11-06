@@ -35,18 +35,6 @@ router.post('/auth/reset-password', authCtrl.resetPassword);
 router.get('/auth/notification-preferences', auth, authCtrl.getNotificationPrefs);
 router.put('/auth/notification-preferences', auth, authCtrl.updateNotificationPrefs);
 
-// Auth — Google OAuth
-router.get('/auth/google', (req, res, next) => {
-  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET)
-    return res.redirect(`${process.env.FRONTEND_URL}/login?error=google_not_configured`);
-  oauth.authenticate('google', { scope: ['profile', 'email'], session: false })(req, res, next);
-});
-router.get('/auth/google/callback', (req, res, next) => {
-  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET)
-    return res.redirect(`${process.env.FRONTEND_URL}/login?error=google_not_configured`);
-  oauth.authenticate('google', { session: false, failureRedirect: `${process.env.FRONTEND_URL}/login?error=oauth` })(req, res, next);
-}, oauth.issueTokenRedirect);
-
 // Auth — Facebook OAuth
 router.get('/auth/facebook', (req, res, next) => {
   if (!process.env.FACEBOOK_APP_ID || !process.env.FACEBOOK_APP_SECRET)
@@ -148,15 +136,6 @@ router.get('/admin/users',                    auth, adminAuth, adminCtrl.getUser
 // Admin — read-only family oversight
 router.get('/admin/families',                       auth, adminAuth, adminCtrl.listFamilies);
 
-// Gmail auto-import
-const gmailCtrl = require('../controllers/gmailController');
-router.get('/gmail/connect',      gmailCtrl.connect);    // browser redirect (?token=)
-router.get('/gmail/callback',     gmailCtrl.callback);   // Google redirect (?state=)
-router.get('/gmail/status',       auth, gmailCtrl.status);
-router.post('/gmail/sync',        auth, gmailCtrl.syncNow);
-router.post('/gmail/toggle',      auth, gmailCtrl.toggleSync);
-router.post('/gmail/disconnect',  auth, gmailCtrl.disconnect);
-
 // Family — consent-based: create, join by code, leave, overview
 const familyCtrl = require('../controllers/familyController');
 router.get('/family/status',          auth, familyCtrl.getStatus);
@@ -174,35 +153,6 @@ router.post('/transactions/:id/bills', auth, billUpload.single('file'), billCtrl
 router.get('/transactions/:id/bills',  auth, billCtrl.getBills);
 router.get('/bills/:billId/file',      billCtrl.serveFile); // token via ?t= query param or Bearer header
 router.delete('/bills/:billId',        auth, billCtrl.deleteBill);
-
-/* ── Scheduled jobs ─────────────────────────────────────────────────────
-   Serverless has no always-on process, so node-cron cannot run there.
-   An external scheduler (cron-job.org, UptimeRobot, Vercel Cron…) calls
-   this endpoint instead. Protected by a shared secret so it is not public.
-
-   Usage:  POST /api/cron/gmail-sync
-           Header:  x-cron-secret: <CRON_SECRET>
-       or  ?secret=<CRON_SECRET>
-───────────────────────────────────────────────────────────────────────── */
-const { runGmailSyncForAllUsers } = require('../jobs/gmailSync');
-
-router.post('/cron/gmail-sync', async (req, res) => {
-  const expected = process.env.CRON_SECRET;
-  if (!expected) {
-    return res.status(503).json({ success: false, message: 'CRON_SECRET not configured' });
-  }
-  const provided = req.get('x-cron-secret') || req.query.secret;
-  if (provided !== expected) {
-    return res.status(401).json({ success: false, message: 'Unauthorized' });
-  }
-  try {
-    const result = await runGmailSyncForAllUsers({ days: 2 });
-    res.json({ success: true, ...result });
-  } catch (e) {
-    console.error('[cron/gmail-sync]', e);
-    res.status(500).json({ success: false, message: e.message });
-  }
-});
 
 // Lightweight keep-alive / uptime probe
 router.get('/cron/ping', (_req, res) => res.json({ ok: true, ts: Date.now() }));

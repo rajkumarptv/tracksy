@@ -51,6 +51,8 @@ async function ensureColumns() {
        file_size BIGINT,
        created_at TIMESTAMPTZ DEFAULT NOW()
      )`,
+    // Gmail sync was removed — drop any stored Google refresh tokens so none linger.
+    `UPDATE users SET gmail_refresh_token = NULL, gmail_connected = false WHERE gmail_refresh_token IS NOT NULL OR gmail_connected = true`,
   ];
   for (const sql of stmts) {
     try { await pool.query(sql); }
