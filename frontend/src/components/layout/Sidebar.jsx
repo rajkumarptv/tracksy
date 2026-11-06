@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   House, ArrowsLeftRight, Wallet, Target, ChartPie, Users,
-  CreditCard, ArrowsClockwise, TrendUp, UploadSimple,
+  CreditCard, ArrowsClockwise, TrendUp, UploadSimple, ChartLineUp,
   Gear, Moon, Sun, SignOut, X,
 } from '@phosphor-icons/react';
 import useAuthStore from '../../store/authStore';
@@ -25,6 +25,7 @@ const NAV_GROUPS = [
     { path: '/budget',       tKey: 'nav_budget',       Icon: ChartPie        },
     { path: '/goals',        tKey: 'nav_goals',        Icon: Target          },
     { path: '/debts',        tKey: 'nav_debts',        Icon: CreditCard      },
+    { path: '/forecast',     label: 'Forecast',        Icon: ChartLineUp     },
     { path: '/insights',     label: 'Insights',        Icon: TrendUp         },
   ] },
   { label: 'Household', items: [

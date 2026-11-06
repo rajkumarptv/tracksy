@@ -38,6 +38,7 @@ const Categories   = lazyWithReload(() => import('./pages/Categories'));
 const Debts        = lazyWithReload(() => import('./pages/Debts'));
 const Import       = lazyWithReload(() => import('./pages/Import'));
 const Recurring    = lazyWithReload(() => import('./pages/Recurring'));
+const Forecast     = lazyWithReload(() => import('./pages/Forecast'));
 const Family       = lazyWithReload(() => import('./pages/Family'));
 const Admin        = lazyWithReload(() => import('./pages/Admin'));
 // OtherPages exports several — wrap each in its own lazy chunk
@@ -96,6 +97,7 @@ export default function App() {
               <Route path="categories" element={<Categories />} />
               <Route path="debts" element={<Debts />} />
               <Route path="insights" element={<Insights />} />
+              <Route path="forecast" element={<Forecast />} />
               <Route path="analytics" element={<Navigate to="/insights" replace />} />
               <Route path="debt-reduction" element={<Navigate to="/debts?tab=payoff" replace />} />
               <Route path="import" element={<Import />} />
