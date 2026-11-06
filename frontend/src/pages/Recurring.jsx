@@ -22,7 +22,9 @@ const TYPE_CFG = {
 
 function RecurringModal({ item, wallets, categories, onClose, onSave }) {
   const t = useT();
-  const [form, setForm] = useState(item || {
+  // The API returns dates as ISO timestamps; <input type="date"> only accepts YYYY-MM-DD.
+  const dateOnly = v => (v ? String(v).slice(0, 10) : '');
+  const [form, setForm] = useState(item ? { ...item, start_date: dateOnly(item.start_date), end_date: dateOnly(item.end_date), next_run: dateOnly(item.next_run) } : {
     type: 'expense', amount: '', payment_name: '', description: '',
     frequency: 'monthly', start_date: new Date().toISOString().split('T')[0],
     end_date: '', wallet_id: '', category_id: '', is_active: true,

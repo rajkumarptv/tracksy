@@ -37,13 +37,13 @@ export default function Forecast() {
   });
 
   // Gradient that turns red below zero: offset is where y=0 sits between the series max and min.
-  const offset = useMemo(() => {
-    if (!data) return 1;
+  const { offset, mode } = useMemo(() => {
+    if (!data) return { offset: 1, mode: 'positive' };
     const vals = data.series.map(p => p.balance);
     const max = Math.max(...vals), min = Math.min(...vals);
-    if (max <= 0) return 0;
-    if (min >= 0) return 1;
-    return max / (max - min);
+    if (min >= 0) return { offset: 1, mode: 'positive' };
+    if (max <= 0) return { offset: 0, mode: 'negative' };
+    return { offset: max / (max - min), mode: 'split' };
   }, [data]);
 
   const chartData = useMemo(() => (data?.series || []).map(p => ({ ...p, label: shortDate(p.date) })), [data]);
@@ -56,7 +56,8 @@ export default function Forecast() {
     return Object.entries(grouped).map(([date, items]) => ({ date, items, balance: bal[date] }));
   }, [data]);
 
-  const money = n => fmt(n, { noDecimals: true });
+  // fmt() shows magnitudes only, so add the sign back: a negative balance must not read as a positive one
+  const money = n => `${n < 0 ? '−' : ''}${fmt(Math.abs(n), { noDecimals: true })}`;
 
   const header = (
     <>
@@ -159,7 +160,7 @@ export default function Forecast() {
               <Tooltip contentStyle={{ borderRadius:10, fontSize:12, border:'1px solid var(--border)', background:'var(--surface)' }}
                 formatter={v => [money(v), 'Balance']} labelFormatter={(_, p) => (p?.[0] ? longDate(p[0].payload.date) : '')}/>
               <ReferenceLine y={0} stroke="#DC2626" strokeDasharray="4 4" strokeOpacity={0.6}/>
-              <Area type="monotone" dataKey="balance" stroke="url(#fcStroke)" strokeWidth={2.5} fill="url(#fcFill)" dot={false} activeDot={{ r:4 }}/>
+              <Area type="monotone" dataKey="balance" stroke={mode === 'split' ? 'url(#fcStroke)' : mode === 'negative' ? '#DC2626' : '#4F46E5'} strokeWidth={2.5} fill={mode === 'split' ? 'url(#fcFill)' : mode === 'negative' ? 'rgba(220,38,38,.14)' : 'rgba(79,70,229,.12)'} dot={false} activeDot={{ r:4 }}/>
               {short && <ReferenceDot x={shortDate(s.lowestDate)} y={s.lowestBalance} r={5} fill="#DC2626" stroke="#fff" strokeWidth={2}/>}
             </AreaChart>
           </ResponsiveContainer>
