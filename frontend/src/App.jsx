@@ -47,9 +47,8 @@ const Recurring    = lazyWithReload(() => import('./pages/Recurring'));
 const Forecast     = lazyWithReload(() => import('./pages/Forecast'));
 const Family       = lazyWithReload(() => import('./pages/Family'));
 const Admin        = lazyWithReload(() => import('./pages/Admin'));
-// OtherPages exports several — wrap each in its own lazy chunk
 const Wallet       = lazyWithReload(() => import('./pages/Accounts'));
-const Settings     = lazyWithReload(() => import('./pages/OtherPages').then(m => ({ default: m.Settings })));
+const Settings     = lazyWithReload(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
 const Insights      = lazyWithReload(() => import('./pages/Insights'));
 
 // Retire browser-only data from the removed Challenges/Investments pages — notably

@@ -770,3 +770,6 @@ input, select, textarea { font-family: 'Inter', sans-serif; }
   .kpi-grid > :last-child:nth-child(odd) { grid-column:1/-1; }
   .kpi-icon { width:36px !important; height:36px !important; border-radius:10px !important; }
 }
+
+/* Side-by-side dropdowns that need their full labels become one column on phones */
+@media (max-width:768px) { .stack-mobile { grid-template-columns:minmax(0,1fr) !important; } }
