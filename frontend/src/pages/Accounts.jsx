@@ -8,6 +8,7 @@ import {
   Landmark, TrendingUp, TrendingDown, CreditCard, HandCoins, LayoutGrid, X, Trash2,
 } from 'lucide-react';
 import { walletsAPI } from '../services/api';
+import { track, accountType } from '../lib/analytics';
 import useThemeStore from '../store/themeStore';
 import { useFmt } from '../i18n';
 import { THEME } from '../theme';
@@ -457,7 +458,10 @@ function AccountModal({ mode, wallet, t, isDark, onClose, onSaved, onPay }) {
         payload.emi_day = parseInt(emiDay||0) || null;
       }
       if (isEdit) await walletsAPI.update(wallet.id, payload);
-      else        await walletsAPI.create(payload);
+      else {
+        await walletsAPI.create(payload);
+        track('account_created', { account_type: accountType(payload.type) });
+      }
       onSaved();
     } catch(e) { setErr(e.response?.data?.message || 'Failed to save'); setBusy(false); }
   };
@@ -722,6 +726,7 @@ function PaymentModal({ wallet, t, isDark, accounts, onClose, onSaved }) {
         from_wallet_id: fromId || null,
         note: `Payment to ${wallet.name}`,
       });
+      track('account_payment_made', { account_type: accountType(wallet.type) });
       onSaved();
     } catch(e) { setErr(e.response?.data?.message || 'Payment failed'); setBusy(false); }
   };
