@@ -8,18 +8,18 @@ import {
 import styles from './BottomNav.module.css';
 
 const LEFT_TABS = [
-  { path: '/',       Icon: House,  label: 'Dashboard', color: '#1D4ED8' },
-  { path: '/wallet', Icon: Wallet, label: 'Accounts',  color: '#1D4ED8' },
+  { path: '/',       Icon: House,  label: 'Dashboard', color: 'var(--accent)' },
+  { path: '/wallet', Icon: Wallet, label: 'Accounts',  color: 'var(--accent)' },
 ];
 const RIGHT_TABS = [
-  { path: '/budget', Icon: ChartPie, label: 'Budget', color: '#1D4ED8' },
-  { path: '/goals',  Icon: Target,   label: 'Goals',  color: '#1D4ED8' },
+  { path: '/budget', Icon: ChartPie, label: 'Budget', color: 'var(--accent)' },
+  { path: '/goals',  Icon: Target,   label: 'Goals',  color: 'var(--accent)' },
 ];
 
 const ACTION_OPTIONS = [
-  { key: 'income',   icon: ArrowUp,          label: 'Income',   color: '#047857', bg: 'rgba(4,120,87,.13)',   route: '/transactions?add=income'   },
-  { key: 'expense',  icon: ArrowDown,        label: 'Expense',  color: '#DC2626', bg: 'rgba(220,38,38,.13)',  route: '/transactions?add=expense'  },
-  { key: 'transfer', icon: ArrowsClockwise,  label: 'Transfer', color: '#1D4ED8', bg: 'rgba(29,78,216,.13)',  route: '/transactions?add=transfer' },
+  { key: 'income',   icon: ArrowUp,          label: 'Income',   color: 'var(--green)', bg: 'var(--green-soft)',   route: '/transactions?add=income'   },
+  { key: 'expense',  icon: ArrowDown,        label: 'Expense',  color: 'var(--red)', bg: 'var(--red-soft)',  route: '/transactions?add=expense'  },
+  { key: 'transfer', icon: ArrowsClockwise,  label: 'Transfer', color: 'var(--accent)', bg: 'var(--accent-light)',  route: '/transactions?add=transfer' },
 ];
 
 function Tab({ path, Icon, label, color }) {
@@ -31,21 +31,14 @@ function Tab({ path, Icon, label, color }) {
         transition={{ type: 'spring', stiffness: 500, damping: 25 }}>
         {isActive && (
           <motion.div className={styles.activePill} layoutId="bottomNavPill"
-            style={{ background: `${color}20` }}
+            style={{ background: 'var(--accent-light)' }}
             transition={{ type: 'spring', stiffness: 500, damping: 35 }} />
         )}
-        <motion.div className={styles.iconWrap}
-          animate={isActive ? { y: -2, scale: 1.1 } : { y: 0, scale: 1 }}
-          transition={{ type: 'spring', stiffness: 400, damping: 20 }}>
-          {isActive && (
-            <motion.div className={styles.iconGlow} style={{ background: color }}
-              initial={{ scale: 0, opacity: 0 }} animate={{ scale: 1, opacity: 0.2 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 20 }} />
-          )}
+        <div className={styles.iconWrap}>
           <Icon size={22} weight={isActive ? 'fill' : 'regular'} color={isActive ? color : 'var(--text3)'} />
-        </motion.div>
+        </div>
         <motion.span className={styles.tabLabel}
-          animate={{ color: isActive ? color : 'var(--text3)', fontWeight: isActive ? 700 : 500 }}
+          animate={{ color: isActive ? color : 'var(--text3)', fontWeight: isActive ? 600 : 500 }}
           transition={{ duration: 0.15 }}>
           {label}
         </motion.span>
