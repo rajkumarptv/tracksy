@@ -8,8 +8,9 @@
   <title>Tracksy – Personal Finance</title>
   <meta name="description" content="Tracksy – Your personal finance management dashboard" />
 
-  <!-- Google Tag Manager. The container id comes from VITE_GTM_ID (set in .env.production), so local
-       dev never loads it and never pollutes production data. The app pushes events to window.dataLayer. -->
+  <!-- Google Tag Manager. %VITE_GTM_ID% is filled at build time by analytics/vite-gtm-plugin.mjs: production
+       builds use GTM-KMVKKZK8; dev/preview load nothing unless VITE_GTM_ID is set, so local use never
+       pollutes production data. The app pushes events to window.dataLayer. -->
   <script>
     window.dataLayer = window.dataLayer || [];
     (function () {

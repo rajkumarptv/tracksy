@@ -2,7 +2,7 @@
 
 The app sends clean, documented events to the Google Tag Manager data layer (`window.dataLayer`). GTM turns them into GA4 events. The app side is done; this guide covers the two things that live in your Google accounts: **the GTM container** and **GA4 settings and reports**.
 
-- GTM container: `GTM-KMVKKZK8` (already installed in `index.html`; production builds only, via `.env.production`).
+- GTM container: `GTM-KMVKKZK8` (already installed in `index.html`; production builds only, via `analytics/vite-gtm-plugin.mjs`, which defaults to this container because `.env` files are git-ignored in this repo).
 - Event reference (every event, parameter and allowed value): [`EVENTS.md`](./EVENTS.md).
 - Importable container: [`gtm-container.json`](./gtm-container.json).
 
@@ -83,6 +83,7 @@ The product owner chose to load analytics **without a consent banner**. Be aware
 
 ## 8. Troubleshooting
 
+- **"Google tag wasn't detected" when setting up the GA4 stream:** the page must load the container *and* the container must have a **published** version that contains the GA4 configuration tag. Import and publish `gtm-container.json` (section 1), then retry detection. Also check the deployed HTML contains `GTM-KMVKKZK8` and not `%VITE_GTM_ID%`.
 - **No data at all:** development builds never load GTM (no `VITE_GTM_ID`). Check the deployed site: in the browser console, `window.google_tag_manager['GTM-KMVKKZK8']` should exist and `window.dataLayer` should list events.
 - **GTM loads but GA4 shows nothing:** the `GA4 Measurement ID` variable still says `G-XXXXXXXXXX`, or the container version isn't published.
 - **Ad blockers** block GTM for a share of users, so GA4 counts are a lower bound.
