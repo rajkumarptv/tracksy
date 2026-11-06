@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, BarChart, Bar, Cell } from 'recharts';
 import { Target, TrendingDown, Zap, Trophy, ChevronDown, ChevronUp, Info, CheckCircle, AlertTriangle, Lightbulb } from 'lucide-react';
 import { walletsAPI } from '../services/api';
+import { track, extraBucket } from '../lib/analytics';
 import { Topbar, PageLoader } from '../components/ui';
 import { useFmt } from '../i18n';
 import { normalizeDebts, minPayment, simulate, whatIf, coachTips } from '../lib/payoff';
@@ -36,6 +37,13 @@ export default function DebtReduction({ embedded = false }) {
   const fmt = useFmt();
   const [extra, setExtra] = useState(0);
   const [method, setMethod] = useState('avalanche');
+
+  // Tracked once the slider settles (not on every drag step)
+  useEffect(() => {
+    if (extra <= 0) return undefined;
+    const t = setTimeout(() => track('payoff_extra_set', { extra_bucket: extraBucket(extra) }), 1000);
+    return () => clearTimeout(t);
+  }, [extra]);
 
   const { data: wallets, isLoading } = useQuery({
     queryKey: ['wallets'],
@@ -161,7 +169,7 @@ export default function DebtReduction({ embedded = false }) {
                 { id:'avalanche', label:'Debt Avalanche', emoji:'❄️', desc:'Highest interest rate first', color:'#1D4ED8', bg:'rgba(29,78,216,.08)', borderColor:'rgba(29,78,216,.3)', result: avalanche },
                 { id:'snowball',  label:'Debt Snowball',  emoji:'⛄', desc:'Smallest balance first',      color:'#3B82F6', bg:'rgba(59,130,246,.08)', borderColor:'rgba(59,130,246,.3)',  result: snowball  },
               ].map(s=>(
-                <div key={s.id} onClick={()=>setMethod(s.id)}
+                <div key={s.id} onClick={()=>{ setMethod(s.id); track('payoff_method_selected', { payoff_method: s.id }); }}
                   style={{ background: method===s.id ? s.bg : 'var(--surface)', borderRadius:14, padding:'20px 22px', border:`2px solid ${method===s.id ? s.color : 'var(--border-light)'}`, cursor:'pointer', transition:'all .18s', position:'relative', overflow:'hidden' }}>
                   {recommended === s.id && (
                     <div style={{ position:'absolute', top:12, right:12, fontSize:10.5, fontWeight:700, color:'#047857', background:'rgba(4,120,87,.12)', borderRadius:8, padding:'2px 8px', border:'1px solid rgba(4,120,87,.25)' }}>✦ Recommended</div>

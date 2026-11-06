@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { transactionsAPI, budgetsAPI, walletsAPI, insightsAPI } from '../services/api';
+import { track } from '../lib/analytics';
 import { PageLoader, Topbar } from '../components/ui';
 import { useFmt, useT } from '../i18n';
 import {
@@ -290,7 +291,7 @@ export default function SmartInsights({ embedded = false }) {
         {/* Tab bar */}
         <div style={{ display:'flex', gap:8, background:'var(--surface2)', borderRadius:16, padding:4 }}>
           {TABS.map(({ key, label, icon: Icon }) => (
-            <button key={key} onClick={() => setActiveTab(key)}
+            <button key={key} onClick={() => { setActiveTab(key); track('insights_tab_viewed', { ui_tab: key }); }}
               style={{
                 flex:1, display:'flex', alignItems:'center', justifyContent:'center', gap:6,
                 padding:'9px 6px', borderRadius:12, border:'none', cursor:'pointer',

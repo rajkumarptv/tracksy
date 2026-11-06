@@ -12,6 +12,7 @@ import {
   ListChecks, Percent, Sparkles, PiggyBank, CalendarDays, Check, TrendingUp, AlertTriangle,
 } from 'lucide-react';
 import { dashboardAPI, walletsAPI, goalsAPI, recurringAPI, forecastAPI } from '../services/api';
+import { track } from '../lib/analytics';
 import useAuthStore from '../store/authStore';
 import useThemeStore from '../store/themeStore';
 import { useFmt } from '../i18n';
@@ -598,11 +599,12 @@ export default function Dashboard() {
         {forecast?.summary && (() => {
           const f = forecast.summary;
           const warn = f.shortfallDate && f.daysUntilShortfall <= 30;
+          const openForecast = () => { track('forecast_banner_clicked', { banner_state: warn ? 'warning' : 'ok' }); navigate('/forecast'); };
           const d = (x) => new Date(x+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'});
           const signed = (n) => `${n < 0 ? '−' : ''}${fmt(Math.abs(n),{noDecimals:true})}`;
           return (
-            <motion.div variants={cardVar} onClick={() => navigate('/forecast')} role="link" tabIndex={0}
-              onKeyDown={e => { if (e.key === 'Enter') navigate('/forecast'); }}
+            <motion.div variants={cardVar} onClick={openForecast} role="link" tabIndex={0}
+              onKeyDown={e => { if (e.key === 'Enter') openForecast(); }}
               style={{ cursor:'pointer', display:'flex', alignItems:'center', gap:12, padding:'12px 16px', borderRadius:12, marginBottom:16,
                 background: warn ? 'var(--red-light)' : c.cardBg,
                 border: `1px solid ${warn ? 'var(--red)' : c.border.replace('1px solid ','')}` }}>

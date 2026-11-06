@@ -4,6 +4,7 @@ import { Search, Moon, Sun, Inbox, ArrowUpRight, ArrowDownRight } from 'lucide-r
 import useThemeStore from '../../store/themeStore';
 import useAuthStore from '../../store/authStore';
 import { useFmt } from '../../i18n';
+import { track } from '../../lib/analytics';
 
 /* ─── StatCard ──────────────────────────────────── */
 export function StatCard({ label, value, change, changeLabel, prefix, icon, isCurrency = true }) {
@@ -158,7 +159,7 @@ export function Topbar({ title, subtitle, children, showSearch = true }) {
   const submitSearch = (e) => {
     e.preventDefault();
     const q = term.trim();
-    if (q) { navigate(`/transactions?search=${encodeURIComponent(q)}`); setTerm(''); }
+    if (q) { track('search_used'); navigate(`/transactions?search=${encodeURIComponent(q)}`); setTerm(''); }
   };
 
   return (

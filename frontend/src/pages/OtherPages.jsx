@@ -1157,6 +1157,7 @@ import { useState as useState2 } from 'react';
 import { useMutation as useMutation2, useQuery as useQuery2 } from '@tanstack/react-query';
 import { useNavigate as useNavigate3 } from 'react-router-dom';
 import { authAPI, dataAPI } from '../services/api';
+import { track, trackThen, isEnabled, setOptOut } from '../lib/analytics';
 import { Topbar as Topbar3 } from '../components/ui';
 import useAuthStore2 from '../store/authStore';
 import useCurrencyStore2, { CURRENCIES as ALL_CURRENCIES } from '../store/currencyStore';
@@ -1174,6 +1175,14 @@ function PrivacySection() {
   const [cur, setCur] = useState2('');
   const [msg, setMsg] = useState2('');
   const hasPw = !!passwordHash;
+  const [analyticsOn, setAnalyticsOn] = useState2(isEnabled());
+  const toggleAnalytics = () => {
+    const next = !analyticsOn;
+    if (!next) track('analytics_opt_out_changed', { analytics_enabled: false }); // last event before switching off
+    setOptOut(!next);
+    if (next) track('analytics_opt_out_changed', { analytics_enabled: true });
+    setAnalyticsOn(next);
+  };
   const ok = (m) => { setMsg(m); setTimeout(() => setMsg(''), 2500); };
 
   const save = () => {
@@ -1239,6 +1248,21 @@ function PrivacySection() {
         </button>
         {hasPw && <button className="btn btn-ghost" onClick={remove}>Remove password</button>}
       </div>
+
+      {/* Usage analytics opt-out */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:16, marginTop:20, paddingTop:16, borderTop:'1px solid var(--border)' }}>
+        <div style={{ minWidth:0 }}>
+          <div style={{ fontSize:14, fontWeight:600, color:'var(--text)' }}>Share anonymous usage data</div>
+          <div style={{ fontSize:13, color:'var(--text3)', marginTop:2, lineHeight:1.5 }}>
+            Helps us improve Tracksy. It never includes your name, email, amounts, account names or anything you type.
+            {typeof navigator !== 'undefined' && navigator.globalPrivacyControl === true && ' Your browser\'s Global Privacy Control is on, so this is already off.'}
+          </div>
+        </div>
+        <button className="btn btn-ghost" role="switch" aria-checked={analyticsOn} disabled={typeof navigator !== 'undefined' && navigator.globalPrivacyControl === true}
+          onClick={toggleAnalytics} style={{ padding:'7px 16px', flexShrink:0 }}>
+          {analyticsOn ? 'On' : 'Off'}
+        </button>
+      </div>
     </SectionCard>
   );
 }
@@ -1269,20 +1293,21 @@ export function Settings() {
     setSampleBusy('load');
     try {
       await dataAPI.sampleLoad();
-      window.location.href = '/dashboard';
+      // fire the event before the hard redirect so it isn't lost with the page
+      trackThen('sample_data_loaded', {}, () => { window.location.href = '/dashboard'; });
     } catch (e) { setSampleBusy(''); alert(e.response?.data?.message || 'Failed to load sample data'); }
   };
   const removeSample = async () => {
     setSampleBusy('remove');
     try {
       await dataAPI.sampleRemove();
-      window.location.href = '/dashboard';
+      trackThen('sample_data_removed', {}, () => { window.location.href = '/dashboard'; });
     } catch (e) { setSampleBusy(''); alert(e.response?.data?.message || 'Failed to remove sample data'); }
   };
 
   const mutation = useMutation2({
     mutationFn: (data) => authAPI.updateProfile(data),
-    onSuccess: (res) => { updateUser(res.data.user); setSaved(true); setTimeout(()=>setSaved(false),2500); },
+    onSuccess: (res) => { track('profile_updated'); updateUser(res.data.user); setSaved(true); setTimeout(()=>setSaved(false),2500); },
   });
 
   const initials = `${user?.first_name?.[0]||''}${user?.last_name?.[0]||''}`.toUpperCase();
@@ -1296,6 +1321,7 @@ export function Settings() {
       const a    = document.createElement('a');
       a.href = url; a.download = `tracksy-backup-${new Date().toISOString().split('T')[0]}.json`;
       a.click(); URL.revokeObjectURL(url);
+      track('data_exported');
       setExportDone(true); setTimeout(()=>setExportDone(false), 3000);
     } catch { }
     setExporting(false);
@@ -1349,12 +1375,12 @@ export function Settings() {
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
               <div className="form-group">
                 <label className="form-label">{t('settings_currency')}</label>
-                <ThemedSelect value={currency} onChange={setCurrency}
+                <ThemedSelect value={currency} onChange={(v) => { setCurrency(v); track('currency_changed', { currency: v }); }}
                   options={ALL_CURRENCIES.map(c => ({ value:c.code, label:`${c.code} — ${c.name}`, emoji:c.flag }))}/>
               </div>
               <div className="form-group">
                 <label className="form-label">{t('settings_language')}</label>
-                <ThemedSelect value={lang} onChange={setLang}
+                <ThemedSelect value={lang} onChange={(v) => { setLang(v); track('language_changed', { language: v }); }}
                   options={[
                     { value:'en', label:'English', emoji:'🇬🇧' },
                     { value:'ta', label:'தமிழ் (Tamil)', emoji:'🇮🇳' },
@@ -1522,6 +1548,7 @@ function NotificationPrefsSection() {
         goal_milestones:    local.goal_milestones,
       });
       qcNotif.invalidateQueries({ queryKey: ['notification-prefs'] });
+      track('notification_prefs_updated');
       setSavedNotif(true); setTimeout(() => setSavedNotif(false), 2500);
     } catch(e) {}
     setSaving(false);
@@ -1589,6 +1616,7 @@ function ChangePasswordSection({ user }) {
     setSavingPwd(true);
     try {
       await authAPI.changePassword({ current_password: form.current_password, new_password: form.new_password });
+      track('password_changed');
       setSuccess2('Password changed successfully!');
       setFormPwd({ current_password: '', new_password: '', confirm_password: '' });
       setTimeout(() => { setOpen(false); setSuccess2(''); }, 2500);
@@ -1668,6 +1696,7 @@ function ResetModal({ scope, onClose }) {
   const mutation = useMutation2({
     mutationFn: () => dataAPI.reset(scope),
     onSuccess: () => {
+      track('data_reset', { scope });
       setDone(true);
       // Drop the persisted query cache too — otherwise the reload below restores
       // the deleted data straight back out of localStorage.

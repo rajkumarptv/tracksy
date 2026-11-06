@@ -8,6 +8,7 @@ import {
   AreaChart, Area,
 } from 'recharts';
 import { walletsAPI } from '../services/api';
+import { track, debtType } from '../lib/analytics';
 import { Topbar, PageLoader, EmptyState, SubTabs } from '../components/ui';
 import DebtReduction from './DebtReduction';
 import {
@@ -665,7 +666,7 @@ function DebtModal({ debt, onClose, onSaved }) {
 
   const mutation = useMutation({
     mutationFn: (data) => debt ? walletsAPI.update(debt.id, data) : walletsAPI.create(data),
-    onSuccess: onSaved,
+    onSuccess: (...a) => { if (!debt) track('debt_added', { debt_type: debtType(form.type), has_rate: parseFloat(form.interest_rate) > 0 }); onSaved?.(...a); },
     onError: (e) => setError(e.response?.data?.message || 'Error saving'),
   });
 

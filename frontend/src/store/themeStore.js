@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { track } from '../lib/analytics';
 
 const useThemeStore = create(persist(
   (set, get) => ({
@@ -8,6 +9,7 @@ const useThemeStore = create(persist(
       const next = get().theme === 'light' ? 'dark' : 'light';
       document.documentElement.setAttribute('data-theme', next);
       set({ theme: next });
+      track('theme_changed', { theme: next });
     },
     initTheme: () => {
       document.documentElement.setAttribute('data-theme', get().theme);

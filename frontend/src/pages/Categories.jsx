@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { categoriesAPI } from '../services/api';
+import { track } from '../lib/analytics';
 import { Topbar, EmptyState, PageLoader } from '../components/ui';
 import { Plus, Tag } from 'lucide-react';
 import useAuthStore from '../store/authStore';
@@ -34,7 +35,7 @@ export default function Categories() {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => categoriesAPI.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['categories'] }),
+    onSuccess: () => { track('category_deleted'); qc.invalidateQueries({ queryKey: ['categories'] }); },
   });
 
   if (isLoading) return <PageLoader />;
@@ -235,7 +236,7 @@ function CategoryModal({ cat, onClose, onSaved }) {
 
   const mutation = useMutation({
     mutationFn: (data) => cat ? categoriesAPI.update(cat.id,data) : categoriesAPI.create(data),
-    onSuccess: onSaved,
+    onSuccess: (...a) => { if (!cat) track('category_created'); onSaved?.(...a); },
     onError: (e) => {
       setError(e.response?.data?.message || 'Error saving category');
     },
