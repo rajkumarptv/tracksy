@@ -12,8 +12,8 @@ import { normalizeDebts, minPayment, simulate, whatIf, coachTips } from '../lib/
 /* ── KPI Card ── */
 function KpiCard({ icon, iconBg, label, value, sub, subColor }) {
   return (
-    <div style={{ background:'var(--surface)', borderRadius:16, padding:'18px 20px', boxShadow:'0 2px 16px rgba(0,0,0,.07)', border:'1px solid var(--border-light)', display:'flex', alignItems:'center', gap:16 }}>
-      <div style={{ width:52, height:52, borderRadius:14, background:iconBg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{icon}</div>
+    <div className="kpi-card" style={{ background:'var(--surface)', borderRadius:16, padding:'18px 20px', boxShadow:'var(--shadow-xs)', border:'1px solid var(--border-light)', display:'flex', alignItems:'center', gap:16 }}>
+      <div className="kpi-icon" style={{ width:52, height:52, borderRadius:14, background:iconBg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{icon}</div>
       <div style={{ minWidth:0, flex:1 }}>
         <div style={{ fontSize:12, fontWeight:500, color:'var(--text3)', marginBottom:3 }}>{label}</div>
         <div style={{ fontSize:19, fontWeight:700, color:'var(--text)', letterSpacing:-0.3, fontFamily:'Inter,sans-serif', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{value}</div>
@@ -85,7 +85,7 @@ export default function DebtReduction({ embedded = false }) {
     <div style={{ display:'flex', flexDirection:'column', minHeight:'100vh' }}>
       {!embedded && <Topbar title="Debt Reduction Planner" subtitle="Avalanche & Snowball strategies to become debt-free faster"/>}
 
-      <div style={{ padding:'24px 28px 40px', flex:1, overflow:'auto' }}>
+      <div className="planner-pad" style={{ padding:'24px 28px 40px', flex:1, overflow:'auto' }}>
 
         {debts.length === 0 ? (
           <div style={{ textAlign:'center', padding:'60px 0', color:'var(--text3)' }}>
@@ -96,7 +96,7 @@ export default function DebtReduction({ embedded = false }) {
         ) : (
           <>
             {/* KPI Cards */}
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:14, marginBottom:24 }}>
+            <div className="kpi-grid" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:14, marginBottom:24 }}>
               <KpiCard icon={<TrendingDown size={22} color="#DC2626"/>} iconBg="rgba(220,38,38,.14)" label="Total Debt"      value={fmt(totalDebt,{noDecimals:true})} sub={`${debts.length} debt${debts.length===1?'':'s'}`}/>
               <KpiCard icon={<Target size={22} color="#1D4ED8"/>}       iconBg="rgba(29,78,216,.14)" label="Min Monthly"    value={fmt(minMonthly,{noDecimals:true})} sub="minimum payments"/>
               <KpiCard icon={<Zap size={22} color="#047857"/>}          iconBg="rgba(4,120,87,.14)" label="Interest Saved" value={fmt(interestSaved > 0 ? interestSaved : 0,{noDecimals:true})} sub={extra > 0 ? `with ₹${extra.toLocaleString('en-IN')} extra/mo` : 'add extra payment'} subColor={interestSaved>0?'#047857':'var(--text3)'}/>

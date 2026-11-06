@@ -761,3 +761,12 @@ input, select, textarea { font-family: 'Inter', sans-serif; }
   .rec-actions { justify-content:flex-end; border-top:1px solid var(--border-light); padding-top:6px; gap:0; }
   .rec-actions button { min-width:44px; min-height:44px; display:flex; align-items:center; justify-content:center; }
 }
+
+/* ── Planner KPI tiles: a compact 2x2 on phones instead of four tall rows ── */
+@media (max-width:768px) {
+  .planner-pad { padding:14px 14px 96px !important; }
+  .kpi-grid { grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:10px !important; margin-bottom:16px !important; }
+  .kpi-card { flex-direction:column; align-items:flex-start !important; gap:8px !important; padding:14px !important; }
+  .kpi-grid > :last-child:nth-child(odd) { grid-column:1/-1; }
+  .kpi-icon { width:36px !important; height:36px !important; border-radius:10px !important; }
+}

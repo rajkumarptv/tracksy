@@ -16,8 +16,8 @@ const longDate = s => new Date(`${s}T00:00:00`).toLocaleDateString('en-IN', { we
 
 function KpiCard({ icon, iconBg, label, value, sub, subColor }) {
   return (
-    <div style={{ background:'var(--surface)', borderRadius:16, padding:'16px 18px', boxShadow:'0 2px 16px rgba(0,0,0,.07)', border:'1px solid var(--border-light)', display:'flex', alignItems:'center', gap:14 }}>
-      <div style={{ width:46, height:46, borderRadius:13, background:iconBg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{icon}</div>
+    <div className="kpi-card" style={{ background:'var(--surface)', borderRadius:16, padding:'16px 18px', boxShadow:'var(--shadow-xs)', border:'1px solid var(--border-light)', display:'flex', alignItems:'center', gap:14 }}>
+      <div className="kpi-icon" style={{ width:46, height:46, borderRadius:13, background:iconBg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{icon}</div>
       <div style={{ minWidth:0, flex:1 }}>
         <div style={{ fontSize:12, fontWeight:500, color:'var(--text3)', marginBottom:3 }}>{label}</div>
         <div style={{ fontSize:18, fontWeight:700, color:'var(--text)', letterSpacing:-0.3, fontFamily:'Inter,sans-serif', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{value}</div>
@@ -126,7 +126,7 @@ export default function Forecast() {
         </div>
 
         {/* KPIs */}
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:14 }}>
+        <div className="kpi-grid" style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:14 }}>
           <KpiCard icon={<Wallet size={20} color="#1D4ED8"/>} iconBg="rgba(29,78,216,.14)" label="Bank + cash today" value={money(data.startBalance)} sub="spendable balance" />
           <KpiCard icon={<TrendingDown size={20} color={s.lowestBalance < 0 ? '#DC2626' : '#D97706'}/>} iconBg={s.lowestBalance < 0 ? 'rgba(220,38,38,.14)' : 'rgba(217,119,6,.14)'}
             label="Lowest point" value={money(s.lowestBalance)} sub={shortDate(s.lowestDate)} subColor={s.lowestBalance < 0 ? '#DC2626' : undefined} />

@@ -151,8 +151,8 @@ function DebtsOverview() {
               <TrendingDown size={19} color={t.text2}/>
             </button>
             <motion.button className={styles.circleBtn} whileTap={{ scale:.9 }}
-              style={{ background:'#DC2626', border:'none', boxShadow:'0 8px 24px rgba(220,38,38,.35)' }}
-              onClick={() => { setEditDebt(null); setShowModal(true); }}>
+              style={{ background:'var(--accent-btn)', border:'none', boxShadow:'var(--shadow-md)' }}
+              onClick={() => { setEditDebt(null); setShowModal(true); }} aria-label="Add debt">
               <Plus size={22} color="#fff"/>
             </motion.button>
           </div>
@@ -244,11 +244,11 @@ function DebtsOverview() {
                   <div className={styles.groupIcon} style={{ background:`${g.clr}1f` }}>
                     <GIcon size={19} color={g.clr}/>
                   </div>
-                  <span style={{ fontSize:16, fontWeight:700, color:t.text }}>{g.title}</span>
+                  <span style={{ fontSize:16, fontWeight:700, color:t.text, whiteSpace:'nowrap' }}>{g.title}</span>
                 </div>
                 <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                  <span style={{ fontSize:13, color:t.text2 }}>{isLent ? 'To Receive' : 'Outstanding'}</span>
-                  <span style={{ fontSize:15, fontWeight:800, color: isLent ? t.green : g.clr, fontFamily:'Inter, sans-serif' }}>
+                  <span className={styles.groupTotalLabel} style={{ fontSize:13, color:t.text2 }}>{isLent ? 'To Receive' : 'Outstanding'}</span>
+                  <span style={{ fontSize:15, fontWeight:800, whiteSpace:'nowrap', color: isLent ? t.green : g.clr, fontFamily:'Inter, sans-serif' }}>
                     {isLent || !g.total ? '' : '−'}{fmt(g.total,{noDecimals:true})}
                   </span>
                   <div className={styles.collapseBtn} style={{ background:t.surface }}>
@@ -282,7 +282,7 @@ function DebtsOverview() {
                             <span style={{ fontSize:18 }}>{meta.icon}</span>
                           </div>
                           <div style={{ flex:1, minWidth:0 }}>
-                            <div style={{ display:'flex', alignItems:'center', gap:8, minWidth:0 }}>
+                            <div style={{ display:'flex', alignItems:'center', flexWrap:'wrap', gap:'2px 8px', minWidth:0 }}>
                               <span className={styles.rowName} style={{ color:t.text }}>{w.name}</span>
                               <span style={{ fontSize:10.5, fontWeight:700, padding:'2px 8px', borderRadius:14, background:`${meta.color}1f`, color:meta.color, whiteSpace:'nowrap', flexShrink:0 }}>{meta.label}</span>
                             </div>
