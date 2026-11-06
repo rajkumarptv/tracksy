@@ -23,32 +23,32 @@ const DS = {
     card: THEME.light.cardBg,
     shadow: THEME.light.cardShadow,
     overviewBg:'linear-gradient(135deg, #F5F2FF 0%, #EEF4FF 100%)',
-    chipBg:'#FFFFFF', chipActiveBg:'#EEF0FF',
+    chipBg:'#FFFFFF', chipActiveBg:'#EFF6FF',
   },
   dark: {
     ...THEME.dark,
     card: THEME.dark.cardBg,
     shadow: THEME.dark.cardShadow,
     overviewBg: THEME.dark.flowBg,
-    chipBg: THEME.dark.cardBg, chipActiveBg:'rgba(79,70,229,.15)',
+    chipBg: THEME.dark.cardBg, chipActiveBg:'rgba(29,78,216,.15)',
   },
-  primary:'#059669', secondary:'#4F46E5', blue:'#3B82F6',
+  primary:'#047857', secondary:'#1D4ED8', blue:'#3B82F6',
   pink:'#DC2626', warning:'#D97706', danger:'#EF4444',
 };
 
 /* ── Type taxonomy → 4 reference groups ────────────────────────────────── */
 const TYPE_META = {
-  bank:{e:'🏦',c:'#3B82F6'}, cash:{e:'💵',c:'#059669'},
+  bank:{e:'🏦',c:'#3B82F6'}, cash:{e:'💵',c:'#047857'},
   gpay:{e:'🟣',c:'#4285F4'}, phonepe:{e:'💜',c:'#5f259f'}, paytm:{e:'🟦',c:'#00B9F1'},
   amazon_pay:{e:'🛒',c:'#FF9900'}, mobikwik:{e:'💙',c:'#3b5bdb'}, jio_money:{e:'🔴',c:'#e03131'},
   airtel_money:{e:'❤️',c:'#e03131'}, paypal:{e:'🅿️',c:'#003087'}, irctc:{e:'🚂',c:'#2563eb'},
-  fd:{e:'🏛️',c:'#00C896'}, mutual_fund:{e:'📊',c:'#4F46E5'}, stocks:{e:'📈',c:'#059669'},
-  gold:{e:'🪙',c:'#D97706'}, crypto:{e:'₿',c:'#F7931A'}, epf:{e:'🛡️',c:'#818CF8'},
-  real_estate:{e:'🏠',c:'#F87171'}, lending:{e:'🤝',c:'#00CEC9'}, asset:{e:'💼',c:'#636E72'},
+  fd:{e:'🏛️',c:'#0D9488'}, mutual_fund:{e:'📊',c:'#1D4ED8'}, stocks:{e:'📈',c:'#047857'},
+  gold:{e:'🪙',c:'#D97706'}, crypto:{e:'₿',c:'#F7931A'}, epf:{e:'🛡️',c:'#60A5FA'},
+  real_estate:{e:'🏠',c:'#F87171'}, lending:{e:'🤝',c:'#0D9488'}, asset:{e:'💼',c:'#636E72'},
   visa:{e:'💳',c:'#DC2626'}, mastercard:{e:'💳',c:'#EB001B'},
   home_loan:{e:'🏠',c:'#DC2626'}, vehicle_loan:{e:'🚗',c:'#D97706'}, personal_loan:{e:'💼',c:'#F87171'},
-  gold_loan:{e:'🪙',c:'#D97706'}, education_loan:{e:'🎓',c:'#3B82F6'}, loan:{e:'📋',c:'#818CF8'},
-  bnpl:{e:'🛍️',c:'#F87171'}, family_borrow:{e:'👨‍👩‍👧',c:'#D97706'}, emi:{e:'📅',c:'#4F46E5'},
+  gold_loan:{e:'🪙',c:'#D97706'}, education_loan:{e:'🎓',c:'#3B82F6'}, loan:{e:'📋',c:'#60A5FA'},
+  bnpl:{e:'🛍️',c:'#F87171'}, family_borrow:{e:'👨‍👩‍👧',c:'#D97706'}, emi:{e:'📅',c:'#1D4ED8'},
 };
 
 const BANK_TYPES   = ['bank','cash','other','gpay','phonepe','paytm','amazon_pay','mobikwik','jio_money','airtel_money','paypal','irctc'];
@@ -57,14 +57,14 @@ const CARD_TYPES   = ['visa','mastercard'];
 const LOAN_TYPES   = ['home_loan','vehicle_loan','personal_loan','gold_loan','education_loan','loan','bnpl','family_borrow','emi'];
 
 const GROUPS = [
-  { key:'bank',   title:'Bank Accounts', icon:Landmark,   color:'#3B82F6', totalLabel:'Total Balance',     types:BANK_TYPES,   liability:false, link:'View all bank accounts', linkColor:'#4338CA' },
-  { key:'invest', title:'Investments',   icon:TrendingUp, color:'#059669', totalLabel:'Total Value',       types:INVEST_TYPES, liability:false, link:'View all investments',   linkColor:'#059669' },
+  { key:'bank',   title:'Bank Accounts', icon:Landmark,   color:'#3B82F6', totalLabel:'Total Balance',     types:BANK_TYPES,   liability:false, link:'View all bank accounts', linkColor:'#1E40AF' },
+  { key:'invest', title:'Investments',   icon:TrendingUp, color:'#047857', totalLabel:'Total Value',       types:INVEST_TYPES, liability:false, link:'View all investments',   linkColor:'#047857' },
   { key:'cards',  title:'Credit Cards',  icon:CreditCard, color:'#D97706', totalLabel:'Total Outstanding', types:CARD_TYPES,   liability:true,  link:'View all credit cards',  linkColor:'#D97706' },
   { key:'loans',  title:'Loans',         icon:HandCoins,  color:'#DC2626', totalLabel:'Total Outstanding', types:LOAN_TYPES,   liability:true,  link:'View all loans',         linkColor:'#DC2626' },
 ];
 
 /* Donut colors per group (reference legend) */
-const GROUP_DONUT = { bank:'#3B82F6', invest:'#059669', cards:'#D97706', loans:'#4F46E5' };
+const GROUP_DONUT = { bank:'#3B82F6', invest:'#047857', cards:'#D97706', loans:'#1D4ED8' };
 
 const spring = { type:'spring', stiffness:280, damping:28 };
 const containerVar = { hidden:{}, show:{ transition:{ staggerChildren:.07 } } };
@@ -133,7 +133,7 @@ export default function Accounts() {
               <Search size={20} color={t.text2}/>
             </button>
             <motion.button className={styles.circleBtn} whileTap={{ scale:.9 }}
-              style={{ background:'#4F46E5', border:'none', boxShadow:'0 8px 24px rgba(124,58,237,.35)' }}
+              style={{ background:'#1D4ED8', border:'none', boxShadow:'0 8px 24px rgba(124,58,237,.35)' }}
               onClick={()=>setModal({ mode:'add' })}>
               <Plus size={22} color="#fff"/>
             </motion.button>
@@ -255,7 +255,7 @@ export default function Accounts() {
                     transition={{ duration:.25, ease:[.2,.8,.2,1] }}
                     style={{ overflow:'hidden' }}>
                     {rows.map((w,i) => {
-                      const meta = TYPE_META[w.type] || { e:'👛', c:'#4F46E5' };
+                      const meta = TYPE_META[w.type] || { e:'👛', c:'#1D4ED8' };
                       const bal = parseFloat(w.balance||0);
                       const neg = bal < 0;
                       const isPrimary = g.key==='bank' && i===0 && !showAll;
@@ -317,7 +317,7 @@ export default function Accounts() {
             <div style={{ fontSize:13, color:t.text2, marginTop:4, marginBottom:16 }}>Add your bank accounts, cards and loans to get started</div>
             <button onClick={()=>setModal({ mode:'add' })}
               style={{ padding:'12px 22px', borderRadius:14, border:'none', cursor:'pointer', fontSize:14, fontWeight:700,
-                background:'#4F46E5', color:'#fff', boxShadow:'0 8px 24px rgba(124,58,237,.35)' }}>
+                background:'#1D4ED8', color:'#fff', boxShadow:'0 8px 24px rgba(124,58,237,.35)' }}>
               + Add Account
             </button>
           </motion.div>
@@ -670,15 +670,15 @@ function AccountModal({ mode, wallet, t, isDark, onClose, onSaved, onPay }) {
 
         <button onClick={save} disabled={busy}
           style={{ height:48, borderRadius:14, border:'none', fontSize:16, fontWeight:600, cursor:'pointer',
-            background: liability ? '#DC2626' : '#059669', color:'#fff',
-            boxShadow: liability ? '0 8px 24px rgba(220,38,38,.35)' : '0 8px 24px rgba(5,150,105,.35)', opacity:busy?.6:1 }}>
+            background: liability ? '#DC2626' : '#047857', color:'#fff',
+            boxShadow: liability ? '0 8px 24px rgba(220,38,38,.35)' : '0 8px 24px rgba(4,120,87,.35)', opacity:busy?.6:1 }}>
           {busy ? 'Saving…' : isEdit ? 'Save Changes' : (liability ? 'Add Liability' : 'Add Account')}
         </button>
 
         {isEdit && liability && onPay && (
           <button onClick={()=>onPay(wallet)} disabled={busy}
             style={{ height:48, borderRadius:14, fontSize:15, fontWeight:700, cursor:'pointer',
-              background:'rgba(5,150,105,.1)', color:DS.primary, border:'1.5px solid rgba(5,150,105,.3)',
+              background:'rgba(4,120,87,.1)', color:DS.primary, border:'1.5px solid rgba(4,120,87,.3)',
               display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
             💵 Record Payment
           </button>
@@ -769,8 +769,8 @@ function PaymentModal({ wallet, t, isDark, accounts, onClose, onSaved }) {
                   <button key={o.key} onClick={()=>setApplyTo(o.key)}
                     style={{ textAlign:'left', padding:'12px 14px', borderRadius:14, cursor:'pointer',
                       border:`1.5px solid ${sel ? DS.secondary : t.border}`,
-                      background: sel ? (isDark?'rgba(79,70,229,.14)':'#EEF0FF') : t.surface }}>
-                    <div style={{ fontSize:14, fontWeight:700, color: sel ? (isDark?'#C4B5FD':DS.secondary) : t.text }}>{o.title}</div>
+                      background: sel ? (isDark?'rgba(29,78,216,.14)':'#EFF6FF') : t.surface }}>
+                    <div style={{ fontSize:14, fontWeight:700, color: sel ? (isDark?'#93C5FD':DS.secondary) : t.text }}>{o.title}</div>
                     <div style={{ fontSize:11, color:t.text3, marginTop:2 }}>{o.desc}</div>
                   </button>
                 );
@@ -796,7 +796,7 @@ function PaymentModal({ wallet, t, isDark, accounts, onClose, onSaved }) {
 
         <button onClick={submit} disabled={busy}
           style={{ height:48, borderRadius:14, border:'none', fontSize:16, fontWeight:700, cursor:'pointer',
-            background:'#059669', color:'#fff', boxShadow:'0 8px 24px rgba(5,150,105,.35)', opacity:busy?.6:1 }}>
+            background:'#047857', color:'#fff', boxShadow:'0 8px 24px rgba(4,120,87,.35)', opacity:busy?.6:1 }}>
           {busy ? 'Recording…' : 'Record Payment'}
         </button>
       </motion.div>

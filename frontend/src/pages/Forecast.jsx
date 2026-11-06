@@ -96,10 +96,10 @@ export default function Forecast() {
         {/* Status */}
         <div style={{
           display:'flex', gap:14, alignItems:'flex-start', padding:'16px 18px', borderRadius:16,
-          background: short ? 'rgba(220,38,38,.09)' : 'rgba(5,150,105,.09)',
-          border: `1px solid ${short ? 'rgba(220,38,38,.3)' : 'rgba(5,150,105,.3)'}`,
+          background: short ? 'rgba(220,38,38,.09)' : 'rgba(4,120,87,.09)',
+          border: `1px solid ${short ? 'rgba(220,38,38,.3)' : 'rgba(4,120,87,.3)'}`,
         }}>
-          <div style={{ marginTop:2 }}>{short ? <AlertTriangle size={22} color="#DC2626"/> : <CheckCircle size={22} color="#059669"/>}</div>
+          <div style={{ marginTop:2 }}>{short ? <AlertTriangle size={22} color="#DC2626"/> : <CheckCircle size={22} color="#047857"/>}</div>
           <div>
             <div style={{ fontSize:15, fontWeight:800, color:'var(--text)' }}>
               {short
@@ -126,10 +126,10 @@ export default function Forecast() {
 
         {/* KPIs */}
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))', gap:14 }}>
-          <KpiCard icon={<Wallet size={20} color="#4F46E5"/>} iconBg="rgba(79,70,229,.14)" label="Bank + cash today" value={money(data.startBalance)} sub="spendable balance" />
+          <KpiCard icon={<Wallet size={20} color="#1D4ED8"/>} iconBg="rgba(29,78,216,.14)" label="Bank + cash today" value={money(data.startBalance)} sub="spendable balance" />
           <KpiCard icon={<TrendingDown size={20} color={s.lowestBalance < 0 ? '#DC2626' : '#D97706'}/>} iconBg={s.lowestBalance < 0 ? 'rgba(220,38,38,.14)' : 'rgba(217,119,6,.14)'}
             label="Lowest point" value={money(s.lowestBalance)} sub={shortDate(s.lowestDate)} subColor={s.lowestBalance < 0 ? '#DC2626' : undefined} />
-          <KpiCard icon={<CalendarDays size={20} color="#059669"/>} iconBg="rgba(5,150,105,.14)" label={`In ${data.days} days`} value={money(s.endBalance)}
+          <KpiCard icon={<CalendarDays size={20} color="#047857"/>} iconBg="rgba(4,120,87,.14)" label={`In ${data.days} days`} value={money(s.endBalance)}
             sub={`${money(s.totalIn)} in · ${money(s.totalOut)} out`} />
         </div>
 
@@ -143,13 +143,13 @@ export default function Forecast() {
             <AreaChart data={chartData} margin={{ top:6, right:8, left:-12, bottom:0 }}>
               <defs>
                 <linearGradient id="fcFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset={0} stopColor="#4F46E5" stopOpacity={0.28}/>
-                  <stop offset={offset} stopColor="#4F46E5" stopOpacity={0.04}/>
+                  <stop offset={0} stopColor="#1D4ED8" stopOpacity={0.28}/>
+                  <stop offset={offset} stopColor="#1D4ED8" stopOpacity={0.04}/>
                   <stop offset={offset} stopColor="#DC2626" stopOpacity={0.04}/>
                   <stop offset={1} stopColor="#DC2626" stopOpacity={0.28}/>
                 </linearGradient>
                 <linearGradient id="fcStroke" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset={offset} stopColor="#4F46E5"/>
+                  <stop offset={offset} stopColor="#1D4ED8"/>
                   <stop offset={offset} stopColor="#DC2626"/>
                 </linearGradient>
               </defs>
@@ -160,7 +160,7 @@ export default function Forecast() {
               <Tooltip contentStyle={{ borderRadius:10, fontSize:12, border:'1px solid var(--border)', background:'var(--surface)' }}
                 formatter={v => [money(v), 'Balance']} labelFormatter={(_, p) => (p?.[0] ? longDate(p[0].payload.date) : '')}/>
               <ReferenceLine y={0} stroke="#DC2626" strokeDasharray="4 4" strokeOpacity={0.6}/>
-              <Area type="monotone" dataKey="balance" stroke={mode === 'split' ? 'url(#fcStroke)' : mode === 'negative' ? '#DC2626' : '#4F46E5'} strokeWidth={2.5} fill={mode === 'split' ? 'url(#fcFill)' : mode === 'negative' ? 'rgba(220,38,38,.14)' : 'rgba(79,70,229,.12)'} dot={false} activeDot={{ r:4 }}/>
+              <Area type="monotone" dataKey="balance" stroke={mode === 'split' ? 'url(#fcStroke)' : mode === 'negative' ? '#DC2626' : '#1D4ED8'} strokeWidth={2.5} fill={mode === 'split' ? 'url(#fcFill)' : mode === 'negative' ? 'rgba(220,38,38,.14)' : 'rgba(29,78,216,.12)'} dot={false} activeDot={{ r:4 }}/>
               {short && <ReferenceDot x={shortDate(s.lowestDate)} y={s.lowestBalance} r={5} fill="#DC2626" stroke="#fff" strokeWidth={2}/>}
             </AreaChart>
           </ResponsiveContainer>
@@ -184,7 +184,7 @@ export default function Forecast() {
                   {day.items.map((e, i) => (
                     <div key={i} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'4px 0', fontSize:13.5, color:'var(--text)' }}>
                       <span>{KIND_ICON[e.kind] || '•'} {e.label}</span>
-                      <span style={{ fontWeight:700, color: e.amount < 0 ? '#DC2626' : '#059669', fontFamily:'Inter,sans-serif' }}>
+                      <span style={{ fontWeight:700, color: e.amount < 0 ? '#DC2626' : '#047857', fontFamily:'Inter,sans-serif' }}>
                         {e.amount < 0 ? '−' : '+'}{money(Math.abs(e.amount))}
                       </span>
                     </div>
@@ -201,8 +201,8 @@ export default function Forecast() {
             <Info size={15} color="var(--text3)"/>
             <span style={{ fontSize:13, fontWeight:700, color:'var(--text)' }}>How this is calculated</span>
             <span style={{ fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:8,
-              color: data.confidence === 'high' ? '#059669' : data.confidence === 'medium' ? '#D97706' : '#DC2626',
-              background: data.confidence === 'high' ? 'rgba(5,150,105,.12)' : data.confidence === 'medium' ? 'rgba(217,119,6,.12)' : 'rgba(220,38,38,.12)' }}>
+              color: data.confidence === 'high' ? '#047857' : data.confidence === 'medium' ? '#D97706' : '#DC2626',
+              background: data.confidence === 'high' ? 'rgba(4,120,87,.12)' : data.confidence === 'medium' ? 'rgba(217,119,6,.12)' : 'rgba(220,38,38,.12)' }}>
               {data.confidence} confidence
             </span>
           </div>

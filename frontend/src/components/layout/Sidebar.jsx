@@ -73,14 +73,10 @@ export default function Sidebar({ isOpen, onClose }) {
       >
         {/* ── Logo ── */}
         <div className={styles.logo}>
-          <motion.div
-            className={styles.logoIcon}
-            whileHover={{ scale: 1.08, rotate: -4 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-          >
-            <img src="/icons/logo.png" alt="T" style={{ width: 26, height: 26, objectFit: 'cover', borderRadius: 7 }}
+          <div className={styles.logoIcon}>
+            <img src="/icons/icon.svg" alt="" width="32" height="32"
               onError={e => { e.target.style.display='none'; e.target.parentElement.textContent='T'; }} />
-          </motion.div>
+          </div>
           <span className={styles.logoName}>Tracksy</span>
           <button onClick={onClose} className={`${styles.closeBtn} show-mobile-only`} aria-label="Close">
             <X size={18} weight="bold" />
@@ -104,31 +100,20 @@ export default function Sidebar({ isOpen, onClose }) {
             className={({ isActive }) => `${styles.navItem}${isActive ? ' ' + styles.active : ''}`}>
             {({ isActive }) => (
               <>
-                <motion.span
-                  className={styles.navIconWrap}
-                  style={{ background: isActive ? 'rgba(79,70,229,.12)' : 'transparent' }}
-                  whileHover={{ scale: 1.12, y: -1 }}
-                  whileTap={{ scale: 0.92 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                >
-                  <Gear size={18} weight={isActive ? 'fill' : 'regular'} color={isActive ? '#4F46E5' : 'var(--text3)'} />
-                </motion.span>
+                <span className={styles.navIconWrap}>
+                  <Gear size={18} weight={isActive ? 'fill' : 'regular'} color={isActive ? 'var(--accent)' : 'var(--text3)'} />
+                </span>
                 <span className={styles.navLabel}>{t('nav_settings')}</span>
               </>
             )}
           </NavLink>
 
           <button className={styles.navItem} onClick={toggleTheme}>
-            <motion.span
-              className={styles.navIconWrap}
-              whileHover={{ scale: 1.12, y: -1 }}
-              whileTap={{ scale: 0.92 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-            >
+            <span className={styles.navIconWrap}>
               {theme === 'light'
                 ? <Moon size={18} color="var(--text3)" />
-                : <Sun size={18} color="#FFB300" weight="fill" />}
-            </motion.span>
+                : <Sun size={18} color="var(--orange)" weight="fill" />}
+            </span>
             <span className={styles.navLabel}>
               {theme === 'light' ? t('nav_darkmode') : t('nav_lightmode')}
             </span>
@@ -139,31 +124,15 @@ export default function Sidebar({ isOpen, onClose }) {
         {/* ── Bottom ── */}
         <div className={styles.navBottom}>
           <InstallPWA onClick={onClose} />
-          <motion.button
-            className={`${styles.navItem} ${styles.logoutBtn}`}
-            onClick={handleLogout}
-            whileHover={{ x: 2 }}
-            transition={{ type: 'spring', stiffness: 400 }}
-          >
-            <motion.span
-              className={styles.navIconWrap}
-              whileHover={{ scale: 1.12 }}
-              whileTap={{ scale: 0.9 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-            >
-              <SignOut size={18} color="var(--red)" />
-            </motion.span>
+          <button className={`${styles.navItem} ${styles.logoutBtn}`} onClick={handleLogout}>
+            <span className={styles.navIconWrap}>
+              <SignOut size={18} color="var(--red-text)" />
+            </span>
             <span className={styles.navLabel}>{t('nav_logout')}</span>
-          </motion.button>
+          </button>
 
           <div className={styles.avatarRow}>
-            <motion.div
-              className={styles.avatar}
-              whileHover={{ scale: 1.08 }}
-              transition={{ type: 'spring', stiffness: 400 }}
-            >
-              {initials}
-            </motion.div>
+            <div className={styles.avatar}>{initials}</div>
             <div className={styles.avatarInfo}>
               <div className={styles.avatarName}>{user?.first_name} {user?.last_name}</div>
               <div className={styles.avatarEmail}>{user?.email}</div>

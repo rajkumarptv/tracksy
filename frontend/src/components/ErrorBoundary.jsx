@@ -32,7 +32,7 @@ export default class ErrorBoundary extends Component {
           </div>
           <button onClick={() => window.location.reload()}
             style={{ padding:'12px 26px', borderRadius:14, border:'none', cursor:'pointer', fontSize:14, fontWeight:700,
-              background:'#4F46E5', color:'#fff', boxShadow:'0 8px 24px rgba(79,70,229,.35)' }}>
+              background:'#1D4ED8', color:'#fff', boxShadow:'0 8px 24px rgba(29,78,216,.35)' }}>
             Reload app
           </button>
         </div>

@@ -24,7 +24,7 @@ const DOMAIN_MAP = {
 };
 
 /* Consistent color from name */
-const COLORS = ['#4F46E5','#059669','#DC2626','#D97706','#3B82F6','#F87171','#00CEC9','#818CF8'];
+const COLORS = ['#1D4ED8','#047857','#DC2626','#D97706','#3B82F6','#F87171','#0D9488','#60A5FA'];
 function colorFor(name = '') {
   return COLORS[name.charCodeAt(0) % COLORS.length];
 }

@@ -1,45 +1,47 @@
 /* ═══════════════════════════════════════════════════════════════════════
    Tracksy shared theme for chart/inline-styled pages — mirrors the CSS
-   variables in index.css (single palette: indigo brand, green income,
-   red expense, slate neutrals). Flat surfaces, no gradients or glows.
+   variables in index.css (trust-blue brand, green = income, red = expense,
+   amber = warning, slate neutrals). Flat surfaces, no gradients or glows.
+   Rules: see frontend/DESIGN.md. Keep in sync with index.css.
    Usage:  import { THEME, ACCENT } from '../theme';
            const c = isDark ? THEME.dark : THEME.light;
 ═══════════════════════════════════════════════════════════════════════ */
 
-export const ACCENT = '#4F46E5';
+export const ACCENT = '#1D4ED8';
 
-const PIE_LIGHT = ['#4F46E5', '#0EA5E9', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#14B8A6', '#64748B'];
-const PIE_DARK  = ['#818CF8', '#38BDF8', '#34D399', '#FBBF24', '#F87171', '#A78BFA', '#2DD4BF', '#94A3B8'];
+// Categorical palette: deliberately excludes the semantic green (income) and red (expense)
+const PIE_LIGHT = ['#1D4ED8', '#0EA5E9', '#14B8A6', '#F59E0B', '#64748B', '#8B5CF6', '#EC4899', '#84CC16'];
+const PIE_DARK  = ['#60A5FA', '#38BDF8', '#2DD4BF', '#FBBF24', '#94A3B8', '#A78BFA', '#F472B6', '#A3E635'];
 
 export const THEME = {
   light: {
-    green:'#059669', red:'#DC2626', blue:'#2563EB', orange:'#D97706', purple:'#4F46E5',
-    text:'#0F172A', text2:'#475569', text3:'#64748B',
-    bg:'#F6F7F9',
+    green:'#047857', red:'#DC2626', redText:'#B91C1C', blue:'#2563EB', orange:'#D97706', orangeText:'#B45309', purple:'#1D4ED8',
+    text:'#0F172A', text2:'#334155', text3:'#5B6B7F',
+    bg:'#F8FAFC',
     cardBg:'#FFFFFF',
-    surface:'#F4F6F8',
-    hover:'#EDF0F3',
-    border:'#E3E7EC',
-    divider:'#E3E7EC',
+    surface:'#F1F5F9',
+    hover:'#E8EDF3',
+    border:'#E2E8F0',
+    divider:'#E2E8F0',
     cardShadow:'0 1px 3px rgba(15,23,42,0.08), 0 1px 2px rgba(15,23,42,0.04)',
     glowShadow:'0 1px 3px rgba(15,23,42,0.08), 0 1px 2px rgba(15,23,42,0.04)',
-    balanceBorder:'1px solid #E3E7EC',
+    balanceBorder:'1px solid #E2E8F0',
     balanceBg:'#FFFFFF',
-    flowBorder:'1px solid #E3E7EC',
+    flowBorder:'1px solid #E2E8F0',
     flowBg:'#FFFFFF',
-    salaryBg:'#FFFFFF', salaryBorder:'1px solid #E3E7EC',
-    spendBg:'#FFFFFF', spendBorder:'1px solid #E3E7EC',
-    tileBg:'#F4F6F8',
-    viewDetailsBg:'#EEF0FF', viewDetailsBorder:'1px solid #C7CCFA',
-    insightBg:'#EEF0FF',
-    grid:'#E3E7EC', axis:'#64748B',
-    areaTop:'rgba(79,70,229,0.18)',
-    stroke:'#4F46E5', strokeW:2.5,
-    barTrack:'#EDF0F3', track:'#EDF0F3',
+    salaryBg:'#FFFFFF', salaryBorder:'1px solid #E2E8F0',
+    spendBg:'#FFFFFF', spendBorder:'1px solid #E2E8F0',
+    tileBg:'#F1F5F9',
+    viewDetailsBg:'#EFF6FF', viewDetailsBorder:'1px solid #BFDBFE',
+    insightBg:'#EFF6FF',
+    grid:'#E2E8F0', axis:'#5B6B7F',
+    areaTop:'rgba(29,78,216,0.18)',
+    stroke:'#1D4ED8', strokeW:2.5,
+    barTrack:'#E8EDF3', track:'#E8EDF3',
     pie: PIE_LIGHT,
   },
   dark: {
-    green:'#34D399', red:'#F87171', blue:'#60A5FA', orange:'#FBBF24', purple:'#818CF8',
+    green:'#34D399', red:'#F87171', redText:'#FCA5A5', blue:'#60A5FA', orange:'#FBBF24', orangeText:'#FCD34D', purple:'#60A5FA',
     text:'#F1F5F9', text2:'#CBD5E1', text3:'#94A3B8',
     bg:'#0B1220',
     cardBg:'#111A2B',
@@ -56,11 +58,11 @@ export const THEME = {
     salaryBg:'#111A2B', salaryBorder:'1px solid rgba(148,163,184,0.18)',
     spendBg:'#111A2B', spendBorder:'1px solid rgba(148,163,184,0.18)',
     tileBg:'#162036',
-    viewDetailsBg:'rgba(129,140,248,0.14)', viewDetailsBorder:'1px solid rgba(129,140,248,0.35)',
-    insightBg:'rgba(129,140,248,0.14)',
+    viewDetailsBg:'rgba(96,165,250,0.14)', viewDetailsBorder:'1px solid rgba(96,165,250,0.35)',
+    insightBg:'rgba(96,165,250,0.14)',
     grid:'rgba(148,163,184,0.12)', axis:'rgba(203,213,225,0.55)',
-    areaTop:'rgba(129,140,248,0.30)',
-    stroke:'#818CF8', strokeW:2.5,
+    areaTop:'rgba(96,165,250,0.30)',
+    stroke:'#60A5FA', strokeW:2.5,
     barTrack:'rgba(148,163,184,0.16)', track:'rgba(148,163,184,0.16)',
     pie: PIE_DARK,
   },

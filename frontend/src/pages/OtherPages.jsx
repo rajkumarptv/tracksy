@@ -14,17 +14,17 @@ const WALLET_MONTHS = ['January','February','March','April','May','June','July',
 const WALLET_YEARS  = [_now.getFullYear(), _now.getFullYear()-1, _now.getFullYear()-2];
 
 const WALLET_GRADIENTS = [
-  '#4F46E5',
-  'linear-gradient(135deg,#1A1033 0%,#3d3473 100%)',
-  'linear-gradient(135deg,#00b894 0%,#55efc4 100%)',
-  'linear-gradient(135deg,#e17055 0%,#fd79a8 100%)',
-  'linear-gradient(135deg,#0984e3 0%,#74b9ff 100%)',
+  '#1D4ED8',
+  'linear-gradient(135deg,#0B1F4B 0%,#3d3473 100%)',
+  'linear-gradient(135deg,#047857 0%,#34D399 100%)',
+  'linear-gradient(135deg,#D97706 0%,#fd79a8 100%)',
+  'linear-gradient(135deg,#0984e3 0%,#60A5FA 100%)',
   'linear-gradient(135deg,#6ab04c 0%,#badc58 100%)',
 ];
 
 // Pick readable ink (dark/light) for a given card background colour
 function cardInk(hex) {
-  let h = (hex || '#4F46E5').replace('#', '');
+  let h = (hex || '#1D4ED8').replace('#', '');
   if (h.length === 3) h = h.split('').map(c => c + c).join('');
   const r = parseInt(h.slice(0,2),16) || 0, g = parseInt(h.slice(2,4),16) || 0, b = parseInt(h.slice(4,6),16) || 0;
   const lum = (0.299*r + 0.587*g + 0.114*b) / 255;   // perceived brightness 0–1
@@ -212,7 +212,7 @@ export function Wallet() {
       <div className="mob-hide">
         <Topbar title={t('wallet_title')} subtitle={t('wallet_sub')}>
           <button className="btn btn-primary btn-sm"
-            style={{ display:'flex', alignItems:'center', gap:6, background: atWalletLimit ? '#D97706' : '#4F46E5', border:'none', boxShadow:'0 4px 14px rgba(79,70,229,.35)' }}
+            style={{ display:'flex', alignItems:'center', gap:6, background: atWalletLimit ? '#D97706' : '#1D4ED8', border:'none', boxShadow:'0 4px 14px rgba(29,78,216,.35)' }}
             onClick={openAddWallet}>
             {atWalletLimit ? t('wallet_upgrade_add') : <><Plus size={13}/> {t('wallet_add')}</>}
           </button>
@@ -252,13 +252,13 @@ export function Wallet() {
         {/* Summary cards */}
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))', gap:14, marginBottom:24 }}>
           {[
-            { label:t('dash_net_worth'),      value: fmt(netWorth),    icon:<span style={{fontSize:22,fontWeight:800,color:'#4F46E5',lineHeight:1,fontFamily:'Inter,sans-serif'}}>{currencySymbol}</span>, bg:'rgba(79,70,229,.15)', color: netWorth >= 0 ? '#4F46E5' : '#DC2626', sub: netWorth >= 0 ? t('wallet_positive') : t('wallet_negative'), border:'rgba(79,70,229,.2)' },
-            { label:t('wallet_total_assets'), value: fmt(totalAssets), icon:<WalletIcon size={22} color="#00C896"/>,  bg:'rgba(0,200,150,.15)', color:'#00C896', sub:t('wallet_all_accounts'), border:'rgba(0,200,150,.2)' },
+            { label:t('dash_net_worth'),      value: fmt(netWorth),    icon:<span style={{fontSize:22,fontWeight:800,color:'#1D4ED8',lineHeight:1,fontFamily:'Inter,sans-serif'}}>{currencySymbol}</span>, bg:'rgba(29,78,216,.15)', color: netWorth >= 0 ? '#1D4ED8' : '#DC2626', sub: netWorth >= 0 ? t('wallet_positive') : t('wallet_negative'), border:'rgba(29,78,216,.2)' },
+            { label:t('wallet_total_assets'), value: fmt(totalAssets), icon:<WalletIcon size={22} color="#0D9488"/>,  bg:'rgba(0,200,150,.15)', color:'#0D9488', sub:t('wallet_all_accounts'), border:'rgba(0,200,150,.2)' },
             { label:t('wallet_total_debt'),   value: fmt(totalDebt),   icon:<CreditCard size={22} color="#DC2626"/>,  bg:'rgba(220,38,38,.15)',  color:'#DC2626', sub:t('wallet_cards_loans'), border:'rgba(220,38,38,.2)' },
           ].map(({ label, value, icon, bg, color, sub, border }) => (
             <div key={label} style={{
               background:'var(--surface)', borderRadius:14, padding:'18px 20px',
-              boxShadow:'0 2px 16px rgba(79,70,229,.07)', border:`1px solid ${border}`,
+              boxShadow:'0 2px 16px rgba(29,78,216,.07)', border:`1px solid ${border}`,
               display:'flex', flexDirection:'row', alignItems:'center', gap:16,
             }}>
               <div style={{ width:52, height:52, borderRadius:14, background:bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
@@ -274,7 +274,7 @@ export function Wallet() {
         </div>
 
         {/* Net Worth hero banner */}
-        <div style={{ background:'#4F46E5', borderRadius:14, padding:'20px 24px', marginBottom:20, color:'#fff', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:16 }}>
+        <div style={{ background:'#1D4ED8', borderRadius:14, padding:'20px 24px', marginBottom:20, color:'#fff', display:'flex', alignItems:'center', justifyContent:'space-between', flexWrap:'wrap', gap:16 }}>
           <div>
             <div style={{ fontSize:11, fontWeight:700, opacity:.7, textTransform:'uppercase', letterSpacing:'.1em', marginBottom:4 }}>Net Worth</div>
             <div style={{ fontSize:28, fontWeight:900, fontFamily:'Inter,sans-serif', letterSpacing:-1 }}>
@@ -285,7 +285,7 @@ export function Wallet() {
           <div style={{ display:'flex', gap:24 }}>
             <div style={{ textAlign:'right' }}>
               <div style={{ fontSize:11, fontWeight:700, opacity:.7, textTransform:'uppercase', letterSpacing:'.07em' }}>Assets</div>
-              <div style={{ fontSize:18, fontWeight:800, color:'#059669' }}>{fmt(totalAssets)}</div>
+              <div style={{ fontSize:18, fontWeight:800, color:'#047857' }}>{fmt(totalAssets)}</div>
               <div style={{ fontSize:11, opacity:.55 }}>{assetWallets.length} accounts</div>
             </div>
             <div style={{ width:1, background:'rgba(255,255,255,.2)' }}/>
@@ -303,7 +303,7 @@ export function Wallet() {
           {assetWallets.length > 0 && (
             <>
               <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14 }}>
-                <div style={{ width:8, height:8, borderRadius:'50%', background:'#059669' }}/>
+                <div style={{ width:8, height:8, borderRadius:'50%', background:'#047857' }}/>
                 <div style={{ fontSize:12, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.07em' }}>
                   Assets — {fmt(totalAssets)}
                 </div>
@@ -329,12 +329,12 @@ export function Wallet() {
           )}
 
           {!(wallets||[]).length && (
-            <div style={{ background:'var(--surface)', borderRadius:14, boxShadow:'0 4px 24px rgba(79,70,229,.08)', border:'1px solid var(--border-light)', padding:'48px', textAlign:'center', color:'var(--text3)', fontSize:14 }}>
+            <div style={{ background:'var(--surface)', borderRadius:14, boxShadow:'0 4px 24px rgba(29,78,216,.08)', border:'1px solid var(--border-light)', padding:'48px', textAlign:'center', color:'var(--text3)', fontSize:14 }}>
               <div style={{ fontSize:48, marginBottom:12 }}>💳</div>
               <div style={{ fontWeight:700, fontSize:15, color:'var(--text)', marginBottom:6 }}>{t('wallet_empty')}</div>
               <div style={{ marginBottom:20 }}>{t('wallet_empty_desc')}</div>
               <button className="btn btn-primary" onClick={openAddWallet}
-                style={{ background: atWalletLimit ? '#D97706' : '#4F46E5', border:'none' }}>
+                style={{ background: atWalletLimit ? '#D97706' : '#1D4ED8', border:'none' }}>
                 {atWalletLimit ? '👑 Upgrade to Add More' : t('wallet_add')}
               </button>
             </div>
@@ -342,7 +342,7 @@ export function Wallet() {
         </div>
 
         {/* Recent activity */}
-        <div style={{ background:'var(--surface)', borderRadius:14, boxShadow:'0 4px 24px rgba(79,70,229,.08)', border:'1px solid var(--border-light)', overflow:'hidden' }}>
+        <div style={{ background:'var(--surface)', borderRadius:14, boxShadow:'0 4px 24px rgba(29,78,216,.08)', border:'1px solid var(--border-light)', overflow:'hidden' }}>
           <div style={{ padding:'18px 22px', borderBottom:'1px solid var(--border-light)', fontWeight:700, fontSize:15, color:'var(--text)' }}>
             {t('wallet_recent')}
           </div>
@@ -406,7 +406,7 @@ export function Wallet() {
 const ASSET_TYPES = [
   { group:'Bank & Cash', items:[
     { value:'bank',         icon:'🏦', label:'Bank Account',        color:'#3B82F6', bg:'rgba(59,130,246,.14)'  },
-    { value:'cash',         icon:'💵', label:'Cash',                color:'#059669', bg:'rgba(5,150,105,.14)'  },
+    { value:'cash',         icon:'💵', label:'Cash',                color:'#047857', bg:'rgba(4,120,87,.14)'  },
   ]},
   { group:'Digital Wallets & UPI', items:[
     { value:'gpay',         icon:'🟣', label:'Google Pay',          color:'#4285F4', bg:'rgba(66,133,244,.14)'  },
@@ -420,16 +420,16 @@ const ASSET_TYPES = [
     { value:'irctc',        icon:'🚂', label:'IRCTC Wallet',        color:'#2563eb', bg:'rgba(37,99,235,.14)'   },
   ]},
   { group:'Investments', items:[
-    { value:'fd',           icon:'🏛️', label:'Fixed Deposit',       color:'#00C896', bg:'rgba(0,200,150,.14)'  },
-    { value:'mutual_fund',  icon:'📊', label:'Mutual Funds',        color:'#4F46E5', bg:'rgba(79,70,229,.14)' },
-    { value:'stocks',       icon:'📈', label:'Stocks',              color:'#059669', bg:'rgba(5,150,105,.14)'  },
+    { value:'fd',           icon:'🏛️', label:'Fixed Deposit',       color:'#0D9488', bg:'rgba(0,200,150,.14)'  },
+    { value:'mutual_fund',  icon:'📊', label:'Mutual Funds',        color:'#1D4ED8', bg:'rgba(29,78,216,.14)' },
+    { value:'stocks',       icon:'📈', label:'Stocks',              color:'#047857', bg:'rgba(4,120,87,.14)'  },
     { value:'gold',         icon:'🪙', label:'Gold',                color:'#D97706', bg:'rgba(217,119,6,.14)'  },
     { value:'crypto',       icon:'₿',  label:'Crypto',              color:'#F7931A', bg:'rgba(247,147,26,.14)'  },
-    { value:'epf',          icon:'🛡️', label:'EPF / PPF',           color:'#818CF8', bg:'rgba(162,155,254,.14)' },
+    { value:'epf',          icon:'🛡️', label:'EPF / PPF',           color:'#60A5FA', bg:'rgba(162,155,254,.14)' },
   ]},
   { group:'Other Assets', items:[
     { value:'real_estate',  icon:'🏠', label:'Real Estate',         color:'#F87171', bg:'rgba(255,121,168,.14)' },
-    { value:'lending',      icon:'🤝', label:'Money Lent',          color:'#00CEC9', bg:'rgba(0,206,201,.14)'  },
+    { value:'lending',      icon:'🤝', label:'Money Lent',          color:'#0D9488', bg:'rgba(0,206,201,.14)'  },
     { value:'asset',        icon:'💼', label:'Other Asset',         color:'#636E72', bg:'rgba(99,110,114,.14)'  },
   ]},
 ];
@@ -445,12 +445,12 @@ const LIABILITY_TYPES = [
     { value:'personal_loan',icon:'💼', label:'Personal Loan',       color:'#F87171', bg:'rgba(255,121,168,.14)' },
     { value:'gold_loan',    icon:'🪙', label:'Gold Loan',           color:'#D97706', bg:'rgba(217,119,6,.14)'  },
     { value:'education_loan',icon:'🎓',label:'Education Loan',      color:'#3B82F6', bg:'rgba(59,130,246,.14)'  },
-    { value:'loan',         icon:'📋', label:'Other Loan',          color:'#818CF8', bg:'rgba(162,155,254,.14)' },
+    { value:'loan',         icon:'📋', label:'Other Loan',          color:'#60A5FA', bg:'rgba(162,155,254,.14)' },
   ]},
   { group:'Buy Now Pay Later & Borrowings', items:[
     { value:'bnpl',         icon:'🛍️', label:'BNPL',                color:'#F87171', bg:'rgba(255,121,168,.14)' },
     { value:'family_borrow',icon:'👨‍👩‍👧', label:'Family Borrowing',   color:'#D97706', bg:'rgba(217,119,6,.14)'  },
-    { value:'emi',          icon:'📅', label:'EMI',                 color:'#4F46E5', bg:'rgba(79,70,229,.14)'  },
+    { value:'emi',          icon:'📅', label:'EMI',                 color:'#1D4ED8', bg:'rgba(29,78,216,.14)'  },
   ]},
 ];
 
@@ -482,17 +482,17 @@ function AccountTypePicker({ value, onChange }) {
           animation:typeCardIn .18s ease both;
           user-select:none; text-align:center;
         }
-        .type-card:hover { transform:translateY(-2px) scale(1.04); box-shadow:0 6px 20px rgba(79,70,229,.15); }
+        .type-card:hover { transform:translateY(-2px) scale(1.04); box-shadow:0 6px 20px rgba(29,78,216,.15); }
       `}</style>
 
       {/* Asset / Liability toggle */}
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:18 }}>
         <button onClick={() => { setTab('asset'); onChange('bank'); }}
-          style={{ padding:'12px 0', borderRadius:14, border: tab==='asset' ? '2px solid #059669' : '1.5px solid var(--border)',
-            background: tab==='asset' ? 'rgba(5,150,105,.12)' : 'var(--surface)', cursor:'pointer',
+          style={{ padding:'12px 0', borderRadius:14, border: tab==='asset' ? '2px solid #047857' : '1.5px solid var(--border)',
+            background: tab==='asset' ? 'rgba(4,120,87,.12)' : 'var(--surface)', cursor:'pointer',
             display:'flex', flexDirection:'column', alignItems:'center', gap:4, transition:'all .2s' }}>
           <span style={{ fontSize:22 }}>💰</span>
-          <span style={{ fontSize:13, fontWeight:700, color: tab==='asset' ? '#059669' : 'var(--text)' }}>Assets</span>
+          <span style={{ fontSize:13, fontWeight:700, color: tab==='asset' ? '#047857' : 'var(--text)' }}>Assets</span>
           <span style={{ fontSize:10.5, color:'var(--text3)' }}>Bank, FD, Gold, Stocks…</span>
         </button>
         <button onClick={() => { setTab('liability'); onChange('visa'); }}
@@ -510,7 +510,7 @@ function AccountTypePicker({ value, onChange }) {
         padding:'8px 14px', background:'var(--surface2)', borderRadius:10, border:'1px solid var(--border-light)' }}>
         <span style={{ fontSize:12, color:'var(--text3)', fontWeight:500 }}>Net Worth</span>
         <span style={{ fontSize:12, color:'var(--text3)' }}>=</span>
-        <span style={{ fontSize:12, fontWeight:700, color:'#059669' }}>Total Assets</span>
+        <span style={{ fontSize:12, fontWeight:700, color:'#047857' }}>Total Assets</span>
         <span style={{ fontSize:12, color:'var(--text3)' }}>−</span>
         <span style={{ fontSize:12, fontWeight:700, color:'#DC2626' }}>Total Liabilities</span>
       </div>
@@ -552,8 +552,8 @@ function AccountTypePicker({ value, onChange }) {
 }
 
 const PRESET_CARD_COLORS = [
-  '#4F46E5','#3B82F6','#DC2626','#059669','#D97706',
-  '#F87171','#00CEC9','#818CF8','#636E72','#2D3436',
+  '#1D4ED8','#3B82F6','#DC2626','#047857','#D97706',
+  '#F87171','#0D9488','#60A5FA','#636E72','#2D3436',
 ];
 
 function calcPaymentDue(billDay) {
@@ -629,7 +629,7 @@ function AddWalletModal({ onClose, onSaved }) {
             <div style={{ display:'flex', gap:10, marginTop:4, justifyContent:'flex-end' }}>
               <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
               <button className="btn btn-primary" onClick={() => setStep(2)}
-                style={{ background:'#4F46E5', border:'none', boxShadow:'0 4px 14px rgba(79,70,229,.35)' }}>
+                style={{ background:'#1D4ED8', border:'none', boxShadow:'0 4px 14px rgba(29,78,216,.35)' }}>
                 Continue →
               </button>
             </div>
@@ -655,10 +655,10 @@ function AddWalletModal({ onClose, onSaved }) {
 
               {/* ── Category badge ── */}
               <div style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'5px 12px', borderRadius:14, marginBottom:14,
-                background: isLiability ? 'rgba(220,38,38,.10)' : 'rgba(5,150,105,.10)',
-                border: `1px solid ${isLiability ? 'rgba(220,38,38,.3)' : 'rgba(5,150,105,.3)'}` }}>
+                background: isLiability ? 'rgba(220,38,38,.10)' : 'rgba(4,120,87,.10)',
+                border: `1px solid ${isLiability ? 'rgba(220,38,38,.3)' : 'rgba(4,120,87,.3)'}` }}>
                 <span style={{ fontSize:13 }}>{isLiability ? '💸' : '💰'}</span>
-                <span style={{ fontSize:11.5, fontWeight:700, color: isLiability ? '#DC2626' : '#059669' }}>
+                <span style={{ fontSize:11.5, fontWeight:700, color: isLiability ? '#DC2626' : '#047857' }}>
                   {isLiability ? 'Liability — reduces Net Worth' : 'Asset — increases Net Worth'}
                 </span>
               </div>
@@ -694,18 +694,18 @@ function AddWalletModal({ onClose, onSaved }) {
                   </div>
                   {paymentDue && (
                     <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:4 }}>
-                      <div style={{ background:'rgba(5,150,105,.08)', border:'1px solid rgba(5,150,105,.25)', borderRadius:12, padding:'12px 14px' }}>
-                        <div style={{ fontSize:11, fontWeight:600, color:'#059669', marginBottom:3 }}>📅 Payment Due</div>
+                      <div style={{ background:'rgba(4,120,87,.08)', border:'1px solid rgba(4,120,87,.25)', borderRadius:12, padding:'12px 14px' }}>
+                        <div style={{ fontSize:11, fontWeight:600, color:'#047857', marginBottom:3 }}>📅 Payment Due</div>
                         <div style={{ fontSize:15, fontWeight:800, color:'var(--text)' }}>
                           {paymentDue.toLocaleDateString('en-IN',{day:'numeric',month:'long'})}
                         </div>
                         <div style={{ fontSize:11, color:'var(--text3)', marginTop:2 }}>Bill date + 20 days</div>
                       </div>
                       {form.credit_limit && form.balance && (
-                        <div style={{ background: utilPct>80?'rgba(220,38,38,.08)':'rgba(5,150,105,.08)', border:`1px solid ${utilPct>80?'rgba(220,38,38,.25)':'rgba(5,150,105,.25)'}`, borderRadius:12, padding:'12px 14px' }}>
-                          <div style={{ fontSize:11, fontWeight:600, color: utilPct>80?'#DC2626':'#059669', marginBottom:6 }}>💳 Utilization {utilPct}%</div>
+                        <div style={{ background: utilPct>80?'rgba(220,38,38,.08)':'rgba(4,120,87,.08)', border:`1px solid ${utilPct>80?'rgba(220,38,38,.25)':'rgba(4,120,87,.25)'}`, borderRadius:12, padding:'12px 14px' }}>
+                          <div style={{ fontSize:11, fontWeight:600, color: utilPct>80?'#DC2626':'#047857', marginBottom:6 }}>💳 Utilization {utilPct}%</div>
                           <div style={{ height:6, background:'var(--surface3)', borderRadius:14, overflow:'hidden' }}>
-                            <div style={{ height:'100%', width:`${utilPct}%`, borderRadius:14, background: utilPct>80?'#DC2626':'#059669' }}/>
+                            <div style={{ height:'100%', width:`${utilPct}%`, borderRadius:14, background: utilPct>80?'#DC2626':'#047857' }}/>
                           </div>
                         </div>
                       )}
@@ -859,12 +859,12 @@ function AddWalletModal({ onClose, onSaved }) {
                 const pos  = gain >= 0;
                 return (
                   <div style={{ padding:'10px 14px', borderRadius:12, marginBottom:4,
-                    background: pos ? 'rgba(5,150,105,.08)' : 'rgba(220,38,38,.08)',
-                    border: `1px solid ${pos ? 'rgba(5,150,105,.25)' : 'rgba(220,38,38,.25)'}` }}>
-                    <div style={{ fontSize:11, fontWeight:600, color: pos?'#059669':'#DC2626', marginBottom:2 }}>
+                    background: pos ? 'rgba(4,120,87,.08)' : 'rgba(220,38,38,.08)',
+                    border: `1px solid ${pos ? 'rgba(4,120,87,.25)' : 'rgba(220,38,38,.25)'}` }}>
+                    <div style={{ fontSize:11, fontWeight:600, color: pos?'#047857':'#DC2626', marginBottom:2 }}>
                       {pos ? '📈 Unrealised Gain' : '📉 Unrealised Loss'}
                     </div>
-                    <div style={{ fontSize:16, fontWeight:800, color: pos?'#059669':'#DC2626' }}>
+                    <div style={{ fontSize:16, fontWeight:800, color: pos?'#047857':'#DC2626' }}>
                       {pos?'+':''}{fmt(gain,{noDecimals:true})} ({pct}%)
                     </div>
                   </div>
@@ -938,7 +938,7 @@ function AddWalletModal({ onClose, onSaved }) {
                     emi_day:  form.bill_date ? parseInt(form.bill_date) : undefined,
                   });
                 }}
-                style={{ background:'#4F46E5', border:'none', boxShadow:'0 4px 14px rgba(79,70,229,.35)' }}>
+                style={{ background:'#1D4ED8', border:'none', boxShadow:'0 4px 14px rgba(29,78,216,.35)' }}>
                 {mutation.isPending ? '⏳ Adding…' : 'Add Account'}
               </button>
             </div>
@@ -981,9 +981,9 @@ const BUCKET_STYLE = {
   commitments:{ color:'#EF4444', bg:'rgba(239,68,68,.12)',  icon:'🏦' },
   transfers:  { color:'#D97706', bg:'rgba(217,119,6,.12)', icon:'👤' },
   essential:  { color:'#EAB308', bg:'rgba(234,179,8,.14)',  icon:'🏠' },
-  optional:   { color:'#059669', bg:'rgba(5,150,105,.12)',  icon:'🎯' },
+  optional:   { color:'#047857', bg:'rgba(4,120,87,.12)',  icon:'🎯' },
 };
-const ACAT_COLORS = ['#2A78D6','#EB6834','#1BAF7A','#EDA100','#E87BA4','#4F46E5','#008300','#00CEC9','#636E72'];
+const ACAT_COLORS = ['#2A78D6','#EB6834','#1BAF7A','#EDA100','#E87BA4','#1D4ED8','#008300','#0D9488','#636E72'];
 
 export function Analytics({ embedded = false } = {}) {
   const fmt = useFmtWallet();
@@ -996,7 +996,7 @@ export function Analytics({ embedded = false } = {}) {
     queryFn:() => analyticsAPI.overview(range).then(r=>r.data.data),
   });
 
-  const card = { background:'var(--surface)', borderRadius:14, padding:'18px 20px', border:'1px solid var(--border-light)', boxShadow:'0 4px 20px rgba(79,70,229,.06)' };
+  const card = { background:'var(--surface)', borderRadius:14, padding:'18px 20px', border:'1px solid var(--border-light)', boxShadow:'0 4px 20px rgba(29,78,216,.06)' };
   const money = (v) => fmt(v, { noDecimals:true });
 
   if (isLoading || !data) return <div style={{ display:'flex', flexDirection:'column', height:'100%' }}>{!embedded && <Topbar2 title="Analytics" subtitle="Your financial intelligence"/>}<PL2/></div>;
@@ -1017,7 +1017,7 @@ export function Analytics({ embedded = false } = {}) {
             return (
               <button key={p.key} onClick={()=>setPeriodKey(p.key)}
                 style={{ padding:'8px 15px', borderRadius:999, fontSize:13, fontWeight:700, cursor:'pointer',
-                  border:`1.5px solid ${on?'#4F46E5':'var(--border)'}`, background:on?'rgba(79,70,229,.12)':'var(--surface)', color:on?'#4F46E5':'var(--text2)' }}>
+                  border:`1.5px solid ${on?'#1D4ED8':'var(--border)'}`, background:on?'rgba(29,78,216,.12)':'var(--surface)', color:on?'#1D4ED8':'var(--text2)' }}>
                 {p.label}
               </button>
             );
@@ -1027,8 +1027,8 @@ export function Analytics({ embedded = false } = {}) {
         {/* KPI cards */}
         <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))', gap:12, marginBottom:22 }}>
           <div style={card}><div style={{ fontSize:12.5, color:'var(--text3)' }}>Money Out</div><div style={{ fontSize:22, fontWeight:800, color:'#DC2626', marginTop:4 }}>{money(k.moneyOut)}</div><div style={{ fontSize:12, color:'var(--text3)', marginTop:2 }}>{k.outCount} txns</div></div>
-          <div style={card}><div style={{ fontSize:12.5, color:'var(--text3)' }}>Money In</div><div style={{ fontSize:22, fontWeight:800, color:'#059669', marginTop:4 }}>{money(k.moneyIn)}</div><div style={{ fontSize:12, color:'var(--text3)', marginTop:2 }}>{k.inCount} txns</div></div>
-          <div style={card}><div style={{ fontSize:12.5, color:'var(--text3)' }}>Net Cash Flow</div><div style={{ fontSize:22, fontWeight:800, color:k.net>=0?'#059669':'#EF4444', marginTop:4 }}>{k.net<0?'−':''}{money(Math.abs(k.net))}</div><div style={{ fontSize:12, color:'var(--text3)', marginTop:2 }}>{k.net>=0?'Surplus':'Deficit'}</div></div>
+          <div style={card}><div style={{ fontSize:12.5, color:'var(--text3)' }}>Money In</div><div style={{ fontSize:22, fontWeight:800, color:'#047857', marginTop:4 }}>{money(k.moneyIn)}</div><div style={{ fontSize:12, color:'var(--text3)', marginTop:2 }}>{k.inCount} txns</div></div>
+          <div style={card}><div style={{ fontSize:12.5, color:'var(--text3)' }}>Net Cash Flow</div><div style={{ fontSize:22, fontWeight:800, color:k.net>=0?'#047857':'#EF4444', marginTop:4 }}>{k.net<0?'−':''}{money(Math.abs(k.net))}</div><div style={{ fontSize:12, color:'var(--text3)', marginTop:2 }}>{k.net>=0?'Surplus':'Deficit'}</div></div>
           <div style={card}><div style={{ fontSize:12.5, color:'var(--text3)' }}>Avg Daily Spend</div><div style={{ fontSize:22, fontWeight:800, color:'var(--text)', marginTop:4 }}>{money(k.avgDaily)}</div></div>
           <div style={card}><div style={{ fontSize:12.5, color:'var(--text3)' }}>Transactions</div><div style={{ fontSize:22, fontWeight:800, color:'var(--text)', marginTop:4 }}>{k.txCount}</div><div style={{ fontSize:12, color:'var(--text3)', marginTop:2 }}>{k.outCount} out · {k.inCount} in</div></div>
         </div>
@@ -1097,7 +1097,7 @@ export function Analytics({ embedded = false } = {}) {
               <YAxis tickLine={false} axisLine={false} width={44} tick={{ fontSize:10.5, fill:'var(--text3)' }} tickFormatter={(v)=>v>=1000?`₹${Math.round(v/1000)}K`:`₹${v}`}/>
               <RTooltip formatter={(v)=>money(v)} contentStyle={{ borderRadius:12, border:'1px solid var(--border)', background:'var(--surface)', fontSize:12 }}/>
               <Bar dataKey="amount" radius={[6,6,0,0]}>
-                {(data.weekly||[]).map((w,i)=><Cell key={i} fill={data.topWeek&&w.week===data.topWeek.week?'#DC2626':'#4F46E5'}/>)}
+                {(data.weekly||[]).map((w,i)=><Cell key={i} fill={data.topWeek&&w.week===data.topWeek.week?'#DC2626':'#1D4ED8'}/>)}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -1110,7 +1110,7 @@ export function Analytics({ embedded = false } = {}) {
               <div style={{ fontSize:14, fontWeight:800, color:'var(--text)', marginBottom:6 }}>🔥 Highest Spending Day</div>
               <div style={{ fontSize:22, fontWeight:800, color:'#DC2626' }}>{money(data.topDay.amount)}</div>
               <div style={{ fontSize:12.5, color:'var(--text3)', marginTop:2 }}>{new Date(data.topDay.date).toLocaleDateString('en-IN',{ day:'numeric', month:'long' })} · {data.topDay.count} txns</div>
-              <button onClick={()=>goTx('')} style={{ marginTop:12, fontSize:12.5, fontWeight:700, color:'#4F46E5', background:'rgba(79,70,229,.1)', border:'none', borderRadius:9, padding:'7px 14px', cursor:'pointer' }}>View transactions →</button>
+              <button onClick={()=>goTx('')} style={{ marginTop:12, fontSize:12.5, fontWeight:700, color:'#1D4ED8', background:'rgba(29,78,216,.1)', border:'none', borderRadius:9, padding:'7px 14px', cursor:'pointer' }}>View transactions →</button>
             </div>
           )}
           <div style={{ ...card }}>
@@ -1196,7 +1196,7 @@ function PrivacySection() {
   };
 
   return (
-    <SectionCard icon={<Shield size={18} color="#059669"/>} title="Privacy — Hide Amounts">
+    <SectionCard icon={<Shield size={18} color="#047857"/>} title="Privacy — Hide Amounts">
       <div style={{ fontSize:13, color:'var(--text2)', marginBottom:14, lineHeight:1.6 }}>
         Hide every amount in the app behind <b>••••</b>. Tap the eye icon on the balance card any time — set a password below so only you can reveal them again.
       </div>
@@ -1211,7 +1211,7 @@ function PrivacySection() {
       </div>
 
       {msg && (
-        <div style={{ fontSize:13, fontWeight:600, marginBottom:12, color: msg.includes('✓') ? '#059669' : '#DC2626' }}>{msg}</div>
+        <div style={{ fontSize:13, fontWeight:600, marginBottom:12, color: msg.includes('✓') ? '#047857' : '#DC2626' }}>{msg}</div>
       )}
 
       <div style={{ display:'grid', gap:12 }}>
@@ -1234,7 +1234,7 @@ function PrivacySection() {
       </div>
 
       <div style={{ display:'flex', gap:10, marginTop:4 }}>
-        <button className="btn btn-primary" onClick={save} style={{ background:'#4F46E5', border:'none', boxShadow:'0 4px 14px rgba(79,70,229,.35)' }}>
+        <button className="btn btn-primary" onClick={save} style={{ background:'#1D4ED8', border:'none', boxShadow:'0 4px 14px rgba(29,78,216,.35)' }}>
           {hasPw ? 'Update password' : 'Set password'}
         </button>
         {hasPw && <button className="btn btn-ghost" onClick={remove}>Remove password</button>}
@@ -1308,13 +1308,13 @@ export function Settings() {
         <div style={{ maxWidth:680 }}>
 
           {saved && (
-            <div style={{ background:'rgba(5,150,105,.12)', color:'#059669', padding:'12px 16px', borderRadius:14, marginBottom:20, fontSize:13.5, fontWeight:600, display:'flex', alignItems:'center', gap:8 }}>
+            <div style={{ background:'rgba(4,120,87,.12)', color:'#047857', padding:'12px 16px', borderRadius:14, marginBottom:20, fontSize:13.5, fontWeight:600, display:'flex', alignItems:'center', gap:8 }}>
               {t('settings_saved')}
             </div>
           )}
 
           {/* Profile hero */}
-          <div style={{ background:'#4F46E5', borderRadius:14, padding:'28px 32px', marginBottom:20, color:'#fff', display:'flex', alignItems:'center', gap:20, boxShadow:'0 8px 32px rgba(79,70,229,.3)', position:'relative', overflow:'hidden' }}>
+          <div style={{ background:'#1D4ED8', borderRadius:14, padding:'28px 32px', marginBottom:20, color:'#fff', display:'flex', alignItems:'center', gap:20, boxShadow:'0 8px 32px rgba(29,78,216,.3)', position:'relative', overflow:'hidden' }}>
             <div style={{ position:'absolute', top:-30, right:-30, width:100, height:100, background:'rgba(255,255,255,.08)', borderRadius:'50%' }}/>
             <div style={{ position:'absolute', bottom:-20, right:80, width:60, height:60, background:'rgba(255,255,255,.05)', borderRadius:'50%' }}/>
             <div style={{ width:64, height:64, borderRadius:'50%', background:'rgba(255,255,255,.2)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:22, fontWeight:700, flexShrink:0, backdropFilter:'blur(10px)', border:'2px solid rgba(255,255,255,.3)' }}>
@@ -1327,7 +1327,7 @@ export function Settings() {
           </div>
 
           {/* Profile form */}
-          <SectionCard icon={<User size={18} color="#4F46E5"/>} title={t('settings_profile')}>
+          <SectionCard icon={<User size={18} color="#1D4ED8"/>} title={t('settings_profile')}>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
               <div className="form-group">
                 <label className="form-label">{t('settings_first_name')}</label>
@@ -1339,7 +1339,7 @@ export function Settings() {
               </div>
             </div>
             <button className="btn btn-primary" disabled={mutation.isPending} onClick={()=>mutation.mutate(form)}
-              style={{ background:'#4F46E5', border:'none', boxShadow:'0 4px 14px rgba(79,70,229,.35)' }}>
+              style={{ background:'#1D4ED8', border:'none', boxShadow:'0 4px 14px rgba(29,78,216,.35)' }}>
               {mutation.isPending ? t('modal_saving') : t('settings_save')}
             </button>
           </SectionCard>
@@ -1368,14 +1368,14 @@ export function Settings() {
           <PrivacySection />
 
           {/* Categories — moved out of main menu */}
-          <SectionCard icon={<Tag size={18} color="#818CF8"/>} title="Categories">
+          <SectionCard icon={<Tag size={18} color="#60A5FA"/>} title="Categories">
             <div
               onClick={() => navigate3('/categories')}
               style={{ display:'flex', alignItems:'center', gap:14, padding:'14px 16px', borderRadius:14, border:'1px solid var(--border)', background:'var(--surface)', cursor:'pointer', transition:'border-color .15s' }}
-              onMouseEnter={e => e.currentTarget.style.borderColor='#818CF8'}
+              onMouseEnter={e => e.currentTarget.style.borderColor='#60A5FA'}
               onMouseLeave={e => e.currentTarget.style.borderColor='var(--border)'}>
-              <div style={{ width:40, height:40, borderRadius:12, background:'rgba(129,140,248,.14)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                <Tag size={18} color="#818CF8"/>
+              <div style={{ width:40, height:40, borderRadius:12, background:'rgba(96,165,250,.14)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                <Tag size={18} color="#60A5FA"/>
               </div>
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ fontSize:14.5, fontWeight:700, color:'var(--text)' }}>Manage Categories</div>
@@ -1405,19 +1405,19 @@ export function Settings() {
                 </div>
               </div>
               <button onClick={handleExport} disabled={exporting}
-                style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 20px', borderRadius:12, fontWeight:700, fontSize:13.5, cursor:'pointer', flexShrink:0, background: exportDone?'rgba(5,150,105,.15)':'var(--accent-light)', border: exportDone?'1.5px solid #059669':'1.5px solid var(--accent)', color: exportDone?'#059669':'var(--accent)', transition:'all .2s' }}>
+                style={{ display:'flex', alignItems:'center', gap:8, padding:'10px 20px', borderRadius:12, fontWeight:700, fontSize:13.5, cursor:'pointer', flexShrink:0, background: exportDone?'rgba(4,120,87,.15)':'var(--accent-light)', border: exportDone?'1.5px solid #047857':'1.5px solid var(--accent)', color: exportDone?'#047857':'var(--accent)', transition:'all .2s' }}>
                 <Download size={15}/> {exporting ? 'Exporting…' : exportDone ? '✓ Downloaded!' : 'Export JSON'}
               </button>
             </div>
           </SectionCard>
 
           {/* Sample / Demo Data */}
-          <SectionCard icon={<Sparkles size={18} color="#4F46E5"/>} title="Sample Data">
+          <SectionCard icon={<Sparkles size={18} color="#1D4ED8"/>} title="Sample Data">
             <div style={{ fontSize:13.5, color:'var(--text3)', marginBottom:16, lineHeight:1.6 }}>
               Load a full year of demo data — accounts, credit card, loan, assets, transactions, budgets & goals — to explore every feature. Your real data is never touched; remove the demo anytime to return to normal.
             </div>
             {sampleLoaded ? (
-              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px', borderRadius:14, background:'rgba(5,150,105,.1)', border:'1px solid #05966922', gap:12 }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px', borderRadius:14, background:'rgba(4,120,87,.1)', border:'1px solid #04785722', gap:12 }}>
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:13.5, fontWeight:700, color:'var(--text)' }}>✓ Demo data is active</div>
                   <div style={{ fontSize:12, color:'var(--text3)', marginTop:2 }}>Remove it to return to your normal data</div>
@@ -1428,13 +1428,13 @@ export function Settings() {
                 </button>
               </div>
             ) : (
-              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px', borderRadius:14, background:'rgba(79,70,229,.1)', border:'1px solid #4F46E522', gap:12 }}>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px', borderRadius:14, background:'rgba(29,78,216,.1)', border:'1px solid #1d4ed822', gap:12 }}>
                 <div style={{ flex:1 }}>
                   <div style={{ fontSize:13.5, fontWeight:700, color:'var(--text)' }}>Load 1 year of demo data</div>
                   <div style={{ fontSize:12, color:'var(--text3)', marginTop:2 }}>See how Tracksy looks fully populated</div>
                 </div>
                 <button onClick={loadSample} disabled={!!sampleBusy}
-                  style={{ padding:'8px 18px', borderRadius:10, border:'none', background:'#4F46E5', color:'#fff', fontSize:12.5, fontWeight:700, cursor:'pointer', flexShrink:0 }}>
+                  style={{ padding:'8px 18px', borderRadius:10, border:'none', background:'#1D4ED8', color:'#fff', fontSize:12.5, fontWeight:700, cursor:'pointer', flexShrink:0 }}>
                   {sampleBusy==='load' ? 'Loading…' : 'Load Sample Data'}
                 </button>
               </div>
@@ -1450,7 +1450,7 @@ export function Settings() {
               {[
                 { scope:'transactions', label:'Clear All Transactions',      desc:'Remove every income & expense record',       color:'#D97706', bg:'rgba(217,119,6,.1)' },
                 { scope:'budgets',      label:'Delete All Budgets',           desc:'Remove all monthly budget configurations',   color:'#3B82F6', bg:'rgba(59,130,246,.1)'  },
-                { scope:'goals',        label:'Delete All Goals',             desc:'Remove all saving goals and progress',       color:'#059669', bg:'rgba(5,150,105,.1)'  },
+                { scope:'goals',        label:'Delete All Goals',             desc:'Remove all saving goals and progress',       color:'#047857', bg:'rgba(4,120,87,.1)'  },
                 { scope:'all',          label:'⚠️ Reset Everything',           desc:'Wipe all data — wallets, transactions, budgets, goals & categories', color:'#DC2626', bg:'rgba(220,38,38,.1)'   },
               ].map(({ scope, label, desc, color, bg }) => (
                 <div key={scope} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'14px 16px', borderRadius:14, background:bg, border:`1px solid ${color}22`, gap:12 }}>
@@ -1471,17 +1471,17 @@ export function Settings() {
 
           {/* Admin panel button — only for admins */}
           {user?.is_admin && (
-            <div onClick={() => navigate3('/admin')} style={{ cursor:'pointer', background:'linear-gradient(135deg,#1a1a2e 0%,#16213e 100%)', borderRadius:14, padding:'18px 24px', marginBottom:16, display:'flex', alignItems:'center', gap:16, boxShadow:'0 4px 24px rgba(79,70,229,.15)', border:'1px solid rgba(79,70,229,.4)', transition:'transform .2s' }}
+            <div onClick={() => navigate3('/admin')} style={{ cursor:'pointer', background:'linear-gradient(135deg,#0B1F4B 0%,#12306B 100%)', borderRadius:14, padding:'18px 24px', marginBottom:16, display:'flex', alignItems:'center', gap:16, boxShadow:'0 4px 24px rgba(29,78,216,.15)', border:'1px solid rgba(29,78,216,.4)', transition:'transform .2s' }}
               onMouseEnter={e=>e.currentTarget.style.transform='translateY(-2px)'}
               onMouseLeave={e=>e.currentTarget.style.transform=''}>
-              <div style={{ width:46, height:46, borderRadius:14, background:'#4F46E5', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+              <div style={{ width:46, height:46, borderRadius:14, background:'#1D4ED8', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M4 4h7v7H4V4zm0 9h7v7H4v-7zm9-9h7v7h-7V4zm0 9h7v7h-7v-7z"/></svg>
               </div>
               <div style={{ flex:1 }}>
                 <div style={{ fontSize:15, fontWeight:800, color:'#fff', marginBottom:3 }}>Admin Dashboard</div>
                 <div style={{ fontSize:12.5, color:'rgba(255,255,255,.5)' }}>Users, stats, premium management & more</div>
               </div>
-              <div style={{ background:'rgba(79,70,229,.25)', border:'1px solid rgba(79,70,229,.5)', borderRadius:12, padding:'8px 16px', color:'#818CF8', fontSize:13, fontWeight:700, flexShrink:0 }}>
+              <div style={{ background:'rgba(29,78,216,.25)', border:'1px solid rgba(29,78,216,.5)', borderRadius:12, padding:'8px 16px', color:'#60A5FA', fontSize:13, fontWeight:700, flexShrink:0 }}>
                 Open →
               </div>
             </div>
@@ -1554,10 +1554,10 @@ function NotificationPrefsSection() {
           ))}
           <div style={{ display:'flex', alignItems:'center', gap:12, marginTop:14 }}>
             <button onClick={handleSave} disabled={saving}
-              style={{ padding:'9px 20px', borderRadius:11, background:'#4F46E5', color:'#fff', border:'none', fontWeight:700, fontSize:13, cursor:'pointer', opacity: saving ? .7 : 1 }}>
+              style={{ padding:'9px 20px', borderRadius:11, background:'#1D4ED8', color:'#fff', border:'none', fontWeight:700, fontSize:13, cursor:'pointer', opacity: saving ? .7 : 1 }}>
               {saving ? 'Saving…' : 'Save Preferences'}
             </button>
-            {savedNotif && <span style={{ fontSize:12.5, color:'#059669', fontWeight:600 }}>✅ Saved!</span>}
+            {savedNotif && <span style={{ fontSize:12.5, color:'#047857', fontWeight:600 }}>✅ Saved!</span>}
           </div>
         </>
       )}
@@ -1602,7 +1602,7 @@ function ChangePasswordSection({ user }) {
   const eyeBtn = { position:'absolute', right:10, background:'none', border:'none', cursor:'pointer', color:'var(--text3)', display:'flex', padding:4 };
 
   return (
-    <SectionCard icon={<Shield size={18} color="#059669"/>} title="Security">
+    <SectionCard icon={<Shield size={18} color="#047857"/>} title="Security">
       {/* Change Password */}
       <div style={{ borderBottom:'1px solid var(--border-light)' }}>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 0', cursor:'pointer' }}
@@ -1619,7 +1619,7 @@ function ChangePasswordSection({ user }) {
         {open && !user?.oauth_provider && (
           <div style={{ paddingBottom:16 }}>
             {error && <div style={{ background:'rgba(220,38,38,.1)', border:'1px solid rgba(220,38,38,.3)', borderRadius:10, padding:'9px 13px', marginBottom:12, color:'#DC2626', fontSize:13 }}>{error}</div>}
-            {success && <div style={{ background:'rgba(5,150,105,.1)', border:'1px solid rgba(5,150,105,.3)', borderRadius:10, padding:'9px 13px', marginBottom:12, color:'#059669', fontSize:13 }}>{success}</div>}
+            {success && <div style={{ background:'rgba(4,120,87,.1)', border:'1px solid rgba(4,120,87,.3)', borderRadius:10, padding:'9px 13px', marginBottom:12, color:'#047857', fontSize:13 }}>{success}</div>}
 
             {[
               { key:'current_password', label:'Current Password', show:showCurrent, toggle:()=>setShowCurrent(s=>!s) },
@@ -1640,7 +1640,7 @@ function ChangePasswordSection({ user }) {
             ))}
 
             <button onClick={handleChangePwd} disabled={saving}
-              style={{ marginTop:4, padding:'9px 20px', borderRadius:11, background:'#059669', color:'#fff', border:'none', fontWeight:700, fontSize:13, cursor:'pointer', opacity: saving ? .7 : 1, display:'flex', alignItems:'center', gap:8 }}>
+              style={{ marginTop:4, padding:'9px 20px', borderRadius:11, background:'#047857', color:'#fff', border:'none', fontWeight:700, fontSize:13, cursor:'pointer', opacity: saving ? .7 : 1, display:'flex', alignItems:'center', gap:8 }}>
               <Key size={14}/> {saving ? 'Changing…' : 'Change Password'}
             </button>
           </div>
@@ -1704,7 +1704,7 @@ function ResetModal({ scope, onClose }) {
             </div>
           </>
         ) : (
-          <div style={{ textAlign:'center', padding:'12px 0', fontSize:15, fontWeight:700, color:'#059669' }}>
+          <div style={{ textAlign:'center', padding:'12px 0', fontSize:15, fontWeight:700, color:'#047857' }}>
             ✅ Data deleted. Refreshing…
           </div>
         )}
@@ -1715,7 +1715,7 @@ function ResetModal({ scope, onClose }) {
 
 function SectionCard({ icon, title, children }) {
   return (
-    <div style={{ background:'var(--surface)', borderRadius:14, padding:'22px 24px', boxShadow:'0 4px 24px rgba(79,70,229,.08)', border:'1px solid var(--border-light)', marginBottom:16 }}>
+    <div style={{ background:'var(--surface)', borderRadius:14, padding:'22px 24px', boxShadow:'0 4px 24px rgba(29,78,216,.08)', border:'1px solid var(--border-light)', marginBottom:16 }}>
       <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:20 }}>
         <div style={{ width:34, height:34, borderRadius:10, background:'var(--accent-light)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
           {icon}

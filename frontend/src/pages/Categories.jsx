@@ -9,15 +9,15 @@ import CategoryIconPicker from '../components/CategoryIconPicker';
 
 
 const TYPE_OPTS = [
-  { value:'income',  label:'Income',  color:'#059669', bg:'rgba(5,150,105,.12)'  },
+  { value:'income',  label:'Income',  color:'#047857', bg:'rgba(4,120,87,.12)'  },
   { value:'expense', label:'Expense', color:'#DC2626', bg:'rgba(220,38,38,.12)'   },
-  { value:'both',    label:'Both',    color:'#4F46E5', bg:'rgba(79,70,229,.12)'  },
+  { value:'both',    label:'Both',    color:'#1D4ED8', bg:'rgba(29,78,216,.12)'  },
 ];
 
 const PRESET_COLORS = [
-  '#4F46E5','#3B82F6','#818CF8','#059669','#00C896',
-  '#D97706','#DC2626','#F87171','#74b9ff','#00CEC9',
-  '#E17055','#FDCB6E','#6AB04C','#636E72','#2D3436',
+  '#1D4ED8','#3B82F6','#60A5FA','#047857','#0D9488',
+  '#D97706','#DC2626','#F87171','#60A5FA','#0D9488',
+  '#D97706','#FDCB6E','#6AB04C','#636E72','#2D3436',
 ];
 
 export default function Categories() {
@@ -64,7 +64,7 @@ export default function Categories() {
       <div className="mob-hide">
         <Topbar title="Categories" subtitle="Organise your income & expense categories">
           <button className="btn btn-primary btn-sm"
-            style={{ display:'flex', alignItems:'center', gap:6, background: '#4F46E5', border:'none', boxShadow:'0 4px 14px rgba(79,70,229,.35)' }}
+            style={{ display:'flex', alignItems:'center', gap:6, background: '#1D4ED8', border:'none', boxShadow:'0 4px 14px rgba(29,78,216,.35)' }}
             onClick={openAddCat}>
             <Plus size={13}/> New Category
           </button>
@@ -76,13 +76,13 @@ export default function Categories() {
         {/* Summary */}
         <div className="mob-summary-scroll" style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:14, marginBottom:24 }}>
           {[
-            { label:'Total Categories', value:(categories||[]).length, icon:<Tag size={22} color="#4F46E5"/>,      bg:'rgba(79,70,229,.1)' },
-            { label:'Income Types',     value:totalIncome,             icon:<span style={{fontSize:22}}>📥</span>, bg:'rgba(5,150,105,.1)' },
+            { label:'Total Categories', value:(categories||[]).length, icon:<Tag size={22} color="#1D4ED8"/>,      bg:'rgba(29,78,216,.1)' },
+            { label:'Income Types',     value:totalIncome,             icon:<span style={{fontSize:22}}>📥</span>, bg:'rgba(4,120,87,.1)' },
             { label:'Expense Types',    value:totalExpense,            icon:<span style={{fontSize:22}}>📤</span>, bg:'rgba(220,38,38,.1)' },
           ].map(({ label, value, icon, bg }) => (
             <div key={label} style={{
               background:'var(--surface)', borderRadius:14, padding:'16px 14px',
-              boxShadow:'0 4px 24px rgba(79,70,229,.08)', border:'1px solid var(--border-light)',
+              boxShadow:'0 4px 24px rgba(29,78,216,.08)', border:'1px solid var(--border-light)',
               display:'flex', alignItems:'center', gap:12,
             }}>
               <div style={{ width:44, height:44, borderRadius:13, background:bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
@@ -124,11 +124,11 @@ export default function Categories() {
           </div>
 
           {custom.length === 0 ? (
-            <div style={{ background:'var(--surface)', borderRadius:14, boxShadow:'0 4px 24px rgba(79,70,229,.08)', border:'1px solid var(--border-light)' }}>
+            <div style={{ background:'var(--surface)', borderRadius:14, boxShadow:'0 4px 24px rgba(29,78,216,.08)', border:'1px solid var(--border-light)' }}>
               <EmptyState icon="🏷️" title="No custom categories yet"
                 description="Create categories tailored to your spending habits"
                 action={<button className="btn btn-primary" onClick={openAddCat}
-                  style={{ background:'#4F46E5', border:'none' }}>
+                  style={{ background:'#1D4ED8', border:'none' }}>
                   Add First Category
                 </button>}/>
             </div>
@@ -177,16 +177,16 @@ export default function Categories() {
 
 function CategoryCard({ cat, onEdit, onDelete, readOnly }) {
   const typeMap = {
-    income:  { label:'Income',  bg:'rgba(5,150,105,.12)',  color:'#059669' },
+    income:  { label:'Income',  bg:'rgba(4,120,87,.12)',  color:'#047857' },
     expense: { label:'Expense', bg:'rgba(220,38,38,.12)',   color:'#DC2626' },
-    both:    { label:'Both',    bg:'rgba(79,70,229,.12)',  color:'var(--accent)' },
+    both:    { label:'Both',    bg:'rgba(29,78,216,.12)',  color:'var(--accent)' },
   };
   const tmap = typeMap[cat.type] || typeMap.both;
 
   return (
     <div style={{
       background:'var(--surface)', borderRadius:14, padding:'16px 18px',
-      boxShadow:'0 4px 20px rgba(79,70,229,.07)', border:'1px solid var(--border-light)',
+      boxShadow:'0 4px 20px rgba(29,78,216,.07)', border:'1px solid var(--border-light)',
       display:'flex', alignItems:'center', gap:12,
       opacity: readOnly ? 0.8 : 1,
       position:'relative', overflow:'hidden',
@@ -196,7 +196,7 @@ function CategoryCard({ cat, onEdit, onDelete, readOnly }) {
     onMouseLeave={e => (e.currentTarget.style.transform='')}>
 
       <CategoryIcon name={cat.name} emoji={cat.emoji} icon={cat.icon} size={42} iconSize={19}
-        style={{ background:(cat.color||'#4F46E5')+'20' }}/>
+        style={{ background:(cat.color||'#1D4ED8')+'20' }}/>
 
       <div style={{ flex:1, minWidth:0 }}>
         <div style={{ fontWeight:700, fontSize:13.5, color:'var(--text)', marginBottom:4, lineHeight:1.3, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
@@ -228,7 +228,7 @@ function CategoryModal({ cat, onClose, onSaved }) {
     name:  cat?.name  || '',
     type:  cat?.type  || 'expense',
     emoji: cat?.emoji || '📌',
-    color: cat?.color || '#4F46E5',
+    color: cat?.color || '#1D4ED8',
     icon:  cat?.icon  || '',
   });
   const [error, setError] = useState('');
@@ -318,7 +318,7 @@ function CategoryModal({ cat, onClose, onSaved }) {
         <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
           <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
           <button className="btn btn-primary" disabled={mutation.isPending||!form.name.trim()} onClick={()=>mutation.mutate(form)}
-            style={{ background:'#4F46E5', border:'none', boxShadow:'0 4px 14px rgba(79,70,229,.35)' }}>
+            style={{ background:'#1D4ED8', border:'none', boxShadow:'0 4px 14px rgba(29,78,216,.35)' }}>
             {mutation.isPending ? 'Saving…' : cat ? 'Update Category' : 'Create Category'}
           </button>
         </div>

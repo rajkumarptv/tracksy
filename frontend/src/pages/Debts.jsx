@@ -31,9 +31,9 @@ const TYPE_META = {
   gold_loan:     { icon: '🪙', label: 'Gold Loan',      color: '#D97706', bg: 'rgba(217,119,6,.12)' },
   education_loan:{ icon: '🎓', label: 'Education Loan', color: '#D97706', bg: 'rgba(217,119,6,.12)' },
   loan:          { icon: '📋', label: 'Loan',           color: '#D97706', bg: 'rgba(217,119,6,.12)' },
-  bnpl:          { icon: '🛍️', label: 'BNPL',           color: '#4F46E5', bg: 'rgba(79,70,229,.12)' },
-  family_borrow: { icon: '👪', label: 'Borrowed',       color: '#4F46E5', bg: 'rgba(79,70,229,.12)' },
-  emi:           { icon: '📅', label: 'EMI',            color: '#4F46E5', bg: 'rgba(79,70,229,.12)' },
+  bnpl:          { icon: '🛍️', label: 'BNPL',           color: '#1D4ED8', bg: 'rgba(29,78,216,.12)' },
+  family_borrow: { icon: '👪', label: 'Borrowed',       color: '#1D4ED8', bg: 'rgba(29,78,216,.12)' },
+  emi:           { icon: '📅', label: 'EMI',            color: '#1D4ED8', bg: 'rgba(29,78,216,.12)' },
   lending:       { icon: '🤝', label: 'Money Lent',     color: '#3B82F6', bg: 'rgba(59,130,246,.12)' },
 };
 
@@ -43,7 +43,7 @@ const DEBT_GROUPS = [
   { key:'cards',   title:'Credit Cards', types:['visa','mastercard'], color:{ light:'#DC2626', dark:'#F87171' }, Icon:CreditCard },
   { key:'lent',    title:'Money Lent',   types:['lending'],           color:{ light:'#3B82F6', dark:'#4F8DFF' }, Icon:HandCoins  },
   { key:'loans',   title:'Loans',        types:['home_loan','vehicle_loan','personal_loan','gold_loan','education_loan','loan'], color:{ light:'#D97706', dark:'#FF9D00' }, Icon:Landmark },
-  { key:'bnpl',    title:'BNPL & EMI',   types:['bnpl','family_borrow','emi'], color:{ light:'#4F46E5', dark:'#4F46E5' }, Icon:CalendarClock },
+  { key:'bnpl',    title:'BNPL & EMI',   types:['bnpl','family_borrow','emi'], color:{ light:'#1D4ED8', dark:'#1D4ED8' }, Icon:CalendarClock },
 ];
 
 const springD = { type:'spring', stiffness:280, damping:28 };
@@ -422,7 +422,7 @@ function CreditCardDashboard({ bal, limit, utilPct, availPct, debt, utilTrend })
   const pieData = limit > 0
     ? [{ name:'Used', value: bal }, { name:'Available', value: Math.max(0, limit - bal) }]
     : [{ name:'Outstanding', value: bal }];
-  const PIE_COLORS = ['#DC2626','#059669'];
+  const PIE_COLORS = ['#DC2626','#047857'];
 
   return (
     <div>
@@ -431,8 +431,8 @@ function CreditCardDashboard({ bal, limit, utilPct, availPct, debt, utilTrend })
         {[
           { l:'Outstanding',  v:`${fmt(bal)}`,               c:'#DC2626' },
           { l:'Credit Limit', v: limit > 0 ? `${fmt(limit)}` : '—',       c:'var(--text)' },
-          { l:'Available',    v: limit > 0 ? `${fmt(Math.max(0,limit-bal))}` : '—', c:'#059669' },
-          { l:'Utilization',  v: limit > 0 ? `${utilPct}%` : '—',           c: utilPct>80?'#DC2626':utilPct>50?'#D97706':'#059669' },
+          { l:'Available',    v: limit > 0 ? `${fmt(Math.max(0,limit-bal))}` : '—', c:'#047857' },
+          { l:'Utilization',  v: limit > 0 ? `${utilPct}%` : '—',           c: utilPct>80?'#DC2626':utilPct>50?'#D97706':'#047857' },
           { l:'Min. Payment', v:`${fmt(bal*0.02)}`,           c:'#D97706' },
           { l:'Due Date',     v: debt.due_date ? new Date(debt.due_date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—', c:'var(--text)' },
         ].map(({ l, v, c }) => (
@@ -460,13 +460,13 @@ function CreditCardDashboard({ bal, limit, utilPct, availPct, debt, utilTrend })
                   </PieChart>
                 </ResponsiveContainer>
                 <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', textAlign:'center' }}>
-                  <div className="mono" style={{ fontSize:20, fontWeight:900, color: utilPct>80?'#DC2626':utilPct>50?'#D97706':'#059669' }}>{utilPct}%</div>
+                  <div className="mono" style={{ fontSize:20, fontWeight:900, color: utilPct>80?'#DC2626':utilPct>50?'#D97706':'#047857' }}>{utilPct}%</div>
                   <div style={{ fontSize:10, color:'var(--text3)' }}>used</div>
                 </div>
               </div>
               <div style={{ display:'flex', justifyContent:'center', gap:16, fontSize:11, marginTop:8 }}>
                 <span style={{ display:'flex', alignItems:'center', gap:4 }}><span style={{ width:8, height:8, borderRadius:'50%', background:'#DC2626', display:'inline-block' }}/> Used {fmt(bal)}</span>
-                <span style={{ display:'flex', alignItems:'center', gap:4 }}><span style={{ width:8, height:8, borderRadius:'50%', background:'#059669', display:'inline-block' }}/> Free {fmt(Math.max(0,limit-bal))}</span>
+                <span style={{ display:'flex', alignItems:'center', gap:4 }}><span style={{ width:8, height:8, borderRadius:'50%', background:'#047857', display:'inline-block' }}/> Free {fmt(Math.max(0,limit-bal))}</span>
               </div>
             </>
           ) : (
@@ -495,8 +495,8 @@ function CreditCardDashboard({ bal, limit, utilPct, availPct, debt, utilTrend })
 
       {/* Payoff tip */}
       {utilPct > 30 && (
-        <div style={{ background: utilPct>80?'rgba(220,38,38,.08)':utilPct>50?'rgba(217,119,6,.08)':'rgba(5,150,105,.08)', borderRadius:14, padding:'14px 16px', display:'flex', gap:10, alignItems:'flex-start' }}>
-          <AlertCircle size={16} color={utilPct>80?'#DC2626':utilPct>50?'#D97706':'#059669'} style={{ flexShrink:0, marginTop:1 }}/>
+        <div style={{ background: utilPct>80?'rgba(220,38,38,.08)':utilPct>50?'rgba(217,119,6,.08)':'rgba(4,120,87,.08)', borderRadius:14, padding:'14px 16px', display:'flex', gap:10, alignItems:'flex-start' }}>
+          <AlertCircle size={16} color={utilPct>80?'#DC2626':utilPct>50?'#D97706':'#047857'} style={{ flexShrink:0, marginTop:1 }}/>
           <div style={{ fontSize:12.5, color:'var(--text)', lineHeight:1.5 }}>
             {utilPct > 80
               ? <><b>High utilization!</b> Keeping utilization below 30% helps your credit score. Try to pay down {fmt(bal - limit*0.3)} to reach the 30% threshold.</>
@@ -523,7 +523,7 @@ function LoanDashboard({ bal, debt, schedule, totalInterest, totalPrincipal }) {
         {[
           { l:'Remaining Balance', v:`${fmt(bal)}`,                          c:'#D97706' },
           { l:'Original Loan',     v:`${fmt(totalLoan)}`,                    c:'var(--text)' },
-          { l:'Already Paid',      v:`${fmt(Math.max(0,totalLoan-bal))}`,    c:'#059669' },
+          { l:'Already Paid',      v:`${fmt(Math.max(0,totalLoan-bal))}`,    c:'#047857' },
           { l:'Interest Rate',     v: debt.interest_rate ? `${debt.interest_rate}% p.a.` : '—', c:'#DC2626' },
           { l:'Monthly EMI',       v: debt.emi_amount ? `${fmt(debt.emi_amount)}` : '—', c:'var(--text)' },
           { l:'EMI Due',           v: debt.emi_day ? `${debt.emi_day}${['st','nd','rd'][debt.emi_day-1]||'th'} of month` : '—', c:'var(--text)' },
@@ -539,10 +539,10 @@ function LoanDashboard({ bal, debt, schedule, totalInterest, totalPrincipal }) {
       <div style={{ background:'var(--surface2)', borderRadius:16, padding:'18px', marginBottom:16 }}>
         <div style={{ display:'flex', justifyContent:'space-between', marginBottom:10 }}>
           <span style={{ fontSize:13, fontWeight:700, color:'var(--text)' }}>Repayment Progress</span>
-          <span className="mono" style={{ fontSize:13, fontWeight:700, color:'#059669' }}>{paidPct}% paid off</span>
+          <span className="mono" style={{ fontSize:13, fontWeight:700, color:'#047857' }}>{paidPct}% paid off</span>
         </div>
         <div style={{ height:10, background:'var(--surface3)', borderRadius:14, overflow:'hidden', marginBottom:8 }}>
-          <div style={{ height:'100%', width:`${paidPct}%`, background:'#059669', borderRadius:14, transition:'width .8s ease' }}/>
+          <div style={{ height:'100%', width:`${paidPct}%`, background:'#047857', borderRadius:14, transition:'width .8s ease' }}/>
         </div>
         <div style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'var(--text3)' }}>
           <span>Paid: {fmt(Math.max(0,totalLoan-bal))}</span>
@@ -557,7 +557,7 @@ function LoanDashboard({ bal, debt, schedule, totalInterest, totalPrincipal }) {
             <div style={{ fontSize:12, fontWeight:700, color:'var(--text3)', marginBottom:12, textTransform:'uppercase', letterSpacing:'.06em' }}>EMI Breakdown — Next {monthsLeft} Months</div>
             <div style={{ display:'flex', gap:16, marginBottom:12 }}>
               <span style={{ fontSize:12, color:'var(--text3)' }}>Total Interest: <b style={{color:'#DC2626'}}>{fmt(totalInterest)}</b></span>
-              <span style={{ fontSize:12, color:'var(--text3)' }}>Total Principal: <b style={{color:'#059669'}}>{fmt(totalPrincipal)}</b></span>
+              <span style={{ fontSize:12, color:'var(--text3)' }}>Total Principal: <b style={{color:'#047857'}}>{fmt(totalPrincipal)}</b></span>
             </div>
             <ResponsiveContainer width="100%" height={180}>
               <BarChart data={schedule.slice(0,12)} margin={{ top:5, right:5, left:-20, bottom:0 }}>
@@ -566,7 +566,7 @@ function LoanDashboard({ bal, debt, schedule, totalInterest, totalPrincipal }) {
                 <YAxis tick={{ fontSize:9, fill:'var(--text3)' }} axisLine={false} tickLine={false}/>
                 <Tooltip contentStyle={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:10, fontSize:12 }} formatter={v => `${fmt(v)}`}/>
                 <Legend iconSize={8} wrapperStyle={{ fontSize:11 }}/>
-                <Bar dataKey="principal" name="Principal" fill="#059669" stackId="a" radius={[0,0,4,4]}/>
+                <Bar dataKey="principal" name="Principal" fill="#047857" stackId="a" radius={[0,0,4,4]}/>
                 <Bar dataKey="interest"  name="Interest"  fill="#DC2626" stackId="a" radius={[4,4,0,0]}/>
               </BarChart>
             </ResponsiveContainer>
@@ -588,7 +588,7 @@ function LoanDashboard({ bal, debt, schedule, totalInterest, totalPrincipal }) {
                   <tr key={i} style={{ borderBottom:'1px solid var(--border-light)', background: i%2===0?'transparent':'var(--surface3)' }}>
                     <td style={{ padding:'7px 8px', fontWeight:600, color:'var(--text)' }}>{r.month}</td>
                     <td style={{ padding:'7px 8px' }} className="mono">{fmt(r.emi)}</td>
-                    <td style={{ padding:'7px 8px', color:'#059669' }} className="mono">{fmt(r.principal)}</td>
+                    <td style={{ padding:'7px 8px', color:'#047857' }} className="mono">{fmt(r.principal)}</td>
                     <td style={{ padding:'7px 8px', color:'#DC2626' }} className="mono">{fmt(r.interest)}</td>
                     <td style={{ padding:'7px 8px', color:'var(--text)' }} className="mono">{fmt(r.balance)}</td>
                   </tr>
@@ -827,7 +827,7 @@ function DebtModal({ debt, onClose, onSaved }) {
             <div style={{ height:8, background:'var(--surface3)', borderRadius:14, overflow:'hidden', marginBottom:6 }}>
               {(() => {
                 const pct = Math.min(100, Math.round((parseFloat(form.balance)/parseFloat(form.credit_limit))*100));
-                return <div style={{ height:'100%', width:`${pct}%`, background: pct>80?'#DC2626':pct>50?'#D97706':'#059669', borderRadius:14, transition:'width .4s' }}/>;
+                return <div style={{ height:'100%', width:`${pct}%`, background: pct>80?'#DC2626':pct>50?'#D97706':'#047857', borderRadius:14, transition:'width .4s' }}/>;
               })()}
             </div>
             <div style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'var(--text3)' }}>
@@ -847,7 +847,7 @@ function DebtModal({ debt, onClose, onSaved }) {
               return (
                 <div style={{ display:'flex', gap:16, fontSize:12 }}>
                   <span>Interest: <b style={{color:'#DC2626'}}>{fmt(interest)}</b></span>
-                  <span>Principal: <b style={{color:'#059669'}}>{fmt(Math.max(0,principal))}</b></span>
+                  <span>Principal: <b style={{color:'#047857'}}>{fmt(Math.max(0,principal))}</b></span>
                   <span>After 1 EMI: <b style={{color:'var(--text)'}}>{fmt(Math.max(0,parseFloat(form.balance)-principal))}</b></span>
                 </div>
               );

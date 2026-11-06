@@ -17,20 +17,20 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 18px 16px 16px;
+  padding: 16px 16px 14px;
   flex-shrink: 0;
-  border-bottom: 1px solid var(--border-light);
-  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
 }
 .logoIcon {
-  width: 34px; height: 34px;
-  border-radius: 10px;
+  width: 32px; height: 32px;
+  border-radius: 8px;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
   overflow: hidden;
 }
 .logoName {
-  font-size: 18px; font-weight: 700; letter-spacing: -0.4px;
+  font-size: 18px; font-weight: 600; letter-spacing: -0.02em;
   color: var(--text);
 }
 .closeBtn {
@@ -45,7 +45,7 @@
 .navSection {
   padding: 8px 12px 4px;
   font-size: 11px; font-weight: 600;
-  letter-spacing: .06em; text-transform: uppercase;
+  letter-spacing: .05em; text-transform: uppercase;
   color: var(--text3);
 }
 
@@ -64,9 +64,9 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-size: 13.5px; font-weight: 500;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 14px; font-weight: 500;
   color: var(--text2);
   transition: background .15s, color .15s;
   border: none; background: transparent;
@@ -96,76 +96,11 @@
   transition: background .15s;
 }
 
-/* Glow burst behind icon when active */
-.iconGlow {
-  position: absolute;
-  inset: -2px;
-  border-radius: 12px;
-  opacity: .18;
-  filter: blur(6px);
-  z-index: 0;
-  pointer-events: none;
-}
-
 .navLabel {
   flex: 1;
   position: relative;
   z-index: 1;
 }
-
-/* Active pill pill on the right side */
-.activeBar {
-  position: absolute;
-  right: 0; top: 18%; bottom: 18%;
-  width: 3px;
-  background: var(--accent);
-  border-radius: 3px 0 0 3px;
-}
-
-/* ── Upgrade banner ── */
-.upgradeBanner {
-  margin: 6px 10px 10px;
-  padding: 16px;
-  background: #4F46E5;
-  border-radius: 14px;
-  position: relative; overflow: hidden; cursor: pointer;
-  flex-shrink: 0;
-}
-.upgradeBannerGlow {
-  position: absolute;
-  top: -30px; right: -20px;
-  width: 100px; height: 100px;
-  background: rgba(255,255,255,.15);
-  border-radius: 50%;
-  pointer-events: none;
-}
-.upgradeBanner::after {
-  content: '';
-  position: absolute;
-  bottom: -20px; right: 10px;
-  width: 60px; height: 60px;
-  background: rgba(255,255,255,.08);
-  border-radius: 50%;
-}
-.upgradeTitle {
-  font-size: 13px; font-weight: 800; color: #fff;
-  margin-bottom: 3px; position: relative; z-index: 1;
-}
-.upgradeDesc {
-  font-size: 11px; color: rgba(255,255,255,.78);
-  margin-bottom: 12px; line-height: 1.5; position: relative; z-index: 1;
-}
-.upgradeBtn {
-  display: inline-flex; align-items: center; gap: 5px;
-  background: rgba(255,255,255,.95); color: #4F46E5;
-  font-size: 12px; font-weight: 800;
-  padding: 6px 14px; border-radius: 14px;
-  border: none; cursor: pointer;
-  font-family: 'Inter', sans-serif;
-  position: relative; z-index: 1;
-  transition: box-shadow .15s;
-}
-.upgradeBtn:hover { box-shadow: 0 4px 14px rgba(0,0,0,.2); }
 
 /* ── Bottom ── */
 .navBottom {
@@ -174,26 +109,25 @@
   flex-shrink: 0;
   border-top: 1px solid var(--border-light);
 }
-.logoutBtn { color: var(--red) !important; }
+.logoutBtn { color: var(--red-text) !important; }
 .logoutBtn:hover { background: var(--red-light) !important; }
 
 /* ── Avatar row ── */
 .avatarRow {
   display: flex; align-items: center; gap: 10px;
-  padding: 10px 10px; margin-top: 4px;
-  border-radius: 12px;
+  padding: 10px; margin-top: 4px;
+  border-radius: var(--radius-sm);
   background: var(--surface2);
 }
 .avatar {
   width: 34px; height: 34px; border-radius: 50%;
-  background: linear-gradient(135deg, #818CF8, var(--accent));
+  background: var(--accent-btn);
   display: flex; align-items: center; justify-content: center;
-  color: #fff; font-size: 12px; font-weight: 800; flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(79,70,229,.3);
+  color: #fff; font-size: 12px; font-weight: 600; flex-shrink: 0;
 }
 .avatarInfo   { flex: 1; min-width: 0; }
-.avatarName   { font-size: 12.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.avatarEmail  { font-size: 10.5px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.avatarName   { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.avatarEmail  { font-size: 12px; color: var(--text3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ── Mobile drawer ── */
 @media (max-width: 768px) {
@@ -204,6 +138,6 @@
   }
   .sidebar.open {
     transform: translateX(0);
-    box-shadow: 0 0 80px rgba(0,0,0,.4);
+    box-shadow: var(--shadow-lg);
   }
 }

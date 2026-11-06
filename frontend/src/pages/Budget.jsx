@@ -32,7 +32,7 @@ const DS = {
     card: THEME.dark.cardBg, shadow: THEME.dark.cardShadow,
     overviewBg: THEME.dark.flowBg, overviewBorder: THEME.dark.flowBorder,
   },
-  purple:'#4F46E5', green:'#059669', pink:'#DC2626', orange:'#D97706', blue:'#3B82F6',
+  purple:'#1D4ED8', green:'#047857', pink:'#DC2626', orange:'#D97706', blue:'#3B82F6',
 };
 
 const spring = { type:'spring', stiffness:280, damping:28 };
@@ -49,7 +49,7 @@ function BudgetRing({ pct, t, glow }) {
       <svg width={size} height={size} style={{ transform:'rotate(-90deg)' }}>
         <defs>
           <linearGradient id="budgetRing" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#4F46E5"/>
+            <stop offset="0%" stopColor="#1D4ED8"/>
             <stop offset="100%" stopColor={t.green}/>
           </linearGradient>
           <filter id="ringGlow" x="-40%" y="-40%" width="180%" height="180%">
@@ -190,7 +190,7 @@ export default function Budget() {
               <Calendar size={19} color={t.text2}/>
             </button>
             <motion.button className={styles.circleBtn} whileTap={{ scale:.9 }}
-              style={{ background:'#4F46E5', border:'none', boxShadow:'0 8px 24px rgba(124,58,237,.35)' }}
+              style={{ background:'#1D4ED8', border:'none', boxShadow:'0 8px 24px rgba(124,58,237,.35)' }}
               onClick={openAddBudget}>
               <Plus size={22} color="#fff"/>
             </motion.button>
@@ -302,7 +302,7 @@ export default function Budget() {
                 <YAxis tickLine={false} axisLine={false} width={40}
                   tick={{ fontSize:10.5, fill:t.text3 }}
                   tickFormatter={v => v >= 1000 ? `₹${Math.round(v/1000)}K` : `₹${v}`}/>
-                <Tooltip cursor={{ fill:'rgba(79,70,229,.06)' }}
+                <Tooltip cursor={{ fill:'rgba(29,78,216,.06)' }}
                   contentStyle={{ background:t.card, border:`1px solid ${t.border}`, borderRadius:12, fontSize:12 }}
                   labelStyle={{ color:t.text2 }} itemStyle={{ fontWeight:700 }}
                   formatter={v => fmt(v,{noDecimals:true})}/>
@@ -404,7 +404,7 @@ export default function Budget() {
             </div>
             <button onClick={openAddBudget}
               style={{ padding:'12px 22px', borderRadius:14, border:'none', cursor:'pointer', fontSize:14, fontWeight:700,
-                background:'#4F46E5', color:'#fff', boxShadow:'0 8px 24px rgba(124,58,237,.35)' }}>
+                background:'#1D4ED8', color:'#fff', boxShadow:'0 8px 24px rgba(124,58,237,.35)' }}>
               {isIncome ? '+ Add Income Target' : '+ Create Budget'}
             </button>
           </motion.div>
@@ -429,7 +429,7 @@ function BudgetModal({ budget, initialType='expense', onClose, onSaved }) {
     name:       budget?.name       || '',
     amount:     budget?.amount     || '',
     emoji:      budget?.emoji      || '📌',
-    color:      budget?.color      || '#4F46E5',
+    color:      budget?.color      || '#1D4ED8',
     category_id:budget?.category_id|| '',
     period:     budget?.period     || 'monthly',
     start_date: budget?.start_date || new Date().toISOString().split('T')[0],
@@ -446,7 +446,7 @@ function BudgetModal({ budget, initialType='expense', onClose, onSaved }) {
     onError: (e) => setError(e.response?.data?.message || 'Error saving budget'),
   });
 
-  const PRESET_COLORS = ['#4F46E5','#3B82F6','#059669','#D97706','#DC2626','#F87171','#00C896','#818CF8'];
+  const PRESET_COLORS = ['#1D4ED8','#3B82F6','#047857','#D97706','#DC2626','#F87171','#0D9488','#60A5FA'];
   const submit = () => {
     if (!(parseFloat(form.amount) > 0)) return setError('Please enter an amount greater than 0');
     setError('');
@@ -464,7 +464,7 @@ function BudgetModal({ budget, initialType='expense', onClose, onSaved }) {
             {[{ k:'expense', label:'Expense' }, { k:'income', label:'Income' }].map(o => (
               <button key={o.k} type="button" onClick={()=>setForm(f=>({...f, type:o.k, category_id:''}))}
                 style={{ flex:1, padding:'9px 0', border:'none', cursor:'pointer', borderRadius:9, fontSize:13.5, fontWeight:700,
-                  background: form.type===o.k ? (o.k==='income' ? '#059669' : '#4F46E5') : 'transparent',
+                  background: form.type===o.k ? (o.k==='income' ? '#047857' : '#1D4ED8') : 'transparent',
                   color: form.type===o.k ? '#fff' : 'var(--text2)' }}>{o.label}</button>
             ))}
           </div>
@@ -483,9 +483,9 @@ function BudgetModal({ budget, initialType='expense', onClose, onSaved }) {
             <label className="form-label">Period</label>
             <ThemedSelect value={form.period} onChange={v=>setForm(f=>({...f,period:v}))}
               options={[
-                { value:'monthly', label:'Monthly', icon:<CalendarDays size={16} color="#4F46E5"/> },
-                { value:'weekly',  label:'Weekly',  icon:<CalendarRange size={16} color="#4F46E5"/> },
-                { value:'yearly',  label:'Yearly',  icon:<Calendar size={16} color="#4F46E5"/> },
+                { value:'monthly', label:'Monthly', icon:<CalendarDays size={16} color="#1D4ED8"/> },
+                { value:'weekly',  label:'Weekly',  icon:<CalendarRange size={16} color="#1D4ED8"/> },
+                { value:'yearly',  label:'Yearly',  icon:<Calendar size={16} color="#1D4ED8"/> },
               ]}/>
           </div>
           <div className="form-group">
@@ -512,7 +512,7 @@ function BudgetModal({ budget, initialType='expense', onClose, onSaved }) {
             <ThemedSelect value={form.category_id} onChange={v=>setForm(f=>({...f,category_id:v}))}
               placeholder="No category link"
               options={[
-                { value:'', label:'No category link', icon:<Ban size={16} color="#9896B2"/> },
+                { value:'', label:'No category link', icon:<Ban size={16} color="#5B6B7F"/> },
                 ...(categories||[]).filter(c=>c.type===form.type||c.type==='both').map(c=>({ value:c.id, label:c.name, icon:<CategoryGlyph name={c.name} emoji={c.emoji} icon={c.icon} size={16}/> })),
               ]}/>
           </div>
@@ -521,7 +521,7 @@ function BudgetModal({ budget, initialType='expense', onClose, onSaved }) {
         <div style={{ display:'flex', gap:10, marginTop:8, justifyContent:'flex-end' }}>
           <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
           <button className="btn btn-primary" disabled={mutation.isPending} onClick={submit}
-            style={{ background:'#4F46E5', border:'none', boxShadow:'0 4px 14px rgba(79,70,229,.35)' }}>
+            style={{ background:'#1D4ED8', border:'none', boxShadow:'0 4px 14px rgba(29,78,216,.35)' }}>
             {mutation.isPending ? 'Saving…' : budget ? 'Update' : (isIncome ? 'Add Income Target' : 'Create Budget')}
           </button>
         </div>

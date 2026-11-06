@@ -17,13 +17,13 @@ import ThemedSelect from '../components/ThemedSelect';
 
 
 const BADGE_CFG_DARK = {
-  High:      { text:'High Priority',   bg:'rgba(79,70,229,.25)',  color:'#C4B5FD' },
+  High:      { text:'High Priority',   bg:'rgba(29,78,216,.25)',  color:'#93C5FD' },
   Medium:    { text:'Medium Priority', bg:'rgba(217,119,6,.22)',  color:'#FCD34D' },
   Low:       { text:'Low Priority',    bg:'rgba(59,130,246,.22)',  color:'#93C5FD' },
   Completed: { text:'Completed',       bg:'rgba(52,211,153,.18)',  color:'#34D399' },
 };
 const BADGE_CFG_LIGHT = {
-  High:      { text:'High Priority',   bg:'#F3E8FF', color:'#4F46E5' },
+  High:      { text:'High Priority',   bg:'#F3E8FF', color:'#1D4ED8' },
   Medium:    { text:'Medium Priority', bg:'#FFF7ED', color:'#D97706' },
   Low:       { text:'Low Priority',    bg:'#EFF6FF', color:'#3B82F6' },
   Completed: { text:'Completed',       bg:'#D1FAE5', color:'#047857' },
@@ -42,7 +42,7 @@ const containerVar = { hidden:{}, show:{ transition:{ staggerChildren:.07 } } };
 const cardVar = { hidden:{ opacity:0, y:22 }, show:{ opacity:1, y:0, transition:spring } };
 
 /* ── Glowing donut (dashboard style) ── */
-function DonutChart({ pct, size=160, stroke=14, color='#4F46E5', track, label, sublabel, labelColor, glow }) {
+function DonutChart({ pct, size=160, stroke=14, color='#1D4ED8', track, label, sublabel, labelColor, glow }) {
   const r = (size - stroke) / 2;
   const circ = 2 * Math.PI * r;
   const clamped = Math.min(100, pct);
@@ -98,7 +98,7 @@ export default function Goals() {
     return apiGoals.map(g => ({
       ...g,
       desc: g.desc || g.description || '',
-      iconBg: g.color || '#4F46E5',
+      iconBg: g.color || '#1D4ED8',
       priority: g.priority || 'Medium',
       status: parseFloat(g.percentage||0) >= 100 ? 'Completed' : (g.status || 'In Progress'),
     }));
@@ -156,7 +156,7 @@ export default function Goals() {
               <BarChart2 size={19} color={t.text2}/>
             </button>
             <motion.button className={styles.circleBtn} whileTap={{ scale:.9 }}
-              style={{ background:'#4F46E5', border:'none', boxShadow:'0 8px 24px rgba(124,58,237,.35)' }}
+              style={{ background:'#1D4ED8', border:'none', boxShadow:'0 8px 24px rgba(124,58,237,.35)' }}
               onClick={openAddGoal}>
               <Plus size={22} color="#fff"/>
             </motion.button>
@@ -183,7 +183,7 @@ export default function Goals() {
           </div>
           <div className={styles.overviewDonut}>
             <DonutChart pct={overallPct} size={156} stroke={13}
-              color={t.purple} track={isDark?'rgba(79,70,229,.18)':'#EEE8FF'}
+              color={t.purple} track={isDark?'rgba(29,78,216,.18)':'#EEE8FF'}
               label={fmtINR(totalSaved)} sublabel="Saved" labelColor={t.text} glow={isDark}/>
           </div>
         </motion.div>
@@ -196,9 +196,9 @@ export default function Goals() {
               return (
                 <motion.button key={key} whileTap={{ scale:.94 }} className={styles.chip}
                   style={{
-                    background: active ? (isDark?'rgba(79,70,229,.18)':'#EEF0FF') : t.cardBg,
+                    background: active ? (isDark?'rgba(29,78,216,.18)':'#EFF6FF') : t.cardBg,
                     border: `1.5px solid ${active ? t.purple : t.border}`,
-                    color: active ? (isDark?'#C4B5FD':t.purple) : t.text2,
+                    color: active ? (isDark?'#93C5FD':t.purple) : t.text2,
                   }}
                   onClick={()=>setFilter(key)}>
                   {key} ({filterCounts[key]||0})
@@ -218,7 +218,7 @@ export default function Goals() {
                   style={{ position:'absolute', right:0, top:'calc(100% + 6px)', background:t.cardBg, border:`1px solid ${t.border}`, borderRadius:14, zIndex:50, minWidth:150, overflow:'hidden', boxShadow:t.cardShadow }}>
                   {['Priority','Progress','Amount','Name'].map(s => (
                     <button key={s} onClick={()=>{setSortBy(s);setShowSort(false);}}
-                      style={{ display:'block', width:'100%', textAlign:'left', padding:'10px 15px', background:sortBy===s?'rgba(79,70,229,.12)':'transparent', color:sortBy===s?(isDark?'#C4B5FD':t.purple):t.text2, border:'none', fontSize:12.5, fontWeight:sortBy===s?700:500, cursor:'pointer' }}>
+                      style={{ display:'block', width:'100%', textAlign:'left', padding:'10px 15px', background:sortBy===s?'rgba(29,78,216,.12)':'transparent', color:sortBy===s?(isDark?'#93C5FD':t.purple):t.text2, border:'none', fontSize:12.5, fontWeight:sortBy===s?700:500, cursor:'pointer' }}>
                       {s}
                     </button>
                   ))}
@@ -288,7 +288,7 @@ export default function Goals() {
                         )}
                         {!isComplete && (
                           <button onClick={()=>!isDummy && setShowFunds(g)}
-                            style={{ fontSize:11, fontWeight:700, padding:'4px 11px', borderRadius:10, border:'none', background:`${g.iconBg||'#4F46E5'}22`, color:g.iconBg||t.purple, cursor:'pointer', whiteSpace:'nowrap' }}>
+                            style={{ fontSize:11, fontWeight:700, padding:'4px 11px', borderRadius:10, border:'none', background:`${g.iconBg||'#1D4ED8'}22`, color:g.iconBg||t.purple, cursor:'pointer', whiteSpace:'nowrap' }}>
                             + Add Funds
                           </button>
                         )}
@@ -306,12 +306,12 @@ export default function Goals() {
           {/* Motivation card */}
           <motion.div className={styles.motivCard} variants={cardVar}
             style={{ background:t.cardBg, border:`1px solid ${t.border}`, boxShadow:t.cardShadow }}>
-            <span className={styles.spark} style={{ top:12, right:16, color: isDark?'rgba(52,211,153,.4)':'rgba(5,150,105,.4)' }}>✦</span>
-            <span className={styles.spark} style={{ bottom:16, right:52, fontSize:8, color: isDark?'rgba(52,211,153,.25)':'rgba(5,150,105,.25)' }}>✦</span>
+            <span className={styles.spark} style={{ top:12, right:16, color: isDark?'rgba(52,211,153,.4)':'rgba(4,120,87,.4)' }}>✦</span>
+            <span className={styles.spark} style={{ bottom:16, right:52, fontSize:8, color: isDark?'rgba(52,211,153,.25)':'rgba(4,120,87,.25)' }}>✦</span>
 
             <div style={{ display:'flex', justifyContent:'center', marginBottom:6 }}>
               <div className={styles.motivRing} style={{ border:`2.5px solid ${isDark?'rgba(52,211,153,.3)':'#A7F3D0'}` }}>
-                <div className={styles.motivRingInner} style={{ background: isDark?'rgba(52,211,153,.12)':'rgba(5,150,105,.1)' }}>
+                <div className={styles.motivRingInner} style={{ background: isDark?'rgba(52,211,153,.12)':'rgba(4,120,87,.1)' }}>
                   <Rocket size={26} color={t.green}/>
                 </div>
               </div>
@@ -327,8 +327,8 @@ export default function Goals() {
 
             <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
               {[
-                { Icon:TargetIcon, label:'Monthly Target',   val:fmtFull(totalMonthly),   clr:t.text,  bg:'rgba(79,70,229,.14)', ic:t.purple },
-                { Icon:Wallet,     label:'Saved This Month', val:fmtFull(savedThisMonth), clr:t.green, bg: isDark?'rgba(52,211,153,.12)':'rgba(5,150,105,.12)', ic:t.green },
+                { Icon:TargetIcon, label:'Monthly Target',   val:fmtFull(totalMonthly),   clr:t.text,  bg:'rgba(29,78,216,.14)', ic:t.purple },
+                { Icon:Wallet,     label:'Saved This Month', val:fmtFull(savedThisMonth), clr:t.green, bg: isDark?'rgba(52,211,153,.12)':'rgba(4,120,87,.12)', ic:t.green },
               ].map(({ Icon, label, val, clr, bg, ic })=>(
                 <div key={label} style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
                   <div style={{ display:'flex', alignItems:'center', gap:10 }}>
@@ -347,8 +347,8 @@ export default function Goals() {
             <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
               <div style={{ fontSize:10.5, fontWeight:700, color:t.text3, textTransform:'uppercase', letterSpacing:'.06em' }}>Goal Breakdown</div>
               {[
-                { label:'In Progress', count:inProgressCt, color:t.purple, bg:'rgba(79,70,229,.14)' },
-                { label:'Completed',   count:completedCt,  color:t.green,  bg: isDark?'rgba(52,211,153,.12)':'rgba(5,150,105,.12)' },
+                { label:'In Progress', count:inProgressCt, color:t.purple, bg:'rgba(29,78,216,.14)' },
+                { label:'Completed',   count:completedCt,  color:t.green,  bg: isDark?'rgba(52,211,153,.12)':'rgba(4,120,87,.12)' },
                 { label:'Paused',      count:pausedCt,     color:t.orange, bg:'rgba(217,119,6,.14)' },
               ].map(({ label, count, color, bg })=>(
                 <div key={label} style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
@@ -375,7 +375,7 @@ function GoalModal({ goal, onClose, onSaved }) {
     target_amount:       goal?.target_amount       || '',
     current_amount:      goal?.current_amount      || '',
     emoji:               goal?.emoji               || '🎯',
-    color:               goal?.color               || '#4F46E5',
+    color:               goal?.color               || '#1D4ED8',
     target_date:         goal?.target_date ? goal.target_date.split('T')[0] : '',
     monthly_contribution:goal?.monthly_contribution|| '',
     priority:            goal?.priority            || 'Medium',
@@ -394,7 +394,7 @@ function GoalModal({ goal, onClose, onSaved }) {
     setError('');
     mutation.mutate(form);
   };
-  const COLORS = ['#4F46E5','#059669','#DC2626','#3B82F6','#D97706','#EF4444','#06B6D4','#10B981'];
+  const COLORS = ['#1D4ED8','#047857','#DC2626','#3B82F6','#D97706','#EF4444','#06B6D4','#10B981'];
   return (
     <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
       <div className="modal">
@@ -431,7 +431,7 @@ function GoalModal({ goal, onClose, onSaved }) {
               options={[
                 { value:'High',   label:'High',   icon:<ChevronsUp size={16} color="#EF4444"/> },
                 { value:'Medium', label:'Medium', icon:<Minus size={16} color="#D97706"/> },
-                { value:'Low',    label:'Low',    icon:<ChevronsDown size={16} color="#059669"/> },
+                { value:'Low',    label:'Low',    icon:<ChevronsDown size={16} color="#047857"/> },
               ]}/>
           </div>
           <div className="form-group">
@@ -450,7 +450,7 @@ function GoalModal({ goal, onClose, onSaved }) {
         </div>
         <div style={{ display:'flex', gap:10, marginTop:16, justifyContent:'flex-end' }}>
           <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" disabled={mutation.isPending} onClick={submit} style={{ background:'#4F46E5', border:'none' }}>
+          <button className="btn btn-primary" disabled={mutation.isPending} onClick={submit} style={{ background:'#1D4ED8', border:'none' }}>
             {mutation.isPending ? 'Saving' : goal ? 'Update Goal' : 'Create Goal'}
           </button>
         </div>
@@ -466,7 +466,7 @@ function AddFundsModal({ goal, onClose, onSaved }) {
     onSuccess: onSaved,
   });
   const pct = Math.min(100, Math.round((parseFloat(goal.current_amount)||0)/(parseFloat(goal.target_amount)||1)*100));
-  const clr = goal.color || '#4F46E5';
+  const clr = goal.color || '#1D4ED8';
   return (
     <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
       <div className="modal" style={{ maxWidth:400 }}>

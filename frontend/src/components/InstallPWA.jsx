@@ -34,8 +34,8 @@ export default function InstallPWA({ onClick: onClose }) {
   return (
     <button onClick={install}
       style={{ display:'flex', alignItems:'center', gap:10, width:'100%', padding:'11px 14px', marginBottom:10,
-        borderRadius:12, border:'1.5px solid rgba(79,70,229,.35)', background:'rgba(79,70,229,.1)',
-        color:'#4F46E5', fontSize:13.5, fontWeight:700, cursor:'pointer' }}>
+        borderRadius:12, border:'1.5px solid rgba(29,78,216,.35)', background:'rgba(29,78,216,.1)',
+        color:'#1D4ED8', fontSize:13.5, fontWeight:700, cursor:'pointer' }}>
       <Download size={17} /> Install App
     </button>
   );

@@ -36,21 +36,18 @@
   align-items: center;
   justify-content: center;
   padding: 6px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  width: 34px; height: 34px;
+  width: 36px; height: 36px;
   transition: background .15s;
 }
 .hamburger:hover { background: var(--surface3); color: var(--text); }
 
 .mobileLogo {
   font-size: 18px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  background: linear-gradient(135deg, var(--accent), #818CF8);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text);
 }
 
 @media (max-width: 768px) {
