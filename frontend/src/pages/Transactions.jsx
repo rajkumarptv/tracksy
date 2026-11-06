@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
 import { transactionsAPI, categoriesAPI, walletsAPI } from '../services/api';
 import { track } from '../lib/analytics';
@@ -184,12 +185,40 @@ function CustomSelect({ value, onChange, options = [], placeholder = 'Select…'
   const [open, setOpen]   = useState(false);
   const [q, setQ]         = useState('');
   const ref               = useRef(null);
+  const panelRef          = useRef(null);
+  const [pos, setPos]     = useState(null);
+
+  // The panel is a fixed-position portal so the sheet's scroll area and its Save bar can never clip or cover it.
+  const place = () => {
+    const r = ref.current?.getBoundingClientRect();
+    if (!r) return;
+    const below = window.innerHeight - r.bottom;
+    const up = below < 280 && r.top > below;
+    setPos({
+      left: r.left, width: r.width,
+      top: up ? undefined : r.bottom + 6,
+      bottom: up ? window.innerHeight - r.top + 6 : undefined,
+      maxH: Math.max(160, Math.min(320, (up ? r.top : below) - 16)),
+    });
+  };
 
   useEffect(() => {
     if (!open) return;
-    const fn = e => { if (ref.current && !ref.current.contains(e.target)) { setOpen(false); setQ(''); } };
+    place();
+    const fn = e => {
+      if (ref.current?.contains(e.target) || panelRef.current?.contains(e.target)) return;
+      setOpen(false); setQ('');
+    };
     document.addEventListener('mousedown', fn);
-    return () => document.removeEventListener('mousedown', fn);
+    document.addEventListener('touchstart', fn);
+    window.addEventListener('resize', place);
+    window.addEventListener('scroll', place, true);
+    return () => {
+      document.removeEventListener('mousedown', fn);
+      document.removeEventListener('touchstart', fn);
+      window.removeEventListener('resize', place);
+      window.removeEventListener('scroll', place, true);
+    };
   }, [open]);
 
   const selected = options.find(o => String(o.value) === String(value));
@@ -224,22 +253,23 @@ function CustomSelect({ value, onChange, options = [], placeholder = 'Select…'
       </button>
 
       {/* Floating panel */}
-      {open && (
-        <div style={{
-          position:'absolute', top:'calc(100% + 6px)', left:0, right:0,
+      {open && pos && createPortal(
+        <div ref={panelRef} style={{
+          position:'fixed', left:pos.left, width:pos.width, top:pos.top, bottom:pos.bottom,
+          display:'flex', flexDirection:'column', maxHeight:pos.maxH,
           background:'var(--surface)', border:'1.5px solid var(--border)',
           borderRadius:14, boxShadow:'0 16px 48px rgba(0,0,0,.18), 0 4px 12px rgba(0,0,0,.08)',
-          zIndex:1002, overflow:'hidden',
+          zIndex:2001, overflow:'hidden',
           animation:'dropFade .14s ease',
         }}>
           {options.length > 5 && (
             <div style={{ padding:'10px 10px 6px', borderBottom:'1px solid var(--border-light)' }}>
-              <input autoFocus value={q} onChange={e => setQ(e.target.value)}
+              <input autoFocus={!window.matchMedia?.('(pointer: coarse)').matches} value={q} onChange={e => setQ(e.target.value)}
                 placeholder="Search…" onClick={e => e.stopPropagation()}
-                style={{ width:'100%', padding:'7px 10px', borderRadius:8, border:'1.5px solid var(--border)', background:'var(--surface2)', color:'var(--text)', fontSize:12.5, outline:'none', boxSizing:'border-box' }}/>
+                style={{ width:'100%', padding:'7px 10px', borderRadius:8, border:'1.5px solid var(--border)', background:'var(--surface2)', color:'var(--text)', fontSize:16, outline:'none', boxSizing:'border-box' }}/>
             </div>
           )}
-          <div style={{ maxHeight:220, overflowY:'auto', padding:6, scrollbarWidth:'thin' }}>
+          <div style={{ flex:1, minHeight:0, overflowY:'auto', padding:6, scrollbarWidth:'thin' }}>
             {/* "None" option */}
             <button type="button" onClick={() => { onChange(''); setOpen(false); setQ(''); }}
               style={{ width:'100%', textAlign:'left', padding:'8px 10px', borderRadius:9, border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:8, fontSize:13, transition:'background .1s',
@@ -276,7 +306,8 @@ function CustomSelect({ value, onChange, options = [], placeholder = 'Select…'
               <div style={{ padding:'14px', textAlign:'center', fontSize:13, color:'var(--text3)' }}>No results</div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

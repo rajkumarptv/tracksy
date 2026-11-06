@@ -15,6 +15,7 @@ import { THEME } from '../theme';
 import styles from './Goals.module.css';
 import { invalidateFinance } from '../lib/cache';
 import ThemedSelect from '../components/ThemedSelect';
+import { confirmAsync } from '../lib/confirm';
 
 
 const BADGE_CFG_DARK = {
@@ -277,12 +278,12 @@ export default function Goals() {
                       <div style={{ display:'flex', alignItems:'center', gap:8 }}>
                         {!isComplete && !isDummy && (
                           <>
-                            <button title="Edit" onClick={()=>{setEditGoal(g);setShowModal(true);}}
-                              style={{ background:'transparent', border:'none', cursor:'pointer', padding:2, display:'flex' }}>
+                            <button title="Edit" aria-label="Edit goal" onClick={()=>{setEditGoal(g);setShowModal(true);}}
+                              style={{ background:'transparent', border:'none', cursor:'pointer', padding:2, display:'flex', alignItems:'center', justifyContent:'center', minWidth:36, minHeight:36 }}>
                               <Pencil size={13} color={t.text3}/>
                             </button>
-                            <button title="Delete" onClick={()=>{if(window.confirm('Delete this goal?'))deleteMutation.mutate(g.id);}}
-                              style={{ background:'transparent', border:'none', cursor:'pointer', padding:2, display:'flex' }}>
+                            <button title="Delete" aria-label="Delete goal" onClick={()=>{confirmAsync('Delete this goal?').then(ok => ok && deleteMutation.mutate(g.id));}}
+                              style={{ background:'transparent', border:'none', cursor:'pointer', padding:2, display:'flex', alignItems:'center', justifyContent:'center', minWidth:36, minHeight:36 }}>
                               <Trash2 size={13} color={t.red}/>
                             </button>
                           </>

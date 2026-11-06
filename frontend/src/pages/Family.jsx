@@ -12,6 +12,7 @@ import useAuthStore from '../store/authStore';
 import useThemeStore from '../store/themeStore';
 import { THEME } from '../theme';
 import styles from './Budget.module.css';
+import { confirmAsync } from '../lib/confirm';
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -219,7 +220,7 @@ function SharedMemberBar({ familyName, qc, t }) {
       <div style={{ fontSize:13, color:t.text2, flex:1, minWidth:180 }}>
         You're a member of <strong style={{ color:t.text }}>{familyName}</strong>. Everyone here can see each other's finances.
       </div>
-      <button onClick={() => { if(confirm('Leave this family? You will no longer see shared data and others won’t see yours.')) leaveMut.mutate(); }}
+      <button onClick={() => { confirmAsync('Leave this family? You will no longer see shared data and others won’t see yours.', { confirmLabel:'Leave' }).then(ok => ok && leaveMut.mutate()); }}
         style={{ display:'flex', alignItems:'center', gap:6, padding:'8px 15px', borderRadius:11, border:'1.5px solid rgba(220,38,38,.3)', background:'rgba(220,38,38,.08)', color:DS.pink, fontSize:12.5, fontWeight:700, cursor:'pointer' }}>
         <LogOut size={13}/> Leave
       </button>
@@ -248,7 +249,7 @@ function InviteCodeBar({ code, qc, t }) {
           {copied ? <Check size={16}/> : <Copy size={16}/>}
         </button>
       </div>
-      <button onClick={() => { if(confirm('Disband this family? All members will be removed.')) leaveMut.mutate(); }}
+      <button onClick={() => { confirmAsync('Disband this family? All members will be removed.', { confirmLabel:'Disband' }).then(ok => ok && leaveMut.mutate()); }}
         style={{ marginLeft:'auto', display:'flex', alignItems:'center', gap:6, padding:'8px 15px', borderRadius:11, border:'1.5px solid rgba(220,38,38,.3)', background:'rgba(220,38,38,.08)', color:DS.pink, fontSize:12.5, fontWeight:700, cursor:'pointer' }}>
         <LogOut size={13}/> Disband
       </button>
@@ -409,7 +410,7 @@ function MemberView({ status, qc }) {
         </div>
       </motion.div>
 
-      <motion.button variants={cardVar} onClick={() => { if(confirm('Leave this family? The head will no longer see your data.')) leaveMut.mutate(); }}
+      <motion.button variants={cardVar} onClick={() => { confirmAsync('Leave this family? The head will no longer see your data.', { confirmLabel:'Leave' }).then(ok => ok && leaveMut.mutate()); }}
         style={{ alignSelf:'center', display:'inline-flex', alignItems:'center', gap:7, padding:'12px 26px', borderRadius:14, border:'1.5px solid rgba(220,38,38,.3)', background:'rgba(220,38,38,.08)', color:DS.pink, fontWeight:700, fontSize:14, cursor:'pointer' }}>
         <LogOut size={15}/> Leave Family
       </motion.button>
@@ -470,7 +471,7 @@ function MemberDetailModal({ memberId, onClose, fmt, qc, canRemove, t }) {
             </div>
 
             {canRemove && (
-              <button onClick={() => { if(confirm('Remove this member from the family?')) removeMut.mutate(); }}
+              <button onClick={() => { confirmAsync('Remove this member from the family?', { confirmLabel:'Remove' }).then(ok => ok && removeMut.mutate()); }}
                 style={{ width:'100%', padding:'12px', borderRadius:12, border:'1.5px solid rgba(220,38,38,.3)', background:'rgba(220,38,38,.08)', color:DS.pink, fontWeight:700, fontSize:13, cursor:'pointer' }}>
                 Remove from family
               </button>

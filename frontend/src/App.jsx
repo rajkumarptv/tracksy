@@ -13,6 +13,7 @@ import { pageView, setUserContext, clearUserContext } from './lib/analytics';
 
 // Auth pages load eagerly (tiny, needed first)
 import { Login, Register, OAuthCallback, ForgotPassword, ResetPassword } from './pages/Auth';
+import ConfirmHost from './components/ConfirmHost';
 
 /* After a redeploy, an already-open session references old chunk file names
    that no longer exist on the server, so navigating to a not-yet-loaded page
@@ -104,6 +105,7 @@ export default function App() {
     >
       <BrowserRouter>
         <PageViewTracker />
+        <ConfirmHost />
         <ErrorBoundary>
         <Suspense fallback={<PageLoader />}>
           <Routes>

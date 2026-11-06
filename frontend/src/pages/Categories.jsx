@@ -7,6 +7,7 @@ import { Plus, Tag } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 import { CategoryIcon } from '../components/icons';
 import CategoryIconPicker from '../components/CategoryIconPicker';
+import { confirmAsync } from '../lib/confirm';
 
 
 const TYPE_OPTS = [
@@ -138,7 +139,7 @@ export default function Categories() {
               {custom.map(cat => (
                 <CategoryCard key={cat.id} cat={cat}
                   onEdit={() => { setEditCat(cat); setShowModal(true); }}
-                  onDelete={() => { if(confirm(`Delete "${cat.name}"?`)) deleteMutation.mutate(cat.id); }}/>
+                  onDelete={() => { confirmAsync(`Delete "${cat.name}"?`).then(ok => ok && deleteMutation.mutate(cat.id)); }}/>
               ))}
             </div>
           )}

@@ -164,15 +164,15 @@ export default function DebtReduction({ embedded = false }) {
             </div>
 
             {/* Strategy Comparison */}
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:20 }}>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(min(280px,100%),1fr))', gap:16, marginBottom:20 }}>
               {[
                 { id:'avalanche', label:'Debt Avalanche', emoji:'❄️', desc:'Highest interest rate first', color:'#1D4ED8', bg:'rgba(29,78,216,.08)', borderColor:'rgba(29,78,216,.3)', result: avalanche },
                 { id:'snowball',  label:'Debt Snowball',  emoji:'⛄', desc:'Smallest balance first',      color:'#3B82F6', bg:'rgba(59,130,246,.08)', borderColor:'rgba(59,130,246,.3)',  result: snowball  },
               ].map(s=>(
                 <div key={s.id} onClick={()=>{ setMethod(s.id); track('payoff_method_selected', { payoff_method: s.id }); }}
-                  style={{ background: method===s.id ? s.bg : 'var(--surface)', borderRadius:14, padding:'20px 22px', border:`2px solid ${method===s.id ? s.color : 'var(--border-light)'}`, cursor:'pointer', transition:'all .18s', position:'relative', overflow:'hidden' }}>
+                  style={{ background: method===s.id ? s.bg : 'var(--surface)', borderRadius:14, padding:'18px 18px', border:`2px solid ${method===s.id ? s.color : 'var(--border-light)'}`, cursor:'pointer', transition:'all .18s', position:'relative', overflow:'hidden' }}>
                   {recommended === s.id && (
-                    <div style={{ position:'absolute', top:12, right:12, fontSize:10.5, fontWeight:700, color:'#047857', background:'rgba(4,120,87,.12)', borderRadius:8, padding:'2px 8px', border:'1px solid rgba(4,120,87,.25)' }}>✦ Recommended</div>
+                    <div style={{ display:'inline-block', marginBottom:10, fontSize:10.5, fontWeight:700, color:'#047857', background:'rgba(4,120,87,.12)', borderRadius:8, padding:'2px 8px', border:'1px solid rgba(4,120,87,.25)' }}>✦ Recommended</div>
                   )}
                   <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14 }}>
                     <span style={{ fontSize:26 }}>{s.emoji}</span>
@@ -181,7 +181,7 @@ export default function DebtReduction({ embedded = false }) {
                       <div style={{ fontSize:12, color:'var(--text3)' }}>{s.desc}</div>
                     </div>
                   </div>
-                  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(130px,1fr))', gap:12 }}>
                     {[
                       { label:'Payoff Time',      value: monthsToLabel(s.result.months) },
                       { label:'Total Interest',   value: fmt(s.result.totalInterest,{noDecimals:true}) },
