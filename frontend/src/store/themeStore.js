@@ -13,7 +13,13 @@ const useThemeStore = create(persist(
       document.documentElement.setAttribute('data-theme', get().theme);
     },
   }),
-  { name: 'tracksy-theme' }
+  {
+    name: 'tracksy-theme',
+    // Apply the saved theme as soon as it's restored, so pre-login pages (sign in, register) match too.
+    onRehydrateStorage: () => (state) => {
+      if (state) document.documentElement.setAttribute('data-theme', state.theme);
+    },
+  }
 ));
 
 export default useThemeStore;

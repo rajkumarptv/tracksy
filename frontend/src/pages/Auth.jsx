@@ -1,88 +1,161 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useId } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Eye, EyeOff, AlertCircle, CheckCircle2, Lock, Moon, Sun, Loader2, Wallet, TrendingUp, Target, ArrowUpRight } from 'lucide-react';
 import { authAPI } from '../services/api';
 import useAuthStore from '../store/authStore';
 import useThemeStore from '../store/themeStore';
+import styles from './Auth.module.css';
 
-const API_BASE = import.meta.env.VITE_API_URL || '';
+/* ── Small building blocks ────────────────────────────────────────────────── */
+// After a failed submit, move keyboard/screen-reader focus to the first invalid field.
+const focusFirstError = () => setTimeout(() => document.querySelector('[aria-invalid="true"]')?.focus(), 0);
 
-/* ── Shared shell ─────────────────────────────────────────────────────────── */
-function AuthShell({ children }) {
-  const { theme, toggleTheme } = useThemeStore();
+function Logo() {
   return (
-    <div style={{ minHeight:'100vh', display:'flex', background:'var(--bg)' }}>
-      {/* Left brand panel */}
-      <div className="hide-mobile" style={{
-        width:'42%', flexShrink:0,
-        background:'linear-gradient(180deg,#0B1F4B 0%,#12306B 100%)',
-        display:'flex', flexDirection:'column', justifyContent:'center',
-        position:'relative', overflow:'hidden', padding:'64px 56px',
-      }}>
-        <div style={{ fontSize:30, fontWeight:700, color:'#fff', marginBottom:12, letterSpacing:-0.6, lineHeight:1.2 }}>
-          Know where your money<br/>goes — and where it's headed.
-        </div>
-        <div style={{ fontSize:15, color:'rgba(255,255,255,.7)', lineHeight:1.6, maxWidth:380 }}>
-          Track spending, plan budgets and goals, and stay on top of debts — all in one place.
-        </div>
-        <ul style={{ listStyle:'none', marginTop:36, display:'flex', flexDirection:'column', gap:14 }}>
-          {['Every account, card and loan in one view','Budgets and goals that update as you spend','Clear insights, not spreadsheets'].map(t => (
-            <li key={t} style={{ display:'flex', alignItems:'center', gap:10, fontSize:14, color:'rgba(255,255,255,.85)' }}>
-              <span style={{ width:20, height:20, borderRadius:'50%', background:'rgba(255,255,255,.14)', display:'inline-flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              </span>
-              {t}
-            </li>
-          ))}
-        </ul>
+    <span className={styles.logoRow}>
+      <img className={styles.logoMark} src="/icons/icon.svg" alt="" width="36" height="36" />
+      <span className={styles.wordmark}>Tracksy</span>
+    </span>
+  );
+}
+
+function Alert({ children }) {
+  if (!children) return null;
+  return (
+    <div className={styles.alert} role="alert">
+      <AlertCircle size={18} aria-hidden="true" />
+      <span>{children}</span>
+    </div>
+  );
+}
+
+function Notice({ children }) {
+  return (
+    <div className={styles.notice} role="status">
+      <CheckCircle2 size={18} aria-hidden="true" style={{ flexShrink: 0, marginTop: 1 }} />
+      <span>{children}</span>
+    </div>
+  );
+}
+
+function FieldError({ id, children }) {
+  if (!children) return null;
+  return <div id={id} className={styles.error}><AlertCircle size={14} aria-hidden="true" />{children}</div>;
+}
+
+function TextField({ label, error, hint, ...input }) {
+  const id = useId();
+  return (
+    <div className={styles.field}>
+      <label className={styles.label} htmlFor={id}>{label}</label>
+      <input id={id} className={styles.input} aria-invalid={error ? 'true' : undefined}
+        aria-describedby={error ? `${id}-err` : hint ? `${id}-hint` : undefined} {...input} />
+      {hint && !error && <div id={`${id}-hint`} className={styles.help}>{hint}</div>}
+      <FieldError id={`${id}-err`}>{error}</FieldError>
+    </div>
+  );
+}
+
+function PasswordField({ label, error, hint, aside, ...input }) {
+  const id = useId();
+  const [show, setShow] = useState(false);
+  return (
+    <div className={styles.field}>
+      <div className={styles.labelRow}>
+        <label className={styles.label} htmlFor={id}>{label}</label>
+        {aside}
       </div>
-
-      {/* Right form panel */}
-      <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'32px 20px', position:'relative', overflowY:'auto' }}>
-        <button onClick={toggleTheme} style={{ position:'absolute', top:20, right:20, width:38, height:38, borderRadius:10, border:'1px solid var(--border)', background:'var(--surface)', color:'var(--text2)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
-          {theme === 'light'
-            ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-            : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-          }
+      <div className={styles.inputWrap}>
+        <input id={id} className={`${styles.input} ${styles.hasToggle}`} type={show ? 'text' : 'password'}
+          aria-invalid={error ? 'true' : undefined}
+          aria-describedby={error ? `${id}-err` : hint ? `${id}-hint` : undefined} {...input} />
+        <button type="button" className={styles.toggle} onClick={() => setShow(s => !s)}
+          aria-label={show ? 'Hide password' : 'Show password'} aria-pressed={show}>
+          {show ? <EyeOff size={18} /> : <Eye size={18} />}
         </button>
+      </div>
+      {hint && !error && <div id={`${id}-hint`} className={styles.help}>{hint}</div>}
+      <FieldError id={`${id}-err`}>{error}</FieldError>
+    </div>
+  );
+}
 
-        {/* Logo */}
-        <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:32 }}>
-          <img src="/icons/logo.png" alt="Tracksy" style={{ width:40, height:40, borderRadius:10, objectFit:'cover', }} />
-          <span style={{ fontSize:22, fontWeight:700, letterSpacing:-0.5, color:'var(--text)' }}>Tracksy</span>
-        </div>
+function SubmitButton({ loading, loadingText, children }) {
+  return (
+    <button type="submit" className={styles.submit} disabled={loading}>
+      {loading && <Loader2 size={18} className={styles.spin} aria-hidden="true" />}
+      {loading ? loadingText : children}
+    </button>
+  );
+}
 
-        <div style={{ width:'100%', maxWidth:400 }}>{children}</div>
+/* Static preview of the product. Figures are sample data and labelled as such. */
+function ProductPreview() {
+  return (
+    <div className={styles.preview} aria-hidden="true">
+      <div className={styles.previewLabel}><span>Available balance</span><span>Sample preview</span></div>
+      <div className={styles.previewAmount}>₹3,48,250</div>
+      <div className={styles.previewDelta}><ArrowUpRight size={14} />+₹18,163 this month</div>
+      <svg className={styles.spark} viewBox="0 0 400 56" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="authSpark" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#93C5FD" stopOpacity=".35" />
+            <stop offset="100%" stopColor="#93C5FD" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path d="M0 44 L50 40 L100 46 L150 32 L200 36 L250 22 L300 26 L350 12 L400 8 L400 56 L0 56 Z" fill="url(#authSpark)" />
+        <path d="M0 44 L50 40 L100 46 L150 32 L200 36 L250 22 L300 26 L350 12 L400 8" fill="none" stroke="#93C5FD" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+      </svg>
+      <div className={styles.previewRows}>
+        <div className={styles.previewRow}><span>Monthly salary</span><span className={styles.in}>+₹65,000</span></div>
+        <div className={styles.previewRow}><span>House rent</span><span className={styles.out}>−₹18,000</span></div>
       </div>
     </div>
   );
 }
 
-/* ── Trust badges under the form ── */
-function TrustBadges() {
+const BENEFITS = [
+  { Icon: Wallet, text: 'Every account, card and loan in one view' },
+  { Icon: TrendingUp, text: 'A cash-flow forecast that warns you before a shortfall' },
+  { Icon: Target, text: 'Budgets and goals that update as you spend' },
+];
 
+/* ── Shared shell: brand panel on desktop, single column on phones ────────── */
+function AuthShell({ children }) {
+  const { theme, toggleTheme } = useThemeStore();
   return (
-    <div>
-      {/* Trust / feature icons — visible on mobile too (left panel is hidden there) */}
-      <div style={{ display:'flex', justifyContent:'center', gap:22, marginTop:26 }}>
-        {[
-          { c:'#047857', label:'Bank-grade\nencryption', icon:(
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#047857" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
-          )},
-          { c:'#3B82F6', label:'Real-time\ninsights', icon:(
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
-          )},
-          { c:'#D97706', label:'Goals &\nbudgets', icon:(
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>
-          )},
-        ].map(({ c, label, icon }) => (
-          <div key={label} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:7, flex:1, maxWidth:96 }}>
-            <div style={{ width:42, height:42, borderRadius:13, background:`${c}18`, display:'flex', alignItems:'center', justifyContent:'center' }}>
-              {icon}
-            </div>
-            <span style={{ fontSize:11, fontWeight:600, color:'var(--text3)', textAlign:'center', lineHeight:1.35, whiteSpace:'pre-line' }}>{label}</span>
-          </div>
-        ))}
-      </div>
+    <div className={styles.root}>
+      <aside className={styles.brand}>
+        <Logo />
+        <div>
+          <h2 className={styles.headline}>Know where your money goes, and where it's headed.</h2>
+          <p className={styles.lede}>Track spending, plan budgets and goals, and stay on top of debts, all in one place.</p>
+          <ProductPreview />
+          <ul className={styles.benefits}>
+            {BENEFITS.map(({ Icon, text }) => (
+              <li key={text} className={styles.benefit}>
+                <span className={styles.benefitIcon}><Icon size={17} aria-hidden="true" /></span>{text}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className={styles.brandFoot}>© {new Date().getFullYear()} Tracksy</div>
+      </aside>
+
+      <main className={styles.formSide}>
+        <div className={styles.formTop}>
+          <span className={styles.mobileLogo}><Logo /></span>
+          <button type="button" className={styles.themeBtn} onClick={toggleTheme}
+            aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}>
+            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+          </button>
+        </div>
+        <div className={styles.formWrap}><div className={styles.card}>{children}</div></div>
+        <p className={styles.trust}>
+          <Lock size={16} aria-hidden="true" />
+          <span>Your data is private to your account, and every connection is encrypted.</span>
+        </p>
+      </main>
     </div>
   );
 }
@@ -91,70 +164,44 @@ function TrustBadges() {
 export function Login() {
   const navigate = useNavigate();
   const { setAuth } = useAuthStore();
-  const [searchParams] = useSearchParams();
   const [form, setForm] = useState({ email: '', password: '' });
+  const [errors, setErrors] = useState({});
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Show error if OAuth failed
-  useEffect(() => {
-    if (searchParams.get('error') === 'oauth') setError('Social login failed. Please try again.');
-  }, [searchParams]);
-
-  const handleSubmit = async () => {
-    if (!form.email || !form.password) { setError('Please fill in all fields'); return; }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const errs = {};
+    if (!form.email.trim()) errs.email = 'Enter your email address';
+    if (!form.password) errs.password = 'Enter your password';
+    setErrors(errs);
+    if (Object.keys(errs).length) { setError(''); focusFirstError(); return; }
     setLoading(true); setError('');
     try {
-      const res = await authAPI.login(form);
+      const res = await authAPI.login({ email: form.email.trim(), password: form.password });
       setAuth(res.data.user, res.data.token);
       navigate('/');
-    } catch (e) {
-      setError(e.response?.data?.message || 'Login failed. Please check your credentials.');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
     } finally { setLoading(false); }
   };
 
   return (
     <AuthShell>
-      <div style={{ marginBottom:28 }}>
-        <div style={{ fontSize:24, fontWeight:800, letterSpacing:-0.5, marginBottom:6 }}>Welcome back!</div>
-        <div style={{ fontSize:14, color:'var(--text3)' }}>Sign in to manage your finances</div>
-      </div>
-
-      {error && (
-        <div style={{ background:'var(--red-light)', color:'var(--red)', padding:'10px 14px', borderRadius:10, marginBottom:18, fontSize:13, fontWeight:500, display:'flex', alignItems:'center', gap:8 }}>
-          ⚠️ {error}
-        </div>
-      )}
-
-      <div className="form-group">
-        <label className="form-label">Email address</label>
-        <input className="form-input" type="email" value={form.email}
-          onChange={e => setForm(f => ({...f, email: e.target.value}))}
-          placeholder="you@example.com"
-          onKeyDown={e => e.key === 'Enter' && handleSubmit()}/>
-      </div>
-      <div className="form-group">
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 }}>
-          <label className="form-label" style={{ marginBottom:0 }}>Password</label>
-          <Link to="/forgot-password" style={{ fontSize:12.5, color:'var(--accent)', fontWeight:600 }}>Forgot password?</Link>
-        </div>
-        <input className="form-input" type="password" value={form.password}
-          onChange={e => setForm(f => ({...f, password: e.target.value}))}
-          placeholder="••••••••"
-          onKeyDown={e => e.key === 'Enter' && handleSubmit()}/>
-      </div>
-
-      <button className="btn btn-primary btn-lg" style={{ width:'100%', justifyContent:'center', marginTop:6 }}
-        disabled={loading} onClick={handleSubmit}>
-        {loading ? 'Signing in…' : 'Sign in →'}
-      </button>
-
-      <div style={{ marginTop:16, textAlign:'center', fontSize:13.5, color:'var(--text3)' }}>
-        Don't have an account?{' '}
-        <Link to="/register" style={{ color:'var(--accent)', fontWeight:700 }}>Create one free</Link>
-      </div>
-
-      <TrustBadges />
+      <h1 className={styles.title}>Sign in</h1>
+      <p className={styles.subtitle}>Welcome back. Enter your details to continue.</p>
+      <Alert>{error}</Alert>
+      <form className={styles.form} onSubmit={handleSubmit} noValidate>
+        <TextField label="Email address" type="email" name="email" autoComplete="email" inputMode="email"
+          placeholder="you@example.com" value={form.email} error={errors.email}
+          onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+        <PasswordField label="Password" name="password" autoComplete="current-password"
+          placeholder="Enter your password" value={form.password} error={errors.password}
+          aside={<Link to="/forgot-password" className={styles.link}>Forgot password?</Link>}
+          onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
+        <SubmitButton loading={loading} loadingText="Signing in…">Sign in</SubmitButton>
+      </form>
+      <p className={styles.switch}>New to Tracksy? <Link to="/register">Create an account</Link></p>
     </AuthShell>
   );
 }
@@ -163,144 +210,108 @@ export function Login() {
 export function Register() {
   const navigate = useNavigate();
   const { setAuth } = useAuthStore();
-  const [form, setForm] = useState({ first_name:'', last_name:'', email:'', password:'', confirm_password:'' });
+  const [form, setForm] = useState({ first_name: '', last_name: '', email: '', password: '', confirm_password: '' });
+  const [errors, setErrors] = useState({});
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const set = k => e => setForm(f => ({ ...f, [k]: e.target.value }));
 
-  const handleSubmit = async () => {
-    if (!form.first_name || !form.last_name || !form.email || !form.password) { setError('Please fill in all fields'); return; }
-    if (form.password !== form.confirm_password) { setError('Passwords do not match'); return; }
-    if (form.password.length < 6) { setError('Password must be at least 6 characters'); return; }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const errs = {};
+    if (!form.first_name.trim()) errs.first_name = 'Enter your first name';
+    if (!form.last_name.trim()) errs.last_name = 'Enter your last name';
+    if (!form.email.trim()) errs.email = 'Enter your email address';
+    if (!form.password) errs.password = 'Choose a password';
+    else if (form.password.length < 6) errs.password = 'Password must be at least 6 characters';
+    if (form.password && form.password !== form.confirm_password) errs.confirm_password = 'Passwords do not match';
+    setErrors(errs);
+    if (Object.keys(errs).length) { setError(''); focusFirstError(); return; }
     setLoading(true); setError('');
     try {
-      const res = await authAPI.register({ first_name:form.first_name, last_name:form.last_name, email:form.email, password:form.password });
+      const res = await authAPI.register({ first_name: form.first_name.trim(), last_name: form.last_name.trim(), email: form.email.trim(), password: form.password });
       setAuth(res.data.user, res.data.token);
       navigate('/');
-    } catch (e) {
-      setError(e.response?.data?.message || 'Registration failed');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Registration failed');
     } finally { setLoading(false); }
   };
 
   return (
     <AuthShell>
-      <div style={{ marginBottom:26 }}>
-        <div style={{ fontSize:24, fontWeight:800, letterSpacing:-0.5, marginBottom:6 }}>Create account</div>
-        <div style={{ fontSize:14, color:'var(--text3)' }}>Start managing your finances today — it's free</div>
-      </div>
-
-      {error && (
-        <div style={{ background:'var(--red-light)', color:'var(--red)', padding:'10px 14px', borderRadius:10, marginBottom:18, fontSize:13, fontWeight:500 }}>
-          ⚠️ {error}
+      <h1 className={styles.title}>Create your account</h1>
+      <p className={styles.subtitle}>Start tracking your money in a couple of minutes. It's free.</p>
+      <Alert>{error}</Alert>
+      <form className={styles.form} onSubmit={handleSubmit} noValidate>
+        <div className={styles.row2}>
+          <TextField label="First name" name="given-name" autoComplete="given-name" placeholder="First name"
+            value={form.first_name} error={errors.first_name} onChange={set('first_name')} />
+          <TextField label="Last name" name="family-name" autoComplete="family-name" placeholder="Last name"
+            value={form.last_name} error={errors.last_name} onChange={set('last_name')} />
         </div>
-      )}
-
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
-        <div className="form-group">
-          <label className="form-label">First name</label>
-          <input className="form-input" value={form.first_name} onChange={e => setForm(f => ({...f, first_name:e.target.value}))} placeholder="John"/>
-        </div>
-        <div className="form-group">
-          <label className="form-label">Last name</label>
-          <input className="form-input" value={form.last_name} onChange={e => setForm(f => ({...f, last_name:e.target.value}))} placeholder="Doe"/>
-        </div>
-      </div>
-      <div className="form-group">
-        <label className="form-label">Email address</label>
-        <input className="form-input" type="email" value={form.email} onChange={e => setForm(f => ({...f, email:e.target.value}))} placeholder="you@example.com"/>
-      </div>
-      <div className="form-group">
-        <label className="form-label">Password</label>
-        <input className="form-input" type="password" value={form.password} onChange={e => setForm(f => ({...f, password:e.target.value}))} placeholder="Min. 6 characters"/>
-      </div>
-      <div className="form-group">
-        <label className="form-label">Confirm password</label>
-        <input className="form-input" type="password" value={form.confirm_password} onChange={e => setForm(f => ({...f, confirm_password:e.target.value}))} placeholder="••••••••"/>
-      </div>
-
-      <button className="btn btn-primary btn-lg" style={{ width:'100%', justifyContent:'center', marginTop:6 }}
-        disabled={loading} onClick={handleSubmit}>
-        {loading ? 'Creating account…' : 'Create account →'}
-      </button>
-
-      <div style={{ marginTop:16, textAlign:'center', fontSize:13.5, color:'var(--text3)' }}>
-        Already have an account?{' '}
-        <Link to="/login" style={{ color:'var(--accent)', fontWeight:700 }}>Sign in</Link>
-      </div>
-
-      <TrustBadges />
+        <TextField label="Email address" type="email" name="email" autoComplete="email" inputMode="email"
+          placeholder="you@example.com" value={form.email} error={errors.email} onChange={set('email')} />
+        <PasswordField label="Password" name="new-password" autoComplete="new-password"
+          placeholder="At least 6 characters" hint="Use at least 6 characters."
+          value={form.password} error={errors.password} onChange={set('password')} />
+        <PasswordField label="Confirm password" name="confirm-password" autoComplete="new-password"
+          placeholder="Re-enter your password" value={form.confirm_password} error={errors.confirm_password}
+          onChange={set('confirm_password')} />
+        <SubmitButton loading={loading} loadingText="Creating account…">Create account</SubmitButton>
+      </form>
+      <p className={styles.switch}>Already have an account? <Link to="/login">Sign in</Link></p>
     </AuthShell>
   );
 }
 
-/* ── Forgot Password ───────────────────────────────────────────────────────── */
+/* ── Forgot Password (behaviour unchanged; restyled only) ──────────────────── */
 export function ForgotPassword() {
   const [email,   setEmail]   = useState('');
   const [token,   setToken]   = useState('');
   const [error,   setError]   = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     if (!email.trim()) { setError('Please enter your email'); return; }
     setLoading(true); setError('');
     try {
       const res = await authAPI.forgotPassword({ email: email.trim() });
       if (res.data.token) setToken(res.data.token);
       else setError('No account found with that email.');
-    } catch (e) {
-      setError(e.response?.data?.message || 'Something went wrong. Try again.');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Something went wrong. Try again.');
     } finally { setLoading(false); }
   };
 
   return (
     <AuthShell>
-      <div style={{ marginBottom:24 }}>
-        <div style={{ fontSize:24, fontWeight:800, letterSpacing:-0.5, marginBottom:6 }}>Reset Password</div>
-        <div style={{ fontSize:14, color:'var(--text3)' }}>Enter your email to get a reset link</div>
-      </div>
-
-      {error && (
-        <div style={{ background:'var(--red-light)', color:'var(--red)', padding:'10px 14px', borderRadius:10, marginBottom:18, fontSize:13, fontWeight:500 }}>
-          ⚠️ {error}
-        </div>
-      )}
+      <h1 className={styles.title}>Reset your password</h1>
+      <p className={styles.subtitle}>Enter your email to get a reset link.</p>
+      <Alert>{error}</Alert>
 
       {token ? (
-        /* ── Reset token generated ── */
-        <div style={{ background:'var(--surface2)', borderRadius:14, padding:'20px', border:'1.5px solid var(--accent)' }}>
-          <div style={{ fontSize:13, fontWeight:700, color:'var(--accent)', marginBottom:10 }}>✅ Reset token generated!</div>
-          <div style={{ fontSize:12.5, color:'var(--text3)', marginBottom:14 }}>
-            Click the link below to set your new password. Valid for <strong>1 hour</strong>.
-          </div>
-          <Link
-            to={`/reset-password?token=${token}`}
-            style={{ display:'block', wordBreak:'break-all', padding:'10px 14px', borderRadius:10, background:'var(--accent-light)', color:'var(--accent)', fontWeight:700, fontSize:13, textDecoration:'none' }}>
-            🔑 Click here to set new password →
-          </Link>
-        </div>
-      ) : (
         <>
-          <div className="form-group">
-            <label className="form-label">Email address</label>
-            <input className="form-input" type="email" value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              onKeyDown={e => e.key === 'Enter' && handleSubmit()}/>
+          <Notice>Your reset link is ready and valid for 1 hour.</Notice>
+          <div className={styles.form}>
+            <Link to={`/reset-password?token=${token}`} className={styles.submit} style={{ textDecoration: 'none' }}>
+              Set a new password
+            </Link>
           </div>
-          <button className="btn btn-primary btn-lg" style={{ width:'100%', justifyContent:'center', marginTop:6 }}
-            disabled={loading} onClick={handleSubmit}>
-            {loading ? 'Checking…' : 'Send reset link →'}
-          </button>
         </>
+      ) : (
+        <form className={styles.form} onSubmit={handleSubmit} noValidate>
+          <TextField label="Email address" type="email" name="email" autoComplete="email" inputMode="email"
+            placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} />
+          <SubmitButton loading={loading} loadingText="Checking…">Send reset link</SubmitButton>
+        </form>
       )}
-
-      <div style={{ marginTop:20, textAlign:'center', fontSize:13.5, color:'var(--text3)' }}>
-        <Link to="/login" style={{ color:'var(--accent)', fontWeight:700 }}>← Back to login</Link>
-      </div>
+      <p className={styles.switch}><Link to="/login">Back to sign in</Link></p>
     </AuthShell>
   );
 }
 
-/* ── Reset Password ────────────────────────────────────────────────────────── */
+/* ── Reset Password (behaviour unchanged; restyled only) ───────────────────── */
 export function ResetPassword() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -310,9 +321,9 @@ export function ResetPassword() {
   const [error,   setError]   = useState('');
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [show,    setShow]    = useState(false);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     if (!password) { setError('Enter a new password'); return; }
     if (password.length < 6) { setError('Password must be at least 6 characters'); return; }
     if (password !== password2) { setError('Passwords do not match'); return; }
@@ -321,56 +332,27 @@ export function ResetPassword() {
       await authAPI.resetPassword({ token, new_password: password });
       setSuccess(true);
       setTimeout(() => navigate('/login'), 3000);
-    } catch (e) {
-      setError(e.response?.data?.message || 'Reset failed. Token may have expired.');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Reset failed. Token may have expired.');
     } finally { setLoading(false); }
   };
 
   return (
     <AuthShell>
-      <div style={{ marginBottom:24 }}>
-        <div style={{ fontSize:24, fontWeight:800, letterSpacing:-0.5, marginBottom:6 }}>Set New Password</div>
-        <div style={{ fontSize:14, color:'var(--text3)' }}>Choose a strong new password</div>
-      </div>
-
-      {error && (
-        <div style={{ background:'var(--red-light)', color:'var(--red)', padding:'10px 14px', borderRadius:10, marginBottom:18, fontSize:13 }}>
-          ⚠️ {error}
-        </div>
-      )}
+      <h1 className={styles.title}>Set a new password</h1>
+      <p className={styles.subtitle}>Choose a strong new password.</p>
+      <Alert>{error}</Alert>
 
       {success ? (
-        <div style={{ background:'rgba(4,120,87,.1)', border:'1.5px solid rgba(4,120,87,.3)', borderRadius:14, padding:'20px', textAlign:'center' }}>
-          <div style={{ fontSize:32, marginBottom:10 }}>✅</div>
-          <div style={{ fontSize:15, fontWeight:700, color:'#047857', marginBottom:6 }}>Password reset successfully!</div>
-          <div style={{ fontSize:13, color:'var(--text3)' }}>Redirecting to login in 3 seconds…</div>
-        </div>
+        <Notice>Your password has been reset. Taking you to sign in…</Notice>
       ) : (
-        <>
-          <div className="form-group">
-            <label className="form-label">New Password</label>
-            <div style={{ position:'relative' }}>
-              <input className="form-input" type={show ? 'text' : 'password'} value={password}
-                onChange={e => setPassword(e.target.value)} placeholder="Min. 6 characters"
-                style={{ paddingRight:40 }}
-                onKeyDown={e => e.key === 'Enter' && handleSubmit()}/>
-              <button type="button" onClick={() => setShow(s => !s)}
-                style={{ position:'absolute', right:12, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'var(--text3)', fontSize:13 }}>
-                {show ? '🙈' : '👁️'}
-              </button>
-            </div>
-          </div>
-          <div className="form-group">
-            <label className="form-label">Confirm Password</label>
-            <input className="form-input" type="password" value={password2}
-              onChange={e => setPassword2(e.target.value)} placeholder="Re-enter password"
-              onKeyDown={e => e.key === 'Enter' && handleSubmit()}/>
-          </div>
-          <button className="btn btn-primary btn-lg" style={{ width:'100%', justifyContent:'center', marginTop:6 }}
-            disabled={loading} onClick={handleSubmit}>
-            {loading ? 'Resetting…' : '🔑 Reset Password →'}
-          </button>
-        </>
+        <form className={styles.form} onSubmit={handleSubmit} noValidate>
+          <PasswordField label="New password" name="new-password" autoComplete="new-password"
+            placeholder="At least 6 characters" value={password} onChange={e => setPassword(e.target.value)} />
+          <PasswordField label="Confirm password" name="confirm-password" autoComplete="new-password"
+            placeholder="Re-enter your password" value={password2} onChange={e => setPassword2(e.target.value)} />
+          <SubmitButton loading={loading} loadingText="Resetting…">Reset password</SubmitButton>
+        </form>
       )}
     </AuthShell>
   );
@@ -401,23 +383,16 @@ export function OAuthCallback() {
 
   if (error) return (
     <AuthShell>
-      <div style={{ textAlign:'center' }}>
-        <div style={{ fontSize:36, marginBottom:16 }}>⚠️</div>
-        <div style={{ fontSize:16, fontWeight:700, marginBottom:8 }}>Login failed</div>
-        <div style={{ fontSize:13.5, color:'var(--text3)', marginBottom:20 }}>{error}</div>
-        <Link to="/login" style={{ color:'var(--accent)', fontWeight:700 }}>← Back to login</Link>
-      </div>
+      <h1 className={styles.title}>Sign-in failed</h1>
+      <Alert>{error}</Alert>
+      <p className={styles.switch}><Link to="/login">Back to sign in</Link></p>
     </AuthShell>
   );
 
   return (
     <AuthShell>
-      <div style={{ textAlign:'center' }}>
-        <div style={{ width:48, height:48, borderRadius:'50%', background:'var(--accent-light)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px', animation:'spin 1s linear infinite' }}>
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-        </div>
-        <div style={{ fontSize:15, fontWeight:600, color:'var(--text2)' }}>Signing you in…</div>
-      </div>
+      <h1 className={styles.title}>Signing you in…</h1>
+      <p className={styles.subtitle}><Loader2 size={18} className={styles.spin} aria-hidden="true" style={{ verticalAlign: 'text-bottom' }} /> One moment.</p>
     </AuthShell>
   );
 }
