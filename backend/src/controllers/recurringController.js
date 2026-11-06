@@ -1,19 +1,14 @@
 const { query } = require('../db');
 const { encrypt, decryptRow } = require('../utils/crypto');
 const { parseAmount } = require('../utils/validate');
+const { addPeriod, toYMD, parseYMD } = require('../utils/dates');
 
 const decrypt = row => decryptRow(row, ['payment_name', 'description']);
 
-// Calculate next run date based on frequency
-function calcNextRun(from, frequency) {
-  const d = new Date(from);
-  switch (frequency) {
-    case 'daily':   d.setDate(d.getDate() + 1);     break;
-    case 'weekly':  d.setDate(d.getDate() + 7);     break;
-    case 'monthly': d.setMonth(d.getMonth() + 1);   break;
-    case 'yearly':  d.setFullYear(d.getFullYear() + 1); break;
-  }
-  return d.toISOString().split('T')[0];
+// Next run date: month-end safe (Jan 31 -> Feb 28 -> Mar 31) and free of UTC day shifts.
+// `startDate` anchors the day-of-month so monthly rules don't drift after a short month.
+function calcNextRun(from, frequency, startDate) {
+  return addPeriod(from, frequency, startDate ? parseYMD(startDate).d : undefined);
 }
 
 const FREQUENCIES = ['daily', 'weekly', 'monthly', 'yearly'];
@@ -112,32 +107,35 @@ const remove = async (req, res) => {
 // POST /recurring/process — run due recurring transactions (called by cron or manually)
 const process = async (req, res) => {
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const today = toYMD(new Date());
+    // Only the caller's own rules (this used to post every user's due rules).
     const due = await query(`
       SELECT * FROM recurring_transactions
-      WHERE is_active = true AND next_run <= $1
+      WHERE user_id = $2 AND is_active = true AND next_run <= $1
         AND (end_date IS NULL OR end_date >= $1)
-    `, [today]);
+    `, [today, req.user.userId]);
 
     let created = 0;
     for (const rec of due.rows) {
       // Insert actual transaction
       await query(`
-        INSERT INTO transactions (user_id, wallet_id, category_id, type, amount, payment_name, description, transaction_date, status)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'completed')
-      `, [rec.user_id, rec.wallet_id, rec.category_id, rec.type, rec.amount, rec.payment_name, rec.description, rec.next_run]);
+        INSERT INTO transactions (user_id, wallet_id, category_id, type, amount, payment_name, description, transaction_date, status, recurring_id)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'completed',$9)
+      `, [rec.user_id, rec.wallet_id, rec.category_id, rec.type, rec.amount, rec.payment_name, rec.description, rec.next_run, rec.id]);
 
       // Update wallet balance
       if (rec.wallet_id) {
         const delta = rec.type === 'income' ? rec.amount : -rec.amount;
-        await query('UPDATE wallets SET balance = balance + $1 WHERE id = $2', [delta, rec.wallet_id]);
+        await query('UPDATE wallets SET balance = balance + $1 WHERE id = $2 AND user_id = $3', [delta, rec.wallet_id, rec.user_id]);
       }
 
       // Advance next_run
-      const nextRun = calcNextRun(rec.next_run, rec.frequency);
+      const nextRun = calcNextRun(rec.next_run, rec.frequency, rec.start_date);
+      // Past the end date there is nothing left to run, so retire the rule.
+      const finished = rec.end_date && nextRun > toYMD(rec.end_date);
       await query(`
-        UPDATE recurring_transactions SET last_run=$1, next_run=$2, updated_at=NOW() WHERE id=$3
-      `, [rec.next_run, nextRun, rec.id]);
+        UPDATE recurring_transactions SET last_run=$1, next_run=$2, is_active=$3, updated_at=NOW() WHERE id=$4
+      `, [rec.next_run, nextRun, !finished, rec.id]);
 
       created++;
     }
