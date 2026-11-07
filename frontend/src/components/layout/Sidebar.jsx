@@ -1,39 +1,13 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  House, ArrowsLeftRight, Wallet, Target, ChartPie, Users,
-  CreditCard, ArrowsClockwise, TrendUp, UploadSimple, ChartLineUp,
-  Gear, Moon, Sun, SignOut, X,
-} from '@phosphor-icons/react';
+import { Gear, Moon, Sun, SignOut, X } from '@phosphor-icons/react';
 import useAuthStore from '../../store/authStore';
 import { track } from '../../lib/analytics';
-import { FEATURES } from '../../config/features';
 import useThemeStore from '../../store/themeStore';
 import { useT } from '../../i18n';
 import InstallPWA from '../InstallPWA';
 import styles from './Sidebar.module.css';
-
-const NAV_GROUPS = [
-  { label: null, items: [
-    { path: '/',             tKey: 'nav_dashboard',    Icon: House           },
-  ] },
-  { label: 'Money', items: [
-    { path: '/transactions', tKey: 'nav_transactions', Icon: ArrowsLeftRight },
-    { path: '/wallet',       tKey: 'nav_accounts',     Icon: Wallet          },
-    { path: '/recurring',    tKey: 'nav_recurring',    Icon: ArrowsClockwise },
-    { path: '/import',       tKey: 'nav_import',       Icon: UploadSimple, soon: !FEATURES.import },
-  ] },
-  { label: 'Plan & analyze', items: [
-    { path: '/budget',       tKey: 'nav_budget',       Icon: ChartPie        },
-    { path: '/goals',        tKey: 'nav_goals',        Icon: Target          },
-    { path: '/debts',        tKey: 'nav_debts',        Icon: CreditCard      },
-    { path: '/forecast',     label: 'Forecast',        Icon: ChartLineUp     },
-    { path: '/insights',     label: 'Insights',        Icon: TrendUp         },
-  ] },
-  { label: 'Household', items: [
-    { path: '/family',       label: 'Family',          Icon: Users, soon: !FEATURES.family },
-  ] },
-];
+import { NAV_GROUPS } from './nav';
 
 function AnimatedNavItem({ path, tKey, label, Icon, soon, t, onClose }) {
   return (

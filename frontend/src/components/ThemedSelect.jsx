@@ -139,7 +139,7 @@ export default function ThemedSelect({
               <motion.div
                 initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
                 onClick={() => setOpen(false)}
-                style={{ position:'fixed', inset:0, zIndex:2000 }}/>
+                style={{ position:'fixed', inset:0, zIndex:2600 }}/>
               <motion.div
                 initial={{ opacity:0, y: coords.bottom ? 8 : -8, scale:.98 }}
                 animate={{ opacity:1, y:0, scale:1 }}
@@ -147,7 +147,7 @@ export default function ThemedSelect({
                 transition={{ type:'spring', stiffness:420, damping:30 }}
                 style={{
                   position:'fixed', left:coords.left, width:coords.width,
-                  top:coords.top, bottom:coords.bottom, zIndex:2001,
+                  top:coords.top, bottom:coords.bottom, zIndex:2601,
                   background: t.cardBg, border:`1px solid ${t.border}`, borderRadius:16,
                   boxShadow:'0 24px 60px rgba(0,0,0,.35)', overflow:'hidden',
                   display:'flex', flexDirection:'column', maxHeight:coords.maxH,

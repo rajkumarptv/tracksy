@@ -1,6 +1,6 @@
 import { useSearchParams } from 'react-router-dom';
 import { Topbar, SubTabs } from '../components/ui';
-import { Analytics } from './OtherPages';
+import { Analytics } from './Analytics';
 import SmartInsights from './SmartInsights';
 
 /* Insights = the numbers (Analytics) + the advice (Smart insights), in one place. */

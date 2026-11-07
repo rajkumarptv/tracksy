@@ -1,0 +1,116 @@
+/* Design-system primitives. Tokens come from src/index.css; see frontend/DESIGN.md. */
+
+/* ── Button ── */
+.ds-btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:40px; padding:0 16px;
+  border-radius:var(--radius-sm); border:1px solid transparent; font:inherit; font-size:14px; font-weight:600; line-height:1;
+  cursor:pointer; white-space:nowrap; transition:var(--transition); -webkit-tap-highlight-color:transparent; }
+.ds-btn:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.ds-btn:disabled, .ds-btn[aria-busy="true"] { opacity:.55; cursor:not-allowed; }
+.ds-btn:active:not(:disabled) { transform:scale(.98); }
+.ds-btn--primary   { background:var(--accent-btn); color:#fff; }
+.ds-btn--primary:hover:not(:disabled) { background:var(--accent-btn-hover); }
+.ds-btn--secondary { background:var(--surface); color:var(--text); border-color:var(--input-border); }
+.ds-btn--secondary:hover:not(:disabled) { background:var(--surface2); }
+.ds-btn--ghost     { background:transparent; color:var(--text2); }
+.ds-btn--ghost:hover:not(:disabled) { background:var(--surface2); color:var(--text); }
+.ds-btn--danger    { background:var(--red-soft); color:var(--red-text); border-color:transparent; }
+.ds-btn--danger:hover:not(:disabled) { background:var(--red-light); }
+.ds-btn--sm { min-height:32px; padding:0 12px; font-size:13px; }
+.ds-btn--lg { min-height:48px; padding:0 22px; font-size:15px; }
+.ds-btn--block { width:100%; }
+.ds-btn--icon { width:40px; padding:0; }
+.ds-spin { width:14px; height:14px; border-radius:50%; border:2px solid currentColor; border-right-color:transparent; animation:ds-rot .7s linear infinite; }
+@keyframes ds-rot { to { transform:rotate(360deg); } }
+@media (pointer:coarse) { .ds-btn { min-height:44px; } .ds-btn--sm { min-height:36px; } .ds-btn--icon { width:44px; } }
+
+/* ── Card ── */
+.ds-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow-xs); }
+.ds-card__pad { padding:20px; }
+.ds-card__head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px 20px; border-bottom:1px solid var(--border-light); }
+.ds-card__title { margin:0; font-size:15px; font-weight:600; color:var(--text); }
+.ds-card__sub { margin:2px 0 0; font-size:13px; color:var(--text3); }
+@media (max-width:768px) { .ds-card__pad { padding:14px; } .ds-card__head { padding:12px 14px; } }
+
+/* ── Field ── */
+.ds-field { display:flex; flex-direction:column; gap:6px; margin-bottom:16px; min-width:0; }
+.ds-field__label { font-size:13px; font-weight:500; color:var(--text2); }
+.ds-field__hint { font-size:12px; color:var(--text3); }
+.ds-field__error { font-size:12px; color:var(--red-text); display:flex; align-items:center; gap:4px; }
+.ds-input { width:100%; min-height:40px; padding:9px 12px; border:1px solid var(--input-border); border-radius:var(--radius-sm);
+  background:var(--input-bg); color:var(--text); font:inherit; font-size:14px; outline:none; box-sizing:border-box; transition:var(--transition); }
+.ds-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-glow); }
+.ds-input[aria-invalid="true"] { border-color:var(--red); }
+.ds-input:disabled { opacity:.5; cursor:not-allowed; }
+.ds-input::placeholder { color:var(--text3); }
+textarea.ds-input { min-height:84px; resize:vertical; }
+@media (max-width:768px) { .ds-input { font-size:16px; min-height:44px; } }
+
+/* ── Sheet: bottom sheet on phones, centred dialog on desktop ── */
+.ds-sheet__overlay { position:fixed; inset:0; z-index:2500; background:rgba(15,23,42,.5); display:flex; align-items:center; justify-content:center; padding:24px; }
+.ds-sheet { background:var(--surface); color:var(--text); border:1px solid var(--border); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg);
+  width:100%; max-width:480px; max-height:min(88vh,720px); display:flex; flex-direction:column; outline:none; }
+.ds-sheet--lg { max-width:640px; }
+.ds-sheet__head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px 20px; border-bottom:1px solid var(--border-light); flex-shrink:0; }
+.ds-sheet__title { margin:0; font-size:16px; font-weight:600; }
+.ds-sheet__body { padding:20px; overflow-y:auto; overscroll-behavior:contain; flex:1; min-height:0; }
+.ds-sheet__foot { display:flex; gap:10px; justify-content:flex-end; padding:12px 20px calc(12px + env(safe-area-inset-bottom,0px)); border-top:1px solid var(--border-light); flex-shrink:0; background:var(--surface); border-radius:0 0 var(--radius-lg) var(--radius-lg); }
+.ds-sheet__grab { display:none; }
+@media (max-width:768px) {
+  .ds-sheet__overlay { align-items:flex-end; padding:0; }
+  .ds-sheet { max-width:none; border-radius:20px 20px 0 0; border-bottom:none; max-height:92vh; }
+  .ds-sheet__grab { display:block; width:36px; height:4px; border-radius:2px; background:var(--border); margin:8px auto 0; }
+  .ds-sheet__foot { border-radius:0; }
+  .ds-sheet__foot > .ds-btn { flex:1; }
+  .ds-sheet__body, .ds-sheet__head { padding-left:16px; padding-right:16px; }
+}
+
+/* ── Table: dense on desktop, stacked rows on phones ── */
+.ds-table-wrap { overflow-x:auto; }
+.ds-table { width:100%; border-collapse:collapse; font-size:14px; }
+.ds-table th { position:sticky; top:0; background:var(--surface); text-align:left; font-size:12px; font-weight:600; color:var(--text3);
+  text-transform:uppercase; letter-spacing:.04em; padding:10px 16px; border-bottom:1px solid var(--border); white-space:nowrap; }
+.ds-table td { padding:11px 16px; border-bottom:1px solid var(--border-light); color:var(--text); vertical-align:middle; }
+.ds-table tbody tr:last-child td { border-bottom:none; }
+.ds-table tbody tr[data-click="1"] { cursor:pointer; }
+.ds-table tbody tr:hover td { background:var(--surface2); }
+.ds-table .is-num { text-align:right; font-variant-numeric:tabular-nums; }
+@media (max-width:768px) {
+  .ds-table thead { display:none; }
+  .ds-table, .ds-table tbody, .ds-table tr, .ds-table td { display:block; width:100%; }
+  .ds-table tr { padding:12px 14px; border-bottom:1px solid var(--border-light); }
+  .ds-table td { display:flex; justify-content:space-between; gap:12px; padding:3px 0; border:none; }
+  .ds-table td::before { content:attr(data-label); color:var(--text3); font-size:12px; flex-shrink:0; }
+  .ds-table td[data-primary="1"] { font-weight:600; }
+  .ds-table td[data-primary="1"]::before { content:none; }
+  .ds-table .is-num { text-align:right; }
+}
+
+/* ── Tabs (scrolls sideways when it doesn't fit) ── */
+.ds-tabs { display:flex; gap:4px; overflow-x:auto; scrollbar-width:none; border-bottom:1px solid var(--border); }
+.ds-tabs::-webkit-scrollbar { display:none; }
+.ds-tab { flex:0 0 auto; min-height:40px; padding:0 14px; border:none; background:none; font:inherit; font-size:14px; font-weight:500; color:var(--text3);
+  cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; white-space:nowrap; }
+.ds-tab:hover { color:var(--text); }
+.ds-tab[aria-selected="true"] { color:var(--accent); border-bottom-color:var(--accent); font-weight:600; }
+.ds-tab:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; border-radius:6px; }
+@media (pointer:coarse) { .ds-tab { min-height:44px; } }
+
+/* ── Badge ── */
+.ds-badge { display:inline-flex; align-items:center; gap:4px; height:22px; padding:0 8px; border-radius:var(--radius-xs); font-size:12px; font-weight:600; white-space:nowrap; }
+.ds-badge--neutral { background:var(--surface2); color:var(--text2); }
+.ds-badge--accent  { background:var(--accent-light); color:var(--accent); }
+.ds-badge--success { background:var(--green-light); color:var(--green); }
+.ds-badge--danger  { background:var(--red-light); color:var(--red-text); }
+.ds-badge--warning { background:var(--orange-light); color:var(--orange-text); }
+
+/* ── Skeleton ── */
+.ds-skel { display:block; background:linear-gradient(90deg,var(--surface2),var(--surface3),var(--surface2)); background-size:200% 100%; border-radius:var(--radius-sm); animation:ds-shimmer 1.3s ease infinite; }
+@keyframes ds-shimmer { from { background-position:200% 0; } to { background-position:-200% 0; } }
+@media (prefers-reduced-motion:reduce) { .ds-skel, .ds-spin { animation:none; } }
+
+/* ── Stat (KPI) ── */
+.ds-stat { display:flex; flex-direction:column; gap:4px; min-width:0; }
+.ds-stat__label { font-size:12px; font-weight:500; color:var(--text3); text-transform:uppercase; letter-spacing:.04em; }
+.ds-stat__value { font-size:24px; font-weight:600; color:var(--text); font-variant-numeric:tabular-nums; letter-spacing:-.01em; overflow-wrap:anywhere; }
+.ds-stat__delta { font-size:13px; font-weight:500; font-variant-numeric:tabular-nums; }
+.ds-stat__delta--up { color:var(--green); } .ds-stat__delta--down { color:var(--red-text); }

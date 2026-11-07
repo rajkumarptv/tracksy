@@ -2,18 +2,18 @@ import { useState, useEffect } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  House, Wallet, ChartPie, Target, X,
+  House, ArrowsLeftRight, ChartPie, DotsThree, X,
   ArrowUp, ArrowDown, ArrowsClockwise
 } from '@phosphor-icons/react';
+import MoreSheet from './MoreSheet';
 import styles from './BottomNav.module.css';
 
 const LEFT_TABS = [
-  { path: '/',       Icon: House,  label: 'Dashboard', color: 'var(--accent)' },
-  { path: '/wallet', Icon: Wallet, label: 'Accounts',  color: 'var(--accent)' },
+  { path: '/',             Icon: House,           label: 'Home',         color: 'var(--accent)' },
+  { path: '/transactions', Icon: ArrowsLeftRight, label: 'Transactions', color: 'var(--accent)' },
 ];
 const RIGHT_TABS = [
   { path: '/budget', Icon: ChartPie, label: 'Budget', color: 'var(--accent)' },
-  { path: '/goals',  Icon: Target,   label: 'Goals',  color: 'var(--accent)' },
 ];
 
 const ACTION_OPTIONS = [
@@ -49,12 +49,13 @@ function Tab({ path, Icon, label, color }) {
 
 export default function BottomNav() {
   const [open, setOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
   // Always close the action sheet when the route changes, otherwise the
   // blurred backdrop stays stuck over the new page until a manual refresh.
-  useEffect(() => { setOpen(false); }, [location.pathname, location.search]);
+  useEffect(() => { setOpen(false); setMoreOpen(false); }, [location.pathname, location.search]);
 
   // Close on back gesture / escape
   useEffect(() => {
@@ -109,6 +110,8 @@ export default function BottomNav() {
         )}
       </AnimatePresence>
 
+      <MoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} />
+
       {/* Bottom nav bar */}
       <nav className={styles.bottomNav}>
         <div className={styles.navInner}>
@@ -128,6 +131,14 @@ export default function BottomNav() {
           </div>
 
           {RIGHT_TABS.map(t => <Tab key={t.path} {...t} />)}
+
+          {/* More: every other screen, settings, theme and sign out */}
+          <button type="button" className={styles.tabItem} onClick={() => setMoreOpen(true)} aria-haspopup="dialog">
+            <div className={styles.tabContent}>
+              <div className={styles.iconWrap}><DotsThree size={26} weight="bold" color={moreOpen ? 'var(--accent)' : 'var(--text3)'} /></div>
+              <span className={styles.tabLabel} style={{ color: moreOpen ? 'var(--accent)' : 'var(--text3)', fontWeight: moreOpen ? 600 : 500 }}>More</span>
+            </div>
+          </button>
         </div>
       </nav>
     </>

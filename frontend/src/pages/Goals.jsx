@@ -151,15 +151,12 @@ export default function Goals() {
         <motion.div className={styles.header} variants={cardVar}>
           <div>
             <h1 className={styles.h1} style={{ color:t.text }}>Goals</h1>
-            <div className={styles.sub} style={{ color:t.text2 }}>Plan for your dreams. Achieve more.</div>
+            <div className={styles.sub} style={{ color:t.text2 }}>Savings targets and your progress</div>
           </div>
           <div className={styles.headerBtns}>
-            <button className={styles.circleBtn} style={{ background:t.cardBg, border:`1px solid ${t.border}` }}>
-              <BarChart2 size={19} color={t.text2}/>
-            </button>
             <motion.button className={styles.circleBtn} whileTap={{ scale:.9 }}
-              style={{ background:'#1D4ED8', border:'none', boxShadow:'0 8px 24px rgba(124,58,237,.35)' }}
-              onClick={openAddGoal}>
+              style={{ background:'#1D4ED8', border:'none', boxShadow:'var(--shadow-md)' }}
+              onClick={openAddGoal} aria-label="Add goal">
               <Plus size={22} color="#fff"/>
             </motion.button>
           </div>
@@ -450,7 +447,7 @@ function GoalModal({ goal, onClose, onSaved }) {
             </div>
           </div>
         </div>
-        <div style={{ display:'flex', gap:10, marginTop:16, justifyContent:'flex-end' }}>
+        <div className="modal-actions" style={{ display:'flex', gap:10, marginTop:16, justifyContent:'flex-end' }}>
           <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
           <button className="btn btn-primary" disabled={mutation.isPending} onClick={submit} style={{ background:'#1D4ED8', border:'none' }}>
             {mutation.isPending ? 'Saving' : goal ? 'Update Goal' : 'Create Goal'}
@@ -489,7 +486,7 @@ function AddFundsModal({ goal, onClose, onSaved }) {
           <label className="form-label">Amount to Add</label>
           <input className="form-input" type="number" value={amount} onChange={e=>setAmount(e.target.value)} placeholder="5000" autoFocus style={{ fontSize:18, fontWeight:700 }}/>
         </div>
-        <div style={{ display:'flex', gap:10, marginTop:8, justifyContent:'flex-end' }}>
+        <div className="modal-actions" style={{ display:'flex', gap:10, marginTop:8, justifyContent:'flex-end' }}>
           <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
           <button className="btn btn-primary" disabled={mutation.isPending||!amount} onClick={()=>mutation.mutate()} style={{ background:`linear-gradient(135deg,${clr},${clr}dd)`, border:'none' }}>
             {mutation.isPending ? 'Adding' : 'Add Funds'}

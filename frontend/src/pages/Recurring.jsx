@@ -69,19 +69,13 @@ function RecurringModal({ item, wallets, categories, onClose, onSave }) {
   const labelStyle = { fontSize: 12, fontWeight: 600, color: 'var(--text3)', marginBottom: 5, display: 'block' };
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 1000,
-      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
-    }} onClick={e => e.target === e.currentTarget && onClose()}>
-      <div style={{
-        background: 'var(--surface)', borderRadius:14, padding: 28, width: '100%', maxWidth: 480,
-        maxHeight: '90vh', overflowY: 'auto',
-      }}>
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
           <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700 }}>
             {item ? 'Edit Recurring' : 'Add Recurring'}
           </h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'var(--text3)' }}>×</button>
+          <button onClick={onClose} aria-label="Close" style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 24, color: 'var(--text3)', minWidth: 44, minHeight: 44 }}>×</button>
         </div>
 
         {error && (
@@ -164,7 +158,7 @@ function RecurringModal({ item, wallets, categories, onClose, onSave }) {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
+        <div className="modal-actions" style={{ display: 'flex', gap: 10, marginTop: 22 }}>
           <button onClick={onClose} style={{
             flex: 1, padding: '12px 0', borderRadius: 12, border: '1.5px solid var(--border)',
             background: 'transparent', color: 'var(--text)', fontWeight: 600, cursor: 'pointer',
@@ -333,14 +327,12 @@ export default function Recurring() {
           const freq = FREQ_COLORS[item.frequency] || FREQ_COLORS.monthly;
           const typ = TYPE_CFG[item.type] || TYPE_CFG.expense;
           return (
-            <div key={item.id} style={{
-              background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16,
-              padding: '16px 18px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 14,
+            <div key={item.id} className="rec-row" style={{
               opacity: item.is_active ? 1 : 0.55,
               transition: 'opacity .2s',
             }}>
               {/* Icon */}
-              <div style={{
+              <div className="rec-icon" style={{
                 width: 44, height: 44, borderRadius: 12, background: typ.bg,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0,
               }}>
@@ -348,49 +340,43 @@ export default function Recurring() {
               </div>
 
               {/* Info */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', marginBottom: 3 }}>
+              <div className="rec-info">
+                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {item.payment_name}
                 </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
-                  <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 6, background: freq.bg, color: freq.color }}>
-                    {item.frequency}
-                  </span>
-                  {item.category_name && (
-                    <span style={{ fontSize: 11, color: 'var(--text3)' }}>{item.category_emoji} {item.category_name}</span>
-                  )}
-                  {item.wallet_name && (
-                    <span style={{ fontSize: 11, color: 'var(--text3)' }}>· {item.wallet_name}</span>
-                  )}
-                  <span style={{ fontSize: 11, color: 'var(--text3)' }}>
-                    · Next: {item.next_run ? new Date(item.next_run).toLocaleDateString() : '—'}
-                  </span>
-                </div>
+                <span style={{ fontSize: 12, fontWeight: 600, padding: '2px 8px', borderRadius: 6, background: freq.bg, color: freq.color }}>
+                  {item.frequency}
+                </span>
+              </div>
+
+              {/* Category, account and next run, on their own line */}
+              <div className="rec-meta">
+                {[item.category_name && `${item.category_emoji || ''} ${item.category_name}`.trim(), item.wallet_name, `Next ${item.next_run ? new Date(item.next_run).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}`].filter(Boolean).join(' · ')}
               </div>
 
               {/* Amount */}
-              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+              <div className="rec-amount">
                 <div style={{ fontSize: 15, fontWeight: 800, color: typ.color, fontFamily: 'Inter, sans-serif' }}>
                   {item.type === 'expense' ? '−' : '+'}{fmt(item.amount)}
                 </div>
-                <div style={{ fontSize: 10, color: 'var(--text3)', marginTop: 2 }}>{{ daily: 'every day', weekly: 'every week', monthly: 'every month', yearly: 'every year' }[item.frequency] || item.frequency}</div>
+                <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{{ daily: 'every day', weekly: 'every week', monthly: 'every month', yearly: 'every year' }[item.frequency] || item.frequency}</div>
               </div>
 
               {/* Actions */}
-              <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+              <div className="rec-actions">
                 <button onClick={() => handleToggle(item)} style={{
-                  background: 'none', border: 'none', cursor: 'pointer', color: item.is_active ? '#047857' : 'var(--text3)', padding: 4,
-                }} title={item.is_active ? 'Deactivate' : 'Activate'}>
+                  background: 'none', border: 'none', cursor: 'pointer', color: item.is_active ? 'var(--green)' : 'var(--text3)', padding: 4,
+                }} title={item.is_active ? 'Deactivate' : 'Activate'} aria-label={item.is_active ? 'Deactivate rule' : 'Activate rule'}>
                   {item.is_active ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
                 </button>
                 <button onClick={() => openEdit(item)} style={{
                   background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text3)', padding: 4,
-                }} title="Edit">
+                }} title="Edit" aria-label="Edit rule">
                   <Edit2 size={15} />
                 </button>
                 <button onClick={() => { confirmAsync('Delete this recurring rule?').then(ok => ok && deleteMut.mutate(item.id)); }} style={{
-                  background: 'none', border: 'none', cursor: 'pointer', color: '#DC2626', padding: 4,
-                }} title="Delete">
+                  background: 'none', border: 'none', cursor: 'pointer', color: 'var(--red)', padding: 4,
+                }} title="Delete" aria-label="Delete rule">
                   <Trash2 size={15} />
                 </button>
               </div>

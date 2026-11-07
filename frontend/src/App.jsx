@@ -34,6 +34,7 @@ const lazyWithReload = (factory) => lazy(() =>
 );
 
 // Everything else is code-split → only downloaded when first visited
+const DesignPreview = import.meta.env.DEV ? lazy(() => import('./pages/DesignPreview')) : null;
 const AppLayout    = lazyWithReload(() => import('./components/layout/AppLayout'));
 const Dashboard    = lazyWithReload(() => import('./pages/Dashboard'));
 const Transactions = lazyWithReload(() => import('./pages/Transactions'));
@@ -46,9 +47,8 @@ const Recurring    = lazyWithReload(() => import('./pages/Recurring'));
 const Forecast     = lazyWithReload(() => import('./pages/Forecast'));
 const Family       = lazyWithReload(() => import('./pages/Family'));
 const Admin        = lazyWithReload(() => import('./pages/Admin'));
-// OtherPages exports several — wrap each in its own lazy chunk
 const Wallet       = lazyWithReload(() => import('./pages/Accounts'));
-const Settings     = lazyWithReload(() => import('./pages/OtherPages').then(m => ({ default: m.Settings })));
+const Settings     = lazyWithReload(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
 const Insights      = lazyWithReload(() => import('./pages/Insights'));
 
 // Retire browser-only data from the removed Challenges/Investments pages — notably
@@ -144,6 +144,7 @@ export default function App() {
               <Route path="settings" element={<Settings />} />
             </Route>
 
+            {import.meta.env.DEV && <Route path="/design" element={<DesignPreview />} />}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>

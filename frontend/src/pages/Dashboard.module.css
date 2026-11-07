@@ -598,13 +598,12 @@
 @media (max-width: 768px) {
   .inner { padding: 14px 14px 104px; gap: 11px; }
 
-  .greetTitle { font-size: 16px; }
-  .greetSub   { font-size: 11px; }
-  .avatar     { width: 42px; height: 42px; }
+  /* The app header already has search and the profile avatar, so the greeting row keeps just text and the bell */
+  .greetTitle { font-size: 17px; font-weight: 600; }
+  .greetSub   { font-size: 12px; }
+  .avatarWrap { display: none; }
   .searchBox  { display: none; }
-
-  /* circular header buttons like the reference */
-  .mobileSearchBtn { display: flex; }
+  .mobileSearchBtn { display: none !important; }
   .iconBtn { width: 38px; height: 38px; border-radius: 50%; }
 
   .cardTitle { font-size: 14px; }

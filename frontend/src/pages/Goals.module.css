@@ -224,6 +224,10 @@
 }
 
 @media (max-width: 768px) {
+  /* The app header already names the screen, so the page header keeps only the intro and Add */
+  .h1 { display: none; }
+  .sub { margin-top: 0; font-size: 13px; }
+  .circleBtn { width: 44px; height: 44px; box-shadow: none !important; }
   .inner { padding: 14px 14px 104px; gap: 11px; }
 
   .h1 { font-size: 20px; }

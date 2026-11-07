@@ -1,0 +1,15 @@
+.profile { display:flex; align-items:center; gap:12px; padding-bottom:16px; border-bottom:1px solid var(--border-light); margin-bottom:8px; }
+.avatar { width:40px; height:40px; border-radius:50%; background:var(--accent-btn); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:14px; flex-shrink:0; }
+.name { font-size:15px; font-weight:600; color:var(--text); }
+.email { font-size:13px; color:var(--text3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.group { margin-top:14px; }
+.groupLabel { font-size:12px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px; }
+.grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.tile { position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; min-height:76px; padding:10px 6px;
+  border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); color:var(--text); text-decoration:none; font-size:13px; font-weight:500; text-align:center; -webkit-tap-highlight-color:transparent; }
+.tile:active { background:var(--surface2); }
+.tile:global(.active) { border-color:var(--accent); background:var(--accent-light); }
+.soon { position:absolute; top:6px; right:6px; font-style:normal; font-size:10px; font-weight:600; color:var(--text3); background:var(--surface2); border-radius:4px; padding:1px 5px; }
+.row { display:flex; align-items:center; gap:12px; width:100%; min-height:48px; padding:0 4px; border:none; background:none; color:var(--text); font:inherit; font-size:15px; text-decoration:none; cursor:pointer; text-align:left; }
+.row:active { background:var(--surface2); }
+.danger { color:var(--red-text); }

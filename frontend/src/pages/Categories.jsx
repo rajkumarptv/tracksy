@@ -317,7 +317,7 @@ function CategoryModal({ cat, onClose, onSaved }) {
           <div style={{ marginLeft:'auto', width:14, height:14, borderRadius:'50%', background:form.color, boxShadow:`0 0 8px ${form.color}66` }}/>
         </div>
 
-        <div style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
+        <div className="modal-actions" style={{ display:'flex', gap:10, justifyContent:'flex-end' }}>
           <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
           <button className="btn btn-primary" disabled={mutation.isPending||!form.name.trim()} onClick={()=>mutation.mutate(form)}
             style={{ background:'#1D4ED8', border:'none', boxShadow:'0 4px 14px rgba(29,78,216,.35)' }}>
