@@ -19,6 +19,10 @@ const oauth = require('../middleware/oauth');
 const adminCtrl = require('../controllers/adminController');
 const adminAuth = require('../middleware/adminAuth');
 const recurringCtrl = require('../controllers/recurringController');
+const limits = require('../middleware/rateLimit');
+
+// A generous ceiling on every API call, per IP
+router.use(limits.api);
 
 // Malformed ids can never match a row — answer 404 instead of a Postgres cast error (500)
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -27,13 +31,13 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
     UUID_RE.test(val) ? next() : res.status(404).json({ success: false, message: 'Not found' })));
 
 // Auth — email/password
-router.post('/auth/register', authCtrl.register);
-router.post('/auth/login', authCtrl.login);
+router.post('/auth/register', limits.register, authCtrl.register);
+router.post('/auth/login', limits.login, authCtrl.login);
 router.get('/auth/me', auth, authCtrl.getMe);
 router.put('/auth/profile', auth, authCtrl.updateProfile);
 router.post('/auth/change-password', auth, authCtrl.changePassword);
-router.post('/auth/forgot-password', authCtrl.forgotPassword);
-router.post('/auth/reset-password', authCtrl.resetPassword);
+router.post('/auth/forgot-password', limits.passwordReset, authCtrl.forgotPassword);
+router.post('/auth/reset-password', limits.passwordReset, authCtrl.resetPassword);
 router.get('/auth/notification-preferences', auth, authCtrl.getNotificationPrefs);
 router.put('/auth/notification-preferences', auth, authCtrl.updateNotificationPrefs);
 
@@ -144,7 +148,7 @@ router.get('/admin/families',                       auth, adminAuth, adminCtrl.l
 const familyCtrl = require('../controllers/familyController');
 router.get('/family/status',          auth, familyCtrl.getStatus);
 router.post('/family/create',         auth, familyCtrl.createFamily);
-router.post('/family/join',           auth, familyCtrl.joinFamily);
+router.post('/family/join',           auth, limits.familyJoin, familyCtrl.joinFamily);
 router.post('/family/leave',          auth, familyCtrl.leaveFamily);
 router.post('/family/remove-member',  auth, familyCtrl.removeMember);
 router.get('/family/overview',        auth, familyCtrl.getOverview);

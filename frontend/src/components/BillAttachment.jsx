@@ -77,8 +77,7 @@ export default function BillAttachment({ txId, txName, onClose, skipLabel }) {
     handleFiles([...e.dataTransfer.files]);
   };
 
-  const token = localStorage.getItem('tracksy_token');
-  const fileUrl = (bill) => `${billsAPI.fileUrl(bill.id)}?t=${token}`;
+  const fileUrl = (bill) => `${billsAPI.fileUrl(bill.id)}?t=${bill.file_token}`;
 
   const surf  = isDark ? '#111827' : '#fff';
   const surf2 = isDark ? '#1E2A3A' : '#F8FAFF';

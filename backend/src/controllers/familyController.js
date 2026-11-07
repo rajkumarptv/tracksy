@@ -1,15 +1,11 @@
 const { query } = require('../db');
 const { decryptRow } = require('../utils/crypto');
+const { randomCode } = require('../utils/security');
 
 const decryptWallet = row => decryptRow(row, ['name']);
 
-// Generate an unambiguous 6-char code (no 0/O/1/I)
-function genCode() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let c = '';
-  for (let i = 0; i < 6; i++) c += chars[Math.floor(Math.random() * chars.length)];
-  return c;
-}
+// Unambiguous 6-char code (no 0/O/1/I) from a cryptographically secure source
+const genCode = () => randomCode(6);
 
 /* ── GET /api/family/status ─────────────────────────────────────────────────
    Any user: their family state, role, code (primary only), and members list.

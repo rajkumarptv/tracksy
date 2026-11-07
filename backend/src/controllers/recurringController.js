@@ -2,6 +2,7 @@ const { query } = require('../db');
 const { encrypt, decryptRow } = require('../utils/crypto');
 const { parseAmount } = require('../utils/validate');
 const { addPeriod, toYMD, parseYMD } = require('../utils/dates');
+const { foreignIdProblem } = require('../utils/ownership');
 
 const decrypt = row => decryptRow(row, ['payment_name', 'description']);
 
@@ -46,6 +47,8 @@ const create = async (req, res) => {
     const { wallet_id, category_id, type, amount, payment_name, description, frequency, start_date, end_date } = req.body;
     const invalid = validateRecurring(req.body);
     if (invalid) return res.status(400).json({ success: false, message: invalid });
+    const foreign = await foreignIdProblem(req.user.userId, { wallets: [wallet_id], categories: [category_id] });
+    if (foreign) return res.status(404).json({ success: false, message: foreign });
     const result = await query(`
       INSERT INTO recurring_transactions
         (user_id, wallet_id, category_id, type, amount, payment_name, description, frequency, start_date, end_date, next_run)
@@ -68,6 +71,8 @@ const update = async (req, res) => {
     const { wallet_id, category_id, type, amount, payment_name, description, frequency, start_date, end_date, is_active, next_run } = req.body;
     const invalid = validateRecurring(req.body);
     if (invalid) return res.status(400).json({ success: false, message: invalid });
+    const foreign = await foreignIdProblem(req.user.userId, { wallets: [wallet_id], categories: [category_id] });
+    if (foreign) return res.status(404).json({ success: false, message: foreign });
     const result = await query(`
       UPDATE recurring_transactions
       SET wallet_id=$1, category_id=$2, type=$3, amount=$4, payment_name=$5,

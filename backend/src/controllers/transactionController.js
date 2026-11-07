@@ -3,6 +3,7 @@ const { randomUUID } = require('crypto');
 const { encrypt, decrypt, decryptRow } = require('../utils/crypto');
 const { recordBalanceSnapshot } = require('./dashboardController');
 const { parseAmount } = require('../utils/validate');
+const { foreignIdProblem } = require('../utils/ownership');
 
 // Fields to decrypt on every transaction row returned to client
 // payment_name is intentionally NOT encrypted — it's needed for ILIKE search
@@ -89,6 +90,9 @@ const create = async (req, res) => {
     if (!['income', 'expense', 'transfer'].includes(type) || parseAmount(amount) === null) {
       return res.status(400).json({ success: false, message: 'A valid type and an amount between ₹0.01 and ₹99,99,99,999 are required' });
     }
+
+    const foreign = await foreignIdProblem(userId, { wallets: [wallet_id, from_wallet_id, to_wallet_id], categories: [category_id] });
+    if (foreign) return res.status(404).json({ success: false, message: foreign });
 
     // ── TRANSFER ──────────────────────────────────────────────────────────────
     if (type === 'transfer') {
@@ -188,6 +192,9 @@ const update = async (req, res) => {
     if (parseAmount(amount) === null) {
       return res.status(400).json({ success: false, message: 'Amount must be between ₹0.01 and ₹99,99,99,999' });
     }
+
+    const foreign = await foreignIdProblem(userId, { wallets: [wallet_id], categories: [category_id] });
+    if (foreign) return res.status(404).json({ success: false, message: foreign });
 
     // Don't allow editing transfer type via regular update
     const old = await query(

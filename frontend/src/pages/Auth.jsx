@@ -225,7 +225,7 @@ export function Register() {
     if (!form.last_name.trim()) errs.last_name = 'Enter your last name';
     if (!form.email.trim()) errs.email = 'Enter your email address';
     if (!form.password) errs.password = 'Choose a password';
-    else if (form.password.length < 6) errs.password = 'Password must be at least 6 characters';
+    else if (form.password.length < 8) errs.password = 'Password must be at least 8 characters';
     if (form.password && form.password !== form.confirm_password) errs.confirm_password = 'Passwords do not match';
     setErrors(errs);
     if (Object.keys(errs).length) { setError(''); focusFirstError(); return; }
@@ -255,7 +255,7 @@ export function Register() {
         <TextField label="Email address" type="email" name="email" autoComplete="email" inputMode="email"
           placeholder="you@example.com" value={form.email} error={errors.email} onChange={set('email')} />
         <PasswordField label="Password" name="new-password" autoComplete="new-password"
-          placeholder="At least 6 characters" hint="Use at least 6 characters."
+          placeholder="At least 8 characters" hint="Use at least 8 characters."
           value={form.password} error={errors.password} onChange={set('password')} />
         <PasswordField label="Confirm password" name="confirm-password" autoComplete="new-password"
           placeholder="Re-enter your password" value={form.confirm_password} error={errors.confirm_password}
@@ -270,7 +270,7 @@ export function Register() {
 /* ── Forgot Password (behaviour unchanged; restyled only) ──────────────────── */
 export function ForgotPassword() {
   const [email,   setEmail]   = useState('');
-  const [token,   setToken]   = useState('');
+  const [sent,    setSent]    = useState(false);
   const [error,   setError]   = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -279,9 +279,9 @@ export function ForgotPassword() {
     if (!email.trim()) { setError('Please enter your email'); return; }
     setLoading(true); setError('');
     try {
-      const res = await authAPI.forgotPassword({ email: email.trim() });
-      if (res.data.token) setToken(res.data.token);
-      else setError('No account found with that email.');
+      await authAPI.forgotPassword({ email: email.trim() });
+      // The server answers the same way whether or not the email is registered, and never returns the token.
+      setSent(true);
     } catch (err) {
       setError(err.response?.data?.message || 'Something went wrong. Try again.');
     } finally { setLoading(false); }
@@ -293,15 +293,8 @@ export function ForgotPassword() {
       <p className={styles.subtitle}>Enter your email to get a reset link.</p>
       <Alert>{error}</Alert>
 
-      {token ? (
-        <>
-          <Notice>Your reset link is ready and valid for 1 hour.</Notice>
-          <div className={styles.form}>
-            <Link to={`/reset-password?token=${token}`} className={styles.submit} style={{ textDecoration: 'none' }}>
-              Set a new password
-            </Link>
-          </div>
-        </>
+      {sent ? (
+        <Notice>If that email is registered, we have sent password reset instructions. Check your inbox.</Notice>
       ) : (
         <form className={styles.form} onSubmit={handleSubmit} noValidate>
           <TextField label="Email address" type="email" name="email" autoComplete="email" inputMode="email"
@@ -328,7 +321,7 @@ export function ResetPassword() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!password) { setError('Enter a new password'); return; }
-    if (password.length < 6) { setError('Password must be at least 6 characters'); return; }
+    if (password.length < 8) { setError('Password must be at least 8 characters'); return; }
     if (password !== password2) { setError('Passwords do not match'); return; }
     setLoading(true); setError('');
     try {
@@ -351,7 +344,7 @@ export function ResetPassword() {
       ) : (
         <form className={styles.form} onSubmit={handleSubmit} noValidate>
           <PasswordField label="New password" name="new-password" autoComplete="new-password"
-            placeholder="At least 6 characters" value={password} onChange={e => setPassword(e.target.value)} />
+            placeholder="At least 8 characters" value={password} onChange={e => setPassword(e.target.value)} />
           <PasswordField label="Confirm password" name="confirm-password" autoComplete="new-password"
             placeholder="Re-enter your password" value={password2} onChange={e => setPassword2(e.target.value)} />
           <SubmitButton loading={loading} loadingText="Resetting…">Reset password</SubmitButton>

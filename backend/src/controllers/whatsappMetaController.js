@@ -1,6 +1,7 @@
 const { query } = require('../db');
 const { parseReceipt } = require('../utils/receiptParser');
 const { readReceiptWithGemini } = require('../utils/geminiReceipt');
+const { verifyMetaSignature } = require('../utils/security');
 
 const GRAPH = 'https://graph.facebook.com/v21.0';
 const TOKEN     = () => process.env.META_WA_TOKEN;
@@ -68,6 +69,14 @@ const verify = (req, res) => {
 
 /* ── POST /api/whatsapp/meta/webhook — receive messages ── */
 const receive = async (req, res) => {
+  // Only Meta may post here: it signs the raw body with the app secret. Without this check anyone could
+  // forge a message "from" a linked phone number and add transactions to that account.
+  const secret = process.env.META_WA_APP_SECRET;
+  if (!secret) {
+    console.error('[wa] META_WA_APP_SECRET is not set; refusing webhook calls. Set it to your Meta app secret.');
+    return res.sendStatus(503);
+  }
+  if (!verifyMetaSignature(req.rawBody, req.get('x-hub-signature-256'), secret)) return res.sendStatus(403);
   res.sendStatus(200); // ack immediately
 
   try {

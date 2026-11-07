@@ -867,6 +867,16 @@ const confirmImport = async (req, res) => {
     const userId = req.user.userId;
     let imported = 0, skipped = 0;
 
+    // Every wallet and category id in the payload must belong to this user (or be a shared default category)
+    const [ownW, ownC] = await Promise.all([
+      query('SELECT id FROM wallets WHERE user_id=$1', [userId]),
+      query('SELECT id FROM categories WHERE user_id=$1 OR is_default=true', [userId]),
+    ]);
+    const okW = new Set(ownW.rows.map(r => String(r.id))), okC = new Set(ownC.rows.map(r => String(r.id)));
+    const badW = [wallet_id, ...transactions.map(t => t.wallet_id)].some(id => id && !okW.has(String(id)));
+    const badC = transactions.some(t => t.category_id && !okC.has(String(t.category_id)));
+    if (badW || badC) return res.status(404).json({ success:false, message: badW ? 'Account not found' : 'Category not found' });
+
     // Track per-wallet balance delta so we can apply one UPDATE per wallet at the end
     const walletDelta = {}; // { wallet_id: delta }
 

@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const compression = require('compression');
+const helmet = require('helmet');
 const routes = require('./routes');
 require('./middleware/oauth'); // initialise passport strategies
 require('./db/ensureColumns')().catch(() => {}); // idempotent schema guards
@@ -10,6 +11,12 @@ require('./db/ensureColumns')().catch(() => {}); // idempotent schema guards
 const app = express();
 const PORT = process.env.PORT || 5000;
 const isProd = process.env.NODE_ENV === 'production';
+
+// Behind Render/Vercel's proxy: use the real client IP (rate limits, logs) from X-Forwarded-For
+app.set('trust proxy', 1);
+// Security headers. CSP is off because this is a JSON API (the React app is served by Vercel);
+// bill images are loaded cross-origin by the app, so resources must be allowed cross-origin.
+app.use(helmet({ contentSecurityPolicy: false, crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 
 // Gzip every response (API JSON + JS/CSS) — big win on mobile networks
 app.use(compression({ level: 6, threshold: 512 }));
@@ -31,7 +38,11 @@ app.use(cors({
   },
   credentials: true,
 }));
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({
+  limit: '10mb',
+  // Meta signs the exact bytes it sends, so keep the raw body for the WhatsApp webhook's signature check
+  verify: (req, _res, buf) => { if (req.originalUrl.startsWith('/api/whatsapp/meta/webhook')) req.rawBody = buf; },
+}));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Request logger (dev only)

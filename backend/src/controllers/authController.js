@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { query } = require('../db');
+const { passwordProblem, isNonEmptyString, hashToken } = require('../utils/security');
 
 const generateToken = (userId, email) => {
   return jwt.sign({ userId, email }, process.env.JWT_SECRET, {
@@ -13,9 +14,14 @@ const generateToken = (userId, email) => {
 const register = async (req, res) => {
   try {
     const { first_name, last_name, email, password } = req.body;
-    if (!first_name || !last_name || !email || !password) {
+    if (!isNonEmptyString(first_name, 60) || !isNonEmptyString(last_name, 60) || !isNonEmptyString(email) || typeof password !== 'string') {
       return res.status(400).json({ success: false, message: 'First name, last name, email and password are required' });
     }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ success: false, message: 'Enter a valid email address' });
+    }
+    const pwProblem = passwordProblem(password);
+    if (pwProblem) return res.status(400).json({ success: false, message: pwProblem });
 
     // Check existing user
     const existing = await query('SELECT id FROM users WHERE email = $1', [email.toLowerCase()]);
@@ -48,6 +54,9 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    if (!isNonEmptyString(email) || typeof password !== 'string' || !password || password.length > 128) {
+      return res.status(400).json({ success: false, message: 'Email and password are required' });
+    }
 
     const result = await query(
       'SELECT id, first_name, last_name, email, password_hash, currency, language, is_premium, premium_expires_at, is_admin FROM users WHERE email = $1',
@@ -112,8 +121,9 @@ const changePassword = async (req, res) => {
     const { current_password, new_password } = req.body;
     if (!current_password || !new_password)
       return res.status(400).json({ success: false, message: 'Both current and new password required' });
-    if (new_password.length < 8)
-      return res.status(400).json({ success: false, message: 'New password must be at least 8 characters' });
+    const newPwProblem = passwordProblem(new_password);
+    if (newPwProblem || typeof current_password !== 'string')
+      return res.status(400).json({ success: false, message: newPwProblem || 'Both current and new password required' });
 
     const result = await query('SELECT password_hash FROM users WHERE id=$1', [req.user.userId]);
     const user = result.rows[0];
@@ -171,27 +181,33 @@ const updateNotificationPrefs = async (req, res) => {
 };
 
 // POST /api/auth/forgot-password
+// The response is always the same, whether or not the email exists, and never contains the token:
+// returning it would let anyone who knows an email address reset that account's password.
+// The token is stored hashed. Until an email provider is wired up, deliverResetToken is the one place to
+// send it; it only logs (server side, development only) so a reset can be tested locally.
+const GENERIC_RESET_MESSAGE = 'If that email is registered, we have sent password reset instructions.';
+
+const deliverResetToken = (email, token) => {
+  if (process.env.RESET_TOKEN_LOG === '1' && process.env.NODE_ENV !== 'production') {
+    console.log(`[dev] password reset token for ${email}: ${token}`);
+  }
+  // TODO: send `token` by email here once an email provider is configured.
+};
+
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-    if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
+    if (!isNonEmptyString(email)) return res.status(400).json({ success: false, message: 'Email is required' });
 
-    const result = await query('SELECT id FROM users WHERE email = $1', [email.toLowerCase()]);
-    if (result.rows.length === 0) {
-      // Don't reveal if email exists — but still return success to prevent enumeration
-      return res.json({ success: true, message: 'If that email exists, a reset token was generated.' });
+    const clean = email.toLowerCase();
+    const result = await query('SELECT id FROM users WHERE email = $1', [clean]);
+    if (result.rows.length > 0) {
+      const token = crypto.randomBytes(32).toString('hex');
+      const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+      await query('UPDATE users SET reset_token=$1, reset_token_expires=$2 WHERE email=$3', [hashToken(token), expires, clean]);
+      deliverResetToken(clean, token);
     }
-
-    const token = crypto.randomBytes(32).toString('hex');
-    const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-
-    await query(
-      'UPDATE users SET reset_token=$1, reset_token_expires=$2 WHERE email=$3',
-      [token, expires, email.toLowerCase()]
-    );
-
-    // Since no email service is configured, return the token directly
-    res.json({ success: true, token, message: 'Reset token generated. Use it within 1 hour.' });
+    res.json({ success: true, message: GENERIC_RESET_MESSAGE });
   } catch (err) {
     console.error('Forgot password error:', err);
     res.status(500).json({ success: false, message: 'Server error' });
@@ -202,14 +218,14 @@ const forgotPassword = async (req, res) => {
 const resetPassword = async (req, res) => {
   try {
     const { token, new_password } = req.body;
-    if (!token || !new_password)
+    if (!isNonEmptyString(token, 200) || typeof new_password !== 'string')
       return res.status(400).json({ success: false, message: 'Token and new password are required' });
-    if (new_password.length < 6)
-      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+    const resetProblem = passwordProblem(new_password);
+    if (resetProblem) return res.status(400).json({ success: false, message: resetProblem });
 
     const result = await query(
       'SELECT id, email FROM users WHERE reset_token=$1 AND reset_token_expires > NOW()',
-      [token]
+      [hashToken(token)]
     );
     if (result.rows.length === 0)
       return res.status(400).json({ success: false, message: 'Invalid or expired reset token' });

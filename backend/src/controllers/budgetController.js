@@ -1,5 +1,6 @@
 const { query } = require('../db');
 const { parseAmount } = require('../utils/validate');
+const { foreignIdProblem } = require('../utils/ownership');
 
 // GET /api/budgets
 const getAll = async (req, res) => {
@@ -46,6 +47,8 @@ const create = async (req, res) => {
     if (parseAmount(amount) === null) {
       return res.status(400).json({ success: false, message: 'Please enter a valid amount' });
     }
+    const foreign = await foreignIdProblem(req.user.userId, { categories: [category_id] });
+    if (foreign) return res.status(404).json({ success: false, message: foreign });
     const result = await query(`
       INSERT INTO budgets (user_id, category_id, name, amount, period, start_date, emoji, color, type)
       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *

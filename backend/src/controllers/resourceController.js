@@ -328,6 +328,8 @@ const payLiability = async (req, res) => {
 
     const wRes = await query('SELECT * FROM wallets WHERE id=$1 AND user_id=$2', [req.params.id, req.user.userId]);
     if (!wRes.rows.length) return res.status(404).json({ success: false, message: 'Liability not found' });
+    const foreignSource = await require('../utils/ownership').foreignIdProblem(req.user.userId, { wallets: [from_wallet_id] });
+    if (foreignSource) return res.status(404).json({ success: false, message: foreignSource });
     const w = wRes.rows[0];
 
     // balance is stored NEGATIVE for liabilities (outstanding owed)
