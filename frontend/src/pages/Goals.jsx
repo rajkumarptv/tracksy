@@ -5,7 +5,7 @@ import { goalsAPI } from '../services/api';
 import { track } from '../lib/analytics';
 import { PageLoader } from '../components/ui';
 import {
-  Plus, ChevronRight, ChevronDown, SlidersHorizontal, BarChart2,
+  Plus, ChevronRight, BarChart2,
   Rocket, Target as TargetIcon, Wallet, Pencil, Trash2,
   ChevronsUp, Minus, ChevronsDown,
 } from 'lucide-react';
@@ -85,7 +85,6 @@ export default function Goals() {
 
   const [filter, setFilter]       = useState('All');
   const [sortBy, setSortBy]       = useState('Priority');
-  const [showSort, setShowSort]   = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editGoal, setEditGoal]   = useState(null);
   const [showFunds, setShowFunds] = useState(null);
@@ -205,25 +204,10 @@ export default function Goals() {
               );
             })}
           </div>
-          <div style={{ position:'relative', flexShrink:0 }}>
-            <button onClick={()=>setShowSort(v=>!v)} className={styles.sortBtn}
-              style={{ background:t.cardBg, border:`1.5px solid ${t.border}`, color:t.text2 }}>
-              <SlidersHorizontal size={14}/> {sortBy} <ChevronDown size={13}/>
-            </button>
-            {showSort && <div onClick={()=>setShowSort(false)} style={{ position:'fixed', inset:0, zIndex:49 }}/>}
-            <AnimatePresence>
-              {showSort && (
-                <motion.div initial={{ opacity:0, y:-6 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:-6 }}
-                  style={{ position:'absolute', right:0, top:'calc(100% + 6px)', background:t.cardBg, border:`1px solid ${t.border}`, borderRadius:14, zIndex:50, minWidth:150, overflow:'hidden', boxShadow:t.cardShadow }}>
-                  {['Priority','Progress','Amount','Name'].map(s => (
-                    <button key={s} onClick={()=>{setSortBy(s);setShowSort(false);}}
-                      style={{ display:'block', width:'100%', textAlign:'left', padding:'10px 15px', background:sortBy===s?'rgba(29,78,216,.12)':'transparent', color:sortBy===s?(isDark?'#93C5FD':t.purple):t.text2, border:'none', fontSize:12.5, fontWeight:sortBy===s?700:500, cursor:'pointer' }}>
-                      {s}
-                    </button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
+          {/* ThemedSelect opens in a portal clamped to the screen, so it can never be clipped or run off the edge */}
+          <div style={{ width:150, flexShrink:0 }}>
+            <ThemedSelect compact value={sortBy} onChange={setSortBy}
+              options={['Priority','Progress','Amount','Name'].map(v => ({ value:v, label:v }))}/>
           </div>
         </motion.div>
 
