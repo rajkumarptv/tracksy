@@ -270,8 +270,8 @@ function DebtsOverview() {
                       const rate = parseFloat(w.interest_rate||0);
                       const subBits = [];
                       if (w.last_four) subBits.push(`•••• ${w.last_four}`);
-                      if (emi > 0) subBits.push(`EMI ${fmt(emi,{noDecimals:true})}${w.emi_day ? ` · due ${w.emi_day}${['st','nd','rd'][w.emi_day-1]||'th'}` : ''}`);
-                      if (rate > 0) subBits.push(`${rate}% p.a.`);
+                      if (emi > 0) subBits.push(`EMI\u00A0${fmt(emi,{noDecimals:true})}${w.emi_day ? ` · due\u00A0${w.emi_day}${['st','nd','rd'][w.emi_day-1]||'th'}` : ''}`);
+                      if (rate > 0) subBits.push(`${rate}%\u00A0p.a.`);
                       if (subBits.length === 0) subBits.push(meta.label);
                       return (
                         <motion.div key={w.id} className={styles.row}
@@ -286,7 +286,7 @@ function DebtsOverview() {
                               <span className={styles.rowName} style={{ color:t.text }}>{w.name}</span>
                               <span style={{ fontSize:10.5, fontWeight:700, padding:'2px 8px', borderRadius:14, background:`${meta.color}1f`, color:meta.color, whiteSpace:'nowrap', flexShrink:0 }}>{meta.label}</span>
                             </div>
-                            <div style={{ fontSize:12.5, color:t.text2, marginTop:2, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+                            <div style={{ fontSize:12.5, color:t.text2, marginTop:2, lineHeight:1.35 }}>
                               {subBits.join(' · ')}
                             </div>
                           </div>

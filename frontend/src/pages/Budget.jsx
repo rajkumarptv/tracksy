@@ -347,7 +347,7 @@ export default function Budget() {
                   </div>
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:8 }}>
-                      <span style={{ fontSize:14.5, fontWeight:700, color:t.text, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{b.name}</span>
+                      <span style={{ fontSize:14.5, fontWeight:700, color:t.text, minWidth:0, overflowWrap:'anywhere', lineHeight:1.25 }}>{b.name}</span>
                       <span style={{ fontSize:13.5, color:t.text2, whiteSpace:'nowrap', fontFamily:'Inter, sans-serif' }}>
                         <b style={{ color:t.text }}>{fmt(sp,{noDecimals:true})}</b> / {fmt(amt,{noDecimals:true})}
                       </span>

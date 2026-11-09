@@ -257,22 +257,24 @@ export default function Goals() {
                   <div className={styles.goalIcon} style={{ background:g.iconBg||t.purple, boxShadow:`0 4px 14px ${g.iconBg||t.purple}55` }}>
                     <span style={{ fontSize:24 }}>{g.emoji}</span>
                   </div>
-                  <div style={{ flex:1, minWidth:0 }}>
+                  <div className={styles.goalMid} style={{ flex:1, minWidth:0 }}>
+                   <div className={styles.goalHead}>
                     <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
                       <span style={{ fontSize:15, fontWeight:700, color:t.text }}>{g.name}</span>
                       <span style={{ fontSize:10.5, fontWeight:700, padding:'2px 9px', borderRadius:14, background:badge.bg, color:badge.color, whiteSpace:'nowrap' }}>{badge.text}</span>
                     </div>
                     {g.desc && <div style={{ fontSize:12, color:t.text3, marginTop:2 }}>{g.desc}</div>}
+                   </div>
                     <div className={styles.goalTrack} style={{ background:t.track }}>
                       <motion.div style={{ height:'100%', borderRadius:999, background:barColor }}
                         initial={{ width:0 }} animate={{ width:`${pct}%` }}
                         transition={{ duration:.8, delay:.3+idx*.06, ease:[.2,.8,.2,1] }}/>
                     </div>
-                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:5 }}>
-                      <span style={{ fontSize:11.5, color:t.text3, fontFamily:'Inter,sans-serif' }}>
+                    <div className={styles.goalMeta} style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginTop:5 }}>
+                      <span className={styles.goalAmounts} style={{ fontSize:11.5, color:t.text3, fontFamily:'Inter,sans-serif', whiteSpace:'nowrap' }}>
                         {fmtFull(g.current_amount)} / {fmtFull(g.target_amount)}
                       </span>
-                      <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                      <div className={styles.goalActions} style={{ display:'flex', alignItems:'center', gap:8 }}>
                         {!isComplete && !isDummy && (
                           <>
                             <button title="Edit" aria-label="Edit goal" onClick={()=>{setEditGoal(g);setShowModal(true);}}
@@ -287,14 +289,14 @@ export default function Goals() {
                         )}
                         {!isComplete && (
                           <button onClick={()=>!isDummy && setShowFunds(g)}
-                            style={{ fontSize:11, fontWeight:700, padding:'4px 11px', borderRadius:10, border:'none', background:`${g.iconBg||'#1D4ED8'}22`, color:g.iconBg||t.purple, cursor:'pointer', whiteSpace:'nowrap' }}>
+                            style={{ fontSize:12, fontWeight:700, padding:'0 12px', minHeight:34, borderRadius:10, border:'none', background:`${g.iconBg||'#1D4ED8'}22`, color:g.iconBg||t.purple, cursor:'pointer', whiteSpace:'nowrap' }}>
                             + Add Funds
                           </button>
                         )}
                       </div>
                     </div>
                   </div>
-                  <div style={{ flexShrink:0, textAlign:'right' }}>
+                  <div className={styles.goalPct} style={{ flexShrink:0, textAlign:'right' }}>
                     <span style={{ fontSize:15, fontWeight:800, color:barColor, fontFamily:'Inter,sans-serif' }}>{pct}%</span>
                   </div>
                 </motion.div>

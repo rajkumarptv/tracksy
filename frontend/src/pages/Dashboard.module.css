@@ -503,9 +503,9 @@
   flex: 1;
   font-size: 14px;
   font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  min-width: 0;
+  overflow-wrap: anywhere;   /* long category names wrap instead of being cut to "Bills & …" */
+  line-height: 1.25;
 }
 
 .spendRowAmt {
