@@ -239,8 +239,20 @@
   .overviewDonut :global(svg) { display: block; }
 
   .goalsCard { padding: 15px; }
-  .goalRow { padding: 13px 0; gap: 12px; }
-  .goalIcon { width: 46px; height: 46px; }
+  /* Phone: icon, name and percent on top; the bar and the amounts get the full card width below */
+  .goalRow {
+    display: grid; padding: 14px 0; gap: 6px 12px; align-items: center;
+    grid-template-columns: 46px minmax(0, 1fr) auto;
+    grid-template-areas: "icon head pct" "bar bar bar" "meta meta meta";
+  }
+  .goalMid { display: contents; }
+  .goalIcon { grid-area: icon; width: 46px; height: 46px; }
+  .goalHead { grid-area: head; min-width: 0; }
+  .goalPct { grid-area: pct; }
+  .goalTrack { grid-area: bar; margin-top: 4px; }
+  .goalMeta { grid-area: meta; flex-wrap: wrap; gap: 4px 10px; margin-top: 0 !important; }
+  .goalAmounts { font-size: 13px !important; }
+  .goalActions { margin-left: auto; }
   .motivCard { padding: 16px 15px; gap: 13px; }
   .chip { padding: 9px 14px; font-size: 12.5px; }
 

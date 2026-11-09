@@ -255,7 +255,7 @@ export default function DebtReduction({ embedded = false }) {
                           <div style={{ height:'100%', width:`${pct}%`, background: i===0?'var(--accent)':'#DC2626', borderRadius:14, opacity: 1 - i*0.15 }}/>
                         </div>
                         <div style={{ fontSize:11.5, color:'var(--text3)', marginTop:6 }}>
-                          Paid off {when} · interest {fmt(o.interestPaid,{noDecimals:true})}
+                          Paid off {when} · interest&nbsp;{fmt(o.interestPaid,{noDecimals:true})}
                         </div>
                       </div>
                       {i === 0 && <div style={{ fontSize:10, fontWeight:700, color:'var(--accent)', background:'var(--accent-light)', borderRadius:7, padding:'3px 8px', flexShrink:0, whiteSpace:'nowrap' }}>FOCUS</div>}

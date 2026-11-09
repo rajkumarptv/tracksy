@@ -120,11 +120,11 @@
 
 .legendName {
   flex: 1;
+  min-width: 0;
   font-size: 13px;
   font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.25;
+  overflow-wrap: anywhere;   /* wrap, never cut a legend name to "Bank Ac…" */
 }
 
 .legendVal {
@@ -195,7 +195,9 @@
 .groupTitle {
   font-size: 16px;
   font-weight: 700;
-  white-space: nowrap;
+  line-height: 1.25;
+  min-width: 0;
+  overflow-wrap: anywhere;   /* wrap onto a second line instead of being cut off */
 }
 
 .groupTotalLabel {
@@ -246,9 +248,8 @@
   max-width: 100%;
   font-size: 15px;
   font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.25;
+  overflow-wrap: anywhere;   /* long account names wrap onto a second line */
 }
 
 .primaryBadge {
