@@ -1,10 +1,9 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
 import { transactionsAPI, categoriesAPI, walletsAPI } from '../services/api';
 import { track } from '../lib/analytics';
-import { Topbar, AmountText, StatusChip, PageLoader, EmptyState, Sheet, Button, Tabs, Field } from '../components/ui';
+import { Topbar, AmountText, StatusChip, PageLoader, EmptyState, Sheet, Button, Tabs, Field, Input, Select, Segmented } from '../components/ui';
 import { Plus, Upload, TrendingUp, TrendingDown, ArrowLeftRight, Search, SlidersHorizontal, Calendar, ChevronDown, Info, Paperclip } from 'lucide-react';
 import BillAttachment, { BillBadge } from '../components/BillAttachment';
 import { useFmt, useT } from '../i18n';
@@ -14,6 +13,7 @@ import PaymentLogo from '../components/PaymentLogo';
 import { MerchantLogo, CategoryIcon, CategoryGlyph } from '../components/icons';
 import ThemedSelect from '../components/ThemedSelect';
 import { invalidateFinance, resetFinance } from '../lib/cache';
+import { confirmAsync } from '../lib/confirm';
 
 /* ── Payment method definitions ──────────────────────────────────────── */
 // walletTypes: which wallet types are shown in the account dropdown
@@ -173,142 +173,6 @@ function TxSummaryCard({ txList, fmt, isDark, periodLabel }) {
           <div style={{ fontSize:13.5, fontWeight:800, color:blue, fontFamily:'Inter, sans-serif' }}>{net>=0?'':'−'}{fmt(Math.abs(net),{noDecimals:true})}</div>
         </div>
       </div>
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────────────────
-   CustomSelect — silky smooth replacement for native <select>
-   options: [{ value, label, emoji?, color?, sub? }]
-───────────────────────────────────────────────────────────────────────── */
-function CustomSelect({ value, onChange, options = [], placeholder = 'Select…' }) {
-  const [open, setOpen]   = useState(false);
-  const [q, setQ]         = useState('');
-  const ref               = useRef(null);
-  const panelRef          = useRef(null);
-  const [pos, setPos]     = useState(null);
-
-  // The panel is a fixed-position portal so the sheet's scroll area and its Save bar can never clip or cover it.
-  const place = () => {
-    const r = ref.current?.getBoundingClientRect();
-    if (!r) return;
-    const below = window.innerHeight - r.bottom;
-    const up = below < 280 && r.top > below;
-    setPos({
-      left: r.left, width: r.width,
-      top: up ? undefined : r.bottom + 6,
-      bottom: up ? window.innerHeight - r.top + 6 : undefined,
-      maxH: Math.max(160, Math.min(320, (up ? r.top : below) - 16)),
-    });
-  };
-
-  useEffect(() => {
-    if (!open) return;
-    place();
-    const fn = e => {
-      if (ref.current?.contains(e.target) || panelRef.current?.contains(e.target)) return;
-      setOpen(false); setQ('');
-    };
-    document.addEventListener('mousedown', fn);
-    document.addEventListener('touchstart', fn);
-    window.addEventListener('resize', place);
-    window.addEventListener('scroll', place, true);
-    return () => {
-      document.removeEventListener('mousedown', fn);
-      document.removeEventListener('touchstart', fn);
-      window.removeEventListener('resize', place);
-      window.removeEventListener('scroll', place, true);
-    };
-  }, [open]);
-
-  const selected = options.find(o => String(o.value) === String(value));
-  const filtered = q ? options.filter(o => o.label.toLowerCase().includes(q.toLowerCase())) : options;
-
-  return (
-    <div ref={ref} style={{ position:'relative' }}>
-      {/* Trigger */}
-      <button type="button" onClick={() => setOpen(o => !o)} style={{
-        width:'100%', display:'flex', alignItems:'center', gap:8,
-        padding:'10px 13px', borderRadius:10, boxSizing:'border-box',
-        border: open ? '1.5px solid var(--accent)' : '1.5px solid var(--border)',
-        background:'var(--surface2)', color:'var(--text)', fontSize:14,
-        cursor:'pointer', outline:'none', justifyContent:'space-between',
-        transition:'border-color .15s, box-shadow .15s',
-        boxShadow: open ? '0 0 0 3px var(--accent-light)' : 'none',
-      }}>
-        <div style={{ display:'flex', alignItems:'center', gap:8, minWidth:0, flex:1 }}>
-          {selected?.emoji && (
-            <span style={{ width:24, height:24, borderRadius:7, background: selected.color ? `${selected.color}22` : 'var(--surface3)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0 }}>
-              {selected.emoji}
-            </span>
-          )}
-          <div style={{ minWidth:0 }}>
-            <div style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontWeight: selected ? 600 : 400, color: selected ? 'var(--text)' : 'var(--text3)', textAlign:'left', fontSize:13.5 }}>
-              {selected ? selected.label : placeholder}
-            </div>
-            {selected?.sub && <div style={{ fontSize:11, color:'var(--text3)', textAlign:'left', marginTop:1 }}>{selected.sub}</div>}
-          </div>
-        </div>
-        <ChevronDown size={13} color="var(--text3)" style={{ flexShrink:0, transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition:'transform .2s' }}/>
-      </button>
-
-      {/* Floating panel */}
-      {open && pos && createPortal(
-        <div ref={panelRef} style={{
-          position:'fixed', left:pos.left, width:pos.width, top:pos.top, bottom:pos.bottom,
-          display:'flex', flexDirection:'column', maxHeight:pos.maxH,
-          background:'var(--surface)', border:'1.5px solid var(--border)',
-          borderRadius:14, boxShadow:'0 16px 48px rgba(0,0,0,.18), 0 4px 12px rgba(0,0,0,.08)',
-          zIndex:2601, overflow:'hidden',
-          animation:'dropFade .14s ease',
-        }}>
-          {options.length > 5 && (
-            <div style={{ padding:'10px 10px 6px', borderBottom:'1px solid var(--border-light)' }}>
-              <input autoFocus={!window.matchMedia?.('(pointer: coarse)').matches} value={q} onChange={e => setQ(e.target.value)}
-                placeholder="Search…" onClick={e => e.stopPropagation()}
-                style={{ width:'100%', padding:'7px 10px', borderRadius:8, border:'1.5px solid var(--border)', background:'var(--surface2)', color:'var(--text)', fontSize:16, outline:'none', boxSizing:'border-box' }}/>
-            </div>
-          )}
-          <div style={{ flex:1, minHeight:0, overflowY:'auto', padding:6, scrollbarWidth:'thin' }}>
-            {/* "None" option */}
-            <button type="button" onClick={() => { onChange(''); setOpen(false); setQ(''); }}
-              style={{ width:'100%', textAlign:'left', padding:'8px 10px', borderRadius:9, border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:8, fontSize:13, transition:'background .1s',
-                background: !value ? 'var(--accent-light)' : 'transparent',
-                color: !value ? 'var(--accent)' : 'var(--text3)',
-              }}>
-              <span style={{ width:24, height:24, borderRadius:7, background:'var(--surface3)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, flexShrink:0 }}>—</span>
-              {placeholder}
-            </button>
-            {filtered.map(o => {
-              const isSel = String(o.value) === String(value);
-              return (
-                <button key={o.value} type="button" onClick={() => { onChange(o.value); setOpen(false); setQ(''); }}
-                  style={{ width:'100%', textAlign:'left', padding:'8px 10px', borderRadius:9, border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:8, fontSize:13, transition:'background .1s',
-                    background: isSel ? 'var(--accent-light)' : 'transparent',
-                    color:      isSel ? 'var(--accent)'       : 'var(--text)',
-                  }}
-                  onMouseEnter={e => { if (!isSel) e.currentTarget.style.background='var(--surface2)'; }}
-                  onMouseLeave={e => { if (!isSel) e.currentTarget.style.background='transparent'; }}>
-                  {o.emoji !== undefined && (
-                    <span style={{ width:24, height:24, borderRadius:7, background: o.color ? `${o.color}22` : 'var(--surface2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0 }}>
-                      {o.emoji || ''}
-                    </span>
-                  )}
-                  <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ fontWeight:600, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{o.label}</div>
-                    {o.sub && <div style={{ fontSize:11, color:'var(--text3)', marginTop:1 }}>{o.sub}</div>}
-                  </div>
-                  {isSel && <span style={{ color:'var(--accent)', fontSize:15, flexShrink:0 }}>✓</span>}
-                </button>
-              );
-            })}
-            {filtered.length === 0 && (
-              <div style={{ padding:'14px', textAlign:'center', fontSize:13, color:'var(--text3)' }}>No results</div>
-            )}
-          </div>
-        </div>,
-        document.body
-      )}
     </div>
   );
 }
@@ -1145,67 +1009,29 @@ function NewCategoryInline({ txType, onCreated, onCancel }) {
   };
 
   return (
-    <div style={{ background:'var(--surface2)', borderRadius:14, padding:'14px 16px', border:'1.5px solid var(--accent)', boxShadow:'0 0 0 3px var(--accent-light)', animation:'dropFade .15s ease' }}>
-
-      {/* Emoji row */}
-      <div style={{ marginBottom:10 }}>
-        <div style={{ fontSize:10.5, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.06em', marginBottom:7 }}>Pick an emoji</div>
-        <div style={{ display:'flex', gap:5, flexWrap:'wrap' }}>
-          {emojiList.map(e => (
-            <button key={e} type="button" onClick={() => setEmoji(e)} style={{
-              width:32, height:32, borderRadius:8, fontSize:17, cursor:'pointer',
-              border: emoji === e ? '2px solid var(--accent)' : '1.5px solid var(--border)',
-              background: emoji === e ? 'var(--accent-light)' : 'var(--surface)',
-              transition:'all .12s',
-            }}>{e}</button>
-          ))}
-        </div>
-      </div>
-
-      {/* Name */}
-      <div style={{ marginBottom:10 }}>
-        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-          {emoji && (
-            <div style={{ width:36, height:36, borderRadius:10, background:`${color}22`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, flexShrink:0 }}>
-              {emoji}
-            </div>
-          )}
-          <input autoFocus placeholder="Category name…" value={name}
-            onChange={e => { setName(e.target.value); setErr(''); }}
-            onKeyDown={e => e.key === 'Enter' && handleSave()}
-            style={{ flex:1, padding:'9px 12px', borderRadius:9, border:'1.5px solid var(--border)', background:'var(--surface)', color:'var(--text)', fontSize:13.5, outline:'none', boxSizing:'border-box' }}/>
-        </div>
-      </div>
-
-      {/* Color row */}
-      <div style={{ display:'flex', gap:6, marginBottom:12, alignItems:'center' }}>
-        <span style={{ fontSize:10.5, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.06em', marginRight:2 }}>Color</span>
-        {QUICK_COLORS.map(c => (
-          <button key={c} type="button" onClick={() => setColor(c)} style={{
-            width:22, height:22, borderRadius:'50%', background:c, flexShrink:0, cursor:'pointer',
-            border: color === c ? '3px solid var(--text)' : '2px solid transparent',
-            transform: color === c ? 'scale(1.2)' : 'scale(1)', transition:'all .12s',
-          }}/>
+    <div style={{ background:'var(--surface2)', borderRadius:'var(--radius)', padding:14, border:'1px solid var(--border)' }}>
+      <Field label="Category name" error={err}>
+        <Input autoFocus placeholder="e.g. Pets" value={name} maxLength={40}
+          onChange={e => { setName(e.target.value); setErr(''); }}
+          onKeyDown={e => e.key === 'Enter' && handleSave()} />
+      </Field>
+      <div className="ds-field__label" style={{ marginBottom:8 }}>Icon</div>
+      <div className="tx-chips" style={{ maxHeight:'none', marginBottom:14 }}>
+        {emojiList.map(e => (
+          <button key={e} type="button" className="tx-chip" aria-pressed={emoji === e} aria-label={`Icon ${e}`} onClick={() => setEmoji(e)}
+            style={{ minWidth:40, justifyContent:'center', padding:0, fontSize:18 }}>{e}</button>
         ))}
       </div>
-
-      {err && <div style={{ fontSize:12, color:'var(--red)', marginBottom:8 }}>{err}</div>}
-
-      {/* Buttons */}
+      <div className="ds-field__label" style={{ marginBottom:8 }}>Colour</div>
+      <div style={{ display:'flex', gap:10, flexWrap:'wrap', marginBottom:14 }}>
+        {QUICK_COLORS.map(c => (
+          <button key={c} type="button" onClick={() => setColor(c)} aria-label={`Colour ${c}`} aria-pressed={color === c}
+            style={{ width:32, height:32, borderRadius:'50%', background:c, cursor:'pointer', border: color === c ? '3px solid var(--text)' : '2px solid transparent' }}/>
+        ))}
+      </div>
       <div style={{ display:'flex', gap:8 }}>
-        <button type="button" onClick={onCancel} style={{ flex:1, padding:'8px', borderRadius:9, border:'1.5px solid var(--border)', background:'var(--surface)', color:'var(--text3)', fontSize:13, fontWeight:600, cursor:'pointer' }}>
-          Cancel
-        </button>
-        <button type="button" onClick={handleSave} disabled={saving || !name.trim()} style={{
-          flex:2, padding:'8px', borderRadius:9, border:'none', fontSize:13, fontWeight:700, cursor: saving ? 'wait' : 'pointer',
-          background:'linear-gradient(135deg,var(--accent),#3B82F6)', color:'#fff',
-          opacity: (!name.trim() || saving) ? 0.55 : 1, transition:'opacity .15s',
-          display:'flex', alignItems:'center', justifyContent:'center', gap:6,
-        }}>
-          {saving
-            ? <><span style={{ animation:'spin .7s linear infinite', display:'inline-block' }}>⟳</span> Creating…</>
-            : `✨ Create "${name || 'category'}"`}
-        </button>
+        <Button onClick={onCancel} style={{ flex:1 }}>Cancel</Button>
+        <Button variant="primary" onClick={handleSave} loading={saving} disabled={!name.trim()} style={{ flex:2 }}>Create category</Button>
       </div>
     </div>
   );
@@ -1389,321 +1215,152 @@ function TransactionModal({ tx, onClose, onSaved, onDelete, initialType }) {
     }
   };
 
-  const TAB_OPTS = [
-    { key:'expense',  label:`📤 ${t('tx_expense')}`,  color:'var(--red)',   activeColor:'rgba(220,38,38,.1)'   },
-    { key:'income',   label:`📥 ${t('tx_income')}`,   color:'var(--green)', activeColor:'rgba(4,120,87,.1)'  },
-    { key:'transfer', label:`🔄 ${t('tx_transfer')}`, color:'#3B82F6',      activeColor:'rgba(59,130,246,.1)'  },
+  const typeOptions = [
+    { key:'expense',  label:t('tx_expense'),  tone:'expense'  },
+    { key:'income',   label:t('tx_income'),   tone:'income'   },
+    { key:'transfer', label:t('tx_transfer'), tone:'transfer' },
   ];
+  const [showMore, setShowMore] = useState(false);
+  const walletOpt = (w) => ({ value:w.id, label:`${w.name}${w.last_four?` ••${w.last_four}`:''}`, sub: CREDIT_WALLET_TYPES.includes(w.type) ? `Outstanding ${fmt(Math.abs(w.balance||0))}` : `Balance ${fmt(w.balance||0)}` });
+  const statusOpts = [{ value:'completed', label:'Completed' }, { value:'pending', label:'Pending' }, { value:'failed', label:'Failed' }];
+  const onAmount = (v) => { const clean = v.replace(/[^\d.]/g, '').replace(/(\..*)\./g, '$1'); if (/^\d*\.?\d{0,2}$/.test(clean)) setAmount(clean); };
+  const desktop = !window.matchMedia?.('(pointer: coarse)').matches;
 
-  const headerBg = isTransfer
-    ? 'rgba(59,130,246,.12)'
-    : txType === 'income' ? 'rgba(4,120,87,.12)' : 'rgba(220,38,38,.12)';
-
-  /* Payment-method grid removed — transactions use the user's real accounts directly. */
-  const showMethodPicker = false;
-
-  /* ── Styles ───────────────────────────────────────────── */
-  const labelSt = { fontSize:11.5, fontWeight:700, color:'var(--text3)', marginBottom:5, display:'block', textTransform:'uppercase', letterSpacing:'.05em' };
-  const inputSt = { width:'100%', padding:'10px 13px', borderRadius:10, border:'1.5px solid var(--border)', background:'var(--surface2)', color:'var(--text)', fontSize:14, outline:'none', boxSizing:'border-box' };
-
-  /* ── Premium type config ── */
-  const TYPE_CFG = {
-    expense:  { color:'#DC2626', bg:'rgba(220,38,38,.14)',  border:'rgba(220,38,38,.3)',  gradient:'#DC2626', icon:'📤', label:'Expense'  },
-    income:   { color:'#047857', bg:'rgba(4,120,87,.14)',   border:'rgba(4,120,87,.3)',   gradient:'#047857',  icon:'📥', label:'Income'   },
-    transfer: { color:'#3B82F6', bg:'rgba(59,130,246,.14)',  border:'rgba(59,130,246,.3)',  gradient:'linear-gradient(135deg,#3B82F6,#60A5FA)',  icon:'🔄', label:'Transfer' },
-  };
-  const tc = TYPE_CFG[txType] || TYPE_CFG.expense;
-
-  const sheetSt = {
-    position:'fixed', bottom:0, left:0, right:0, zIndex:1100,
-    background:'var(--surface)', borderRadius:'28px 28px 0 0',
-    boxShadow:'0 -12px 60px rgba(0,0,0,.2)',
-    height:'auto',
-    display:'flex', flexDirection:'column', overflow:'hidden',
-  };
-  const scrollSt = { flex:1, minHeight:0, overflowY:'auto', WebkitOverflowScrolling:'touch' };
-  const footerSt = {
-    flexShrink:0, borderTop:'1px solid var(--border-light)', background:'var(--surface)',
-    padding:'12px 20px', paddingBottom:'calc(12px + env(safe-area-inset-bottom,0px))',
-  };
-  const overlayStyle = {
-    position:'fixed', inset:0, zIndex:1099,
-    background:'rgba(0,0,0,.45)', backdropFilter:'blur(4px)',
-  };
-  const fieldLbl = { fontSize:11, fontWeight:700, color:'var(--text3)', textTransform:'uppercase', letterSpacing:'.06em', marginBottom:6, display:'block' };
-  const fieldIn  = { width:'100%', padding:'12px 14px', borderRadius:14, border:'1.5px solid var(--border-light)', background:'var(--surface2)', color:'var(--text)', fontSize:14, outline:'none', boxSizing:'border-box', fontFamily:'inherit' };
+  const title = isEdit ? 'Edit transaction' : 'Add transaction';
+  const saveLabel = isTransfer ? 'Save transfer'
+    : isEdit ? 'Save changes'
+    : isCreditSelected && hasInterest && interestAmount ? 'Save with interest'
+    : `Save ${txType}`;
 
   // Bill attach step — shown after a new transaction is saved
   if (savedTxId) {
     return (
-      <BillAttachment
-        txId={savedTxId.id}
-        txName={savedTxId.name}
-        onClose={() => { onSaved?.(); onClose(); }}
-        skipLabel="Skip"
-      />
+      <BillAttachment txId={savedTxId.id} txName={savedTxId.name}
+        onClose={() => { onSaved?.(); onClose(); }} skipLabel="Skip" />
     );
   }
+
+  const removeTx = () => confirmAsync('Delete this transaction?').then(ok => ok && onDelete(tx.id));
 
   return (
     <>
       {showBills && tx?.id && (
-        <BillAttachment
-          txId={tx.id}
-          txName={tx.description || tx.payment_name || 'Transaction'}
-          onClose={() => setShowBills(false)}
-        />
+        <BillAttachment txId={tx.id} txName={tx.description || tx.payment_name || 'Transaction'} onClose={() => setShowBills(false)} />
       )}
-      <div style={overlayStyle} onClick={onClose}/>
-      <div className="txSheet" style={sheetSt}>
+      <Sheet open onClose={onClose} title={title}
+        footer={<>
+          {isEdit && <Button variant="danger" onClick={removeTx}>Delete</Button>}
+          <Button variant="primary" loading={saving} onClick={handleSubmit} style={{ flex:1 }}>{saveLabel}</Button>
+        </>}>
 
-        {/* Handle */}
-        <div style={{ width:40, height:4, borderRadius:2, background:'var(--border)', margin:'12px auto 0' }}/>
-
-        {/* Header row */}
-        <div style={{ display:'flex', alignItems:'center', padding:'16px 20px 0', gap:12 }}>
-          <div style={{ width:42, height:42, borderRadius:14, background:tc.bg, border:`1.5px solid ${tc.border}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0 }}>
-            {tc.icon}
-          </div>
-          <div style={{ flex:1 }}>
-            <div style={{ fontSize:17, fontWeight:800, color:'var(--text)', letterSpacing:'-0.3px' }}>
-              {isEdit ? 'Edit Transaction' : 'Add Transaction'}
-            </div>
-            <div style={{ fontSize:12, color:'var(--text3)', marginTop:1 }}>
-              {isEdit ? `Editing ${tc.label.toLowerCase()}` : 'Fill in the details below'}
-            </div>
-          </div>
-          <button onClick={onClose} style={{ width:34, height:34, borderRadius:10, background:'var(--surface2)', border:'1.5px solid var(--border-light)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', color:'var(--text3)', fontSize:18, lineHeight:1 }}>×</button>
-        </div>
-
-        {/* Type selector — premium icon tabs */}
         {!isEdit && (
-          <div style={{ display:'flex', gap:8, padding:'16px 20px 0' }}>
-            {Object.entries(TYPE_CFG).map(([key, cfg]) => {
-              const active = txType === key;
-              return (
-                <button key={key}
-                  onClick={() => { setTxType(key); setPayMethod(null); setWalletId(''); setError(''); setShowNewCat(false); }}
-                  style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:6, padding:'12px 8px', borderRadius:16, border:`1.5px solid ${active ? cfg.border : 'var(--border-light)'}`, background: active ? cfg.bg : 'var(--surface2)', cursor:'pointer', transition:'all .15s' }}>
-                  <div style={{ width:40, height:40, borderRadius:13, background: active ? cfg.bg : 'var(--surface3)', border:`1.5px solid ${active ? cfg.border : 'transparent'}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18 }}>
-                    {cfg.icon}
-                  </div>
-                  <span style={{ fontSize:12, fontWeight:700, color: active ? cfg.color : 'var(--text3)' }}>{cfg.label}</span>
-                </button>
-              );
-            })}
+          <div style={{ marginBottom:4 }}>
+            <Segmented label="Transaction type" options={typeOptions} value={txType}
+              onChange={(key) => { setTxType(key); setPayMethod(null); setWalletId(''); setError(''); setShowNewCat(false); setCatId(''); }} />
           </div>
         )}
 
-        {/* Error */}
-        {error && (
-          <div style={{ margin:'12px 20px 0', background:'rgba(220,38,38,.08)', border:'1.5px solid rgba(220,38,38,.25)', borderRadius:12, padding:'10px 14px', fontSize:13, color:'#DC2626', fontWeight:500 }}>
-            ⚠️ {error}
+        {/* Amount comes first: it is the one thing every transaction needs */}
+        <div className="tx-amount">
+          <span className="tx-amount__cur" aria-hidden="true">₹</span>
+          <input className="tx-amount__input" inputMode="decimal" placeholder="0" aria-label="Amount"
+            value={amount} onChange={e => onAmount(e.target.value)} autoFocus={desktop}
+            style={{ width: `${Math.max(amount.length, 1) + 0.6}ch` }} />
+        </div>
+
+        {error && <div className="tx-error" role="alert"><span aria-hidden="true">⚠</span><span>{error}</span></div>}
+
+        {isTransfer ? (<>
+          <div className="ds-field">
+            <span className="ds-field__label">From</span>
+            <Select value={fromWalletId} onChange={setFromWalletId} placeholder="Choose source account" options={(wallets||[]).map(walletOpt)} />
           </div>
-        )}
-
-        <div style={{ ...scrollSt, padding:'16px 20px', display:'grid', gap:14, alignContent:'start' }}>
-
-          {/* ══ AMOUNT — big hero input ══ */}
-          <div style={{ background:`linear-gradient(135deg,${tc.bg},${tc.bg.replace('.14','.07')})`, border:`1.5px solid ${tc.border}`, borderRadius:14, padding:'20px 20px 16px', textAlign:'center' }}>
-            <div style={{ fontSize:11, fontWeight:700, color:tc.color, textTransform:'uppercase', letterSpacing:'.08em', marginBottom:10 }}>Amount</div>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:4 }}>
-              <span style={{ fontSize:28, fontWeight:900, color:tc.color, fontFamily:'Inter,sans-serif' }}>₹</span>
-              <input
-                type="number" step="0.01" placeholder="0.00"
-                value={amount} onChange={e=>setAmount(e.target.value)}
-                autoFocus
-                style={{ fontSize:36, fontWeight:900, color:tc.color, border:'none', background:'transparent', outline:'none', textAlign:'center', width:'100%', fontFamily:'Inter,sans-serif', caretColor:tc.color }}
-              />
-            </div>
+          <div className="ds-field">
+            <span className="ds-field__label">To</span>
+            <Select value={toWalletId} onChange={setToWalletId} placeholder="Choose destination account" options={(wallets||[]).filter(w => w.id !== fromWalletId).map(walletOpt)} />
           </div>
-
-          {/* ══ TRANSFER FLOW ══ */}
-          {isTransfer ? (<>
-            <div>
-              <label style={fieldLbl}>From Account</label>
-              <CustomSelect value={fromWalletId} onChange={setFromWalletId} placeholder="Select source account"
-                options={(wallets||[]).map(w => ({ value:w.id, label:`${w.name}${w.last_four?` *${w.last_four}`:''}`, sub:`Balance: ${fmt(w.balance||0)}` }))}/>
+          {CREDIT_WALLET_TYPES.includes((wallets||[]).find(w => w.id === toWalletId)?.type) && (
+            <div className="tx-note"><span aria-hidden="true">💳</span><span><strong>Credit card payment.</strong> This reduces the card's outstanding balance from the source account.</span></div>
+          )}
+          <div className="tx-row2">
+            <Field label="Date"><Input type="date" value={date} onChange={e => setDate(e.target.value)} /></Field>
+            <Field label="Note (optional)"><Input placeholder="What was it for?" value={note} onChange={e => setNote(e.target.value)} /></Field>
+          </div>
+        </>) : (<>
+          <div className="ds-field">
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+              <span className="ds-field__label">Category</span>
+              <button type="button" className="ds-btn ds-btn--ghost ds-btn--sm" onClick={() => setShowNewCat(v => !v)}>{showNewCat ? 'Cancel' : 'New category'}</button>
             </div>
-            <div>
-              <label style={fieldLbl}>To Account</label>
-              <CustomSelect value={toWalletId} onChange={setToWalletId} placeholder="Select destination account"
-                options={(wallets||[]).filter(w=>w.id!==fromWalletId).map(w => ({ value:w.id, label:`${w.name}${w.last_four?` *${w.last_four}`:''}`, emoji: CREDIT_WALLET_TYPES.includes(w.type)?'💳':undefined, sub:`Balance: ${fmt(w.balance||0)}` }))}/>
-            </div>
-            {CREDIT_WALLET_TYPES.includes((wallets||[]).find(w=>w.id===toWalletId)?.type) && (
-              <div style={{ display:'flex', gap:10, background:'rgba(217,119,6,.08)', border:'1.5px solid rgba(217,119,6,.25)', borderRadius:14, padding:'12px 14px' }}>
-                <span style={{ fontSize:20 }}>💳</span>
-                <div>
-                  <div style={{ fontSize:13, fontWeight:700, color:'#D97706' }}>Credit Card Bill Payment</div>
-                  <div style={{ fontSize:12, color:'var(--text3)', marginTop:2 }}>Clears the credit card balance from your bank account.</div>
-                </div>
-              </div>
-            )}
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
-              <div><label style={fieldLbl}>Status</label>
-                <CustomSelect value={status} onChange={setStatus} placeholder="Status"
-                  options={[{value:'completed',label:'Completed',emoji:'✅'},{value:'pending',label:'Pending',emoji:'⏳'},{value:'failed',label:'Failed',emoji:'❌'}]}/>
-              </div>
-              <div><label style={fieldLbl}>Date</label><input style={fieldIn} type="date" value={date} onChange={e=>setDate(e.target.value)}/></div>
-            </div>
-            <div><label style={fieldLbl}>Note (optional)</label><input style={fieldIn} placeholder="Transfer description…" value={note} onChange={e=>setNote(e.target.value)}/></div>
-          </>) : (<>
-
-            {/* ══ INCOME / EXPENSE FLOW ══ */}
-
-            {(<>
-
-              {/* Merchant / source name */}
-              <div>
-                <label style={fieldLbl}>{txType==='income' ? 'Income Source' : 'Merchant / Payee'}</label>
-                <input style={fieldIn} placeholder={txType==='income' ? 'e.g. Salary, Freelance…' : 'e.g. Swiggy, Amazon…'} value={payName} onChange={e=>setPayName(e.target.value)}/>
-              </div>
-
-              {/* Category grid — visual icons */}
-              <div>
-                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
-                  <label style={{ ...fieldLbl, marginBottom:0 }}>Category</label>
-                  <button type="button" onClick={() => setShowNewCat(v=>!v)}
-                    style={{ fontSize:11, fontWeight:700, color: showNewCat ? '#DC2626' : 'var(--accent)', background: showNewCat ? 'rgba(220,38,38,.08)' : 'var(--accent-light)', border:'none', borderRadius:8, padding:'4px 10px', cursor:'pointer' }}>
-                    {showNewCat ? '✕ Cancel' : '+ New'}
+            {showNewCat ? (
+              <NewCategoryInline txType={txType} onCancel={() => setShowNewCat(false)}
+                onCreated={cat => { setCatId(cat.id); setShowNewCat(false); qc.invalidateQueries({ queryKey:['categories'] }); }} />
+            ) : (
+              <div className="tx-chips" role="group" aria-label="Category">
+                {catsLoading && filteredCats.length === 0 && <span style={{ fontSize:13, color:'var(--text3)' }}>Loading categories…</span>}
+                {!catsLoading && filteredCats.length === 0 && <span style={{ fontSize:13, color:'var(--text3)' }}>No categories yet. Use “New category”.</span>}
+                {filteredCats.map(c => (
+                  <button key={c.id} type="button" className="tx-chip" aria-pressed={catId === c.id} onClick={() => setCatId(catId === c.id ? '' : c.id)}>
+                    <CategoryGlyph name={c.name} emoji={c.emoji} icon={c.icon} size={16}/>{c.name}
                   </button>
-                </div>
-                {showNewCat ? (
-                  <NewCategoryInline txType={txType} onCancel={() => setShowNewCat(false)}
-                    onCreated={cat => { setCatId(cat.id); setShowNewCat(false); qc.invalidateQueries({ queryKey:['categories'] }); }}/>
-                ) : (
-                  <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:8, maxHeight:224, overflowY:'auto', paddingRight:2, scrollbarWidth:'thin' }}>
-                    {catsLoading && filteredCats.length === 0 && (
-                      <div style={{ gridColumn:'1/-1', textAlign:'center', padding:'18px 8px', fontSize:12.5, color:'var(--text3)' }}>Loading categories…</div>
-                    )}
-                    {!catsLoading && filteredCats.length === 0 && (
-                      <div style={{ gridColumn:'1/-1', textAlign:'center', padding:'18px 8px', fontSize:12.5, color:'var(--text3)' }}>
-                        No categories yet — tap “+ New” to add one.
-                      </div>
-                    )}
-                    {filteredCats.map(c => {
-                      const sel = catId === c.id;
-                      const col = c.color || '#1D4ED8';
-                      return (
-                        <button key={c.id} onClick={() => setCatId(sel ? '' : c.id)}
-                          style={{ display:'flex', flexDirection:'column', alignItems:'center', padding:'10px 6px', borderRadius:14, border:`1.5px solid ${sel ? col+'60' : 'var(--border-light)'}`, background: sel ? col+'18' : 'var(--surface2)', cursor:'pointer', transition:'all .15s', gap:5 }}>
-                          <div style={{ width:36, height:36, borderRadius:11, background: sel ? col+'25' : 'var(--surface3)', border:`1.5px solid ${sel ? col+'50' : 'transparent'}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:17 }}>
-                            <CategoryGlyph name={c.name} emoji={c.emoji} icon={c.icon} size={18}/>
-                          </div>
-                          <span style={{ fontSize:10, fontWeight:700, color: sel ? col : 'var(--text3)', textAlign:'center', lineHeight:1.2, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', width:'100%' }}>{c.name}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+                ))}
               </div>
-
-              {/* Account */}
-              <div>
-                <label style={fieldLbl}>
-                  {isCreditSelected ? 'Credit Card' : txType==='income' ? 'Credited To' : 'Paid From'}
-                </label>
-                {allowedWallets.length === 0 ? (
-                  <div style={{ background:'rgba(217,119,6,.08)', border:'1.5px solid rgba(217,119,6,.25)', borderRadius:12, padding:'10px 14px', fontSize:13, color:'#D97706' }}>
-                    ⚠️ No matching account. Add one in Accounts first.
-                  </div>
-                ) : (
-                  <CustomSelect value={walletId} onChange={setWalletId} placeholder="Select account"
-                    options={allowedWallets.map(w => ({ value:w.id, label:`${w.name}${w.last_four?` *${w.last_four}`:''}`, sub:`Balance: ${fmt(w.balance||0)}` }))}/>
-                )}
-              </div>
-
-              {/* Credit card interest toggle */}
-              {isCreditSelected && walletId && (
-                <div style={{ background:'rgba(220,38,38,.06)', border:'1.5px solid rgba(220,38,38,.18)', borderRadius:16, padding:'14px 16px' }}>
-                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-                    <div style={{ display:'flex', gap:10, alignItems:'center' }}>
-                      <div style={{ width:36, height:36, borderRadius:11, background:'rgba(220,38,38,.12)', border:'1.5px solid rgba(220,38,38,.25)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16 }}>💳</div>
-                      <div>
-                        <div style={{ fontSize:13, fontWeight:700, color:'var(--text)' }}>Add Interest Charges?</div>
-                        <div style={{ fontSize:11, color:'var(--text3)', marginTop:1 }}>Logged as separate expense</div>
-                      </div>
-                    </div>
-                    <div onClick={() => setHasInterest(h=>!h)} style={{ width:44, height:24, borderRadius:12, cursor:'pointer', transition:'background .2s', background: hasInterest ? '#DC2626' : 'var(--surface3)', position:'relative', flexShrink:0 }}>
-                      <div style={{ position:'absolute', top:4, left: hasInterest ? 24 : 4, width:16, height:16, borderRadius:'50%', background:'#fff', boxShadow:'0 1px 4px rgba(0,0,0,.25)', transition:'left .2s' }}/>
-                    </div>
-                  </div>
-                  {hasInterest && (
-                    <div style={{ marginTop:14, display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
-                      <div><label style={fieldLbl}>Interest Amount</label>
-                        <input style={{ ...fieldIn, color:'#DC2626', fontWeight:700 }} type="number" step="0.01" placeholder="0.00" value={interestAmount} onChange={e=>setInterestAmount(e.target.value)}/></div>
-                      <div><label style={fieldLbl}>Interest Category</label>
-                        <CustomSelect value={interestCatId} onChange={setInterestCatId} placeholder="CC Interest"
-                          options={expenseCats.map(c => ({ value:c.id, label:c.name, emoji:c.emoji, color:c.color }))}/></div>
-                      <div style={{ gridColumn:'1/-1', background:'var(--surface2)', borderRadius:10, padding:'8px 12px', fontSize:12, color:'var(--text3)', display:'flex', alignItems:'center', gap:8 }}>
-                        <Info size={13}/> Total = <strong style={{color:'var(--text)'}}>{fmt(parseFloat(amount||0)+parseFloat(interestAmount||0))}</strong>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Date + Note */}
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
-                <div><label style={fieldLbl}>Date</label><input style={fieldIn} type="date" value={date} onChange={e=>setDate(e.target.value)}/></div>
-                <div><label style={fieldLbl}>Status</label>
-                  <CustomSelect value={status} onChange={setStatus} placeholder="Status"
-                    options={[{value:'completed',label:'Completed',emoji:'✅'},{value:'pending',label:'Pending',emoji:'⏳'},{value:'failed',label:'Failed',emoji:'❌'}]}/></div>
-              </div>
-              <div><label style={fieldLbl}>Note (optional)</label><input style={fieldIn} placeholder="Add a note…" value={note} onChange={e=>setNote(e.target.value)}/></div>
-
-            </>)}
-          </>)}
-        </div>
-
-        {/* ── Sticky Footer ── */}
-        <div style={footerSt}>
-          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-
-            {/* Attach Bill — edit mode */}
-            {isEdit && !confirmDelete && (
-              <button onClick={() => setShowBills(true)}
-                style={{ padding:'12px', borderRadius:14, border:'1.5px solid rgba(29,78,216,.3)', background:'rgba(29,78,216,.08)', color:'#1D4ED8', fontSize:13, fontWeight:700, cursor:'pointer', width:'100%', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
-                <Paperclip size={15}/> Attach Bill / Receipt
-              </button>
-            )}
-
-            {/* Delete — edit mode */}
-            {isEdit && (
-              confirmDelete ? (
-                <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-                  <span style={{ fontSize:12.5, color:'#DC2626', fontWeight:600, flex:1 }}>Delete this transaction?</span>
-                  <button onClick={() => onDelete(tx.id)} style={{ padding:'9px 16px', borderRadius:12, border:'none', background:'#DC2626', color:'#fff', fontSize:13, fontWeight:700, cursor:'pointer' }}>Delete</button>
-                  <button onClick={() => setConfirmDelete(false)} style={{ padding:'9px 14px', borderRadius:12, border:'1.5px solid var(--border)', background:'var(--surface2)', color:'var(--text3)', fontSize:13, cursor:'pointer' }}>Cancel</button>
-                </div>
-              ) : (
-                <button onClick={() => setConfirmDelete(true)}
-                  style={{ padding:'12px', borderRadius:14, border:'1.5px solid rgba(220,38,38,.3)', background:'rgba(220,38,38,.06)', color:'#DC2626', fontSize:13, fontWeight:700, cursor:'pointer', width:'100%' }}>
-                  🗑️ Delete Transaction
-                </button>
-              )
-            )}
-
-            {!confirmDelete && (
-              <button disabled={saving}
-                onClick={handleSubmit}
-                style={{ width:'100%', padding:'15px', borderRadius:16, border:'none', fontWeight:800, fontSize:15, cursor:'pointer', background: tc.gradient, color:'#fff', boxShadow:`0 6px 20px ${tc.color}44`, opacity: saving?.6:1, display:'flex', alignItems:'center', justifyContent:'center', gap:8, letterSpacing:'-0.2px' }}>
-                {saving ? <><span style={{ display:'inline-block', animation:'spin .8s linear infinite' }}>⟳</span> Saving…</>
-                  : isTransfer ? '🔄 Save Transfer'
-                  : isEdit ? '✓ Save Changes'
-                  : isCreditSelected && hasInterest && interestAmount ? '💳 Save + Interest'
-                  : `${tc.icon} Save ${tc.label}`}
-              </button>
             )}
           </div>
 
-        </div>
-        <style>{`
-          @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-          .txSheet{ max-height:88vh; max-height:88dvh; max-height:88svh; }
-          @media (max-width:768px){ .txSheet{ max-height:92vh; max-height:92dvh; max-height:92svh; } }
-        `}</style>
-      </div>
+          <div className="ds-field">
+            <span className="ds-field__label">{isCreditSelected ? 'Credit card' : txType === 'income' ? 'Received in' : 'Paid from'}</span>
+            {allowedWallets.length === 0 ? (
+              <div className="tx-note">No account to use yet. Add one in Accounts first.</div>
+            ) : (
+              <Select value={walletId} onChange={setWalletId} placeholder="Choose account" options={allowedWallets.map(walletOpt)} />
+            )}
+          </div>
+
+          <div className="tx-row2">
+            <Field label="Date"><Input type="date" value={date} onChange={e => setDate(e.target.value)} /></Field>
+            <Field label={txType === 'income' ? 'Source' : 'Payee'}>
+              <Input placeholder={txType === 'income' ? 'e.g. Salary' : 'e.g. Swiggy'} value={payName} onChange={e => setPayName(e.target.value)} />
+            </Field>
+          </div>
+          <Field label="Note (optional)"><Input placeholder="Add a note" value={note} onChange={e => setNote(e.target.value)} /></Field>
+
+          {isCreditSelected && walletId && (<>
+            <button type="button" role="switch" aria-checked={hasInterest} className="tx-switch" onClick={() => setHasInterest(h => !h)}>
+              <span>
+                <strong style={{ display:'block', fontSize:14 }}>Add interest charges</strong>
+                <span style={{ fontSize:12, color:'var(--text3)' }}>Saved as a separate expense</span>
+              </span>
+              <span className="tx-switch__track" aria-hidden="true" />
+            </button>
+            {hasInterest && (
+              <div className="tx-row2">
+                <Field label="Interest amount"><Input inputMode="decimal" placeholder="0" value={interestAmount} onChange={e => setInterestAmount(e.target.value.replace(/[^\d.]/g, ''))} /></Field>
+                <div className="ds-field">
+                  <span className="ds-field__label">Interest category</span>
+                  <Select value={interestCatId} onChange={setInterestCatId} placeholder="Choose category"
+                    options={expenseCats.map(c => ({ value:c.id, label:c.name, emoji:c.emoji || '' }))} />
+                </div>
+                <div className="tx-note" style={{ gridColumn:'1/-1' }}>Total on the card: <strong>{fmt(parseFloat(amount||0) + parseFloat(interestAmount||0))}</strong></div>
+              </div>
+            )}
+          </>)}
+        </>)}
+
+        <button type="button" className="tx-more" aria-expanded={showMore} onClick={() => setShowMore(v => !v)}>
+          {showMore ? 'Hide options' : 'More options'}
+        </button>
+        {showMore && (
+          <div className="ds-field">
+            <span className="ds-field__label">Status</span>
+            <Select value={status} onChange={setStatus} options={statusOpts} />
+          </div>
+        )}
+
+        {isEdit && (
+          <Button block icon={<Paperclip size={16}/>} onClick={() => setShowBills(true)}>Receipts and bills</Button>
+        )}
+      </Sheet>
     </>
   );
 }
