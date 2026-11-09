@@ -420,6 +420,7 @@ function DebtDetailModal({ debt, onClose, onEdit }) {
 
 /* ── Credit Card Dashboard ─────────────────────────────── */
 function CreditCardDashboard({ bal, limit, utilPct, availPct, debt, utilTrend }) {
+  const fmt = useFmtHook();
   const pieData = limit > 0
     ? [{ name:'Used', value: bal }, { name:'Available', value: Math.max(0, limit - bal) }]
     : [{ name:'Outstanding', value: bal }];
@@ -513,6 +514,7 @@ function CreditCardDashboard({ bal, limit, utilPct, availPct, debt, utilTrend })
 
 /* ── Loan Dashboard ───────────────────────────────────── */
 function LoanDashboard({ bal, debt, schedule, totalInterest, totalPrincipal }) {
+  const fmt = useFmtHook();
   const totalLoan = parseFloat(debt.total_loan_amount || bal);
   const paidPct   = totalLoan > 0 ? Math.max(0, Math.round(((totalLoan - bal) / totalLoan) * 100)) : 0;
   const monthsLeft = schedule.length;
@@ -611,6 +613,7 @@ function LoanDashboard({ bal, debt, schedule, totalInterest, totalPrincipal }) {
 
 /* ── Lending Detail ───────────────────────────────────── */
 function LendingDetail({ debt, bal }) {
+  const fmt = useFmtHook();
   return (
     <div>
       <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:12, marginBottom:20 }}>

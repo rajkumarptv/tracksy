@@ -382,7 +382,6 @@ export function OAuthCallback() {
         })
         .catch(() => setError('Failed to fetch account details. Please try again.'));
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (error) return (
