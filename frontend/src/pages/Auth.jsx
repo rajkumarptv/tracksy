@@ -6,6 +6,7 @@ import useAuthStore from '../store/authStore';
 import useThemeStore from '../store/themeStore';
 import { track } from '../lib/analytics';
 import styles from './Auth.module.css';
+import GoogleLogo from '../components/GoogleLogo';
 
 /* ── Small building blocks ────────────────────────────────────────────────── */
 // After a failed submit, move keyboard/screen-reader focus to the first invalid field.
@@ -161,13 +162,38 @@ function AuthShell({ children }) {
   );
 }
 
+/* ── Continue with Google ──────────────────────────────────────────────────── */
+const GOOGLE_ERRORS = {
+  google_not_configured: 'Google sign-in is not available right now. Use your email and password.',
+  google_cancelled: 'Google sign-in was cancelled.',
+  google_email_unverified: 'Your Google account’s email address is not verified, so we can’t sign you in with it.',
+  oauth: 'We couldn’t sign you in with Google. Please try again.',
+};
+const oauthErrorMessage = (code) => (code ? (GOOGLE_ERRORS[code] || GOOGLE_ERRORS.oauth) : '');
+
+function GoogleButton({ label = 'Continue with Google' }) {
+  const go = () => {
+    window.location.href = `${import.meta.env.VITE_API_URL || '/api'}/auth/google`;
+  };
+  return (
+    <>
+      <div className={styles.or} role="separator"><span>or</span></div>
+      <button type="button" className={styles.google} onClick={go}>
+        <GoogleLogo />
+        {label}
+      </button>
+    </>
+  );
+}
+
 /* ── Login ─────────────────────────────────────────────────────────────────── */
 export function Login() {
   const navigate = useNavigate();
   const { setAuth } = useAuthStore();
   const [form, setForm] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
-  const [error, setError] = useState('');
+  const [searchParams] = useSearchParams();
+  const [error, setError] = useState(() => oauthErrorMessage(searchParams.get('error')));
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -203,6 +229,7 @@ export function Login() {
           onChange={e => setForm(f => ({ ...f, password: e.target.value }))} />
         <SubmitButton loading={loading} loadingText="Signing in…">Sign in</SubmitButton>
       </form>
+      <GoogleButton />
       <p className={styles.switch}>New to Tracksy? <Link to="/register">Create an account</Link></p>
     </AuthShell>
   );
@@ -262,6 +289,7 @@ export function Register() {
           onChange={set('confirm_password')} />
         <SubmitButton loading={loading} loadingText="Creating account…">Create account</SubmitButton>
       </form>
+      <GoogleButton label="Sign up with Google" />
       <p className={styles.switch}>Already have an account? <Link to="/login">Sign in</Link></p>
     </AuthShell>
   );
@@ -369,8 +397,10 @@ export function OAuthCallback() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const token = searchParams.get('token');
-    if (!token) { setError('Authentication failed — no token received.'); return; }
+    // The token arrives in the URL fragment (never sent to a server); remove it from the address bar straight away
+    const token = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('token');
+    window.history.replaceState(null, '', window.location.pathname);
+    if (!token) { setError('Authentication failed. No sign-in token was received.'); return; }
 
     // Fetch user info using the token from URL (before it's stored in Zustand)
     import('../services/api').then(({ default: api }) => {

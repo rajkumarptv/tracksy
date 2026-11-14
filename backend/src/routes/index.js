@@ -37,6 +37,25 @@ router.post('/auth/reset-password', authCtrl.resetPassword);
 router.get('/auth/notification-preferences', auth, authCtrl.getNotificationPrefs);
 router.put('/auth/notification-preferences', auth, authCtrl.updateNotificationPrefs);
 
+// Auth — Google OAuth (sign in / sign up). `state` is signed and checked on return to stop login CSRF.
+const { signState, verifyState } = require('../utils/oauthState');
+const googleReady = () => !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+router.get('/auth/google', (req, res, next) => {
+  if (!googleReady()) return res.redirect(`${process.env.FRONTEND_URL}/login?error=google_not_configured`);
+  oauth.authenticate('google', { scope: ['profile', 'email'], session: false, state: signState(), prompt: 'select_account' })(req, res, next);
+});
+router.get('/auth/google/callback', (req, res, next) => {
+  const login = (e) => `${process.env.FRONTEND_URL}/login?error=${e}`;
+  if (!googleReady()) return res.redirect(login('google_not_configured'));
+  if (req.query.error) return res.redirect(login('google_cancelled'));
+  if (!verifyState(req.query.state)) return res.redirect(login('oauth'));
+  oauth.authenticate('google', { session: false }, (err, user) => {
+    if (err || !user) return res.redirect(login(err?.message === 'google_email_unverified' ? 'google_email_unverified' : 'oauth'));
+    req.user = user;
+    next();
+  })(req, res, next);
+}, oauth.issueTokenRedirect);
+
 // Auth — Facebook OAuth
 router.get('/auth/facebook', (req, res, next) => {
   if (!process.env.FACEBOOK_APP_ID || !process.env.FACEBOOK_APP_SECRET)
