@@ -110,4 +110,6 @@ passport.issueTokenRedirect = (req, res) => {
   res.redirect(`${FRONTEND_URL}/auth/callback#token=${token}`);
 };
 
+passport.findOrCreate = findOrCreate;
+
 module.exports = passport;

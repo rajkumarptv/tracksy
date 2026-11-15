@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 process.env.JWT_SECRET = 'test-secret';
 const jwt = require('jsonwebtoken');
-const { signState, verifyState, googleEmail } = require('./oauthState');
+const { signState, verifyState, googleEmail, profileFromSupabaseUser } = require('./oauthState');
 
 test('a state we signed verifies; anything else does not', () => {
   assert.equal(verifyState(signState()), true);
@@ -28,4 +28,19 @@ test('the session auth middleware rejects an oauth state token', async () => {
     auth(req, { status() { return this; }, json: (b) => resolve(b) }, () => resolve({ next: true }));
   });
   assert.notEqual(res.next, true);
+});
+
+test('profileFromSupabaseUser accepts only confirmed Google users and maps their details', () => {
+  const ok = {
+    id: 'sb-1', email: 'Ann.Lee@Gmail.com', email_confirmed_at: '2026-11-01T00:00:00Z',
+    app_metadata: { provider: 'google' },
+    identities: [{ provider: 'google', id: '123', identity_data: { sub: '123', full_name: 'Ann Marie Lee', avatar_url: 'https://x/y.png' } }],
+    user_metadata: { full_name: 'Ann Marie Lee' },
+  };
+  assert.deepEqual(profileFromSupabaseUser(ok), { id: '123', email: 'ann.lee@gmail.com', firstName: 'Ann', lastName: 'Marie Lee', avatar: 'https://x/y.png' });
+  assert.equal(profileFromSupabaseUser({ ...ok, email_confirmed_at: null }), null);                 // unconfirmed email
+  assert.equal(profileFromSupabaseUser({ ...ok, email: '' }), null);
+  assert.equal(profileFromSupabaseUser({ ...ok, identities: [{ provider: 'email' }], app_metadata: { provider: 'email' } }), null); // not Google
+  assert.equal(profileFromSupabaseUser(null), null);
+  assert.equal(profileFromSupabaseUser('x'), null);
 });

@@ -1,4 +1,4 @@
-import { useState, useEffect, useId } from 'react';
+import { useState, useEffect, useId, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Eye, EyeOff, AlertCircle, CheckCircle2, Lock, Moon, Sun, Loader2, Wallet, TrendingUp, Target, ArrowUpRight } from 'lucide-react';
 import { authAPI } from '../services/api';
@@ -393,24 +393,35 @@ export function ResetPassword() {
 export function OAuthCallback() {
   const navigate = useNavigate();
   const { setAuth } = useAuthStore();
-  const [searchParams] = useSearchParams();
   const [error, setError] = useState('');
+  const ran = useRef(false);   // React runs effects twice in development; the fragment can only be read once
 
   useEffect(() => {
-    // The token arrives in the URL fragment (never sent to a server); remove it from the address bar straight away
-    const token = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('token');
+    if (ran.current) return;
+    ran.current = true;
+    // Everything arrives in the URL fragment (never sent to a server). Read it, then remove it from the address bar.
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ''));
     window.history.replaceState(null, '', window.location.pathname);
-    if (!token) { setError('Authentication failed. No sign-in token was received.'); return; }
 
-    // Fetch user info using the token from URL (before it's stored in Zustand)
-    import('../services/api').then(({ default: api }) => {
-      api.get('/auth/me', { headers: { Authorization: `Bearer ${token}` } })
-        .then(res => {
-          setAuth(res.data.user, token);
-          track('login', { method: 'oauth' });
-          navigate('/', { replace: true });
-        })
-        .catch(() => setError('Failed to fetch account details. Please try again.'));
+    if (hash.get('error')) { setError(hash.get('error') === 'access_denied' ? 'Google sign-in was cancelled.' : 'We couldn’t sign you in with Google. Please try again.'); return; }
+
+    import('../services/api').then(async ({ default: api }) => {
+      try {
+        let token = hash.get('token');                        // our own session token (direct Google flow)
+        const supabaseToken = hash.get('access_token');       // a Supabase session (Google through Supabase)
+        if (!token && supabaseToken) {
+          const ex = await api.post('/auth/supabase', { access_token: supabaseToken });
+          token = ex.data.token;
+        }
+        if (!token) { setError('Authentication failed. No sign-in token was received.'); return; }
+        // Fetch the account using the token before it is stored
+        const res = await api.get('/auth/me', { headers: { Authorization: `Bearer ${token}` } });
+        setAuth(res.data.user, token);
+        track('login', { method: 'oauth' });
+        navigate('/', { replace: true });
+      } catch (err) {
+        setError(err.response?.data?.message || 'Failed to fetch account details. Please try again.');
+      }
     });
   }, []);
 

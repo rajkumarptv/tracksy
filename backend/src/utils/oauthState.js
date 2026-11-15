@@ -19,4 +19,24 @@ function googleEmail(profile) {
   return e?.value && verified ? String(e.value).toLowerCase() : null;
 }
 
-module.exports = { signState, verifyState, googleEmail };
+/**
+ * Turns a user returned by Supabase Auth (GET /auth/v1/user) into our OAuth profile, or null when it is not
+ * a Google sign-in with an address Google has confirmed.
+ */
+function profileFromSupabaseUser(u) {
+  if (!u || typeof u !== 'object') return null;
+  const identity = (u.identities || []).find(i => i.provider === 'google');
+  if (!identity && u.app_metadata?.provider !== 'google') return null;
+  if (!u.email || !u.email_confirmed_at) return null;            // Supabase only sets this once the email is confirmed
+  const meta = { ...(identity?.identity_data || {}), ...(u.user_metadata || {}) };
+  const full = String(meta.full_name || meta.name || '').trim();
+  return {
+    id: String(identity?.identity_data?.sub || identity?.id || u.id),
+    email: String(u.email).toLowerCase(),
+    firstName: meta.given_name || full.split(' ')[0] || '',
+    lastName: meta.family_name || full.split(' ').slice(1).join(' ') || '',
+    avatar: meta.avatar_url || meta.picture || null,
+  };
+}
+
+module.exports = { signState, verifyState, googleEmail, profileFromSupabaseUser };
