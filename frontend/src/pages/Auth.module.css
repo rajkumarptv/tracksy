@@ -188,3 +188,12 @@
 @media (prefers-reduced-motion: reduce) {
   .spin { animation: none; }
 }
+
+/* Continue with Google */
+.or { display: flex; align-items: center; gap: 12px; margin: 20px 0 16px; color: var(--text3); font-size: 13px; }
+.or::before, .or::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.google { width: 100%; min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 10px;
+  border: 1px solid var(--input-border); border-radius: var(--radius-sm); background: var(--surface); color: var(--text);
+  font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; transition: var(--transition); }
+.google:hover { background: var(--surface2); }
+.google:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

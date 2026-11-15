@@ -58,6 +58,10 @@ const login = async (req, res) => {
     }
 
     const user = result.rows[0];
+    // Accounts created with Google have no password; send people to the right button instead of crashing
+    if (!user.password_hash) {
+      return res.status(401).json({ success: false, message: 'This account signs in with Google. Use “Continue with Google”.' });
+    }
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) {
       return res.status(401).json({ success: false, message: 'Invalid email or password' });

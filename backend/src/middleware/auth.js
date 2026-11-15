@@ -8,6 +8,8 @@ const authMiddleware = (req, res, next) => {
   const token = authHeader.split(' ')[1];
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // Single-purpose tokens (for example bill file links) are never valid as a login
+    if (decoded.purpose || !decoded.userId) return res.status(401).json({ success: false, message: 'Invalid token' });
     req.user = decoded;
     next();
   } catch (err) {

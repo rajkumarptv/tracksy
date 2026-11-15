@@ -37,6 +37,59 @@ router.post('/auth/reset-password', authCtrl.resetPassword);
 router.get('/auth/notification-preferences', auth, authCtrl.getNotificationPrefs);
 router.put('/auth/notification-preferences', auth, authCtrl.updateNotificationPrefs);
 
+// Auth — Google. Two ways to run it, chosen by environment variables:
+//   GOOGLE_AUTH=supabase : Google is configured in Supabase Auth. The button sends the browser to Supabase, which
+//                          returns to the app with a Supabase session; the app posts that to /auth/supabase.
+//   GOOGLE_CLIENT_ID/SECRET : this API talks to Google directly (the signed `state` stops login CSRF).
+const { signState, verifyState, profileFromSupabaseUser } = require('../utils/oauthState');
+const googleMode = () => (process.env.GOOGLE_AUTH === 'supabase' && process.env.SUPABASE_URL ? 'supabase'
+  : (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) ? 'direct' : null);
+router.get('/auth/google', (req, res, next) => {
+  const mode = googleMode();
+  if (!mode) return res.redirect(`${process.env.FRONTEND_URL}/login?error=google_not_configured`);
+  if (mode === 'supabase') {
+    const to = encodeURIComponent(`${process.env.FRONTEND_URL}/auth/callback`);
+    return res.redirect(`${process.env.SUPABASE_URL.replace(/\/$/, '')}/auth/v1/authorize?provider=google&prompt=select_account&redirect_to=${to}`);
+  }
+  oauth.authenticate('google', { scope: ['profile', 'email'], session: false, state: signState(), prompt: 'select_account' })(req, res, next);
+});
+router.get('/auth/google/callback', (req, res, next) => {
+  const login = (e) => `${process.env.FRONTEND_URL}/login?error=${e}`;
+  if (googleMode() !== 'direct') return res.redirect(login('google_not_configured'));
+  if (req.query.error) return res.redirect(login('google_cancelled'));
+  if (!verifyState(req.query.state)) return res.redirect(login('oauth'));
+  oauth.authenticate('google', { session: false }, (err, user) => {
+    if (err || !user) return res.redirect(login(err?.message === 'google_email_unverified' ? 'google_email_unverified' : 'oauth'));
+    req.user = user;
+    next();
+  })(req, res, next);
+}, oauth.issueTokenRedirect);
+
+// Exchange a Supabase session (from "Continue with Google" through Supabase) for a Tracksy session.
+// The Supabase token is not trusted on its own: it is checked with Supabase, and only a Google sign-in with a
+// confirmed email is accepted.
+router.post('/auth/supabase', async (req, res) => {
+  try {
+    if (googleMode() !== 'supabase') return res.status(404).json({ success: false, message: 'Not available' });
+    const accessToken = req.body?.access_token;
+    if (typeof accessToken !== 'string' || accessToken.length < 20 || accessToken.length > 4000) {
+      return res.status(400).json({ success: false, message: 'Missing sign-in token' });
+    }
+    const r = await fetch(`${process.env.SUPABASE_URL.replace(/\/$/, '')}/auth/v1/user`, {
+      headers: { Authorization: `Bearer ${accessToken}`, apikey: process.env.SUPABASE_SERVICE_KEY || '' },
+    });
+    if (!r.ok) return res.status(401).json({ success: false, message: 'Sign-in could not be verified' });
+    const profile = profileFromSupabaseUser(await r.json());
+    if (!profile) return res.status(401).json({ success: false, message: 'Only Google accounts with a verified email can sign in' });
+    const user = await oauth.findOrCreate({ provider: 'google', ...profile, emailVerified: true });
+    const token = require('jsonwebtoken').sign({ userId: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || '7d' });
+    res.json({ success: true, token });
+  } catch (err) {
+    console.error('Supabase sign-in error:', err.message);
+    res.status(500).json({ success: false, message: 'Sign-in failed' });
+  }
+});
+
 // Auth — Facebook OAuth
 router.get('/auth/facebook', (req, res, next) => {
   if (!process.env.FACEBOOK_APP_ID || !process.env.FACEBOOK_APP_SECRET)
